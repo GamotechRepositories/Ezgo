@@ -7,7 +7,6 @@ import {
   Star,
   Users
 } from 'lucide-react';
-import LiveBidsCard from './LiveBidsCard';
 
 interface HeroProps {
   onOpenPostModal: (service?: string, city?: string) => void;
@@ -24,12 +23,12 @@ export default function Hero({ onOpenPostModal }: HeroProps) {
   };
 
   return (
-    <section className="relative pt-28 pb-8 sm:pt-36 sm:pb-12 lg:pt-38 lg:pb-14 text-white">
+    <section className="relative pt-24 pb-6 sm:pt-32 sm:pb-8 lg:pt-36 lg:pb-10 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        <div className="grid lg:grid-cols-12 gap-8 lg:gap-6 items-center">
+        <div className="grid lg:grid-cols-12 gap-8 items-center">
           
-          {/* Left Hero Column (7.5 cols on lg) */}
+          {/* Left Hero Column */}
           <div className="lg:col-span-8 flex flex-col items-start text-left">
             
             {/* Eyebrow */}
@@ -158,10 +157,8 @@ export default function Hero({ onOpenPostModal }: HeroProps) {
 
           </div>
 
-          {/* Right Hero Column: Live Bids Floating Card (4 cols on lg) */}
-          <div className="lg:col-span-4 flex justify-center lg:justify-end">
-            <LiveBidsCard onSelectBid={() => onOpenPostModal(serviceInput || 'DJ / Sound', locationInput)} />
-          </div>
+          {/* Right Column Spacer */}
+          <div className="lg:col-span-4" />
 
         </div>
 
