@@ -1,179 +1,132 @@
-import { useState, useEffect } from 'react';
-import { 
-  MapPin, 
-  Menu, 
-  X, 
-  ArrowRight 
-} from 'lucide-react';
-import ezgoLogo from '../assets/ezgo-logo.png';
+import React from 'react';
+import { ShieldCheck, UserCheck, Briefcase, LayoutDashboard, ArrowUpRight } from 'lucide-react';
+import type { User, UserRole } from '../types';
 
 interface NavbarProps {
-  onOpenPostModal: () => void;
+  currentRole: UserRole;
+  onRoleChange: (role: UserRole) => void;
+  currentUser: User;
+  onOpenExplainer: () => void;
 }
 
-export default function Navbar({ onOpenPostModal }: NavbarProps) {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [selectedCity, setSelectedCity] = useState('Hyderabad, Telangana');
-  const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
-
-  const cities = [
-    'Hyderabad, Telangana',
-    'Mumbai, Maharashtra',
-    'Delhi NCR',
-    'Bengaluru, Karnataka',
-    'Jaipur, Rajasthan',
-    'Pune, Maharashtra',
-    'Goa'
-  ];
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 30);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const navLinks = [
-    { name: 'Services', href: '#services' },
-    { name: 'How It Works', href: '#how-it-works' },
-    { name: 'For Providers', href: '#reverse-bidding' },
-    { name: 'About', href: '#occasions' },
-    { name: 'Blog', href: '#testimonials' }
-  ];
-
+export const Navbar: React.FC<NavbarProps> = ({
+  currentRole,
+  onRoleChange,
+  currentUser,
+  onOpenExplainer,
+}) => {
   return (
-    <>
-      <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          isScrolled
-            ? 'py-3 bg-[#07141C]/85 backdrop-blur-xl border-b border-white/10 shadow-2xl'
-            : 'py-5 bg-gradient-to-b from-black/70 via-black/20 to-transparent'
-        }`}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+    <header className="sticky top-0 z-40 bg-slate-950/85 backdrop-blur-xl border-b border-slate-800/80">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-20">
           
-          {/* Left: Brand Logo */}
-          <a href="#" className="flex items-center gap-2 group">
-            <img
-              src={ezgoLogo}
-              alt="EzGo"
-              className="h-9 sm:h-11 w-auto object-contain drop-shadow-md"
-            />
-          </a>
-
-          {/* Center: Nav Links */}
-          <nav className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
-              <a
-                key={link.name}
-                href={link.href}
-                className="text-xs sm:text-sm font-medium text-white/90 hover:text-[#FF5A1F] transition-colors"
-              >
-                {link.name}
-              </a>
-            ))}
-          </nav>
-
-          {/* Right Action Buttons */}
-          <div className="hidden sm:flex items-center gap-3">
-            {/* Location Pill Button */}
-            <div className="relative">
-              <button
-                onClick={() => setCityDropdownOpen(!cityDropdownOpen)}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black/40 hover:bg-black/60 border border-white/20 text-xs font-medium text-white transition backdrop-blur-md"
-              >
-                <MapPin className="w-3.5 h-3.5 text-white/80" />
-                <span>{selectedCity}</span>
-                <ArrowRight className="w-3 h-3 text-white/60 ml-0.5" />
-              </button>
-
-              {cityDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 rounded-xl bg-[#07141C]/95 border border-white/15 shadow-2xl backdrop-blur-2xl py-1.5 z-50 animate-in fade-in">
-                  {cities.map((city) => (
-                    <button
-                      key={city}
-                      onClick={() => {
-                        setSelectedCity(city);
-                        setCityDropdownOpen(false);
-                      }}
-                      className={`w-full text-left px-3.5 py-2 text-xs transition flex items-center justify-between ${
-                        selectedCity === city
-                          ? 'bg-[#FF5A1F]/20 text-[#FF5A1F] font-semibold'
-                          : 'text-white/80 hover:bg-white/10 hover:text-white'
-                      }`}
-                    >
-                      {city}
-                    </button>
-                  ))}
+          {/* Logo */}
+          <div className="flex items-center gap-3">
+            <div className="relative group">
+              <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-500 via-orange-600 to-violet-600 p-[2px] shadow-lg shadow-amber-500/20">
+                <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
+                  <span className="text-xl font-black bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">
+                    Ez
+                  </span>
                 </div>
-              )}
+              </div>
+              <span className="absolute -bottom-1 -right-1 flex h-3.5 w-3.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-amber-500"></span>
+              </span>
             </div>
 
-            {/* Login Button */}
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-2xl tracking-tight text-white">
+                  EzGo<span className="text-amber-400">.</span>
+                </span>
+                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                  Reverse Bids
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400 hidden sm:block">Event Services Escrow Marketplace</p>
+            </div>
+          </div>
+
+          {/* Center: Role Switcher Tabs */}
+          <div className="bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800 shadow-inner flex items-center gap-1">
             <button
-              onClick={() => onOpenPostModal()}
-              className="px-4 py-1.5 rounded-full bg-black/40 hover:bg-black/60 border border-white/20 text-xs font-medium text-white transition backdrop-blur-md"
+              onClick={() => onRoleChange('requester')}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+                currentRole === 'requester'
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md shadow-amber-500/25'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+              }`}
             >
-              Login
+              <UserCheck className="w-3.5 h-3.5" />
+              <span>Requester</span>
             </button>
 
-            {/* Get Started Button */}
             <button
-              onClick={() => onOpenPostModal()}
-              className="px-4 py-1.5 rounded-full bg-[#FF5A1F] hover:bg-[#E44C13] text-white text-xs font-semibold shadow-lg shadow-[#FF5A1F]/30 transition flex items-center gap-1.5"
+              onClick={() => onRoleChange('provider')}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+                currentRole === 'provider'
+                  ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+              }`}
             >
-              <span>Get Started</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <Briefcase className="w-3.5 h-3.5" />
+              <span>Provider</span>
+              {currentUser.role === 'provider' && currentUser.isVerified && (
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              )}
+            </button>
+
+            <button
+              onClick={() => onRoleChange('admin')}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+                currentRole === 'admin'
+                  ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md shadow-cyan-500/25'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+              }`}
+            >
+              <LayoutDashboard className="w-3.5 h-3.5" />
+              <span>Admin</span>
             </button>
           </div>
 
-          {/* Mobile Hamburger Toggle */}
-          <div className="flex sm:hidden items-center gap-2">
+          {/* Right Action & Profile */}
+          <div className="flex items-center gap-3">
             <button
-              onClick={() => onOpenPostModal()}
-              className="px-3 py-1 rounded-full bg-[#FF5A1F] text-white text-xs font-semibold"
+              onClick={onOpenExplainer}
+              className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 hover:bg-amber-500/20 text-xs font-medium transition"
             >
-              Get Started
+              <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+              <span>15% Savings & Escrow Model</span>
+              <ArrowUpRight className="w-3 h-3 text-amber-400" />
             </button>
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-1.5 rounded-lg bg-white/10 text-white"
-            >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
+
+            <div className="flex items-center gap-2.5 pl-2 border-l border-slate-800">
+              <img
+                src={currentUser.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'}
+                alt={currentUser.name}
+                className="w-9 h-9 rounded-full object-cover border-2 border-slate-700 ring-2 ring-amber-500/20"
+              />
+              <div className="hidden md:block text-left">
+                <div className="text-xs font-bold text-white leading-none">
+                  {currentUser.businessName || currentUser.name}
+                </div>
+                <div className="text-[10px] text-slate-400 font-medium capitalize mt-0.5 flex items-center gap-1">
+                  <span>{currentUser.role}</span>
+                  {currentUser.isVerified && (
+                    <span className="text-emerald-400 text-[9px] font-bold bg-emerald-500/10 px-1 rounded">
+                      KYC Verified
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
           </div>
 
         </div>
-      </header>
-
-      {/* Mobile Menu Drawer */}
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 z-40 bg-black/90 backdrop-blur-2xl pt-24 px-6 pb-8 flex flex-col justify-between sm:hidden">
-          <nav className="space-y-4">
-            {navLinks.map((link) => (
-              <a
-                key={link.name}
-                href={link.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className="block text-lg font-serif font-medium text-white hover:text-[#FF5A1F]"
-              >
-                {link.name}
-              </a>
-            ))}
-          </nav>
-          <button
-            onClick={() => {
-              setMobileMenuOpen(false);
-              onOpenPostModal();
-            }}
-            className="w-full py-3 rounded-full bg-[#FF5A1F] text-white font-semibold text-sm shadow-xl"
-          >
-            Get Started →
-          </button>
-        </div>
-      )}
-    </>
+      </div>
+    </header>
   );
-}
+};
