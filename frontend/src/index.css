@@ -1,18 +1,16 @@
 @import "tailwindcss";
 
 @theme {
-  --font-serif: "Playfair Display", "Cormorant Garamond", Georgia, serif;
-  --font-display: "Cormorant Garamond", "Playfair Display", Georgia, serif;
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-display: "Playfair Display", Georgia, serif;
   --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-script: "Caveat", cursive;
 
   --color-brand-orange: #FF5A1F;
   --color-brand-orange-hover: #E44C13;
-  --color-brand-orange-light: #FFF0EB;
   --color-brand-navy: #07141C;
-  --color-brand-navy-light: #0D222F;
   --color-brand-ivory: #FFF8EE;
   --color-brand-cream: #F8EBDD;
-  --color-brand-gold: #D4AF37;
 }
 
 @layer base {
@@ -37,74 +35,28 @@
   }
 }
 
-/* Custom Utilities for Continuous Luxury Experience */
-.glass-panel-dark {
-  background: rgba(7, 20, 28, 0.72);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+.font-script {
+  font-family: "Caveat", cursive;
 }
 
-.glass-panel-light {
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+/* Custom Utilities matching exact reference */
+.pill-input-shadow {
+  box-shadow: 0 10px 35px -5px rgba(0, 0, 0, 0.45);
 }
 
-.glass-panel-cream {
-  background: rgba(255, 248, 238, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(248, 235, 221, 0.8);
+.card-shadow {
+  box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.15), 0 5px 15px rgba(0, 0, 0, 0.05);
 }
 
-.text-gradient-gold {
-  background: linear-gradient(135deg, #FFF8EE 0%, #F5D77F 50%, #D4AF37 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+.dark-card-shadow {
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.6);
 }
 
-.text-gradient-orange {
-  background: linear-gradient(135deg, #FF7B47 0%, #FF5A1F 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-/* Smooth Horizontal Scrollbar hiding for rails */
+/* Hide scrollbar */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
-}
-
-/* Shimmer and Pulse animations */
-@keyframes soft-float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-8px);
-  }
-}
-
-.animate-soft-float {
-  animation: soft-float 4s ease-in-out infinite;
-}
-
-@keyframes pulse-glow {
-  0%, 100% {
-    opacity: 0.6;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.9;
-    transform: scale(1.05);
-  }
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 3.5s ease-in-out infinite;
 }

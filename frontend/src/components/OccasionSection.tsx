@@ -1,84 +1,124 @@
-import { Sparkles, ArrowRight, CheckCircle2 } from 'lucide-react';
-import { OCCASIONS_DATA } from '../data/landingData';
+import { useRef } from 'react';
+import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface OccasionSectionProps {
   onSelectOccasion: (occasionTitle: string) => void;
 }
 
 export default function OccasionSection({ onSelectOccasion }: OccasionSectionProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const occasions = [
+    {
+      id: 'weddings',
+      title: 'Weddings',
+      image: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400&auto=format&fit=crop&q=80'
+    },
+    {
+      id: 'festivals',
+      title: 'Festivals',
+      image: 'https://images.unsplash.com/photo-1609137144822-0a25615ee516?w=400&auto=format&fit=crop&q=80'
+    },
+    {
+      id: 'corporate',
+      title: 'Corporate Events',
+      image: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=400&auto=format&fit=crop&q=80'
+    },
+    {
+      id: 'parties',
+      title: 'Private Parties',
+      image: 'https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?w=400&auto=format&fit=crop&q=80'
+    }
+  ];
+
+  const handleScroll = (dir: 'left' | 'right') => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: dir === 'left' ? -260 : 260, behavior: 'smooth' });
+    }
+  };
+
   return (
-    <section id="occasions" className="relative py-16 sm:py-24 text-white overflow-hidden">
+    <section id="occasions" className="relative py-14 sm:py-20 text-[#07141C]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-14">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#FFF8EE]/10 border border-[#FFF8EE]/20 text-[#FFF8EE] text-xs font-semibold uppercase tracking-widest backdrop-blur-md mb-4">
-            <Sparkles className="w-3.5 h-3.5 text-[#FF5A1F]" />
-            <span>Tailored By Occasion</span>
-          </div>
+        <div className="grid lg:grid-cols-12 gap-8 lg:gap-8 items-center">
+          
+          {/* Left Text Column (4.5 cols on lg) */}
+          <div className="lg:col-span-4 text-left">
+            <span className="text-[10px] sm:text-xs font-bold tracking-widest text-[#FF5A1F] uppercase block mb-2">
+              FOR EVERY OCCASION
+            </span>
 
-          <h2 className="font-serif text-3xl sm:text-5xl font-bold text-white tracking-tight leading-tight">
-            Find the Right Professionals <br />
-            <span className="text-[#FF5A1F] italic font-normal">for Your Event</span>
-          </h2>
+            <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-[#07141C] tracking-tight leading-tight">
+              Find the Right Professionals
+            </h2>
 
-          <p className="mt-4 text-base sm:text-lg text-[#FFF8EE]/80 leading-relaxed">
-            From grand Indian weddings to sacred festivals and corporate galas, find trusted local professionals for all your event needs.
-          </p>
-        </div>
+            <p className="mt-3 text-xs sm:text-sm text-[#4A5568] leading-relaxed max-w-sm">
+              From weddings to festivals, get the best deals from trusted local professionals.
+            </p>
 
-        {/* 4 Large Visual Cards */}
-        <div className="grid md:grid-cols-2 gap-6 sm:gap-8">
-          {OCCASIONS_DATA.map((occasion) => (
-            <div
-              key={occasion.id}
-              onClick={() => onSelectOccasion(occasion.title)}
-              className="group relative rounded-[28px] overflow-hidden p-7 sm:p-9 bg-gradient-to-b from-[#07141C]/85 via-[#07141C]/75 to-[#07141C]/90 border border-white/15 hover:border-[#FF5A1F]/50 backdrop-blur-2xl transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-[#FF5A1F]/20 cursor-pointer flex flex-col justify-between min-h-[300px]"
-            >
-              {/* Background ambient gradient glow */}
-              <div className="absolute top-0 right-0 w-64 h-64 bg-[#FF5A1F]/10 rounded-full blur-3xl group-hover:bg-[#FF5A1F]/20 transition-all duration-500 pointer-events-none" />
+            <div className="mt-6 flex items-center gap-4">
+              <button
+                onClick={() => onSelectOccasion('All Occasions')}
+                className="px-5 py-2.5 rounded-full bg-white hover:bg-slate-50 border border-slate-300 text-[#07141C] text-xs font-semibold shadow-sm transition flex items-center gap-2"
+              >
+                <span>Explore All Services</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
 
-              <div>
-                {/* Top Badge */}
-                <div className="flex items-center justify-between gap-2 mb-4">
-                  <span className="px-3 py-1 rounded-full bg-white/10 border border-white/15 text-xs font-semibold text-[#FFF8EE]/90 uppercase tracking-wider">
-                    {occasion.badge}
-                  </span>
-                  <div className="w-9 h-9 rounded-full bg-white/10 group-hover:bg-[#FF5A1F] text-white flex items-center justify-center transition-all duration-300 group-hover:translate-x-1 shadow-md">
-                    <ArrowRight className="w-4 h-4" />
-                  </div>
-                </div>
-
-                {/* Card Title */}
-                <h3 className="font-serif font-bold text-2xl sm:text-3xl text-white group-hover:text-[#FF5A1F] transition-colors leading-snug">
-                  {occasion.title}
-                </h3>
-
-                {/* Subtitle */}
-                <p className="mt-2 text-sm text-[#FFF8EE]/75 leading-relaxed">
-                  {occasion.subtitle}
-                </p>
-              </div>
-
-              {/* Service tags included */}
-              <div className="mt-8 pt-6 border-t border-white/10">
-                <p className="text-[11px] uppercase tracking-wider text-white/50 font-bold mb-2.5">
-                  Popular Services Needed
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {occasion.servicesIncluded.map((service, sIdx) => (
-                    <span
-                      key={sIdx}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white/5 border border-white/10 text-xs font-medium text-[#FFF8EE]/90 group-hover:border-white/20 transition"
-                    >
-                      <CheckCircle2 className="w-3 h-3 text-[#FF5A1F]" />
-                      {service}
-                    </span>
-                  ))}
-                </div>
+              {/* Navigation Arrows */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleScroll('left')}
+                  className="w-8 h-8 rounded-full bg-white hover:bg-slate-50 border border-slate-300 text-[#07141C] flex items-center justify-center transition shadow-sm"
+                  aria-label="Previous"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => handleScroll('right')}
+                  className="w-8 h-8 rounded-full bg-white hover:bg-slate-50 border border-slate-300 text-[#07141C] flex items-center justify-center transition shadow-sm"
+                  aria-label="Next"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
               </div>
             </div>
-          ))}
+          </div>
+
+          {/* Right Cards Column: 4 Vertical Visual Cards (8 cols on lg) */}
+          <div className="lg:col-span-8">
+            <div
+              ref={scrollRef}
+              className="flex items-center gap-4 sm:gap-5 overflow-x-auto no-scrollbar pb-2 pt-1"
+            >
+              {occasions.map((occasion) => (
+                <div
+                  key={occasion.id}
+                  onClick={() => onSelectOccasion(occasion.title)}
+                  className="group relative flex-none w-[170px] sm:w-[200px] h-[240px] sm:h-[280px] rounded-2xl overflow-hidden shadow-xl cursor-pointer transition-transform duration-300 hover:-translate-y-1"
+                >
+                  {/* Background Image */}
+                  <img
+                    src={occasion.image}
+                    alt={occasion.title}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+
+                  {/* Gradient Overlay at bottom for readable text */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+
+                  {/* Bottom Title Label */}
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <h3 className="font-serif font-bold text-sm sm:text-base text-white tracking-wide">
+                      {occasion.title}
+                    </h3>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
         </div>
 
       </div>

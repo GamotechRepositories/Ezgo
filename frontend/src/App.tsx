@@ -6,7 +6,6 @@ import ServiceRail from './components/ServiceRail';
 import OccasionSection from './components/OccasionSection';
 import HowItWorks from './components/HowItWorks';
 import BiddingShowcase from './components/BiddingShowcase';
-import MobileAppPreview from './components/MobileAppPreview';
 import TrustSection from './components/TrustSection';
 import Testimonials from './components/Testimonials';
 import FinalCTA from './components/FinalCTA';
@@ -31,64 +30,60 @@ export default function App() {
       
       {/* 
         =======================================================================
-        CONTINUOUS MASTER BACKGROUND LAYER
-        This image provides the seamless visual foundation across all sections
+        CONTINUOUS MASTER BACKGROUND CANVAS
         =======================================================================
       */}
       <div className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-hidden">
         <img
           src={landingBackground}
           alt="EzGo Luxury Events Continuous Background"
-          className="w-full h-full object-cover object-top opacity-75 min-h-[4800px]"
+          className="w-full h-full object-cover object-top opacity-85 min-h-[4200px]"
           loading="eager"
         />
-        {/* Subtle unified ambient overlay for contrast and high readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#07141C]/40 via-transparent to-[#07141C]/80" />
+        {/* Subtle ambient tint */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#07141C]/30 via-transparent to-[#07141C]/60" />
       </div>
 
       {/* 
         =======================================================================
-        FOREGROUND CONTINUOUS LUXURY LANDING PAGE
+        FOREGROUND CONTINUOUS LANDING PAGE
         =======================================================================
       */}
       <div className="relative z-10 flex flex-col min-h-screen">
         
-        {/* Transparent Floating Sticky Header */}
-        <Navbar onOpenPostModal={(service) => handleOpenPostModal(service)} />
+        {/* 1. Transparent Floating Sticky Header */}
+        <Navbar onOpenPostModal={() => handleOpenPostModal()} />
 
-        {/* Hero Section with Live Bids Card */}
+        {/* 2. Hero Section with Pill Search Bar & Live Bids Card */}
         <Hero onOpenPostModal={(service, city) => handleOpenPostModal(service, city)} />
 
-        {/* Floating Horizontal Service Rail */}
+        {/* 3. Circular Service Orbs Row */}
         <ServiceRail onSelectCategory={(catName) => handleOpenPostModal(catName)} />
 
-        {/* Occasion Section (Weddings, Festivals, Corporate, Parties) */}
+        {/* 4. For Every Occasion Section (Weddings, Festivals, Corporate, Parties) */}
         <OccasionSection onSelectOccasion={(occTitle) => handleOpenPostModal(occTitle)} />
 
-        {/* How It Works (Connected 5-Step Process) */}
+        {/* 5. How EzGo Works (5-Step Horizontal Process) */}
         <HowItWorks onOpenPostModal={() => handleOpenPostModal()} />
 
-        {/* Core USP: Reverse Bidding Showcase with Interactive Calculator */}
-        <BiddingShowcase onOpenPostModal={(budget) => handleOpenPostModal(undefined, undefined, budget)} />
+        {/* 6. Built For Your Budget: Reverse Bidding with Phone Mockup & Script */}
+        <BiddingShowcase onOpenPostModal={() => handleOpenPostModal()} />
 
-        {/* Mobile App Smartphone Mockup Preview */}
-        <MobileAppPreview onOpenPostModal={() => handleOpenPostModal()} />
-
-        {/* Trust & Safety Guarantees */}
+        {/* 7. Why Choose EzGo? (4 Guarantees & Script) */}
         <TrustSection />
 
-        {/* Testimonials (Soft Cream / Glass Cards) */}
+        {/* 8. Trusted By Thousands: Testimonials (3 White Avatar Cards) */}
         <Testimonials />
 
-        {/* Final High-Converting Cinematic CTA */}
+        {/* 9. Ready To Plan Your Event? Final CTA Banner & Right Stats Capsule */}
         <FinalCTA onOpenPostModal={() => handleOpenPostModal()} />
 
-        {/* Dark Navy Footer */}
+        {/* 10. Dark Footer */}
         <Footer />
 
       </div>
 
-      {/* Interactive Reverse-Bidding & Requirement Posting Modal */}
+      {/* Interactive Reverse-Bidding Simulation & Requirement Posting Modal */}
       <PostRequirementModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

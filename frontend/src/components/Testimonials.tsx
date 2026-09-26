@@ -1,81 +1,89 @@
-import { Sparkles, Star, Quote, CheckCircle2 } from 'lucide-react';
-import { TESTIMONIALS_DATA } from '../data/landingData';
+import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
 
 export default function Testimonials() {
+  const testimonials = [
+    {
+      id: 1,
+      quote: "Got an amazing photographer at 30% less than my budget. The whole process was so easy!",
+      author: "Priya S.",
+      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80"
+    },
+    {
+      id: 2,
+      quote: "As a vendor, I get genuine leads and no extra charges. Great platform!",
+      author: "Rahul K.",
+      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80"
+    },
+    {
+      id: 3,
+      quote: "Used EzGo for my brother's wedding. Everything was smooth and professional.",
+      author: "Sneha M.",
+      avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80"
+    }
+  ];
+
   return (
-    <section id="testimonials" className="relative py-20 sm:py-28 text-white overflow-hidden">
+    <section id="testimonials" className="relative py-16 sm:py-24 text-[#07141C]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16 sm:mb-20">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#FFF8EE]/10 border border-[#FFF8EE]/20 text-[#FFF8EE] text-xs font-semibold uppercase tracking-widest backdrop-blur-md mb-4">
-            <Sparkles className="w-3.5 h-3.5 text-[#FF5A1F]" />
-            <span>Real Experiences</span>
+        {/* Section Header with Arrows */}
+        <div className="flex items-end justify-between gap-4 mb-10">
+          <div className="text-left">
+            <span className="text-[10px] sm:text-xs font-bold tracking-widest text-[#FF5A1F] uppercase block mb-1">
+              TRUSTED BY THOUSANDS
+            </span>
+            <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-[#07141C] tracking-tight">
+              What Our Users Say
+            </h2>
           </div>
 
-          <h2 className="font-serif text-3xl sm:text-5xl font-bold text-white tracking-tight">
-            What Our Users Say
-          </h2>
-
-          <p className="mt-4 text-base sm:text-lg text-[#FFF8EE]/80 leading-relaxed">
-            Discover how event hosts and top providers achieve transparent, win-win bookings on EzGo.
-          </p>
+          {/* Navigation Arrows */}
+          <div className="flex items-center gap-2">
+            <button
+              className="w-8 h-8 rounded-full bg-white hover:bg-slate-50 border border-slate-200 text-[#07141C] flex items-center justify-center transition shadow-sm"
+              aria-label="Previous"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              className="w-8 h-8 rounded-full bg-white hover:bg-slate-50 border border-slate-200 text-[#07141C] flex items-center justify-center transition shadow-sm"
+              aria-label="Next"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
-        {/* 3 Testimonial Cards (Soft Cream / Glassmorphism) */}
-        <div className="grid md:grid-cols-3 gap-6 sm:gap-8">
-          {TESTIMONIALS_DATA.map((testimonial) => (
+        {/* 3 White Testimonial Cards */}
+        <div className="grid md:grid-cols-3 gap-5 sm:gap-6">
+          {testimonials.map((t) => (
             <div
-              key={testimonial.id}
-              className="group relative p-7 sm:p-8 rounded-[28px] bg-gradient-to-b from-[#FFF8EE]/95 via-white/95 to-[#F8EBDD]/90 text-[#07141C] border border-white/80 backdrop-blur-2xl shadow-2xl shadow-black/40 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl flex flex-col justify-between"
+              key={t.id}
+              className="p-5 sm:p-6 rounded-2xl bg-white/95 backdrop-blur-sm border border-slate-100 shadow-lg text-left flex flex-col justify-between"
             >
-              <div>
-                {/* Top Rating & Badge */}
-                <div className="flex items-center justify-between mb-5">
-                  <div className="flex items-center gap-1 text-amber-500">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
-                    ))}
-                  </div>
-
-                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
-                    {testimonial.savedAmount}
-                  </span>
-                </div>
-
-                {/* Quote Icon */}
-                <Quote className="w-8 h-8 text-[#FF5A1F]/20 mb-3" />
-
-                {/* Quote Text */}
-                <p className="font-serif text-base sm:text-lg text-[#07141C] leading-relaxed italic">
-                  "{testimonial.quote}"
+              <div className="flex items-start gap-3.5 mb-4">
+                <img
+                  src={t.avatar}
+                  alt={t.author}
+                  className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm shrink-0"
+                />
+                <p className="text-xs sm:text-sm text-[#334155] leading-relaxed italic">
+                  "{t.quote}"
                 </p>
-
-                <div className="mt-4 inline-block px-2.5 py-1 rounded-lg bg-[#07141C]/5 text-[11px] font-semibold text-[#07141C]/70">
-                  {testimonial.serviceType}
-                </div>
               </div>
 
-              {/* Author Info */}
-              <div className="mt-8 pt-5 border-t border-[#07141C]/10 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#FF5A1F] to-amber-600 text-white font-bold text-sm flex items-center justify-center shadow-md">
-                    {testimonial.avatar}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <h4 className="font-bold text-sm text-[#07141C]">
-                        {testimonial.author}
-                      </h4>
-                      <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
-                    </div>
-                    <p className="text-[11px] text-[#07141C]/60">
-                      {testimonial.role} • {testimonial.location}
-                    </p>
-                  </div>
+              {/* Bottom Author & Stars */}
+              <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                <span className="font-bold text-xs text-[#07141C]">
+                  {t.author}
+                </span>
+
+                <div className="flex items-center gap-0.5 text-amber-400">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                  ))}
                 </div>
               </div>
-
             </div>
           ))}
         </div>

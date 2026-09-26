@@ -1,36 +1,36 @@
 import { useState, useEffect } from 'react';
 import { 
   MapPin, 
-  Sparkles, 
   Menu, 
   X, 
-  ArrowRight, 
-  ShieldCheck, 
-  ChevronDown
+  ArrowRight 
 } from 'lucide-react';
 import ezgoLogo from '../assets/ezgo-logo.png';
 
 interface NavbarProps {
-  onOpenPostModal: (service?: string) => void;
+  onOpenPostModal: () => void;
 }
 
 export default function Navbar({ onOpenPostModal }: NavbarProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [selectedCity, setSelectedCity] = useState('Mumbai');
+  const [selectedCity, setSelectedCity] = useState('Hyderabad, Telangana');
   const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
 
-  const cities = ['Mumbai', 'Delhi NCR', 'Bengaluru', 'Jaipur', 'Hyderabad', 'Pune', 'Goa'];
+  const cities = [
+    'Hyderabad, Telangana',
+    'Mumbai, Maharashtra',
+    'Delhi NCR',
+    'Bengaluru, Karnataka',
+    'Jaipur, Rajasthan',
+    'Pune, Maharashtra',
+    'Goa'
+  ];
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 40) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
+      setIsScrolled(window.scrollY > 30);
     };
-
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -38,10 +38,9 @@ export default function Navbar({ onOpenPostModal }: NavbarProps) {
   const navLinks = [
     { name: 'Services', href: '#services' },
     { name: 'How It Works', href: '#how-it-works' },
-    { name: 'Reverse Bidding', href: '#reverse-bidding' },
-    { name: 'Occasions', href: '#occasions' },
-    { name: 'Trust & Safety', href: '#trust' },
-    { name: 'Reviews', href: '#testimonials' }
+    { name: 'For Providers', href: '#reverse-bidding' },
+    { name: 'About', href: '#occasions' },
+    { name: 'Blog', href: '#testimonials' }
   ];
 
   return (
@@ -49,52 +48,49 @@ export default function Navbar({ onOpenPostModal }: NavbarProps) {
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           isScrolled
-            ? 'py-2.5 bg-[#07141C]/90 backdrop-blur-xl border-b border-white/10 shadow-2xl shadow-black/40'
-            : 'py-4 bg-gradient-to-b from-black/70 via-black/30 to-transparent'
+            ? 'py-3 bg-[#07141C]/85 backdrop-blur-xl border-b border-white/10 shadow-2xl'
+            : 'py-5 bg-gradient-to-b from-black/70 via-black/20 to-transparent'
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          {/* Brand Logo with Image */}
-          <a href="#" className="flex items-center gap-2.5 group">
+          
+          {/* Left: Brand Logo */}
+          <a href="#" className="flex items-center gap-2 group">
             <img
               src={ezgoLogo}
-              alt="EzGo Logo"
-              className="h-10 sm:h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-105 drop-shadow-md"
+              alt="EzGo"
+              className="h-9 sm:h-11 w-auto object-contain drop-shadow-md"
             />
           </a>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-7">
+          {/* Center: Nav Links */}
+          <nav className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => (
               <a
                 key={link.name}
                 href={link.href}
-                className="text-sm font-medium text-[#FFF8EE]/80 hover:text-white transition-colors duration-200 relative group py-1"
+                className="text-xs sm:text-sm font-medium text-white/90 hover:text-[#FF5A1F] transition-colors"
               >
                 {link.name}
-                <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-[#FF5A1F] transition-all duration-300 group-hover:w-full rounded-full" />
               </a>
             ))}
           </nav>
 
-          {/* Right Action Area */}
-          <div className="hidden sm:flex items-center gap-4">
-            {/* Location Selector */}
+          {/* Right Action Buttons */}
+          <div className="hidden sm:flex items-center gap-3">
+            {/* Location Pill Button */}
             <div className="relative">
               <button
                 onClick={() => setCityDropdownOpen(!cityDropdownOpen)}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-medium text-[#FFF8EE]/90 transition-all backdrop-blur-md"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black/40 hover:bg-black/60 border border-white/20 text-xs font-medium text-white transition backdrop-blur-md"
               >
-                <MapPin className="w-3.5 h-3.5 text-[#FF5A1F]" />
+                <MapPin className="w-3.5 h-3.5 text-white/80" />
                 <span>{selectedCity}</span>
-                <ChevronDown className={`w-3 h-3 text-white/50 transition-transform ${cityDropdownOpen ? 'rotate-180' : ''}`} />
+                <ArrowRight className="w-3 h-3 text-white/60 ml-0.5" />
               </button>
 
               {cityDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-40 rounded-xl bg-[#07141C]/95 border border-white/15 shadow-2xl backdrop-blur-2xl py-1.5 z-50 animate-in fade-in zoom-in-95">
-                  <div className="px-3 py-1 text-[10px] font-semibold text-white/40 uppercase tracking-wider">
-                    Select City
-                  </div>
+                <div className="absolute right-0 mt-2 w-48 rounded-xl bg-[#07141C]/95 border border-white/15 shadow-2xl backdrop-blur-2xl py-1.5 z-50 animate-in fade-in">
                   {cities.map((city) => (
                     <button
                       key={city}
@@ -102,36 +98,34 @@ export default function Navbar({ onOpenPostModal }: NavbarProps) {
                         setSelectedCity(city);
                         setCityDropdownOpen(false);
                       }}
-                      className={`w-full text-left px-3 py-1.5 text-xs transition flex items-center justify-between ${
+                      className={`w-full text-left px-3.5 py-2 text-xs transition flex items-center justify-between ${
                         selectedCity === city
                           ? 'bg-[#FF5A1F]/20 text-[#FF5A1F] font-semibold'
-                          : 'text-[#FFF8EE]/80 hover:bg-white/10 hover:text-white'
+                          : 'text-white/80 hover:bg-white/10 hover:text-white'
                       }`}
                     >
                       {city}
-                      {selectedCity === city && <span className="w-1.5 h-1.5 rounded-full bg-[#FF5A1F]" />}
                     </button>
                   ))}
                 </div>
               )}
             </div>
 
-            {/* Provider Login / Join Link */}
-            <a
-              href="#provider"
-              className="text-xs font-semibold text-[#FFF8EE]/80 hover:text-white transition px-2 py-1"
-            >
-              For Providers
-            </a>
-
-            {/* Post Requirement CTA Button */}
+            {/* Login Button */}
             <button
               onClick={() => onOpenPostModal()}
-              className="relative group overflow-hidden px-4 py-2 rounded-xl bg-gradient-to-r from-[#FF5A1F] to-[#FF7B47] text-white text-xs font-semibold shadow-lg shadow-[#FF5A1F]/30 hover:shadow-[#FF5A1F]/50 transition-all duration-300 active:scale-95 flex items-center gap-1.5"
+              className="px-4 py-1.5 rounded-full bg-black/40 hover:bg-black/60 border border-white/20 text-xs font-medium text-white transition backdrop-blur-md"
             >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Post Requirement</span>
-              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+              Login
+            </button>
+
+            {/* Get Started Button */}
+            <button
+              onClick={() => onOpenPostModal()}
+              className="px-4 py-1.5 rounded-full bg-[#FF5A1F] hover:bg-[#E44C13] text-white text-xs font-semibold shadow-lg shadow-[#FF5A1F]/30 transition flex items-center gap-1.5"
+            >
+              <span>Get Started</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
@@ -139,76 +133,45 @@ export default function Navbar({ onOpenPostModal }: NavbarProps) {
           <div className="flex sm:hidden items-center gap-2">
             <button
               onClick={() => onOpenPostModal()}
-              className="px-3 py-1.5 rounded-lg bg-[#FF5A1F] text-white text-xs font-semibold shadow-md shadow-[#FF5A1F]/30"
+              className="px-3 py-1 rounded-full bg-[#FF5A1F] text-white text-xs font-semibold"
             >
-              Post Bid
+              Get Started
             </button>
-
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-xl bg-white/10 text-white hover:bg-white/20 transition"
-              aria-label="Toggle menu"
+              className="p-1.5 rounded-lg bg-white/10 text-white"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
+
         </div>
       </header>
 
-      {/* Mobile Drawer Menu */}
+      {/* Mobile Menu Drawer */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-40 bg-black/85 backdrop-blur-2xl pt-24 px-6 pb-8 flex flex-col justify-between sm:hidden animate-in fade-in">
-          <div className="space-y-4">
-            <div className="pb-4 border-b border-white/10 flex items-center justify-between">
-              <img src={ezgoLogo} alt="EzGo" className="h-8 w-auto object-contain" />
-              <div className="flex flex-wrap gap-1.5">
-                {cities.slice(0, 3).map((city) => (
-                  <button
-                    key={city}
-                    onClick={() => setSelectedCity(city)}
-                    className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${
-                      selectedCity === city
-                        ? 'bg-[#FF5A1F] border-[#FF5A1F] text-white'
-                        : 'bg-white/5 border-white/10 text-white/80'
-                    }`}
-                  >
-                    {city}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <nav className="space-y-3 pt-2">
-              {navLinks.map((link) => (
-                <a
-                  key={link.name}
-                  href={link.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block text-lg font-serif font-medium text-white/90 hover:text-[#FF5A1F] transition py-1"
-                >
-                  {link.name}
-                </a>
-              ))}
-            </nav>
-          </div>
-
-          <div className="pt-6 border-t border-white/10 space-y-3">
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                onOpenPostModal();
-              }}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-[#FF5A1F] to-[#FF7B47] text-white font-semibold text-sm shadow-xl shadow-[#FF5A1F]/30 flex items-center justify-center gap-2"
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>Post Your Requirement</span>
-            </button>
-
-            <div className="flex items-center justify-center gap-2 text-xs text-white/60 pt-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>100% Escrow Protected Booking</span>
-            </div>
-          </div>
+        <div className="fixed inset-0 z-40 bg-black/90 backdrop-blur-2xl pt-24 px-6 pb-8 flex flex-col justify-between sm:hidden">
+          <nav className="space-y-4">
+            {navLinks.map((link) => (
+              <a
+                key={link.name}
+                href={link.href}
+                onClick={() => setMobileMenuOpen(false)}
+                className="block text-lg font-serif font-medium text-white hover:text-[#FF5A1F]"
+              >
+                {link.name}
+              </a>
+            ))}
+          </nav>
+          <button
+            onClick={() => {
+              setMobileMenuOpen(false);
+              onOpenPostModal();
+            }}
+            className="w-full py-3 rounded-full bg-[#FF5A1F] text-white font-semibold text-sm shadow-xl"
+          >
+            Get Started →
+          </button>
         </div>
       )}
     </>
