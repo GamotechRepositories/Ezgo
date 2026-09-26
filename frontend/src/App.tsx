@@ -23,35 +23,35 @@ export default function App() {
       
       {/* 
         =======================================================================
-        HERO SECTION WITH PROPORTIONATE BACKGROUND
+        COMPACT HERO SECTION WITH PROPORTIONATE BACKGROUND
         =======================================================================
       */}
-      <div className="relative w-full min-h-screen lg:min-h-[860px] flex flex-col justify-between overflow-hidden bg-[#07141C]">
+      <div className="relative w-full max-h-[85vh] lg:max-h-[720px] min-h-[580px] sm:min-h-[640px] flex flex-col justify-between overflow-hidden bg-[#07141C]">
         
-        {/* Background Image Layer - Properly scaled & positioned */}
-        <div className="absolute inset-0 z-0 overflow-hidden">
+        {/* Background Image Layer - Scaled down & nicely framed */}
+        <div className="absolute inset-0 z-0 overflow-hidden flex items-center justify-center">
           <img
             src={heroBackground}
             alt="EzGo Hero Background"
-            className="w-full h-full object-cover sm:object-cover object-top lg:object-[center_top] scale-100 sm:scale-100 transition-all duration-300"
+            className="w-full h-full object-cover object-top opacity-90 transition-all duration-300"
           />
-          {/* Subtle contrast gradient */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-[#07141C]/80" />
+          {/* Subtle vignette gradient */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/20 to-[#07141C]/90" />
         </div>
 
         {/* Foreground Content Container */}
-        <div className="relative z-10 flex flex-col justify-between min-h-screen lg:min-h-[860px]">
+        <div className="relative z-10 flex flex-col justify-between h-full">
           
-          {/* Header / Navbar */}
+          {/* Header / Navbar (Compact) */}
           <Navbar onOpenPostModal={() => handleOpenPostModal()} />
 
-          {/* Main Hero (Headline, Subheading & Pill Search Capsule) */}
-          <div className="my-auto py-4 sm:py-6">
+          {/* Main Hero (Compact Headline & Search Capsule) */}
+          <div className="my-auto py-2">
             <Hero onOpenPostModal={(service, city) => handleOpenPostModal(service, city)} />
           </div>
 
-          {/* Bottom Service Category Orbs */}
-          <div className="pb-6 sm:pb-10">
+          {/* Bottom Service Category Orbs (Compact) */}
+          <div className="pb-4 sm:pb-6">
             <ServiceRail onSelectCategory={(catName) => handleOpenPostModal(catName)} />
           </div>
 
