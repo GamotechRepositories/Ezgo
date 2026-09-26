@@ -23,7 +23,7 @@ export default function Hero({ onOpenPostModal }: HeroProps) {
   };
 
   return (
-    <section className="relative pt-24 pb-6 sm:pt-32 sm:pb-8 lg:pt-36 lg:pb-10 text-white">
+    <section className="relative pt-20 pb-4 sm:pt-24 sm:pb-6 lg:pt-28 lg:pb-6 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div className="grid lg:grid-cols-12 gap-8 items-center">
