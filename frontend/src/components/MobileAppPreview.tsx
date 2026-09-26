@@ -8,6 +8,7 @@ import {
   ArrowRight,
   TrendingDown
 } from 'lucide-react';
+import ezgoLogo from '../assets/ezgo-logo.png';
 
 interface MobileAppPreviewProps {
   onOpenPostModal: () => void;
@@ -46,11 +47,9 @@ export default function MobileAppPreview({ onOpenPostModal }: MobileAppPreviewPr
                 {/* Mock In-App Header */}
                 <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10 px-1">
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-[#FF5A1F] flex items-center justify-center text-white font-bold text-xs">
-                      E
-                    </div>
+                    <img src={ezgoLogo} alt="EzGo" className="h-6 w-auto object-contain" />
                     <div>
-                      <h4 className="text-xs font-bold text-white">EzGo Live</h4>
+                      <h4 className="text-xs font-bold text-white">Live Bidding</h4>
                       <p className="text-[9px] text-emerald-400">● 4 Bids Active</p>
                     </div>
                   </div>

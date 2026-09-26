@@ -4,6 +4,7 @@ import {
   Check, 
   Heart
 } from 'lucide-react';
+import ezgoLogo from '../assets/ezgo-logo.png';
 
 export default function Footer() {
   const [email, setEmail] = useState('');
@@ -27,19 +28,12 @@ export default function Footer() {
           
           {/* Col 1: Brand & Bio (4 cols on lg) */}
           <div className="lg:col-span-4">
-            <div className="flex items-center gap-2 group mb-4">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#FF5A1F] to-[#D93D04] flex items-center justify-center shadow-lg shadow-[#FF5A1F]/30">
-                <span className="font-serif font-black text-2xl text-white">E</span>
-              </div>
-              <div className="flex flex-col">
-                <div className="flex items-baseline">
-                  <span className="font-serif font-bold text-2xl tracking-tight text-white">Ez</span>
-                  <span className="font-serif font-bold text-2xl tracking-tight text-[#FF5A1F]">Go</span>
-                </div>
-                <span className="text-[9px] uppercase tracking-widest text-[#FFF8EE]/60 font-semibold -mt-1">
-                  Event Services Marketplace
-                </span>
-              </div>
+            <div className="mb-4">
+              <img
+                src={ezgoLogo}
+                alt="EzGo"
+                className="h-11 w-auto object-contain drop-shadow-md"
+              />
             </div>
 
             <p className="text-xs sm:text-sm text-[#FFF8EE]/70 leading-relaxed max-w-sm">

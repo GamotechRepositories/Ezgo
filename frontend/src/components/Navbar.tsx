@@ -8,6 +8,7 @@ import {
   ShieldCheck, 
   ChevronDown
 } from 'lucide-react';
+import ezgoLogo from '../assets/ezgo-logo.png';
 
 interface NavbarProps {
   onOpenPostModal: (service?: string) => void;
@@ -48,25 +49,18 @@ export default function Navbar({ onOpenPostModal }: NavbarProps) {
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           isScrolled
-            ? 'py-3 bg-[#07141C]/85 backdrop-blur-xl border-b border-white/10 shadow-2xl shadow-black/40'
-            : 'py-5 bg-gradient-to-b from-black/60 via-black/20 to-transparent'
+            ? 'py-2.5 bg-[#07141C]/90 backdrop-blur-xl border-b border-white/10 shadow-2xl shadow-black/40'
+            : 'py-4 bg-gradient-to-b from-black/70 via-black/30 to-transparent'
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          {/* Brand Logo */}
-          <a href="#" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#FF5A1F] to-[#D93D04] flex items-center justify-center shadow-lg shadow-[#FF5A1F]/30 group-hover:scale-105 transition-transform duration-200">
-              <span className="font-serif font-black text-2xl text-white tracking-tighter">E</span>
-            </div>
-            <div className="flex flex-col">
-              <div className="flex items-baseline">
-                <span className="font-serif font-bold text-2xl tracking-tight text-white">Ez</span>
-                <span className="font-serif font-bold text-2xl tracking-tight text-[#FF5A1F]">Go</span>
-              </div>
-              <span className="text-[9px] uppercase tracking-widest text-[#FFF8EE]/60 font-semibold -mt-1">
-                Event Marketplace
-              </span>
-            </div>
+          {/* Brand Logo with Image */}
+          <a href="#" className="flex items-center gap-2.5 group">
+            <img
+              src={ezgoLogo}
+              alt="EzGo Logo"
+              className="h-10 sm:h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-105 drop-shadow-md"
+            />
           </a>
 
           {/* Desktop Navigation Links */}
@@ -89,7 +83,7 @@ export default function Navbar({ onOpenPostModal }: NavbarProps) {
             <div className="relative">
               <button
                 onClick={() => setCityDropdownOpen(!cityDropdownOpen)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-medium text-[#FFF8EE]/90 transition-all backdrop-blur-md"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-medium text-[#FFF8EE]/90 transition-all backdrop-blur-md"
               >
                 <MapPin className="w-3.5 h-3.5 text-[#FF5A1F]" />
                 <span>{selectedCity}</span>
@@ -163,16 +157,16 @@ export default function Navbar({ onOpenPostModal }: NavbarProps) {
 
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-40 bg-black/80 backdrop-blur-2xl pt-24 px-6 pb-8 flex flex-col justify-between sm:hidden animate-in fade-in">
+        <div className="fixed inset-0 z-40 bg-black/85 backdrop-blur-2xl pt-24 px-6 pb-8 flex flex-col justify-between sm:hidden animate-in fade-in">
           <div className="space-y-4">
-            <div className="pb-4 border-b border-white/10">
-              <p className="text-xs text-white/50 uppercase tracking-widest mb-2 font-semibold">City</p>
-              <div className="flex flex-wrap gap-2">
-                {cities.map((city) => (
+            <div className="pb-4 border-b border-white/10 flex items-center justify-between">
+              <img src={ezgoLogo} alt="EzGo" className="h-8 w-auto object-contain" />
+              <div className="flex flex-wrap gap-1.5">
+                {cities.slice(0, 3).map((city) => (
                   <button
                     key={city}
                     onClick={() => setSelectedCity(city)}
-                    className={`px-3 py-1 rounded-full text-xs font-medium border ${
+                    className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${
                       selectedCity === city
                         ? 'bg-[#FF5A1F] border-[#FF5A1F] text-white'
                         : 'bg-white/5 border-white/10 text-white/80'
