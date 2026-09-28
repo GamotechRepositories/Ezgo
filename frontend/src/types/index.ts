@@ -39,6 +39,9 @@ export interface Requirement {
   category: string;
   title: string;
   description: string;
+  imageUrl?: string;
+  eventType?: string;
+  equipmentNeeded?: string[];
   location: {
     city: string;
     area: string;
