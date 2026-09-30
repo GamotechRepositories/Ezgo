@@ -2,20 +2,41 @@ import mongoose from 'mongoose';
 
 const itemSchema = new mongoose.Schema(
   {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
     title: {
       type: String,
-      required: [true, 'Title is required'],
-      trim: true,
+      default: function () {
+        return this.name;
+      },
     },
-    description: {
+    category: {
       type: String,
-      trim: true,
+      default: 'DJ & Sound Systems',
+    },
+    specs: {
+      type: String,
       default: '',
     },
-    status: {
+    dailyRate: {
+      type: Number,
+      default: 2000,
+    },
+    isAvailable: {
+      type: Boolean,
+      default: true,
+    },
+    condition: {
       type: String,
-      enum: ['pending', 'in-progress', 'completed'],
-      default: 'pending',
+      enum: ['Excellent', 'Good', 'Maintenance Required'],
+      default: 'Excellent',
+    },
+    image: {
+      type: String,
+      default: '',
     },
   },
   {

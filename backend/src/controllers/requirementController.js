@@ -28,7 +28,7 @@ export const createRequirement = async (req, res, next) => {
       title,
       description,
       location: {
-        city: location.city || 'Hyderabad',
+        city: location.city || 'Pune',
         area: location.area,
         venueAddress: location.venueAddress || '',
       },
@@ -38,14 +38,14 @@ export const createRequirement = async (req, res, next) => {
       guestCount: Number(guestCount) || 100,
     });
 
-    const populated = await Requirement.findById(requirement._id).populate('requesterId', 'name phone');
+    const populated = await Requirement.findById(requirement._id).populate('requesterId', 'name phone rating avatar');
     res.status(201).json({ success: true, data: populated });
   } catch (error) {
     next(error);
   }
 };
 
-// Get all requirements with optional filters
+// Get all requirements with optional filters and populated bids
 export const getRequirements = async (req, res, next) => {
   try {
     const { category, status, city, requesterId } = req.query;
@@ -53,25 +53,38 @@ export const getRequirements = async (req, res, next) => {
 
     if (category) filter.category = category;
     if (status) filter.status = status;
-    if (city) filter['location.city'] = city;
+    if (city) filter['location.city'] = new RegExp(city, 'i');
     if (requesterId) filter.requesterId = requesterId;
 
     const requirements = await Requirement.find(filter)
       .sort({ createdAt: -1 })
-      .populate('requesterId', 'name rating');
+      .populate('requesterId', 'name phone rating avatar')
+      .lean();
 
-    res.json({ success: true, count: requirements.length, data: requirements });
+    // Attach all bids for each requirement
+    const reqIds = requirements.map((r) => r._id);
+    const allBids = await Bid.find({ requirementId: { $in: reqIds } })
+      .sort({ amount: 1 })
+      .populate('providerId', 'name businessName phone rating reviewCount completedJobs isVerified avatar bankDetails')
+      .lean();
+
+    const reqsWithBids = requirements.map((r) => ({
+      ...r,
+      bids: allBids.filter((b) => b.requirementId.toString() === r._id.toString()),
+    }));
+
+    res.json({ success: true, count: reqsWithBids.length, data: reqsWithBids });
   } catch (error) {
     next(error);
   }
 };
 
-// Get single requirement with all bids (protects provider phone numbers)
+// Get single requirement with all bids
 export const getRequirementById = async (req, res, next) => {
   try {
     const requirement = await Requirement.findById(req.params.id).populate(
       'requesterId',
-      'name phone rating'
+      'name phone rating avatar'
     );
 
     if (!requirement) {
@@ -79,10 +92,9 @@ export const getRequirementById = async (req, res, next) => {
       throw new Error('Requirement not found');
     }
 
-    // Fetch bids and mask phone numbers for privacy
     const bids = await Bid.find({ requirementId: requirement._id })
       .sort({ amount: 1 })
-      .populate('providerId', 'name businessName rating reviewCount completedJobs isVerified avatar');
+      .populate('providerId', 'name businessName rating reviewCount completedJobs isVerified avatar bankDetails');
 
     res.json({
       success: true,

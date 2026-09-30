@@ -1,20 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, MapPin, ArrowRight, UserCheck, Briefcase, LayoutDashboard } from 'lucide-react';
-import ezgoLogo from '../assets/EzGo logo.png';
-import type { User, UserRole } from '../types';
+import { ChevronDown, MapPin, ArrowRight } from 'lucide-react';
+import { EzGoLogo } from './EzGoLogo';
+import type { User } from '../types';
 
 interface NavbarProps {
-  currentRole: UserRole;
-  onRoleChange: (role: UserRole) => void;
   currentUser: User;
   onOpenExplainer: () => void;
-  onOpenPostModal?: () => void;
+  onOpenPostModal: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
-  currentRole,
-  onRoleChange,
-  currentUser: _currentUser,
   onOpenExplainer,
   onOpenPostModal,
 }) => {
@@ -44,16 +39,12 @@ export const Navbar: React.FC<NavbarProps> = ({
           
           {/* Logo */}
           <div className="flex items-center gap-8">
-            <div 
-              onClick={() => onRoleChange('requester')} 
-              className="flex items-center cursor-pointer select-none transition-transform hover:scale-[1.02] active:scale-95 py-1"
+            <a 
+              href="/"
+              className="flex items-center select-none transition-transform hover:scale-[1.02] active:scale-95 py-1"
             >
-              <img 
-                src={ezgoLogo} 
-                alt="EzGo Logo" 
-                className="h-11 sm:h-12 lg:h-14 w-auto object-contain drop-shadow-sm" 
-              />
-            </div>
+              <EzGoLogo variant="host" size="lg" />
+            </a>
 
             {/* Nav Links */}
             <nav className="hidden lg:flex items-center gap-7 text-xs font-bold text-slate-700">
@@ -86,10 +77,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 
               <button onClick={onOpenExplainer} className="hover:text-[#f95724] transition cursor-pointer">
                 How It Works
-              </button>
-
-              <button onClick={() => onRoleChange('provider')} className="hover:text-[#f95724] transition cursor-pointer">
-                For Providers
               </button>
 
               <a href="#about" className="hover:text-[#f95724] transition">
@@ -138,57 +125,12 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </div>
 
-            {/* Role Switcher Mini Dropdown / Pill */}
-            <div className="hidden sm:flex items-center bg-slate-100/90 p-1 rounded-full border border-slate-200 text-xs font-bold">
-              <button
-                onClick={() => onRoleChange('requester')}
-                className={`px-3 py-1 rounded-full transition flex items-center gap-1 ${
-                  currentRole === 'requester'
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-500 hover:text-slate-900'
-                }`}
-              >
-                <UserCheck className="w-3 h-3 text-[#f95724]" />
-                <span>Host</span>
-              </button>
-              <button
-                onClick={() => onRoleChange('provider')}
-                className={`px-3 py-1 rounded-full transition flex items-center gap-1 ${
-                  currentRole === 'provider'
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-500 hover:text-slate-900'
-                }`}
-              >
-                <Briefcase className="w-3 h-3 text-indigo-600" />
-                <span>Vendor</span>
-              </button>
-              <button
-                onClick={() => onRoleChange('admin')}
-                className={`px-3 py-1 rounded-full transition flex items-center gap-1 ${
-                  currentRole === 'admin'
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-500 hover:text-slate-900'
-                }`}
-              >
-                <LayoutDashboard className="w-3 h-3 text-slate-700" />
-                <span>Admin</span>
-              </button>
-            </div>
-
-            {/* Login Button */}
-            <button
-              onClick={() => onRoleChange(currentRole === 'requester' ? 'provider' : 'requester')}
-              className="px-4 py-2 rounded-full bg-white border border-slate-200 hover:border-slate-300 text-xs font-bold text-slate-800 transition shadow-2xs cursor-pointer"
-            >
-              Login
-            </button>
-
-            {/* Get Started / Post Need CTA Button */}
+            {/* Post Need CTA Button */}
             <button
               onClick={onOpenPostModal}
               className="px-5 py-2.5 rounded-full bg-[#f95724] hover:bg-[#e04818] text-white font-bold text-xs shadow-md shadow-[#f95724]/25 flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
             >
-              <span>Get Started</span>
+              <span>Post Requirement</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
 

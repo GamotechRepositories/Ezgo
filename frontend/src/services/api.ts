@@ -2,17 +2,15 @@ import type { User, Requirement, Bid, Booking, Category, AdminMetrics, UserRole 
 
 const API_BASE = 'http://localhost:5000/api';
 
-// Initial Mock Seed fallback
 export const mockCategories: Category[] = [
-  { _id: 'cat-1', name: 'DJ / Teenmar / Sound & Lighting', slug: 'dj-sound', icon: 'Volume2', description: 'DJ setup, teenmar beats, truss lights & fog machines', avgPriceRange: '₹8,000 - ₹35,000', isActive: true },
-  { _id: 'cat-2', name: 'Catering', slug: 'catering', icon: 'Utensils', description: 'South & North Indian vegetarian & non-vegetarian buffets', avgPriceRange: '₹15,000 - ₹1,50,000', isActive: true },
-  { _id: 'cat-3', name: 'Decoration', slug: 'decoration', icon: 'Sparkles', description: 'Floral stage, mandap, entrance arch & theme lighting', avgPriceRange: '₹10,000 - ₹75,000', isActive: true },
-  { _id: 'cat-4', name: 'Lighting', slug: 'lighting', icon: 'Lightbulb', description: 'Ambient LED serial lights, focus beams & architectural wash', avgPriceRange: '₹5,000 - ₹25,000', isActive: true },
-  { _id: 'cat-5', name: 'Purohit / Priest services', slug: 'purohit', icon: 'Flame', description: 'Vedic rituals, Griha Pravesh, Satyanarayana Puja & Weddings', avgPriceRange: '₹3,500 - ₹15,000', isActive: true },
-  { _id: 'cat-6', name: 'Photography & Videography', slug: 'photography', icon: 'Camera', description: 'Candid wedding photography, cinematic 4K video & drones', avgPriceRange: '₹15,000 - ₹80,000', isActive: true },
-  { _id: 'cat-7', name: 'Mehendi', slug: 'mehendi', icon: 'Heart', description: 'Bridal organic Rajasthani & Arabic Mehendi artists', avgPriceRange: '₹4,000 - ₹20,000', isActive: true },
-  { _id: 'cat-8', name: 'Tent & Stage setup', slug: 'tent-stage', icon: 'Tent', description: 'German shamiana tents, VIP lounge chairs & stage trussing', avgPriceRange: '₹15,000 - ₹60,000', isActive: true },
-  { _id: 'cat-9', name: 'Festival-specific event setup', slug: 'festival', icon: 'Sun', description: 'Ganesh Utsav, Diwali lights & Durga Puja pandal decor', avgPriceRange: '₹8,000 - ₹40,000', isActive: true },
+  { _id: 'cat-1', name: 'DJ & Sound Systems', slug: 'dj-sound', icon: 'Speaker', description: 'DJ setup, teenmar beats, truss lights & fog machines', avgPriceRange: '₹8,000 - ₹35,000', isActive: true },
+  { _id: 'cat-2', name: 'Catering Buffets', slug: 'catering', icon: 'Utensils', description: 'South & North Indian vegetarian & non-vegetarian buffets', avgPriceRange: '₹15,000 - ₹1,50,000', isActive: true },
+  { _id: 'cat-3', name: 'Stage & Mandap Decoration', slug: 'decor', icon: 'Sparkles', description: 'Floral stage, mandap, entrance arch & theme lighting', avgPriceRange: '₹10,000 - ₹75,000', isActive: true },
+  { _id: 'cat-4', name: 'Lighting & Trussing', slug: 'lighting', icon: 'Zap', description: 'Ambient LED serial lights, focus beams & architectural wash', avgPriceRange: '₹5,000 - ₹25,000', isActive: true },
+  { _id: 'cat-5', name: 'Purohit & Priest Services', slug: 'purohit', icon: 'Flame', description: 'Vedic rituals, Griha Pravesh, Satyanarayana Puja & Weddings', avgPriceRange: '₹3,500 - ₹15,000', isActive: true },
+  { _id: 'cat-6', name: '4K Photography & Drone', slug: 'photography', icon: 'Camera', description: 'Candid wedding photography, cinematic 4K video & drones', avgPriceRange: '₹15,000 - ₹80,000', isActive: true },
+  { _id: 'cat-7', name: 'Bridal Mehendi & Makeup', slug: 'mehendi-makeup', icon: 'Heart', description: 'Bridal organic Rajasthani & Arabic Mehendi artists', avgPriceRange: '₹4,000 - ₹20,000', isActive: true },
+  { _id: 'cat-8', name: 'Tent & Stage Setup', slug: 'tent-stage', icon: 'Tent', description: 'German shamiana tents, VIP lounge chairs & stage trussing', avgPriceRange: '₹15,000 - ₹60,000', isActive: true },
 ];
 
 export const mockUsers: Record<UserRole, User> = {
@@ -26,25 +24,25 @@ export const mockUsers: Record<UserRole, User> = {
   },
   provider: {
     _id: 'usr-prov-1',
-    name: 'Rajesh Pro Events & DJ',
-    businessName: 'Rajesh Sound & Teenmar Beats',
-    phone: '+91 91234 56789',
-    email: 'rajesh@events.in',
+    name: 'Rajesh Sound & FX Pro',
+    businessName: 'Rajesh Pro Audio & Lightings',
+    phone: '+91 98231 45678',
+    email: 'rajesh@punesoundpros.in',
     role: 'provider',
-    categories: ['DJ / Teenmar / Sound & Lighting', 'Lighting'],
-    serviceArea: 'Hyderabad (Madhapur, Gachibowli, Jubilee Hills)',
+    categories: ['DJ & Sound Systems', 'Lighting & Trussing'],
+    serviceArea: 'Pune, MH',
     rating: 4.9,
     reviewCount: 42,
-    completedJobs: 45,
+    completedJobs: 58,
     isVerified: true,
     bankDetails: {
-      accountHolder: 'Rajesh Sound & Beats',
-      accountNumber: '••••••••8921',
+      accountHolder: 'Rajesh Pro Audio LLP',
+      accountNumber: '••••••••9812',
       ifscCode: 'HDFC0001234',
-      upiId: 'rajesh.events@okaxis',
+      upiId: 'rajeshsound@okhdfc',
       isKycCompleted: true,
     },
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+    avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop&q=80',
   },
   admin: {
     _id: 'usr-admin-1',
@@ -52,18 +50,33 @@ export const mockUsers: Record<UserRole, User> = {
     phone: '+91 90000 00001',
     email: 'ops@ezgo.in',
     role: 'admin',
-    avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80',
+    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
   },
 };
 
-// API Client Helper
+// Live Dynamic API Client
 export const api = {
+  async getUserByRole(role: 'requester' | 'provider' | 'admin'): Promise<User> {
+    try {
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data) return json.data;
+      }
+    } catch (_) {}
+    return mockUsers[role];
+  },
+
   async getCategories(): Promise<Category[]> {
     try {
       const res = await fetch(`${API_BASE}/categories`);
       if (res.ok) {
         const json = await res.json();
-        return json.data;
+        return json.data || json;
       }
     } catch (_) {}
     return mockCategories;
@@ -75,7 +88,7 @@ export const api = {
       const res = await fetch(`${API_BASE}/requirements?${query}`);
       if (res.ok) {
         const json = await res.json();
-        return json.data;
+        return json.data || json;
       }
     } catch (_) {}
     return [];
@@ -86,7 +99,7 @@ export const api = {
       const res = await fetch(`${API_BASE}/requirements/${id}`);
       if (res.ok) {
         const json = await res.json();
-        return json.data;
+        return json.data || json;
       }
     } catch (_) {}
     return null;
@@ -103,7 +116,7 @@ export const api = {
       throw new Error(err.message || 'Failed to post requirement');
     }
     const json = await res.json();
-    return json.data;
+    return json.data || json;
   },
 
   async placeBid(data: {
@@ -136,7 +149,7 @@ export const api = {
       throw new Error(err.message || 'Failed to accept bid');
     }
     const json = await res.json();
-    return json.data;
+    return json.data || json;
   },
 
   async payBooking(bookingId: string, paymentMethod: string): Promise<Booking> {
@@ -150,7 +163,7 @@ export const api = {
       throw new Error(err.message || 'Payment processing failed');
     }
     const json = await res.json();
-    return json.data;
+    return json.data || json;
   },
 
   async completeBooking(bookingId: string): Promise<{ message: string; data: Booking }> {
@@ -172,7 +185,7 @@ export const api = {
       const res = await fetch(`${API_BASE}/bookings?${query}`);
       if (res.ok) {
         const json = await res.json();
-        return json.data;
+        return json.data || json;
       }
     } catch (_) {}
     return [];
@@ -183,17 +196,17 @@ export const api = {
       const res = await fetch(`${API_BASE}/admin/metrics`);
       if (res.ok) {
         const json = await res.json();
-        return json.data;
+        return json.data || json;
       }
     } catch (_) {}
     return null;
   },
 
   async verifyProvider(providerId: string, isVerified: boolean) {
-    const res = await fetch(`${API_BASE}/admin/verify-provider`, {
-      method: 'POST',
+    const res = await fetch(`${API_BASE}/admin/providers/${providerId}/verify`, {
+      method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ providerId, isVerified }),
+      body: JSON.stringify({ isVerified }),
     });
     return await res.json();
   },

@@ -13,7 +13,7 @@ import {
   MapPin, 
   CheckCircle2
 } from 'lucide-react';
-import ezgoLogo from '../assets/EzGo logo.png';
+import { EzGoLogo } from './EzGoLogo';
 
 interface FooterProps {
   onOpenExplainer?: () => void;
@@ -136,10 +136,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenExplainer, onOpenPostModal
           {/* Column 1: Brand Info (3 cols) */}
           <div className="lg:col-span-3 space-y-4">
             <div className="flex items-center gap-2.5">
-              <img src={ezgoLogo} alt="EzGo" className="h-9 sm:h-10 w-auto object-contain" />
-              <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-orange-100 text-[#f95724] border border-orange-200/80">
-                REVERSE BIDS
-              </span>
+              <EzGoLogo variant="host" size="md" />
             </div>
 
             <p className="text-xs text-slate-600 leading-relaxed font-medium max-w-sm">

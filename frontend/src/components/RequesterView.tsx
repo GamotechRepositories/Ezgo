@@ -255,71 +255,60 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
       {/* ========================================================================= */}
       {/* 1. EXACT FULL-SCREEN HERO SECTION (Full Wide Screen 4K Canvas)            */}
       {/* ========================================================================= */}
-      <section className="relative w-full overflow-hidden bg-[#fdfbf7] pt-28 sm:pt-32 lg:pt-36 pb-20 lg:pb-28">
+      <section className="relative w-full overflow-hidden bg-[#fdfbf7] pt-20 sm:pt-32 lg:pt-36 pb-12 sm:pb-20 lg:pb-28">
         
         {/* Full-bleed Ultra 4K Luxury Floral Wedding Pavilion Background Image */}
         <div 
-          className="absolute inset-0 w-full h-full bg-cover bg-[center_right] lg:bg-right bg-no-repeat pointer-events-none"
+          className="absolute inset-0 w-full h-full bg-cover bg-[center_right] lg:bg-right bg-no-repeat pointer-events-none opacity-80 sm:opacity-100"
           style={{ backgroundImage: `url('/hero_wedding_bg.jpg')` }}
         >
           {/* Multi-stage luxury gradient fade for maximum text clarity & wide-screen elegance */}
-          <div className="w-full h-full bg-gradient-to-r from-[#fdfbf7] via-[#fdfbf7] sm:via-[#fdfbf7]/95 md:via-[#fdfbf7]/80 lg:via-[#fdfbf7]/45 to-transparent" />
+          <div className="w-full h-full bg-gradient-to-r from-[#fdfbf7] via-[#fdfbf7]/98 sm:via-[#fdfbf7]/95 md:via-[#fdfbf7]/80 lg:via-[#fdfbf7]/45 to-transparent" />
         </div>
 
         {/* Subtle Ambient Warm Glow */}
         <div className="absolute top-10 left-1/4 w-96 h-96 bg-amber-200/20 rounded-full blur-3xl pointer-events-none" />
 
         {/* Decorative Top-Left Leaves Motif */}
-        <div className="absolute top-0 left-0 w-44 h-44 opacity-25 pointer-events-none">
+        <div className="absolute top-0 left-0 w-32 sm:w-44 h-32 sm:h-44 opacity-20 sm:opacity-25 pointer-events-none">
           <svg viewBox="0 0 160 160" fill="#3a5a20">
             <path d="M0,0 Q60,10 80,60 Q100,20 160,0 Q120,60 100,100 Q60,120 0,160 Q20,100 0,0 Z" />
           </svg>
         </div>
 
         {/* Decorative Bottom-Right Leaves Motif */}
-        <div className="absolute bottom-0 right-0 w-44 h-44 opacity-25 pointer-events-none rotate-180">
+        <div className="absolute bottom-0 right-0 w-32 sm:w-44 h-32 sm:h-44 opacity-20 sm:opacity-25 pointer-events-none rotate-180">
           <svg viewBox="0 0 160 160" fill="#3a5a20">
             <path d="M0,0 Q60,10 80,60 Q100,20 160,0 Q120,60 100,100 Q60,120 0,160 Q20,100 0,0 Z" />
           </svg>
         </div>
 
         {/* Hero Content Container (Expansive Full Wide Screen) */}
-        <div className="relative z-10 w-full max-w-[1600px] mx-auto px-5 sm:px-8 lg:px-14">
-          <div className="max-w-3xl space-y-6">
+        <div className="relative z-10 w-full max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-14">
+          <div className="max-w-3xl space-y-3 sm:space-y-5">
             
-            {/* Eyebrow */}
-            <div className="inline-block">
-              <span className="text-xs font-black uppercase tracking-[0.2em] text-[#f95724] bg-orange-100/70 border border-orange-200/80 px-3.5 py-1.5 rounded-full shadow-2xs">
-                EVENT SERVICES MARKETPLACE
-              </span>
-            </div>
-
-            {/* Main Headline */}
-            <h1 className="font-editorial text-4xl sm:text-5xl lg:text-[64px] font-black text-[#0f172a] leading-[1.08] tracking-tight">
+            {/* Main Headline - Exactly 3 Clean Lines with Expanded Mobile Height */}
+            <h1 className="font-heading text-[44px] xs:text-[50px] sm:text-6xl lg:text-[76px] font-black text-[#0f172a] leading-[1.14] sm:leading-[1.08] tracking-tight">
               Your Event.<br />
               Your Budget.<br />
-              <span className="text-[#f95724]">Their Best Bid.</span>
+              <span className="text-[#f95724] inline-block mt-1 sm:mt-1.5">Their Best Bid.</span>
             </h1>
 
-            {/* Subtitle (Dark & High Contrast) */}
-            <p className="text-slate-900 font-semibold text-base sm:text-lg leading-relaxed max-w-xl">
-              Post what you need and let verified event professionals compete with better prices.
+            {/* Subtitle (Clean, Short & Minimal) */}
+            <p className="text-slate-700 font-medium text-sm sm:text-base leading-snug max-w-lg">
+              Post what you need. Top verified event pros bid lowest to win your booking.
             </p>
 
             {/* Redesigned 100% Responsive Interactive Search / Requirement Bar */}
-            <div className="w-full max-w-4xl bg-white rounded-3xl lg:rounded-full p-3 lg:p-2 lg:pl-6 lg:pr-2.5 shadow-2xl shadow-slate-900/10 border border-slate-200/90 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2.5 lg:gap-2">
+            <div className="w-full max-w-4xl bg-white rounded-2xl lg:rounded-full p-2 lg:p-2 lg:pl-6 lg:pr-2.5 shadow-xl shadow-slate-900/5 border border-slate-200/90 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2 lg:gap-2">
               
               {/* Field 1: Service */}
-              <div className="flex-1 bg-slate-50/80 lg:bg-transparent rounded-2xl lg:rounded-none p-3 lg:p-0 lg:py-1.5 lg:px-2 flex items-center gap-3 min-w-0">
-                <div className="w-8 h-8 lg:w-7 lg:h-7 rounded-xl lg:rounded-none bg-orange-50 lg:bg-transparent flex items-center justify-center text-[#f95724] shrink-0">
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="4" y1="6" x2="20" y2="6"></line>
-                    <line x1="4" y1="12" x2="16" y2="12"></line>
-                    <line x1="4" y1="18" x2="11" y2="18"></line>
-                  </svg>
+              <div className="flex-1 bg-slate-50/60 lg:bg-transparent rounded-xl lg:rounded-none px-3.5 py-2.5 lg:p-0 lg:py-1.5 lg:px-2 flex items-center gap-3 min-w-0 border border-slate-100 lg:border-none">
+                <div className="w-7 h-7 rounded-lg lg:rounded-none bg-orange-100/70 lg:bg-transparent flex items-center justify-center text-[#f95724] shrink-0">
+                  <Search className="w-4 h-4" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <label className="block text-[13px] font-bold text-slate-900 leading-tight whitespace-nowrap">
+                  <label className="block text-[11px] lg:text-[13px] font-bold text-slate-900 leading-tight">
                     What service do you need?
                   </label>
                   <input
@@ -327,7 +316,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                     value={heroService}
                     onChange={(e) => setHeroService(e.target.value)}
                     placeholder="e.g. Decoration, Catering, DJ..."
-                    className="w-full text-xs text-slate-600 font-normal placeholder-slate-400 focus:outline-none bg-transparent pt-0.5 truncate"
+                    className="w-full text-xs text-slate-700 font-medium placeholder-slate-400 focus:outline-none bg-transparent pt-0.5 truncate"
                   />
                 </div>
               </div>
@@ -336,29 +325,29 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
               <div className="hidden lg:block h-8 w-[1px] bg-slate-200/90 shrink-0 mx-1" />
 
               {/* Sub-grid for Location & Date on mobile/tablet */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:items-center gap-2.5 lg:gap-2 flex-[1.4] min-w-0">
+              <div className="grid grid-cols-2 lg:flex lg:items-center gap-2 lg:gap-2 flex-[1.4] min-w-0">
                 
                 {/* Field 2: Location */}
-                <div className="flex-1 bg-slate-50/80 lg:bg-transparent rounded-2xl lg:rounded-none p-3 lg:p-0 lg:py-1.5 lg:px-3 flex items-center gap-3 min-w-0">
-                  <div className="w-8 h-8 lg:w-7 lg:h-7 rounded-xl lg:rounded-none bg-orange-50 lg:bg-transparent flex items-center justify-center text-[#f95724] shrink-0">
-                    <MapPin className="w-5 h-5 stroke-[2]" />
+                <div className="flex-1 bg-slate-50/60 lg:bg-transparent rounded-xl lg:rounded-none px-3 py-2.5 lg:p-0 lg:py-1.5 lg:px-3 flex items-center gap-2.5 min-w-0 border border-slate-100 lg:border-none">
+                  <div className="w-6 h-6 rounded-md lg:rounded-none bg-orange-100/70 lg:bg-transparent flex items-center justify-center text-[#f95724] shrink-0">
+                    <MapPin className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <label className="block text-[13px] font-bold text-slate-900 leading-tight whitespace-nowrap">
+                    <label className="block text-[11px] lg:text-[13px] font-bold text-slate-900 leading-tight">
                       Location
                     </label>
                     <div className="relative flex items-center cursor-pointer pt-0.5 w-full">
                       <select
                         value={heroLocation}
                         onChange={(e) => setHeroLocation(e.target.value)}
-                        className="text-xs text-slate-600 font-normal focus:outline-none bg-transparent cursor-pointer appearance-none pr-5 w-full truncate"
+                        className="text-xs text-slate-700 font-medium focus:outline-none bg-transparent cursor-pointer appearance-none pr-4 w-full truncate"
                       >
-                        <option value="Pune, Maharashtra">Pune, Maharashtra</option>
-                        <option value="Hyderabad, Telangana">Hyderabad, Telangana</option>
-                        <option value="Mumbai, Maharashtra">Mumbai, Maharashtra</option>
-                        <option value="Bangalore, Karnataka">Bangalore, Karnataka</option>
+                        <option value="Pune, Maharashtra">Pune, MH</option>
+                        <option value="Hyderabad, Telangana">Hyderabad, TS</option>
+                        <option value="Mumbai, Maharashtra">Mumbai, MH</option>
+                        <option value="Bangalore, Karnataka">Bangalore, KA</option>
                       </select>
-                      <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-0 pointer-events-none shrink-0" />
+                      <ChevronDown className="w-3 h-3 text-slate-400 absolute right-0 pointer-events-none shrink-0" />
                     </div>
                   </div>
                 </div>
@@ -367,17 +356,17 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                 <div className="hidden lg:block h-8 w-[1px] bg-slate-200/90 shrink-0 mx-1" />
 
                 {/* Field 3: Date */}
-                <div className="flex-1 bg-slate-50/80 lg:bg-transparent rounded-2xl lg:rounded-none p-3 lg:p-0 lg:py-1.5 lg:px-3 flex items-center gap-3 min-w-0 relative">
-                  <div className="w-8 h-8 lg:w-7 lg:h-7 rounded-xl lg:rounded-none bg-orange-50 lg:bg-transparent flex items-center justify-center text-[#f95724] shrink-0">
-                    <Calendar className="w-5 h-5 stroke-[2]" />
+                <div className="flex-1 bg-slate-50/60 lg:bg-transparent rounded-xl lg:rounded-none px-3 py-2.5 lg:p-0 lg:py-1.5 lg:px-3 flex items-center gap-2.5 min-w-0 relative border border-slate-100 lg:border-none">
+                  <div className="w-6 h-6 rounded-md lg:rounded-none bg-orange-100/70 lg:bg-transparent flex items-center justify-center text-[#f95724] shrink-0">
+                    <Calendar className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <label className="block text-[13px] font-bold text-slate-900 leading-tight whitespace-nowrap">
-                      Event date
+                    <label className="block text-[11px] lg:text-[13px] font-bold text-slate-900 leading-tight">
+                      Event Date
                     </label>
                     <div className="relative pt-0.5">
-                      <span className="text-xs text-slate-600 font-normal block truncate">
-                        {heroDate ? new Date(heroDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Select date'}
+                      <span className="text-xs text-slate-700 font-medium block truncate">
+                        {heroDate ? new Date(heroDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : 'Pick date'}
                       </span>
                       <input
                         type="date"
@@ -394,59 +383,59 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
               {/* Submit Action Button */}
               <button
                 onClick={() => onOpenPostModal(heroService)}
-                className="w-full lg:w-auto px-7 py-3.5 rounded-2xl lg:rounded-full bg-[#f95724] hover:bg-[#e04818] text-white font-bold text-xs shadow-md shadow-orange-500/25 flex items-center justify-center gap-2 transition active:scale-95 shrink-0 cursor-pointer whitespace-nowrap"
+                className="w-full lg:w-auto px-6 py-3.5 rounded-xl lg:rounded-full bg-gradient-to-r from-[#f95724] to-orange-500 hover:from-[#e04818] hover:to-[#f95724] text-white font-bold text-xs sm:text-sm shadow-md shadow-orange-500/20 flex items-center justify-center gap-2 transition active:scale-95 shrink-0 cursor-pointer whitespace-nowrap"
               >
-                <span>Post a Requirement</span>
+                <span>Post Requirement</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
 
             </div>
 
             {/* Redesigned 4 Stats Bar Below */}
-            <div className="w-full max-w-3xl pt-6 border-t border-[#eedfc9]/80 mt-4">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6">
+            <div className="hidden sm:block w-full max-w-3xl pt-6 border-t border-[#eedfc9]/70 mt-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-6">
                 
                 {/* Stat 1 */}
-                <div className="flex items-center gap-2.5 sm:gap-3">
-                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-[#fff2ec] flex items-center justify-center text-[#f95724] shrink-0 shadow-2xs">
-                    <Users className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2]" />
+                <div className="flex items-center gap-2 bg-white/60 sm:bg-transparent p-2 sm:p-0 rounded-xl sm:rounded-none border border-slate-200/50 sm:border-none shadow-2xs sm:shadow-none">
+                  <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-2xl bg-[#fff2ec] flex items-center justify-center text-[#f95724] shrink-0">
+                    <Users className="w-3.5 h-3.5 sm:w-5 sm:h-5 stroke-[2.2]" />
                   </div>
                   <div>
-                    <span className="block text-lg sm:text-xl font-black text-slate-900 leading-none tracking-tight">10K+</span>
-                    <span className="text-[11px] sm:text-xs text-slate-500 font-medium mt-1 block whitespace-nowrap">Happy Users</span>
+                    <span className="block text-sm sm:text-xl font-black text-slate-900 leading-none">10K+</span>
+                    <span className="text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5 block whitespace-nowrap">Happy Users</span>
                   </div>
                 </div>
 
                 {/* Stat 2 */}
-                <div className="flex items-center gap-2.5 sm:gap-3">
-                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-[#fff2ec] flex items-center justify-center text-[#f95724] shrink-0 shadow-2xs">
-                    <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2]" />
+                <div className="flex items-center gap-2 bg-white/60 sm:bg-transparent p-2 sm:p-0 rounded-xl sm:rounded-none border border-slate-200/50 sm:border-none shadow-2xs sm:shadow-none">
+                  <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-2xl bg-[#fff2ec] flex items-center justify-center text-[#f95724] shrink-0">
+                    <ShieldCheck className="w-3.5 h-3.5 sm:w-5 sm:h-5 stroke-[2.2]" />
                   </div>
                   <div>
-                    <span className="block text-lg sm:text-xl font-black text-slate-900 leading-none tracking-tight">2K+</span>
-                    <span className="text-[11px] sm:text-xs text-slate-500 font-medium mt-1 block whitespace-nowrap">Verified Vendors</span>
+                    <span className="block text-sm sm:text-xl font-black text-slate-900 leading-none">2K+</span>
+                    <span className="text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5 block whitespace-nowrap">Verified Pros</span>
                   </div>
                 </div>
 
                 {/* Stat 3 */}
-                <div className="flex items-center gap-2.5 sm:gap-3">
-                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-[#fff2ec] flex items-center justify-center text-[#f95724] shrink-0 shadow-2xs">
-                    <Star className="w-4 h-4 sm:w-5 sm:h-5 fill-[#f95724] text-[#f95724]" />
+                <div className="flex items-center gap-2 bg-white/60 sm:bg-transparent p-2 sm:p-0 rounded-xl sm:rounded-none border border-slate-200/50 sm:border-none shadow-2xs sm:shadow-none">
+                  <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-2xl bg-[#fff2ec] flex items-center justify-center text-[#f95724] shrink-0">
+                    <Star className="w-3.5 h-3.5 sm:w-5 sm:h-5 fill-[#f95724] text-[#f95724]" />
                   </div>
                   <div>
-                    <span className="block text-lg sm:text-xl font-black text-slate-900 leading-none tracking-tight">4.8/5</span>
-                    <span className="text-[11px] sm:text-xs text-slate-500 font-medium mt-1 block whitespace-nowrap">Average Rating</span>
+                    <span className="block text-sm sm:text-xl font-black text-slate-900 leading-none">4.8 / 5</span>
+                    <span className="text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5 block whitespace-nowrap">Average Rating</span>
                   </div>
                 </div>
 
                 {/* Stat 4 */}
-                <div className="flex items-center gap-2.5 sm:gap-3">
-                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-[#fff2ec] flex items-center justify-center text-[#f95724] shrink-0 shadow-2xs">
-                    <BarChart2 className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2]" />
+                <div className="flex items-center gap-2 bg-white/60 sm:bg-transparent p-2 sm:p-0 rounded-xl sm:rounded-none border border-slate-200/50 sm:border-none shadow-2xs sm:shadow-none">
+                  <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-2xl bg-[#fff2ec] flex items-center justify-center text-[#f95724] shrink-0">
+                    <BarChart2 className="w-3.5 h-3.5 sm:w-5 sm:h-5 stroke-[2.2]" />
                   </div>
                   <div>
-                    <span className="block text-lg sm:text-xl font-black text-slate-900 leading-none tracking-tight">50K+</span>
-                    <span className="text-[11px] sm:text-xs text-slate-500 font-medium mt-1 block whitespace-nowrap">Bookings Done</span>
+                    <span className="block text-sm sm:text-xl font-black text-slate-900 leading-none">50K+</span>
+                    <span className="text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5 block whitespace-nowrap">Bids Placed</span>
                   </div>
                 </div>
 
@@ -623,7 +612,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                     <div
                       key={occ.id}
                       onClick={() => onOpenPostModal(occ.name)}
-                      className={`relative w-[215px] sm:w-[235px] lg:w-[252px] h-[320px] sm:h-[355px] lg:h-[380px] shrink-0 rounded-[34px] sm:rounded-[38px] overflow-hidden group cursor-pointer transition-all duration-500 ease-out border border-white/40 shadow-[0_22px_45px_-12px_rgba(30,20,10,0.28),0_10px_20px_-8px_rgba(0,0,0,0.15)] hover:shadow-[0_35px_65px_-15px_rgba(249,87,36,0.35),0_15px_30px_-5px_rgba(0,0,0,0.25)] ${get3DTransform()}`}
+                      className={`relative w-[185px] sm:w-[230px] lg:w-[252px] h-[260px] sm:h-[340px] lg:h-[380px] shrink-0 rounded-2xl sm:rounded-[34px] lg:rounded-[38px] overflow-hidden group cursor-pointer transition-all duration-500 ease-out border border-white/40 shadow-md sm:shadow-[0_22px_45px_-12px_rgba(30,20,10,0.28)] hover:shadow-[0_35px_65px_-15px_rgba(249,87,36,0.35)] ${get3DTransform()}`}
                     >
                       {/* Background Card Image with subtle zoom on hover */}
                       <img
@@ -793,7 +782,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
             
             {/* Left Column: Configurator (Step 1 + Step 2 + Step 3) */}
-            <div className="lg:col-span-8 bg-white/95 backdrop-blur-md rounded-3xl border border-amber-200/60 p-5 sm:p-6 shadow-xl shadow-slate-900/5 space-y-6 flex flex-col justify-between">
+            <div className="lg:col-span-8 bg-white sm:bg-white/95 sm:backdrop-blur-md rounded-2xl sm:rounded-3xl border border-amber-200/50 p-3.5 sm:p-6 shadow-sm sm:shadow-xl shadow-slate-900/5 space-y-5 sm:space-y-6 flex flex-col justify-between">
               
               {/* Step 1: Select Occasion (6 Cards in 1 Row) */}
               <div className="space-y-3">
@@ -1316,6 +1305,78 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
 
             </div>
 
+          </div>
+
+          {/* 4-Step Host Visual Booking Roadmap */}
+          <div className="rounded-3xl bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-slate-900/5 border border-amber-200/90 p-5 sm:p-7 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-amber-200/60">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-[#f95724] flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>HOW HOST BOOKING & ESCROW WORKS</span>
+                </span>
+                <h3 className="text-base sm:text-lg font-black text-slate-900 mt-0.5">
+                  Save 15% to 30% with 100% Escrow Protection
+                </h3>
+              </div>
+              <span className="text-xs text-slate-500">
+                4 Simple Steps • 0 Risk to You
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mt-4">
+              <div className="p-3.5 rounded-2xl bg-white/95 border border-amber-200/80 shadow-2xs space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="w-6 h-6 rounded-full bg-orange-100 text-[#f95724] font-black text-xs flex items-center justify-center">
+                    1
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Step 1</span>
+                </div>
+                <h4 className="text-xs font-bold text-slate-900">Post Event Need</h4>
+                <p className="text-[11px] text-slate-500 leading-normal">
+                  Select service, venue, date & set your maximum budget ceiling.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-white/95 border border-amber-200/80 shadow-2xs space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="w-6 h-6 rounded-full bg-amber-100 text-amber-800 font-black text-xs flex items-center justify-center">
+                    2
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Step 2</span>
+                </div>
+                <h4 className="text-xs font-bold text-slate-900">Vendors Reverse-Bid</h4>
+                <p className="text-[11px] text-slate-500 leading-normal">
+                  Verified pros compete by bidding down (guaranteed ≥15% cheaper).
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-white/95 border border-amber-200/80 shadow-2xs space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 font-black text-xs flex items-center justify-center">
+                    3
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Step 3</span>
+                </div>
+                <h4 className="text-xs font-bold text-slate-900">Accept & Pay Escrow</h4>
+                <p className="text-[11px] text-slate-500 leading-normal">
+                  Money is safely held in EzGo escrow vault until service is delivered.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-white/95 border border-amber-200/80 shadow-2xs space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 font-black text-xs flex items-center justify-center">
+                    4
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Step 4</span>
+                </div>
+                <h4 className="text-xs font-bold text-slate-900">Approve & Release</h4>
+                <p className="text-[11px] text-slate-500 leading-normal">
+                  Vendor executes at event. You approve and funds are released to vendor.
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Navigation Tabs and New Post Button */}
@@ -2456,3 +2517,9 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
     </div>
   );
 };
+
+
+
+
+
+
