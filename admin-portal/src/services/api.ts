@@ -55,6 +55,7 @@ export const mockCategories: Category[] = [
     name: 'DJ & Sound Systems',
     slug: 'dj-sound',
     icon: 'Speaker',
+    image: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&auto=format&fit=crop&q=80',
     description: 'Line arrays, active tops, subwoofers, Pioneer DDJ, wireless mics',
     avgPriceRange: '₹8,000 - ₹45,000',
     isActive: true,
@@ -64,6 +65,7 @@ export const mockCategories: Category[] = [
     name: 'Stage & Mandap Decoration',
     slug: 'decor',
     icon: 'Sparkles',
+    image: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&auto=format&fit=crop&q=80',
     description: 'Custom flower arches, fairy light canopies, royal wedding backdrops',
     avgPriceRange: '₹15,000 - ₹1,20,000',
     isActive: true,
@@ -73,11 +75,31 @@ export const mockCategories: Category[] = [
     name: '4K Photography & Drone',
     slug: 'photography',
     icon: 'Camera',
+    image: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&auto=format&fit=crop&q=80',
     description: 'Cinematic 4K coverage, drone flybys, live stream mix, gimbal rigs',
     avgPriceRange: '₹12,000 - ₹65,000',
     isActive: true,
   },
 ];
+
+const LOCAL_STORAGE_KEY = 'ezgo_custom_categories';
+
+function getStoredCategories(): Category[] {
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveStoredCategories(newCat: Category) {
+  try {
+    const existing = getStoredCategories();
+    const filtered = existing.filter((c) => c._id !== newCat._id && c.slug !== newCat.slug);
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify([...filtered, newCat]));
+  } catch {}
+}
 
 export const api = {
   async getAdminUser(): Promise<User> {
@@ -142,35 +164,57 @@ export const api = {
   },
 
   async getCategories(): Promise<Category[]> {
+    const stored = getStoredCategories();
+    let baseList = mockCategories;
     try {
       const res = await fetch(`${API_BASE}/categories`);
       if (res.ok) {
         const data = await res.json();
-        return data.data || data;
+        if (Array.isArray(data.data) && data.data.length > 0) {
+          baseList = data.data;
+        }
       }
     } catch (_) {}
-    return mockCategories;
+
+    // Merge baseList and stored categories, deduplicating by slug/id
+    const combined = [...baseList];
+    for (const cat of stored) {
+      if (!combined.some((c) => c._id === cat._id || c.slug === cat.slug)) {
+        combined.push(cat);
+      }
+    }
+    return combined;
   },
 
   async addCategory(catData: Partial<Category>): Promise<Category> {
+    let createdCat: Category | null = null;
     try {
       const res = await fetch(`${API_BASE}/categories`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(catData),
       });
-      const data = await res.json();
-      return data.data || data;
-    } catch (_) {
-      return {
+      if (res.ok) {
+        const data = await res.json();
+        createdCat = data.data || data;
+      }
+    } catch (_) {}
+
+    if (!createdCat) {
+      createdCat = {
         _id: 'cat-' + Date.now(),
         name: catData.name || 'New Category',
         slug: catData.slug || 'new-cat',
         icon: catData.icon || 'Sparkles',
+        image: catData.image || 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&auto=format&fit=crop&q=80',
         description: catData.description || '',
         avgPriceRange: catData.avgPriceRange || '₹10,000 - ₹50,000',
         isActive: true,
       };
     }
+
+    // Persist to localStorage so refresh never loses the category
+    saveStoredCategories(createdCat);
+    return createdCat;
   },
 };

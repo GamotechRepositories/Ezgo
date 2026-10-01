@@ -170,13 +170,31 @@ export const api = {
   },
 
   async getCategories(): Promise<Category[]> {
+    let baseList = mockCategories;
     try {
       const res = await fetch(`${API_BASE}/categories`);
       if (res.ok) {
         const data = await res.json();
-        return data.data || data;
+        if (Array.isArray(data.data) && data.data.length > 0) {
+          baseList = data.data;
+        }
       }
     } catch (_) {}
-    return mockCategories;
+
+    try {
+      const raw = localStorage.getItem('ezgo_custom_categories');
+      if (raw) {
+        const customCats: Category[] = JSON.parse(raw);
+        const combined = [...baseList];
+        for (const cat of customCats) {
+          if (!combined.some((c) => c._id === cat._id || c.slug === cat.slug)) {
+            combined.push(cat);
+          }
+        }
+        return combined;
+      }
+    } catch (_) {}
+
+    return baseList;
   },
 };

@@ -3,14 +3,14 @@ import type { User, Requirement, Bid, Booking, Category, AdminMetrics, UserRole 
 const API_BASE = 'http://localhost:5000/api';
 
 export const mockCategories: Category[] = [
-  { _id: 'cat-1', name: 'DJ & Sound Systems', slug: 'dj-sound', icon: 'Speaker', description: 'DJ setup, teenmar beats, truss lights & fog machines', avgPriceRange: '₹8,000 - ₹35,000', isActive: true },
-  { _id: 'cat-2', name: 'Catering Buffets', slug: 'catering', icon: 'Utensils', description: 'South & North Indian vegetarian & non-vegetarian buffets', avgPriceRange: '₹15,000 - ₹1,50,000', isActive: true },
-  { _id: 'cat-3', name: 'Stage & Mandap Decoration', slug: 'decor', icon: 'Sparkles', description: 'Floral stage, mandap, entrance arch & theme lighting', avgPriceRange: '₹10,000 - ₹75,000', isActive: true },
-  { _id: 'cat-4', name: 'Lighting & Trussing', slug: 'lighting', icon: 'Zap', description: 'Ambient LED serial lights, focus beams & architectural wash', avgPriceRange: '₹5,000 - ₹25,000', isActive: true },
-  { _id: 'cat-5', name: 'Purohit & Priest Services', slug: 'purohit', icon: 'Flame', description: 'Vedic rituals, Griha Pravesh, Satyanarayana Puja & Weddings', avgPriceRange: '₹3,500 - ₹15,000', isActive: true },
-  { _id: 'cat-6', name: '4K Photography & Drone', slug: 'photography', icon: 'Camera', description: 'Candid wedding photography, cinematic 4K video & drones', avgPriceRange: '₹15,000 - ₹80,000', isActive: true },
-  { _id: 'cat-7', name: 'Bridal Mehendi & Makeup', slug: 'mehendi-makeup', icon: 'Heart', description: 'Bridal organic Rajasthani & Arabic Mehendi artists', avgPriceRange: '₹4,000 - ₹20,000', isActive: true },
-  { _id: 'cat-8', name: 'Tent & Stage Setup', slug: 'tent-stage', icon: 'Tent', description: 'German shamiana tents, VIP lounge chairs & stage trussing', avgPriceRange: '₹15,000 - ₹60,000', isActive: true },
+  { _id: 'cat-1', name: 'DJ & Sound Systems', slug: 'dj-sound', icon: 'Speaker', image: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&auto=format&fit=crop&q=80', description: 'DJ setup, teenmar beats, truss lights & fog machines', avgPriceRange: '₹8,000 - ₹35,000', isActive: true },
+  { _id: 'cat-2', name: 'Catering Buffets', slug: 'catering', icon: 'Utensils', image: 'https://images.unsplash.com/photo-1555244162-803834f70033?w=600&auto=format&fit=crop&q=80', description: 'South & North Indian vegetarian & non-vegetarian buffets', avgPriceRange: '₹15,000 - ₹1,50,000', isActive: true },
+  { _id: 'cat-3', name: 'Stage & Mandap Decoration', slug: 'decor', icon: 'Sparkles', image: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&auto=format&fit=crop&q=80', description: 'Floral stage, mandap, entrance arch & theme lighting', avgPriceRange: '₹10,000 - ₹75,000', isActive: true },
+  { _id: 'cat-4', name: 'Lighting & Trussing', slug: 'lighting', icon: 'Zap', image: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=600&auto=format&fit=crop&q=80', description: 'Ambient LED serial lights, focus beams & architectural wash', avgPriceRange: '₹5,000 - ₹25,000', isActive: true },
+  { _id: 'cat-5', name: 'Purohit & Priest Services', slug: 'purohit', icon: 'Flame', image: 'https://images.unsplash.com/photo-1609137144822-26f6eb8b973c?w=600&auto=format&fit=crop&q=80', description: 'Vedic rituals, Griha Pravesh, Satyanarayana Puja & Weddings', avgPriceRange: '₹3,500 - ₹15,000', isActive: true },
+  { _id: 'cat-6', name: '4K Photography & Drone', slug: 'photography', icon: 'Camera', image: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&auto=format&fit=crop&q=80', description: 'Candid wedding photography, cinematic 4K video & drones', avgPriceRange: '₹15,000 - ₹80,000', isActive: true },
+  { _id: 'cat-7', name: 'Bridal Mehendi & Makeup', slug: 'mehendi-makeup', icon: 'Heart', image: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=600&auto=format&fit=crop&q=80', description: 'Bridal organic Rajasthani & Arabic Mehendi artists', avgPriceRange: '₹4,000 - ₹20,000', isActive: true },
+  { _id: 'cat-8', name: 'Tent & Stage Setup', slug: 'tent-stage', icon: 'Tent', image: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&auto=format&fit=crop&q=80', description: 'German shamiana tents, VIP lounge chairs & stage trussing', avgPriceRange: '₹15,000 - ₹60,000', isActive: true },
 ];
 
 export const mockUsers: Record<UserRole, User> = {
@@ -72,14 +72,32 @@ export const api = {
   },
 
   async getCategories(): Promise<Category[]> {
+    let baseList = mockCategories;
     try {
       const res = await fetch(`${API_BASE}/categories`);
       if (res.ok) {
         const json = await res.json();
-        return json.data || json;
+        if (Array.isArray(json.data) && json.data.length > 0) {
+          baseList = json.data;
+        }
       }
     } catch (_) {}
-    return mockCategories;
+
+    try {
+      const raw = localStorage.getItem('ezgo_custom_categories');
+      if (raw) {
+        const customCats: Category[] = JSON.parse(raw);
+        const combined = [...baseList];
+        for (const cat of customCats) {
+          if (!combined.some((c) => c._id === cat._id || c.slug === cat.slug)) {
+            combined.push(cat);
+          }
+        }
+        return combined;
+      }
+    } catch (_) {}
+
+    return baseList;
   },
 
   async getRequirements(params?: { category?: string; status?: string; requesterId?: string }): Promise<Requirement[]> {

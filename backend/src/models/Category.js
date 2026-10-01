@@ -20,6 +20,10 @@ const categorySchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    image: {
+      type: String,
+      default: '',
+    },
     avgPriceRange: {
       type: String,
       default: '₹5,000 - ₹50,000',

@@ -28,6 +28,7 @@ export interface Category {
   name: string;
   slug: string;
   icon: string;
+  image?: string;
   description: string;
   avgPriceRange: string;
   isActive: boolean;
