@@ -1,6 +1,6 @@
 import type { AdminMetrics, Booking, Category, User } from '../types';
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export const mockAdminUser: User = {
   _id: 'usr-admin-1',

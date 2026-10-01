@@ -1,6 +1,6 @@
 import type { User, Requirement, Bid, Booking, Category, AdminMetrics, UserRole } from '../types';
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export const mockCategories: Category[] = [
   { _id: 'cat-1', name: 'DJ & Sound Systems', slug: 'dj-sound', icon: 'Speaker', image: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&auto=format&fit=crop&q=80', description: 'DJ setup, teenmar beats, truss lights & fog machines', avgPriceRange: '₹8,000 - ₹35,000', isActive: true },
