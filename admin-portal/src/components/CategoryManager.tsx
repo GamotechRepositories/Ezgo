@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { FolderKanban, Plus, Image as ImageIcon, Upload, Sparkles, X, Check } from 'lucide-react';
+import { FolderKanban, Plus, Image as ImageIcon, Upload, Sparkles, X, Check, Camera, Loader2 } from 'lucide-react';
 import type { Category } from '../types';
+import { api } from '../services/api';
 
 interface CategoryManagerProps {
   categories: Category[];
@@ -18,6 +19,23 @@ const PRESET_IMAGES = [
   { name: 'Tent & Stage', url: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&auto=format&fit=crop&q=80' },
 ];
 
+export const getResolvedCategoryImage = (cat: Partial<Category>): string => {
+  if (cat.image && typeof cat.image === 'string' && cat.image.trim().length > 0) {
+    return cat.image.trim();
+  }
+  const name = (cat.name || '').toLowerCase();
+  const slug = (cat.slug || '').toLowerCase();
+  if (slug.includes('dj') || name.includes('dj') || name.includes('sound')) return 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&auto=format&fit=crop&q=80';
+  if (slug.includes('decor') || name.includes('decor') || name.includes('mandap')) return 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&auto=format&fit=crop&q=80';
+  if (slug.includes('photo') || name.includes('photo') || name.includes('drone')) return 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&auto=format&fit=crop&q=80';
+  if (slug.includes('cater') || name.includes('cater') || name.includes('food')) return 'https://images.unsplash.com/photo-1555244162-803834f70033?w=600&auto=format&fit=crop&q=80';
+  if (slug.includes('light') || name.includes('light')) return 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=600&auto=format&fit=crop&q=80';
+  if (slug.includes('purohit') || name.includes('purohit') || name.includes('priest')) return 'https://images.unsplash.com/photo-1609137144822-26f6eb8b973c?w=600&auto=format&fit=crop&q=80';
+  if (slug.includes('mehendi') || name.includes('mehendi') || name.includes('makeup')) return 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=600&auto=format&fit=crop&q=80';
+  if (slug.includes('tent') || name.includes('tent') || name.includes('stage')) return 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&auto=format&fit=crop&q=80';
+  return 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&auto=format&fit=crop&q=80';
+};
+
 export const CategoryManager: React.FC<CategoryManagerProps> = ({
   categories,
   onAddCategory,
@@ -28,29 +46,54 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({
   const [avgPrice, setAvgPrice] = useState('₹10,000 - ₹50,000');
   const [imageUrl, setImageUrl] = useState('');
   const [imageTab, setImageTab] = useState<'preset' | 'url' | 'upload'>('preset');
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const [updatingCatId, setUpdatingCatId] = useState<string | null>(null);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (typeof reader.result === 'string') {
-          setImageUrl(reader.result);
-        }
-      };
-      reader.readAsDataURL(file);
+      try {
+        setIsUploading(true);
+        setUploadError('');
+        const cloudUrl = await api.uploadImage(file, 'ezgo/categories');
+        setImageUrl(cloudUrl);
+      } catch (err: any) {
+        setUploadError(err.message || 'Failed to upload to Cloudinary');
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
+
+  const handleCardImageChange = async (cat: Category, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        setUpdatingCatId(cat._id);
+        const cloudUrl = await api.uploadImage(file, 'ezgo/categories');
+        onAddCategory({
+          ...cat,
+          image: cloudUrl,
+        });
+      } catch (err: any) {
+        alert('Upload failed: ' + err.message);
+      } finally {
+        setUpdatingCatId(null);
+      }
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name) return;
+    const finalImage = imageUrl.trim() || getResolvedCategoryImage({ name, slug: name.toLowerCase().replace(/[^a-z0-9]/g, '-') });
     onAddCategory({
       name,
       slug: name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
       description,
       avgPriceRange: avgPrice,
-      image: imageUrl.trim() || 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&auto=format&fit=crop&q=80',
+      image: finalImage,
       icon: 'Sparkles',
       isActive: true,
     });
@@ -75,7 +118,11 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({
         </div>
 
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            setImageUrl('');
+            setUploadError('');
+            setIsModalOpen(true);
+          }}
           className="px-5 py-2.5 rounded-full bg-[#f95724] hover:bg-[#e04818] text-white font-bold text-xs shadow-md shadow-[#f95724]/25 flex items-center gap-1.5 cursor-pointer transition"
         >
           <Plus className="w-4 h-4" />
@@ -84,57 +131,86 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {categories.map((cat) => (
-          <div
-            key={cat._id}
-            className="rounded-3xl bg-white border border-slate-200 overflow-hidden flex flex-col justify-between shadow-sm hover:shadow-lg transition group"
-          >
-            {/* Category Photo Banner */}
-            <div className="relative h-40 w-full overflow-hidden bg-slate-100">
-              {cat.image ? (
+        {categories.map((cat) => {
+          const bannerUrl = getResolvedCategoryImage(cat);
+          const isUpdatingThis = updatingCatId === cat._id;
+
+          return (
+            <div
+              key={cat._id}
+              className="rounded-3xl bg-white border border-slate-200 overflow-hidden flex flex-col justify-between shadow-sm hover:shadow-lg transition group"
+            >
+              {/* Category Photo Banner */}
+              <div className="relative h-44 w-full overflow-hidden bg-slate-900">
                 <img
-                  src={cat.image}
+                  src={bannerUrl}
                   alt={cat.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                   onError={(e) => {
-                    (e.target as HTMLElement).style.display = 'none';
+                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&auto=format&fit=crop&q=80';
                   }}
                 />
-              ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-purple-50 to-orange-50 text-slate-400">
-                  <ImageIcon className="w-8 h-8 opacity-40 mb-1" />
-                  <span className="text-[11px] font-medium text-slate-400">No Image Set</span>
+
+                {/* Dark Vignette Overlay for Crisp Typography */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/30" />
+
+                <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-10">
+                  <span className="px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-md text-purple-900 text-[10px] font-bold shadow">
+                    /{cat.slug}
+                  </span>
+                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100/95 backdrop-blur-md px-2.5 py-0.5 rounded-full shadow">
+                    Active ✓
+                  </span>
                 </div>
-              )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-              <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
-                <span className="px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-md text-purple-900 text-[10px] font-bold shadow">
-                  /{cat.slug}
-                </span>
-                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100/90 backdrop-blur-md px-2 py-0.5 rounded-full shadow">
-                  Active ✓
-                </span>
+
+                {/* Direct Cloudinary Change Button on Hover */}
+                <label
+                  htmlFor={`cat-img-${cat._id}`}
+                  title="Upload / Change Category Photo (Cloudinary)"
+                  className="absolute top-3 right-3 sm:right-24 z-20 px-2 py-1 rounded-lg bg-black/70 hover:bg-[#f95724] text-white backdrop-blur-md cursor-pointer transition-all duration-200 shadow-md opacity-0 group-hover:opacity-100 flex items-center gap-1 text-[10px] font-bold"
+                >
+                  {isUpdatingThis ? (
+                    <>
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      <span>Uploading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Camera className="w-3.5 h-3.5" />
+                      <span>Change Photo</span>
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    id={`cat-img-${cat._id}`}
+                    accept="image/*"
+                    disabled={isUpdatingThis}
+                    onChange={(e) => handleCardImageChange(cat, e)}
+                    className="hidden"
+                  />
+                </label>
+
+                <div className="absolute bottom-3 left-3 right-3 z-10">
+                  <h3 className="text-base font-bold text-white drop-shadow-md truncate">{cat.name}</h3>
+                </div>
               </div>
-              <div className="absolute bottom-3 left-3 right-3">
-                <h3 className="text-base font-bold text-white drop-shadow-md truncate">{cat.name}</h3>
+
+              {/* Content Details */}
+              <div className="p-5 flex-1 flex flex-col justify-between space-y-3">
+                <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                  {cat.description || 'Verified event vendor service equipment & professional crew.'}
+                </p>
+
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                  <span className="text-slate-400 font-bold uppercase text-[10px]">Benchmark Price</span>
+                  <span className="font-extrabold text-[#f95724] bg-orange-50 px-2 py-0.5 rounded-lg border border-orange-100">
+                    {cat.avgPriceRange}
+                  </span>
+                </div>
               </div>
             </div>
-
-            {/* Content Details */}
-            <div className="p-5 flex-1 flex flex-col justify-between space-y-3">
-              <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
-                {cat.description || 'Verified event vendor service equipment & professional crew.'}
-              </p>
-
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                <span className="text-slate-400 font-bold uppercase text-[10px]">Benchmark Price</span>
-                <span className="font-extrabold text-[#f95724] bg-orange-50 px-2 py-0.5 rounded-lg border border-orange-100">
-                  {cat.avgPriceRange}
-                </span>
-              </div>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Modal: Add Category with Image Provision */}
@@ -153,7 +229,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({
               </div>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="p-1 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+                className="p-1 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -183,21 +259,21 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({
                     <button
                       type="button"
                       onClick={() => setImageTab('preset')}
-                      className={`px-2 py-0.5 rounded-md font-medium transition ${imageTab === 'preset' ? 'bg-white shadow text-slate-900 font-bold' : 'text-slate-500'}`}
+                      className={`px-2 py-0.5 rounded-md font-medium transition cursor-pointer ${imageTab === 'preset' ? 'bg-white shadow text-slate-900 font-bold' : 'text-slate-500'}`}
                     >
                       Presets
                     </button>
                     <button
                       type="button"
                       onClick={() => setImageTab('url')}
-                      className={`px-2 py-0.5 rounded-md font-medium transition ${imageTab === 'url' ? 'bg-white shadow text-slate-900 font-bold' : 'text-slate-500'}`}
+                      className={`px-2 py-0.5 rounded-md font-medium transition cursor-pointer ${imageTab === 'url' ? 'bg-white shadow text-slate-900 font-bold' : 'text-slate-500'}`}
                     >
                       Image URL
                     </button>
                     <button
                       type="button"
                       onClick={() => setImageTab('upload')}
-                      className={`px-2 py-0.5 rounded-md font-medium transition ${imageTab === 'upload' ? 'bg-white shadow text-slate-900 font-bold' : 'text-slate-500'}`}
+                      className={`px-2 py-0.5 rounded-md font-medium transition cursor-pointer ${imageTab === 'upload' ? 'bg-white shadow text-slate-900 font-bold' : 'text-slate-500'}`}
                     >
                       Upload File
                     </button>
@@ -215,7 +291,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({
                             type="button"
                             key={preset.name}
                             onClick={() => setImageUrl(preset.url)}
-                            className={`relative h-16 rounded-xl overflow-hidden border-2 text-left group transition ${isSelected ? 'border-[#f95724] ring-2 ring-[#f95724]/30' : 'border-slate-200 hover:border-slate-400'}`}
+                            className={`relative h-16 rounded-xl overflow-hidden border-2 text-left group transition cursor-pointer ${isSelected ? 'border-[#f95724] ring-2 ring-[#f95724]/30' : 'border-slate-200 hover:border-slate-400'}`}
                           >
                             <img src={preset.url} alt={preset.name} className="w-full h-full object-cover" />
                             <div className="absolute inset-0 bg-black/40 flex items-end p-1">
@@ -251,17 +327,30 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({
                       type="file"
                       id="category-file-upload"
                       accept="image/*"
+                      disabled={isUploading}
                       onChange={handleFileUpload}
                       className="hidden"
                     />
                     <label
                       htmlFor="category-file-upload"
-                      className="cursor-pointer flex flex-col items-center justify-center gap-1 text-slate-600"
+                      className={`cursor-pointer flex flex-col items-center justify-center gap-1.5 text-slate-600 ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}
                     >
-                      <Upload className="w-6 h-6 text-[#f95724]" />
-                      <span className="font-bold text-xs text-slate-800">Click to upload photo from your device</span>
-                      <span className="text-[10px] text-slate-400">PNG, JPG, WebP up to 5MB</span>
+                      {isUploading ? (
+                        <div className="flex flex-col items-center gap-1">
+                          <div className="w-6 h-6 border-2 border-[#f95724] border-t-transparent rounded-full animate-spin" />
+                          <span className="font-bold text-xs text-[#f95724]">Uploading to Cloudinary...</span>
+                        </div>
+                      ) : (
+                        <>
+                          <Upload className="w-6 h-6 text-[#f95724]" />
+                          <span className="font-bold text-xs text-slate-800">Click to upload photo from your device</span>
+                          <span className="text-[10px] text-slate-400">PNG, JPG, WebP up to 10MB</span>
+                        </>
+                      )}
                     </label>
+                    {uploadError && (
+                      <p className="text-[11px] text-red-500 font-medium mt-2">{uploadError}</p>
+                    )}
                   </div>
                 )}
 
@@ -288,36 +377,36 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({
               </div>
 
               <div>
-                <label className="font-bold text-slate-700">Recommended Price Benchmark Range</label>
+                <label className="font-bold text-slate-700">Benchmark Price Range (Display Only)</label>
                 <input
                   type="text"
                   value={avgPrice}
                   onChange={(e) => setAvgPrice(e.target.value)}
-                  placeholder="e.g. ₹15,000 - ₹75,000"
+                  placeholder="e.g. ₹15,000 - ₹80,000"
                   className="w-full mt-1 px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:outline-none focus:border-[#f95724]"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition cursor-pointer"
+                  className="px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 rounded-full bg-[#f95724] hover:bg-[#e04818] text-white font-bold shadow-md shadow-[#f95724]/25 transition cursor-pointer"
+                  disabled={isUploading}
+                  className="px-5 py-2 rounded-full bg-[#f95724] hover:bg-[#e04818] text-white font-bold disabled:opacity-50 cursor-pointer shadow-md shadow-[#f95724]/20"
                 >
-                  Publish Category
+                  Create Category
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-
     </div>
   );
 };

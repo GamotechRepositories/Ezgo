@@ -222,9 +222,15 @@ export const VendorHeader: React.FC<VendorHeaderProps> = ({
                   
                   <div className="mt-2.5 pt-2 border-t border-orange-200/60 flex items-center justify-between text-[11px]">
                     <span className="text-slate-600">KYC Status:</span>
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-extrabold text-[10px]">
-                      VERIFIED PRO
-                    </span>
+                    {vendor.isVerified ? (
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-extrabold text-[10px]">
+                        VERIFIED PRO
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 font-extrabold text-[10px]">
+                        PENDING KYC
+                      </span>
+                    )}
                   </div>
                 </div>
 

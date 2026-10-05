@@ -15,6 +15,7 @@ export const createRequirement = async (req, res, next) => {
       timeWindow,
       budget,
       guestCount,
+      imageUrl,
     } = req.body;
 
     if (!requesterId || !category || !title || !budget || !eventDate || !location?.area) {
@@ -27,6 +28,7 @@ export const createRequirement = async (req, res, next) => {
       category,
       title,
       description,
+      imageUrl: imageUrl || '',
       location: {
         city: location.city || 'Pune',
         area: location.area,

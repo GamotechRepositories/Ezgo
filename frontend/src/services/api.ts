@@ -228,4 +228,23 @@ export const api = {
     });
     return await res.json();
   },
+
+  async uploadImage(file: File, folder = 'ezgo/uploads'): Promise<string> {
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('folder', folder);
+
+    const res = await fetch(`${API_BASE}/upload`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || 'Image upload failed');
+    }
+
+    const data = await res.json();
+    return data.url;
+  },
 };

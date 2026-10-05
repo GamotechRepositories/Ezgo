@@ -194,6 +194,15 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
 
                 {/* Title & Description */}
                 <div>
+                  {req.imageUrl && (
+                    <div className="mb-3 h-32 w-full rounded-2xl overflow-hidden border border-slate-200/80 bg-slate-100">
+                      <img
+                        src={req.imageUrl}
+                        alt={req.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    </div>
+                  )}
                   <h3 className="text-lg font-bold text-slate-900 group-hover:text-[#f95724] transition">
                     {req.title}
                   </h3>

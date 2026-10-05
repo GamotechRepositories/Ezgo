@@ -47,6 +47,72 @@ export const mockProviders: User[] = [
     },
     avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop&q=80',
   },
+  {
+    _id: 'usr-p2',
+    name: 'BeatDrop Audio Works',
+    phone: '+91 97654 32100',
+    email: 'contact@beatdrop.in',
+    role: 'provider',
+    businessName: 'BeatDrop Audio Works',
+    categories: ['DJ & Sound Systems', '4K Photography & Drone'],
+    serviceArea: 'Pune, MH',
+    rating: 4.8,
+    reviewCount: 31,
+    completedJobs: 39,
+    isVerified: true,
+    bankDetails: {
+      accountHolder: 'BeatDrop Audio Works',
+      accountNumber: '••••••••1123',
+      ifscCode: 'ICIC0002345',
+      upiId: 'beatdrop@okaxis',
+      isKycCompleted: true,
+    },
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+  },
+  {
+    _id: 'usr-p3',
+    name: 'Swara Mandap & Floral Decorators',
+    phone: '+91 98877 66554',
+    email: 'swara@decorpune.com',
+    role: 'provider',
+    businessName: 'Swara Events & Decor',
+    categories: ['Stage & Mandap Decoration'],
+    serviceArea: 'Pune, MH',
+    rating: 4.6,
+    reviewCount: 18,
+    completedJobs: 22,
+    isVerified: false,
+    bankDetails: {
+      accountHolder: 'Swara Decor Works',
+      accountNumber: '••••••••4490',
+      ifscCode: 'SBIN0005678',
+      upiId: 'swaradecor@oksbi',
+      isKycCompleted: false,
+    },
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+  },
+  {
+    _id: 'usr-p4',
+    name: 'Royal Feast Gourmet Caterers',
+    phone: '+91 98111 22334',
+    email: 'events@royalfeast.in',
+    role: 'provider',
+    businessName: 'Royal Feast Hospitality Pvt Ltd',
+    categories: ['Catering Buffets'],
+    serviceArea: 'Pune & PCMC',
+    rating: 4.7,
+    reviewCount: 25,
+    completedJobs: 30,
+    isVerified: false,
+    bankDetails: {
+      accountHolder: 'Royal Feast Hospitality',
+      accountNumber: '••••••••7712',
+      ifscCode: 'KKBK0009876',
+      upiId: 'royalfeast@kotak',
+      isKycCompleted: false,
+    },
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+  }
 ];
 
 export const mockCategories: Category[] = [
@@ -216,5 +282,24 @@ export const api = {
     // Persist to localStorage so refresh never loses the category
     saveStoredCategories(createdCat);
     return createdCat;
+  },
+
+  async uploadImage(file: File, folder = 'ezgo/categories'): Promise<string> {
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('folder', folder);
+
+    const res = await fetch(`${API_BASE}/upload`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || 'Image upload failed');
+    }
+
+    const data = await res.json();
+    return data.url;
   },
 };

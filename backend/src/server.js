@@ -11,6 +11,7 @@ import requirementRoutes from './routes/requirementRoutes.js';
 import bidRoutes from './routes/bidRoutes.js';
 import bookingRoutes from './routes/bookingRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import uploadRoutes from './routes/uploadRoutes.js';
 import { notFound, errorHandler } from './middlewares/errorHandler.js';
 
 // Load environment variables
@@ -55,6 +56,7 @@ app.use('/api/requirements', requirementRoutes);
 app.use('/api/bids', bidRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Error Handling Middlewares
 app.use(notFound);

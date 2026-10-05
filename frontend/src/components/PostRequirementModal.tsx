@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   Sparkles,
@@ -20,9 +20,13 @@ import {
   Tent,
   SunMedium,
   Plus,
+  Upload,
+  Image as ImageIcon,
+  Loader2,
 } from 'lucide-react';
 import type { Category, Requirement } from '../types';
 import { EVENT_CATEGORIES } from '../data/eventData';
+import { api } from '../services/api';
 
 interface PostRequirementModalProps {
   isOpen: boolean;
@@ -79,7 +83,26 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
   const [guestCount, setGuestCount] = useState<number>(200);
   const [budget, setBudget] = useState<number>(25000);
   const [selectedEquipments, setSelectedEquipments] = useState<string[]>([]);
+  const [customImageUrl, setCustomImageUrl] = useState<string>('');
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [uploadError, setUploadError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        setIsUploadingImage(true);
+        setUploadError('');
+        const cloudUrl = await api.uploadImage(file, 'ezgo/requirements');
+        setCustomImageUrl(cloudUrl);
+      } catch (err: any) {
+        setUploadError(err.message || 'Failed to upload photo to Cloudinary');
+      } finally {
+        setIsUploadingImage(false);
+      }
+    }
+  };
 
   // Sync initial category if changed
   useEffect(() => {
@@ -90,7 +113,24 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
 
   if (!isOpen) return null;
 
-  const activeCategoryData = EVENT_CATEGORIES.find((c) => c.name === category) || EVENT_CATEGORIES[0];
+  const mergedCategories = (_categories && _categories.length > 0)
+    ? _categories
+    : EVENT_CATEGORIES.map((c) => ({
+        _id: c.id,
+        name: c.name,
+        slug: c.id,
+        icon: 'Sparkles',
+        image: c.image,
+        description: c.description,
+        avgPriceRange: c.avgPriceRange,
+        isActive: true,
+      }));
+
+  const activeCategoryData = mergedCategories.find((c) => c.name === category) || mergedCategories[0] || {
+    name: 'Event Services',
+    image: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&auto=format&fit=crop&q=80',
+    avgPriceRange: '₹10,000 - ₹50,000',
+  };
   const maxAcceptableBid = Math.floor(budget * 0.85);
   const guaranteedMinSavings = budget - maxAcceptableBid;
 
@@ -123,7 +163,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
         category,
         title,
         description,
-        imageUrl: activeCategoryData.image,
+        imageUrl: customImageUrl || activeCategoryData.image,
         equipmentNeeded: selectedEquipments,
         location: { city, area, venueAddress },
         eventDate,
@@ -214,40 +254,54 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {EVENT_CATEGORIES.map((cat) => {
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5">
+              {mergedCategories.map((cat) => {
                 const isSelected = category === cat.name;
-                const Icon = CATEGORY_ICONS[cat.name] || Music;
+                const Icon = CATEGORY_ICONS[cat.name] || Sparkles;
+                const catImg = cat.image && cat.image.trim().length > 0
+                  ? cat.image
+                  : 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=400&auto=format&fit=crop&q=80';
+
                 return (
                   <button
-                    key={cat.id}
+                    key={cat._id || cat.name}
                     type="button"
                     onClick={() => handleSelectCategory(cat.name)}
-                    className={`p-3.5 rounded-xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
+                    className={`p-2.5 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer group overflow-hidden ${
                       isSelected
-                        ? 'border-orange-500 bg-orange-50/70 ring-2 ring-orange-500/20 shadow-xs'
-                        : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-slate-300'
+                        ? 'border-orange-500 bg-orange-50/80 ring-2 ring-orange-500/20 shadow-md shadow-orange-500/10'
+                        : 'border-slate-200 bg-white hover:border-orange-300 hover:shadow-sm'
                     }`}
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                        isSelected ? 'bg-orange-500 text-white' : 'bg-white border border-slate-200 text-slate-600'
-                      }`}>
-                        <Icon className="w-4 h-4" />
+                    {/* Category Image Thumbnail */}
+                    <div className="relative h-24 w-full rounded-xl overflow-hidden mb-2 bg-slate-100 border border-slate-100">
+                      <img
+                        src={catImg}
+                        alt={cat.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=400&auto=format&fit=crop&q=80';
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                      
+                      <div className="absolute top-2 left-2 w-7 h-7 rounded-lg bg-white/95 backdrop-blur-md flex items-center justify-center text-[#f95724] shadow-xs">
+                        <Icon className="w-3.5 h-3.5" />
                       </div>
+
                       {isSelected && (
-                        <div className="w-4 h-4 rounded-full bg-orange-500 flex items-center justify-center text-white">
-                          <Check className="w-2.5 h-2.5 stroke-[3]" />
+                        <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center text-white shadow-md">
+                          <Check className="w-3 h-3 stroke-[3]" />
                         </div>
                       )}
                     </div>
 
-                    <div>
-                      <span className="text-xs font-bold text-slate-900 block leading-tight">
+                    <div className="px-1 pb-1">
+                      <span className="text-xs font-bold text-slate-900 block leading-tight truncate">
                         {cat.name}
                       </span>
-                      <span className="text-[11px] text-slate-500 block mt-1">
-                        Avg. {cat.avgPriceRange}
+                      <span className="text-[11px] font-semibold text-[#f95724] block mt-0.5 truncate">
+                        Avg. {cat.avgPriceRange || '₹10,000 - ₹50,000'}
                       </span>
                     </div>
                   </button>
@@ -546,6 +600,69 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                 onChange={(e) => setDescription(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-medium focus:outline-none focus:border-orange-500 focus:bg-white"
               />
+            </div>
+
+            {/* Cloudinary Device Image Upload */}
+            <div className="pt-2 border-t border-slate-100">
+              <label className="block text-xs font-bold text-slate-700 mb-2 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <ImageIcon className="w-3.5 h-3.5 text-orange-500" />
+                  <span>Venue Photo / Inspiration Reference (Optional)</span>
+                </span>
+                <span className="text-[10px] text-slate-400 font-normal">Stored securely on Cloudinary</span>
+              </label>
+
+              <div className="border-2 border-dashed border-slate-200 hover:border-orange-400 rounded-2xl p-4 bg-slate-50/60 transition text-center">
+                <input
+                  type="file"
+                  id="req-custom-image-upload"
+                  accept="image/*"
+                  disabled={isUploadingImage}
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+                <label
+                  htmlFor="req-custom-image-upload"
+                  className={`cursor-pointer flex flex-col items-center justify-center gap-1.5 text-slate-600 ${isUploadingImage ? 'opacity-60 pointer-events-none' : ''}`}
+                >
+                  {isUploadingImage ? (
+                    <div className="flex flex-col items-center gap-1.5 py-2">
+                      <Loader2 className="w-6 h-6 text-orange-500 animate-spin" />
+                      <span className="font-bold text-xs text-orange-600">Uploading image to Cloudinary...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <Upload className="w-6 h-6 text-orange-500" />
+                      <span className="font-bold text-xs text-slate-800">
+                        {customImageUrl ? 'Change Photo from Device' : 'Click to Upload Venue / Reference Photo from Device'}
+                      </span>
+                      <span className="text-[10px] text-slate-400">Supports JPG, PNG, WebP up to 10MB</span>
+                    </>
+                  )}
+                </label>
+
+                {uploadError && (
+                  <p className="text-[11px] text-red-500 font-medium mt-2">{uploadError}</p>
+                )}
+
+                {customImageUrl && (
+                  <div className="mt-3 relative rounded-xl overflow-hidden h-36 border border-slate-200 bg-slate-900 group">
+                    <img src={customImageUrl} alt="Uploaded venue reference" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                      <span className="text-white text-xs font-bold bg-emerald-600 px-2.5 py-1 rounded-lg">
+                        ✓ Cloudinary Uploaded
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setCustomImageUrl('')}
+                        className="bg-red-600 text-white text-xs px-2 py-1 rounded-lg hover:bg-red-700"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

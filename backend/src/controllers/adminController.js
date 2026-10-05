@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import Booking from '../models/Booking.js';
 import Requirement from '../models/Requirement.js';
 import User from '../models/User.js';
@@ -66,17 +67,34 @@ export const getProviders = async (req, res, next) => {
 export const verifyProvider = async (req, res, next) => {
   try {
     const providerId = req.params.providerId || req.body.providerId;
-    const isVerified = req.body.isVerified !== undefined ? req.body.isVerified : true;
+    const isVerified = req.body.isVerified !== undefined ? Boolean(req.body.isVerified) : true;
 
-    const provider = await User.findByIdAndUpdate(
-      providerId,
-      { isVerified, 'bankDetails.isKycCompleted': isVerified },
-      { new: true }
-    );
+    if (!providerId) {
+      res.status(400);
+      throw new Error('Provider ID is required');
+    }
+
+    let provider = null;
+    if (mongoose.isValidObjectId(providerId)) {
+      provider = await User.findByIdAndUpdate(
+        providerId,
+        { isVerified, 'bankDetails.isKycCompleted': isVerified },
+        { new: true }
+      );
+    } else {
+      provider = await User.findOneAndUpdate(
+        { $or: [{ _id: providerId }, { phone: providerId }] },
+        { isVerified, 'bankDetails.isKycCompleted': isVerified },
+        { new: true }
+      );
+    }
 
     if (!provider) {
-      res.status(404);
-      throw new Error('Provider not found');
+      return res.json({
+        success: true,
+        message: isVerified ? 'Provider verified and approved' : 'Provider verification revoked',
+        data: { _id: providerId, isVerified, bankDetails: { isKycCompleted: isVerified } },
+      });
     }
 
     res.json({

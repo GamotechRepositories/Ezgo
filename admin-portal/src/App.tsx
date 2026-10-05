@@ -56,10 +56,30 @@ export default function App() {
     try {
       await api.verifyProvider(providerId, isVerified);
       setProviders((prev) =>
-        prev.map((p) => (p._id === providerId ? { ...p, isVerified } : p))
+        prev.map((p) =>
+          p._id === providerId
+            ? {
+                ...p,
+                isVerified,
+                bankDetails: p.bankDetails
+                  ? { ...p.bankDetails, isKycCompleted: isVerified }
+                  : undefined,
+              }
+            : p
+        )
       );
-      addToast('success', 'Provider Verification Updated', `KYC status set to ${isVerified ? 'VERIFIED' : 'REVOKED'}.`);
-    } catch (_) {}
+      setMetrics((prev) => ({
+        ...prev,
+        pendingVerificationCount: Math.max(0, prev.pendingVerificationCount + (isVerified ? -1 : 1)),
+      }));
+      addToast(
+        'success',
+        isVerified ? 'KYC Verification Approved' : 'KYC Verification Revoked',
+        `Provider KYC credentials have been ${isVerified ? 'verified & activated' : 'revoked'}.`
+      );
+    } catch (_) {
+      addToast('error', 'Update Failed', 'Could not update provider KYC status.');
+    }
   };
 
   const handleReleasePayout = (bookingId: string) => {
