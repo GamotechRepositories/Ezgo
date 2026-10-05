@@ -44,7 +44,7 @@ import {
   Briefcase,
   MoreHorizontal
 } from 'lucide-react';
-import type { Requirement, Booking, User, Category } from '../types';
+import type { Requirement, Booking, User, Category, Occasion } from '../types';
 import { EVENT_CATEGORIES, TESTIMONIALS, FAQS, OCCASION_CARDS } from '../data/eventData';
 
 const EVENT_TYPE_OPTIONS = [
@@ -150,6 +150,7 @@ interface RequesterViewProps {
   requirements: Requirement[];
   bookings: Booking[];
   categories: Category[];
+  occasions?: Occasion[];
   currentUser: User;
   onOpenPostModal: (initialCategory?: string) => void;
   onAcceptBid: (requirementId: string, bidId: string) => Promise<void>;
@@ -163,6 +164,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
   requirements,
   bookings,
   categories = [],
+  occasions = [],
   currentUser: _currentUser,
   onOpenPostModal,
   onAcceptBid,
@@ -176,6 +178,65 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('All');
   const [expandedReqId, setExpandedReqId] = useState<string | null>(null);
   const [expandedFaqIndex, setExpandedFaqIndex] = useState<number | null>(0);
+
+  // Dynamic Occasions passed from Admin
+  const displayOccasions: (Occasion | typeof OCCASION_CARDS[0])[] = (occasions && occasions.length > 0) ? occasions : OCCASION_CARDS;
+
+  const renderOccasionIcon = (iconType?: string) => {
+    switch (iconType) {
+      case 'rings':
+        return (
+          <svg className="w-5 h-5 text-[#f95724]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+            <circle cx="9" cy="12" r="4.5" />
+            <circle cx="15" cy="12" r="4.5" />
+          </svg>
+        );
+      case 'lotus':
+        return (
+          <svg className="w-5 h-5 text-[#f95724]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 3C12 3 10 7.5 10 11C10 13.5 12 15 12 15C12 15 14 13.5 14 11C14 7.5 12 3 12 3Z" />
+            <path d="M12 15C9.5 15 5 12 4 8C7 8 10 10.5 12 15Z" />
+            <path d="M12 15C14.5 15 19 12 20 8C17 8 14 10.5 12 15Z" />
+            <path d="M3 18C7 16 17 16 21 18" />
+          </svg>
+        );
+      case 'corporate':
+        return (
+          <svg className="w-5 h-5 text-[#f95724]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+          </svg>
+        );
+      case 'party':
+        return (
+          <svg className="w-5 h-5 text-[#f95724]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M8 21h8" />
+            <path d="M12 15v6" />
+            <path d="M5 4l7 7 7-7H5z" />
+            <circle cx="12" cy="7" r="1" fill="currentColor" />
+          </svg>
+        );
+      case 'birthday':
+        return (
+          <svg className="w-5 h-5 text-[#f95724]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8" />
+            <path d="M4 16s4-1 8-1 8 1 8 1" />
+            <path d="M12 7V3" />
+            <circle cx="12" cy="3" r="1" fill="currentColor" />
+          </svg>
+        );
+      case 'music':
+        return <Music className="w-5 h-5 text-[#f95724]" />;
+      case 'camera':
+        return <Camera className="w-5 h-5 text-[#f95724]" />;
+      case 'food':
+        return <Utensils className="w-5 h-5 text-[#f95724]" />;
+      default:
+        return <Sparkles className="w-5 h-5 text-[#f95724]" />;
+    }
+  };
 
   // Search Bar States in Hero
   const [heroService, setHeroService] = useState('Decoration');
@@ -601,7 +662,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                 id="occasion-cards-track"
                 className="flex items-center gap-5 sm:gap-6 overflow-x-auto py-10 px-6 sm:px-8 scrollbar-none scroll-smooth [perspective:1400px] [transform-style:preserve-3d]"
               >
-                {OCCASION_CARDS.map((occ, idx) => {
+                {displayOccasions.map((occ, idx) => {
                   // Pre-calculated 3D arc transforms for the panoramic curve matching the screenshot
                   const get3DTransform = () => {
                     if (idx === 0) return 'lg:[transform:rotateY(14deg)_translateY(-8px)_rotateZ(-2.5deg)_scale(0.97)] lg:hover:[transform:rotateY(0deg)_translateY(-16px)_translateZ(40px)_scale(1.05)]';
@@ -611,9 +672,11 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                     return 'lg:[transform:rotateY(-16deg)_translateY(-8px)_rotateZ(3deg)_scale(0.96)] lg:hover:[transform:rotateY(0deg)_translateY(-16px)_translateZ(40px)_scale(1.05)]';
                   };
 
+                  const occKey = (occ as any)._id || occ.id || occ.slug || `occ-${idx}`;
+
                   return (
                     <div
-                      key={occ.id}
+                      key={occKey}
                       onClick={() => onOpenPostModal(occ.name)}
                       className={`relative w-[185px] sm:w-[230px] lg:w-[252px] h-[260px] sm:h-[340px] lg:h-[380px] shrink-0 rounded-2xl sm:rounded-[34px] lg:rounded-[38px] overflow-hidden group cursor-pointer transition-all duration-500 ease-out border border-white/40 shadow-md sm:shadow-[0_22px_45px_-12px_rgba(30,20,10,0.28)] hover:shadow-[0_35px_65px_-15px_rgba(249,87,36,0.35)] ${get3DTransform()}`}
                     >
@@ -621,6 +684,9 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                       <img
                         src={occ.image}
                         alt={occ.name}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/occasion_parties.jpg';
+                        }}
                         className="w-full h-full object-cover group-hover:scale-112 transition-transform duration-700 ease-out"
                       />
 
@@ -637,44 +703,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                         {/* Left side: Circular White Icon Badge + Occasion Name */}
                         <div className="flex items-center gap-2.5 min-w-0">
                           <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white/95 backdrop-blur-md flex items-center justify-center text-[#f95724] shadow-lg shadow-black/30 shrink-0 group-hover:scale-105 transition-transform">
-                            {occ.iconType === 'rings' && (
-                              <svg className="w-5 h-5 text-[#f95724]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                                <circle cx="9" cy="12" r="4.5" />
-                                <circle cx="15" cy="12" r="4.5" />
-                              </svg>
-                            )}
-                            {occ.iconType === 'lotus' && (
-                              <svg className="w-5 h-5 text-[#f95724]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M12 3C12 3 10 7.5 10 11C10 13.5 12 15 12 15C12 15 14 13.5 14 11C14 7.5 12 3 12 3Z" />
-                                <path d="M12 15C9.5 15 5 12 4 8C7 8 10 10.5 12 15Z" />
-                                <path d="M12 15C14.5 15 19 12 20 8C17 8 14 10.5 12 15Z" />
-                                <path d="M3 18C7 16 17 16 21 18" />
-                              </svg>
-                            )}
-                            {occ.iconType === 'corporate' && (
-                              <svg className="w-5 h-5 text-[#f95724]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                                <circle cx="9" cy="7" r="4" />
-                                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                              </svg>
-                            )}
-                            {occ.iconType === 'party' && (
-                              <svg className="w-5 h-5 text-[#f95724]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M8 21h8" />
-                                <path d="M12 15v6" />
-                                <path d="M5 4l7 7 7-7H5z" />
-                                <circle cx="12" cy="7" r="1" fill="currentColor" />
-                              </svg>
-                            )}
-                            {occ.iconType === 'birthday' && (
-                              <svg className="w-5 h-5 text-[#f95724]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8" />
-                                <path d="M4 16s4-1 8-1 8 1 8 1" />
-                                <path d="M12 7V3" />
-                                <circle cx="12" cy="3" r="1" fill="currentColor" />
-                              </svg>
-                            )}
+                            {renderOccasionIcon(occ.iconType)}
                           </div>
                           <span className="font-editorial text-base sm:text-lg font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] tracking-tight truncate">
                             {occ.name}

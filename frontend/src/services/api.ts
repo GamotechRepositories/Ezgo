@@ -1,4 +1,4 @@
-import type { User, Requirement, Bid, Booking, Category, AdminMetrics, UserRole } from '../types';
+import type { User, Requirement, Bid, Booking, Category, Occasion, AdminMetrics, UserRole } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -246,5 +246,76 @@ export const api = {
 
     const data = await res.json();
     return data.url;
+  },
+
+  async getOccasions(): Promise<Occasion[]> {
+    const defaults: Occasion[] = [
+      { id: 'occ-weddings', name: 'Weddings', slug: 'weddings', image: '/occasion_weddings.jpg', iconType: 'rings' },
+      { id: 'occ-festivals', name: 'Festivals', slug: 'festivals', image: '/occasion_festivals.jpg', iconType: 'lotus' },
+      { id: 'occ-corporate', name: 'Corporate Events', slug: 'corporate-events', image: '/occasion_corporate.jpg', iconType: 'corporate' },
+      { id: 'occ-parties', name: 'Private Parties', slug: 'private-parties', image: '/occasion_parties.jpg', iconType: 'party' },
+      { id: 'occ-birthdays', name: 'Birthdays', slug: 'birthdays', image: '/occasion_birthdays.jpg', iconType: 'birthday' },
+    ];
+
+    let baseList = defaults;
+    try {
+      const res = await fetch(`${API_BASE}/occasions`);
+      if (res.ok) {
+        const json = await res.json();
+        if (Array.isArray(json.data) && json.data.length > 0) {
+          baseList = json.data;
+        }
+      }
+    } catch (_) {}
+
+    try {
+      const stored = localStorage.getItem('ezgo_custom_occasions');
+      if (stored) {
+        const parsed: Occasion[] = JSON.parse(stored);
+        const combined = [...baseList];
+        for (const item of parsed) {
+          if (!combined.some(o => o.slug === item.slug || (o._id && o._id === item._id))) {
+            combined.push(item);
+          }
+        }
+        return combined;
+      }
+    } catch (_) {}
+
+    return baseList;
+  },
+
+  async addOccasion(occasionData: Partial<Occasion>): Promise<Occasion> {
+    let created: Occasion | null = null;
+    try {
+      const res = await fetch(`${API_BASE}/occasions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(occasionData),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        created = json.data || json;
+      }
+    } catch (_) {}
+
+    if (!created) {
+      created = {
+        _id: 'occ-' + Date.now(),
+        name: occasionData.name || 'New Occasion',
+        slug: occasionData.slug || (occasionData.name || '').toLowerCase().replace(/[^a-z0-9]/g, '-'),
+        image: occasionData.image || '/occasion_parties.jpg',
+        iconType: occasionData.iconType || 'sparkles',
+        isActive: true,
+      };
+    }
+
+    try {
+      const stored = localStorage.getItem('ezgo_custom_occasions');
+      const list: Occasion[] = stored ? JSON.parse(stored) : [];
+      localStorage.setItem('ezgo_custom_occasions', JSON.stringify([...list.filter(o => o.slug !== created!._id), created]));
+    } catch (_) {}
+
+    return created;
   },
 };

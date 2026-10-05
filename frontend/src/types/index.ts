@@ -32,6 +32,18 @@ export interface Category {
   description: string;
   avgPriceRange: string;
   isActive: boolean;
+  sampleEquipments?: string[];
+}
+
+export interface Occasion {
+  _id?: string;
+  id?: string;
+  name: string;
+  slug: string;
+  image: string;
+  iconType?: 'rings' | 'lotus' | 'corporate' | 'party' | 'birthday' | 'sparkles' | 'music' | 'camera' | 'food';
+  order?: number;
+  isActive?: boolean;
 }
 
 export interface Requirement {

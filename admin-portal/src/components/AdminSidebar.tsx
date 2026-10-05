@@ -9,15 +9,16 @@ import {
   ExternalLink,
   X,
   Sparkles,
-  Server
+  Server,
+  PartyPopper
 } from 'lucide-react';
 import { EzGoLogo } from './EzGoLogo';
 import type { User } from '../types';
 
 interface AdminSidebarProps {
   admin: User;
-  activeTab: 'metrics' | 'kyc' | 'escrow' | 'categories' | 'logs';
-  onTabChange: (tab: 'metrics' | 'kyc' | 'escrow' | 'categories' | 'logs') => void;
+  activeTab: 'metrics' | 'kyc' | 'escrow' | 'categories' | 'occasions' | 'logs';
+  onTabChange: (tab: 'metrics' | 'kyc' | 'escrow' | 'categories' | 'occasions' | 'logs') => void;
   pendingKycCount: number;
   activeEscrowCount: number;
   isOpen: boolean;
@@ -66,6 +67,14 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       shortLabel: 'Categories',
       icon: FolderKanban,
       iconColor: 'text-purple-600',
+      badge: null,
+    },
+    {
+      id: 'occasions' as const,
+      label: 'Occasions & Themes',
+      shortLabel: 'Occasions',
+      icon: PartyPopper,
+      iconColor: 'text-amber-500',
       badge: null,
     },
     {

@@ -15,11 +15,11 @@ import type { User } from '../types';
 
 interface AdminHeaderProps {
   admin: User;
-  activeTab: 'metrics' | 'kyc' | 'escrow' | 'categories' | 'logs';
+  activeTab: 'metrics' | 'kyc' | 'escrow' | 'categories' | 'occasions' | 'logs';
   onToggleSidebar: () => void;
   pendingKycCount: number;
   activeEscrowCount: number;
-  onTabChange: (tab: 'metrics' | 'kyc' | 'escrow' | 'categories' | 'logs') => void;
+  onTabChange: (tab: 'metrics' | 'kyc' | 'escrow' | 'categories' | 'occasions' | 'logs') => void;
 }
 
 export const AdminHeader: React.FC<AdminHeaderProps> = ({

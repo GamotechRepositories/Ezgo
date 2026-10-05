@@ -9,13 +9,14 @@ import { Footer } from './components/Footer';
 import { ToastContainer } from './components/Toast';
 import type { ToastMessage } from './components/Toast';
 import { api, mockCategories, mockUsers } from './services/api';
-import type { User, Requirement, Booking, Category } from './types';
+import type { User, Requirement, Booking, Category, Occasion } from './types';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User>(mockUsers.requester);
   
   // Data State
   const [categories, setCategories] = useState<Category[]>(mockCategories);
+  const [occasions, setOccasions] = useState<Occasion[]>([]);
   const [requirements, setRequirements] = useState<Requirement[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
 
@@ -46,11 +47,12 @@ export default function App() {
   // Initial Load
   const loadData = async () => {
     try {
-      const [catsRes, reqsRes, bookingsRes, userRes] = await Promise.allSettled([
+      const [catsRes, reqsRes, bookingsRes, userRes, occsRes] = await Promise.allSettled([
         api.getCategories(),
         api.getRequirements(),
         api.getBookings(),
         api.getUserByRole('requester'),
+        api.getOccasions(),
       ]);
 
       if (userRes.status === 'fulfilled' && userRes.value) {
@@ -65,6 +67,9 @@ export default function App() {
       if (bookingsRes.status === 'fulfilled' && bookingsRes.value.length > 0) {
         setBookings(bookingsRes.value);
       }
+      if (occsRes.status === 'fulfilled' && occsRes.value.length > 0) {
+        setOccasions(occsRes.value);
+      }
     } catch (_) {
       // Fallbacks already initialized in state
     }
@@ -72,6 +77,20 @@ export default function App() {
 
   useEffect(() => {
     loadData();
+
+    const refreshOccasions = () => {
+      api.getOccasions().then((occs) => {
+        if (occs && occs.length > 0) setOccasions(occs);
+      }).catch(() => {});
+    };
+
+    window.addEventListener('focus', refreshOccasions);
+    const interval = setInterval(refreshOccasions, 8000);
+
+    return () => {
+      window.removeEventListener('focus', refreshOccasions);
+      clearInterval(interval);
+    };
   }, []);
 
   const handleOpenPostModal = (categoryName?: string) => {
@@ -250,6 +269,7 @@ export default function App() {
           requirements={requirements}
           bookings={bookings}
           categories={categories}
+          occasions={occasions}
           currentUser={currentUser}
           onOpenPostModal={handleOpenPostModal}
           onAcceptBid={handleAcceptBid}

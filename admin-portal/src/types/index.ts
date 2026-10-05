@@ -32,6 +32,17 @@ export interface Category {
   isActive: boolean;
 }
 
+export interface Occasion {
+  _id?: string;
+  id?: string;
+  name: string;
+  slug: string;
+  image: string;
+  iconType?: 'rings' | 'lotus' | 'corporate' | 'party' | 'birthday' | 'sparkles' | 'music' | 'camera' | 'food';
+  order?: number;
+  isActive?: boolean;
+}
+
 export interface Requirement {
   _id: string;
   requesterId: User | string;
