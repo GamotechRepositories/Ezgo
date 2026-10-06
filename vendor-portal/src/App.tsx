@@ -9,11 +9,42 @@ import { EquipmentInventory } from './components/EquipmentInventory';
 import { RuleExplainer } from './components/RuleExplainer';
 import { ToastContainer } from './components/Toast';
 import type { ToastMessage } from './components/Toast';
-import { api, mockVendor } from './services/api';
+import { LoginPage } from './components/LoginPage';
+import { api, getToken, clearToken } from './services/api';
 import type { Requirement, Booking, User } from './types';
 
 export default function App() {
-  const [currentVendor, setCurrentVendor] = useState<User>(mockVendor);
+  const [currentVendor, setCurrentVendor] = useState<User | null>(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (!getToken()) {
+      setReady(true);
+      return;
+    }
+    api.me()
+      .then(setCurrentVendor)
+      .catch(() => clearToken())
+      .finally(() => setReady(true));
+  }, []);
+
+  if (!ready) {
+    return <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center text-slate-600">Loading...</div>;
+  }
+  if (!currentVendor) return <LoginPage onSuccess={setCurrentVendor} />;
+  return (
+    <VendorApp
+      currentVendor={currentVendor}
+      onLogout={() => {
+        clearToken();
+        setCurrentVendor(null);
+      }}
+    />
+  );
+}
+
+function VendorApp({ currentVendor, onLogout }: { currentVendor: User; onLogout: () => void }) {
+  const [loadError, setLoadError] = useState('');
   const [activeTab, setActiveTab] = useState<'auctions' | 'orders' | 'wallet' | 'inventory'>('auctions');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
@@ -34,17 +65,17 @@ export default function App() {
   };
 
   const loadData = async () => {
+    setLoadError('');
     try {
-      const user = await api.getVendorUser();
-      if (user) setCurrentVendor(user);
-
       const [reqs, bks] = await Promise.all([
         api.getRequirements(),
-        api.getMyBookings(user?._id),
+        api.getMyBookings(currentVendor._id),
       ]);
       setRequirements(reqs);
       setBookings(bks);
-    } catch (_) {}
+    } catch (err: any) {
+      setLoadError(err.message);
+    }
   };
 
   useEffect(() => {
@@ -70,23 +101,12 @@ export default function App() {
       );
       addToast(
         'success',
-        'Bid Dispatched to Host!',
-        `Your bid of ₹${bidData.amount.toLocaleString()} is live. Host will review your equipment package.`
+        'Bid sent',
+        `The host can now see your bid of ₹${bidData.amount.toLocaleString()}.`
       );
     } catch (err: any) {
-      addToast('error', 'Bid Error', err.message);
+      addToast('error', 'Could not send bid', err.message);
     }
-  };
-
-  const handleCompleteBooking = async (bookingId: string) => {
-    setBookings((prev) =>
-      prev.map((b) => (b._id === bookingId ? { ...b, status: 'COMPLETED' } : b))
-    );
-    addToast(
-      'success',
-      'Event Completed!',
-      'Service marked complete. Full payout has been unlocked into your wallet.'
-    );
   };
 
   const activeOrdersCount = bookings.filter((b) => b.status === 'ACTIVE').length;
@@ -114,9 +134,22 @@ export default function App() {
           onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
           onTabChange={setActiveTab}
           activeOrdersCount={activeOrdersCount}
+          onLogout={onLogout}
         />
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+          {loadError && (
+            <div className="mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <p className="text-sm">{loadError}</p>
+              <button
+                onClick={loadData}
+                className="px-4 py-2 rounded-full bg-white border border-rose-200 text-sm font-semibold hover:bg-rose-100 transition cursor-pointer shrink-0"
+              >
+                Try again
+              </button>
+            </div>
+          )}
+
           {activeTab === 'auctions' && (
             <LiveAuctionDesk
               requirements={requirements}
@@ -127,10 +160,7 @@ export default function App() {
           )}
 
           {activeTab === 'orders' && (
-            <ActiveOrdersDesk
-              bookings={bookings}
-              onCompleteBooking={handleCompleteBooking}
-            />
+            <ActiveOrdersDesk bookings={bookings} />
           )}
 
           {activeTab === 'wallet' && (
@@ -141,12 +171,12 @@ export default function App() {
           )}
 
           {activeTab === 'inventory' && (
-            <EquipmentInventory />
+            <EquipmentInventory vendorId={currentVendor._id} />
           )}
         </main>
 
         <footer className="py-4 px-6 border-t border-slate-200/80 text-center text-xs text-slate-400 bg-white/50">
-          EzGo Verified Vendor Partner Workspace • 100% Escrow Backed Direct Payouts
+          EzGo for vendors · You get your full bid after every event
         </footer>
       </div>
 

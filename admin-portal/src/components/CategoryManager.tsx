@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { FolderKanban, Plus, Image as ImageIcon, Upload, Sparkles, X, Check, Camera, Loader2 } from 'lucide-react';
+import { Plus, Image as ImageIcon, Upload, X, Check, Camera, Loader2 } from 'lucide-react';
 import type { Category } from '../types';
 import { api } from '../services/api';
 
 interface CategoryManagerProps {
   categories: Category[];
   onAddCategory: (cat: Partial<Category>) => void;
+  onUpdateCategory: (id: string, cat: Partial<Category>) => Promise<void> | void;
 }
 
 const PRESET_IMAGES = [
@@ -39,6 +40,7 @@ export const getResolvedCategoryImage = (cat: Partial<Category>): string => {
 export const CategoryManager: React.FC<CategoryManagerProps> = ({
   categories,
   onAddCategory,
+  onUpdateCategory,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [name, setName] = useState('');
@@ -72,10 +74,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({
       try {
         setUpdatingCatId(cat._id);
         const cloudUrl = await api.uploadImage(file, 'ezgo/categories');
-        onAddCategory({
-          ...cat,
-          image: cloudUrl,
-        });
+        await onUpdateCategory(cat._id, { image: cloudUrl });
       } catch (err: any) {
         alert('Upload failed: ' + err.message);
       } finally {
@@ -108,12 +107,9 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({
     <div className="space-y-6 animate-in fade-in duration-300">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2">
-            <FolderKanban className="w-6 h-6 text-purple-600" />
-            <span>Event Categories & Benchmark Pricing</span>
-          </h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Manage service categories and banner photos displayed on host posting wizard and vendor reverse-bidding feeds.
+          <h2 className="text-2xl font-bold text-slate-900">Categories</h2>
+          <p className="text-base text-slate-600 mt-1">
+            Services hosts can ask for when they post a request. Vendors see the same list.
           </p>
         </div>
 
@@ -123,10 +119,10 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({
             setUploadError('');
             setIsModalOpen(true);
           }}
-          className="px-5 py-2.5 rounded-full bg-[#f95724] hover:bg-[#e04818] text-white font-bold text-xs shadow-md shadow-[#f95724]/25 flex items-center gap-1.5 cursor-pointer transition"
+          className="px-5 py-2.5 rounded-full bg-[#f95724] hover:bg-[#e04818] text-white font-semibold text-sm flex items-center gap-1.5 cursor-pointer transition shrink-0"
         >
           <Plus className="w-4 h-4" />
-          <span>Add New Category</span>
+          <span>Add category</span>
         </button>
       </div>
 
@@ -155,19 +151,13 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/30" />
 
                 <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-10">
-                  <span className="px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-md text-purple-900 text-[10px] font-bold shadow">
-                    /{cat.slug}
-                  </span>
-                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100/95 backdrop-blur-md px-2.5 py-0.5 rounded-full shadow">
-                    Active ✓
-                  </span>
                 </div>
 
                 {/* Direct Cloudinary Change Button on Hover */}
                 <label
                   htmlFor={`cat-img-${cat._id}`}
-                  title="Upload / Change Category Photo (Cloudinary)"
-                  className="absolute top-3 right-3 sm:right-24 z-20 px-2 py-1 rounded-lg bg-black/70 hover:bg-[#f95724] text-white backdrop-blur-md cursor-pointer transition-all duration-200 shadow-md opacity-0 group-hover:opacity-100 flex items-center gap-1 text-[10px] font-bold"
+                  title="Change photo"
+                  className="absolute top-3 right-3 z-20 px-2.5 py-1 rounded-lg bg-black/70 hover:bg-[#f95724] text-white cursor-pointer transition flex items-center gap-1 text-xs font-medium"
                 >
                   {isUpdatingThis ? (
                     <>
@@ -177,7 +167,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({
                   ) : (
                     <>
                       <Camera className="w-3.5 h-3.5" />
-                      <span>Change Photo</span>
+                      <span>Change photo</span>
                     </>
                   )}
                   <input
@@ -197,16 +187,16 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({
 
               {/* Content Details */}
               <div className="p-5 flex-1 flex flex-col justify-between space-y-3">
-                <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
-                  {cat.description || 'Verified event vendor service equipment & professional crew.'}
+                <p className="text-sm text-slate-600 line-clamp-2 leading-relaxed">
+                  {cat.description || <span className="text-slate-400">No description</span>}
                 </p>
 
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <span className="text-slate-400 font-bold uppercase text-[10px]">Benchmark Price</span>
-                  <span className="font-extrabold text-[#f95724] bg-orange-50 px-2 py-0.5 rounded-lg border border-orange-100">
-                    {cat.avgPriceRange}
-                  </span>
-                </div>
+                {cat.avgPriceRange && (
+                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-sm">
+                    <span className="text-slate-500">Usual price</span>
+                    <span className="font-semibold text-slate-900">{cat.avgPriceRange}</span>
+                  </div>
+                )}
               </div>
             </div>
           );
@@ -218,17 +208,13 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
           <div className="w-full max-w-lg rounded-3xl bg-white border border-slate-200 p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-orange-100 text-[#f95724] flex items-center justify-center font-bold">
-                  <Sparkles className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900">Create New Event Category</h3>
-                  <p className="text-[11px] text-slate-500">Add service name, image/photo, scope & price benchmark</p>
-                </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">Add category</h3>
+                <p className="text-sm text-slate-500">Name, photo, short description, and usual price</p>
               </div>
               <button
                 onClick={() => setIsModalOpen(false)}
+                aria-label="Close"
                 className="p-1 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
               >
                 <X className="w-5 h-5" />
@@ -237,7 +223,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({
 
             <form onSubmit={handleSubmit} className="space-y-4 text-xs">
               <div>
-                <label className="font-bold text-slate-700">Category Name *</label>
+                <label className="font-medium text-slate-700">Name</label>
                 <input
                   type="text"
                   value={name}
@@ -255,7 +241,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({
                     <ImageIcon className="w-3.5 h-3.5 text-[#f95724]" />
                     <span>Category Photo / Banner *</span>
                   </label>
-                  <div className="flex bg-slate-100 p-0.5 rounded-lg text-[11px]">
+                  <div className="flex bg-slate-100 p-0.5 rounded-lg text-xs">
                     <button
                       type="button"
                       onClick={() => setImageTab('preset')}
@@ -282,7 +268,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({
 
                 {imageTab === 'preset' && (
                   <div>
-                    <p className="text-[11px] text-slate-500 mb-1.5">Choose from curated event service images:</p>
+                    <p className="text-sm text-slate-500 mb-1.5">Pick a picture:</p>
                     <div className="grid grid-cols-4 gap-2">
                       {PRESET_IMAGES.map((preset) => {
                         const isSelected = imageUrl === preset.url;
@@ -295,7 +281,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({
                           >
                             <img src={preset.url} alt={preset.name} className="w-full h-full object-cover" />
                             <div className="absolute inset-0 bg-black/40 flex items-end p-1">
-                              <span className="text-[9px] font-bold text-white truncate drop-shadow">{preset.name}</span>
+                              <span className="text-xs font-medium text-white truncate drop-shadow">{preset.name}</span>
                             </div>
                             {isSelected && (
                               <div className="absolute top-1 right-1 w-4 h-4 bg-[#f95724] text-white rounded-full flex items-center justify-center">
@@ -338,18 +324,18 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({
                       {isUploading ? (
                         <div className="flex flex-col items-center gap-1">
                           <div className="w-6 h-6 border-2 border-[#f95724] border-t-transparent rounded-full animate-spin" />
-                          <span className="font-bold text-xs text-[#f95724]">Uploading to Cloudinary...</span>
+                          <span className="font-medium text-sm text-[#f95724]">Uploading...</span>
                         </div>
                       ) : (
                         <>
                           <Upload className="w-6 h-6 text-[#f95724]" />
                           <span className="font-bold text-xs text-slate-800">Click to upload photo from your device</span>
-                          <span className="text-[10px] text-slate-400">PNG, JPG, WebP up to 10MB</span>
+                          <span className="text-xs text-slate-500">PNG, JPG or WebP, up to 10 MB</span>
                         </>
                       )}
                     </label>
                     {uploadError && (
-                      <p className="text-[11px] text-red-500 font-medium mt-2">{uploadError}</p>
+                      <p className="text-sm text-red-600 mt-2">{uploadError}</p>
                     )}
                   </div>
                 )}
@@ -358,15 +344,15 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({
                 {imageUrl && (
                   <div className="mt-2 relative rounded-xl overflow-hidden h-28 border border-slate-200 bg-slate-100">
                     <img src={imageUrl} alt="Category preview" className="w-full h-full object-cover" />
-                    <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded text-[10px] text-white font-medium">
-                      ✓ Image Preview
+                    <div className="absolute bottom-2 left-2 bg-black/60 px-2 py-0.5 rounded text-xs text-white font-medium">
+                      Preview
                     </div>
                   </div>
                 )}
               </div>
 
               <div>
-                <label className="font-bold text-slate-700">Description & Equipment Scope</label>
+                <label className="font-medium text-slate-700">Short description</label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -377,7 +363,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({
               </div>
 
               <div>
-                <label className="font-bold text-slate-700">Benchmark Price Range (Display Only)</label>
+                <label className="font-medium text-slate-700">Usual price (shown to hosts)</label>
                 <input
                   type="text"
                   value={avgPrice}

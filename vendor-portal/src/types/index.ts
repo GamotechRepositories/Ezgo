@@ -103,7 +103,8 @@ export interface Booking {
 }
 
 export interface EquipmentItem {
-  id: string;
+  _id: string;
+  providerId?: string;
   name: string;
   category: string;
   specs: string;

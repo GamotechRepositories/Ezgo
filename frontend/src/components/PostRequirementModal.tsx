@@ -57,6 +57,22 @@ const POPULAR_AREAS_BY_CITY: Record<string, string[]> = {
   Chennai: ['T. Nagar', 'Adyar', 'Anna Nagar', 'Velachery', 'OMR / ECR', 'Nungambakkam'],
 };
 
+const findCategory = <T extends { name: string }>(list: T[], name?: string): T | undefined => {
+  if (!name) return undefined;
+  const wanted = name.toLowerCase();
+  return (
+    list.find((c) => c.name.toLowerCase() === wanted) ||
+    list.find((c) => {
+      const keyword = c.name.toLowerCase().split(/[\s/&,]+/)[0];
+      return keyword.length >= 2 && wanted.includes(keyword);
+    })
+  );
+};
+
+const isoDate = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const todayIso = () => isoDate(new Date());
+const twoWeeksFromNowIso = () => isoDate(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000));
+
 const GUEST_TIERS = [
   { label: 'Small / Intimate', range: '50 - 100 Guests', count: 80 },
   { label: 'Medium Party / Sangeet', range: '150 - 300 Guests', count: 200 },
@@ -77,7 +93,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
   const [city, setCity] = useState('Hyderabad');
   const [area, setArea] = useState('Gachibowli');
   const [venueAddress, setVenueAddress] = useState('');
-  const [eventDate, setEventDate] = useState('2026-10-25');
+  const [eventDate, setEventDate] = useState(twoWeeksFromNowIso);
   const [startTime, setStartTime] = useState('18:00');
   const [endTime, setEndTime] = useState('23:00');
   const [guestCount, setGuestCount] = useState<number>(200);
@@ -106,10 +122,13 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
 
   // Sync initial category if changed
   useEffect(() => {
-    if (initialCategory) {
-      setCategory(initialCategory);
+    if (!initialCategory) return;
+    setCategory(initialCategory);
+    const isRealCategory = (_categories || []).some((c) => c.name.toLowerCase() === initialCategory.toLowerCase());
+    if (!isRealCategory) {
+      setTitle((prev) => prev || initialCategory);
     }
-  }, [initialCategory]);
+  }, [initialCategory, _categories]);
 
   if (!isOpen) return null;
 
@@ -126,7 +145,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
         isActive: true,
       }));
 
-  const activeCategoryData = mergedCategories.find((c) => c.name === category) || mergedCategories[0] || {
+  const activeCategoryData = findCategory(mergedCategories, category) || mergedCategories[0] || {
     name: 'Event Services',
     image: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&auto=format&fit=crop&q=80',
     avgPriceRange: '₹10,000 - ₹50,000',
@@ -160,7 +179,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
     try {
       await onSubmit({
         requesterId,
-        category,
+        category: activeCategoryData.name,
         title,
         description,
         imageUrl: customImageUrl || activeCategoryData.image,
@@ -172,8 +191,8 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
         budget,
       });
       onClose();
-    } catch (err) {
-      console.error(err);
+    } catch (_) {
+      // Error toast already shown; keep the form open so nothing is lost
     } finally {
       setLoading(false);
     }
@@ -258,7 +277,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3.5 lg:gap-4">
               {mergedCategories.map((cat) => {
-                const isSelected = category === cat.name;
+                const isSelected = activeCategoryData.name === cat.name;
                 const Icon = CATEGORY_ICONS[cat.name] || Sparkles;
                 const catImg = cat.image && cat.image.trim().length > 0
                   ? cat.image
@@ -421,6 +440,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                 <input
                   type="date"
                   value={eventDate}
+                  min={todayIso()}
                   onChange={(e) => setEventDate(e.target.value)}
                   required
                   className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs sm:text-sm font-bold focus:outline-none focus:border-orange-500 focus:bg-white transition"

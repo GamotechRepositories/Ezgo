@@ -6,8 +6,11 @@ import {
   updateItem,
   deleteItem,
 } from '../controllers/itemController.js';
+import { requireAuth } from '../middlewares/auth.js';
 
 const router = express.Router();
+
+router.use(requireAuth);
 
 router.route('/')
   .get(getItems)

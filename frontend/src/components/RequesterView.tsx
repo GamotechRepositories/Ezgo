@@ -1,7 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { 
   Plus, 
-  Clock, 
   MapPin, 
   Calendar, 
   CheckCircle2, 
@@ -12,10 +11,8 @@ import {
   ArrowRight, 
   Users, 
   Search, 
-  Filter, 
   ChevronDown, 
   ChevronUp, 
-  Award, 
   Shield, 
   Camera, 
   Volume2, 
@@ -24,16 +21,13 @@ import {
   Heart, 
   Tent, 
   Lightbulb,
-  MessageCircle,
   ChevronLeft,
   ChevronRight,
-  BarChart2,
   Check,
   IndianRupee,
   X,
   Headphones,
   ArrowDown,
-  Zap,
   ArrowUpRight,
   Percent,
   Package,
@@ -45,7 +39,7 @@ import {
   MoreHorizontal
 } from 'lucide-react';
 import type { Requirement, Booking, User, Category, Occasion } from '../types';
-import { EVENT_CATEGORIES, TESTIMONIALS, FAQS, OCCASION_CARDS } from '../data/eventData';
+import { EVENT_CATEGORIES, FAQS, OCCASION_CARDS } from '../data/eventData';
 
 const EVENT_TYPE_OPTIONS = [
   { 
@@ -154,9 +148,7 @@ interface RequesterViewProps {
   currentUser: User;
   onOpenPostModal: (initialCategory?: string) => void;
   onAcceptBid: (requirementId: string, bidId: string) => Promise<void>;
-  onOpenPaymentModal: (booking: Booking) => void;
-  onCompleteBooking: (bookingId: string) => Promise<void>;
-  onOpenReviewModal: (booking: Booking) => void;
+  onOpenBookings: () => void;
   onOpenExplainer: () => void;
 }
 
@@ -168,12 +160,9 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
   currentUser: _currentUser,
   onOpenPostModal,
   onAcceptBid,
-  onOpenPaymentModal,
-  onCompleteBooking,
-  onOpenReviewModal,
+  onOpenBookings,
   onOpenExplainer: _onOpenExplainer,
 }) => {
-  const [activeTab, setActiveTab] = useState<'open' | 'active' | 'completed'>('open');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('All');
   const [expandedReqId, setExpandedReqId] = useState<string | null>(null);
@@ -241,7 +230,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
   // Search Bar States in Hero
   const [heroService, setHeroService] = useState('Decoration');
   const [heroLocation, setHeroLocation] = useState('Pune, Maharashtra');
-  const [heroDate, setHeroDate] = useState('2026-10-25');
+  const [heroDate, setHeroDate] = useState('');
 
   // Interactive Event Package Builder State
   const [packageEventType, setPackageEventType] = useState('Wedding');
@@ -283,7 +272,6 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
 
   const openReqs = requirements.filter((r) => r.status === 'OPEN' || r.status === 'ACCEPTED');
   const activeBookings = bookings.filter((b) => b.status === 'ACTIVE' || b.status === 'AWAITING_PAYMENT');
-  const completedBookings = bookings.filter((b) => b.status === 'COMPLETED');
 
   // Filtered requirements
   const filteredOpenReqs = openReqs.filter((r) => {
@@ -333,34 +321,19 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
         {/* Subtle Ambient Warm Glow */}
         <div className="absolute top-10 left-1/4 w-96 h-96 bg-amber-200/20 rounded-full blur-3xl pointer-events-none" />
 
-        {/* Decorative Top-Left Leaves Motif */}
-        <div className="absolute top-0 left-0 w-32 sm:w-44 h-32 sm:h-44 opacity-20 sm:opacity-25 pointer-events-none">
-          <svg viewBox="0 0 160 160" fill="#3a5a20">
-            <path d="M0,0 Q60,10 80,60 Q100,20 160,0 Q120,60 100,100 Q60,120 0,160 Q20,100 0,0 Z" />
-          </svg>
-        </div>
-
-        {/* Decorative Bottom-Right Leaves Motif */}
-        <div className="absolute bottom-0 right-0 w-32 sm:w-44 h-32 sm:h-44 opacity-20 sm:opacity-25 pointer-events-none rotate-180">
-          <svg viewBox="0 0 160 160" fill="#3a5a20">
-            <path d="M0,0 Q60,10 80,60 Q100,20 160,0 Q120,60 100,100 Q60,120 0,160 Q20,100 0,0 Z" />
-          </svg>
-        </div>
-
         {/* Hero Content Container (Expansive Full Wide Screen) */}
         <div className="relative z-10 w-full max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-14">
           <div className="max-w-3xl space-y-3 sm:space-y-5">
             
             {/* Main Headline - Exactly 3 Clean Lines with Expanded Mobile Height */}
-            <h1 className="font-heading text-[44px] xs:text-[50px] sm:text-6xl lg:text-[76px] font-black text-[#0f172a] leading-[1.14] sm:leading-[1.08] tracking-tight">
-              Your Event.<br />
-              Your Budget.<br />
-              <span className="text-[#f95724] inline-block mt-1 sm:mt-1.5">Their Best Bid.</span>
+            <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl font-bold text-[#0f172a] leading-[1.15] tracking-tight">
+              Post your budget.<br />
+              Vendors bid lower.<br />
+              <span className="text-[#f95724]">You pick the best one.</span>
             </h1>
 
-            {/* Subtitle (Clean, Short & Minimal) */}
-            <p className="text-slate-700 font-medium text-sm sm:text-base leading-snug max-w-lg">
-              Post what you need. Top verified event pros bid lowest to win your booking.
+            <p className="text-slate-700 text-base sm:text-lg leading-relaxed max-w-xl">
+              You set the most you will pay. A vendor can win only by bidding at least 15% below that. You pay the bid plus a 10% fee, and EzGo holds the money until the event is done.
             </p>
 
             {/* Redesigned 100% Responsive Interactive Search / Requirement Bar */}
@@ -435,6 +408,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                       <input
                         type="date"
                         value={heroDate}
+                        min={new Date().toISOString().slice(0, 10)}
                         onChange={(e) => setHeroDate(e.target.value)}
                         className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                       />
@@ -453,57 +427,6 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                 <ArrowRight className="w-4 h-4" />
               </button>
 
-            </div>
-
-            {/* Redesigned 4 Stats Bar Below */}
-            <div className="hidden sm:block w-full max-w-3xl pt-6 border-t border-[#eedfc9]/70 mt-4">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-6">
-                
-                {/* Stat 1 */}
-                <div className="flex items-center gap-2 bg-white/60 sm:bg-transparent p-2 sm:p-0 rounded-xl sm:rounded-none border border-slate-200/50 sm:border-none shadow-2xs sm:shadow-none">
-                  <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-2xl bg-[#fff2ec] flex items-center justify-center text-[#f95724] shrink-0">
-                    <Users className="w-3.5 h-3.5 sm:w-5 sm:h-5 stroke-[2.2]" />
-                  </div>
-                  <div>
-                    <span className="block text-sm sm:text-xl font-black text-slate-900 leading-none">10K+</span>
-                    <span className="text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5 block whitespace-nowrap">Happy Users</span>
-                  </div>
-                </div>
-
-                {/* Stat 2 */}
-                <div className="flex items-center gap-2 bg-white/60 sm:bg-transparent p-2 sm:p-0 rounded-xl sm:rounded-none border border-slate-200/50 sm:border-none shadow-2xs sm:shadow-none">
-                  <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-2xl bg-[#fff2ec] flex items-center justify-center text-[#f95724] shrink-0">
-                    <ShieldCheck className="w-3.5 h-3.5 sm:w-5 sm:h-5 stroke-[2.2]" />
-                  </div>
-                  <div>
-                    <span className="block text-sm sm:text-xl font-black text-slate-900 leading-none">2K+</span>
-                    <span className="text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5 block whitespace-nowrap">Verified Pros</span>
-                  </div>
-                </div>
-
-                {/* Stat 3 */}
-                <div className="flex items-center gap-2 bg-white/60 sm:bg-transparent p-2 sm:p-0 rounded-xl sm:rounded-none border border-slate-200/50 sm:border-none shadow-2xs sm:shadow-none">
-                  <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-2xl bg-[#fff2ec] flex items-center justify-center text-[#f95724] shrink-0">
-                    <Star className="w-3.5 h-3.5 sm:w-5 sm:h-5 fill-[#f95724] text-[#f95724]" />
-                  </div>
-                  <div>
-                    <span className="block text-sm sm:text-xl font-black text-slate-900 leading-none">4.8 / 5</span>
-                    <span className="text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5 block whitespace-nowrap">Average Rating</span>
-                  </div>
-                </div>
-
-                {/* Stat 4 */}
-                <div className="flex items-center gap-2 bg-white/60 sm:bg-transparent p-2 sm:p-0 rounded-xl sm:rounded-none border border-slate-200/50 sm:border-none shadow-2xs sm:shadow-none">
-                  <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-2xl bg-[#fff2ec] flex items-center justify-center text-[#f95724] shrink-0">
-                    <BarChart2 className="w-3.5 h-3.5 sm:w-5 sm:h-5 stroke-[2.2]" />
-                  </div>
-                  <div>
-                    <span className="block text-sm sm:text-xl font-black text-slate-900 leading-none">50K+</span>
-                    <span className="text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5 block whitespace-nowrap">Bids Placed</span>
-                  </div>
-                </div>
-
-              </div>
             </div>
 
           </div>
@@ -1328,247 +1251,67 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
       {/* ========================================================================= */}
       {/* 4. EXACT LIVE REVERSE-BIDDING AUCTIONS HUB (MATCHING SCREENSHOT)          */}
       {/* ========================================================================= */}
-      <section id="requirements-hub" className="relative w-full overflow-hidden py-12 sm:py-16">
-        
-        {/* Background Atmosphere: Ambient Glow & Subtle Petals */}
-        <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
-          {/* Subtle Ambient Glow */}
-          <div className="absolute top-1/4 left-1/5 w-96 h-96 bg-orange-200/20 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 right-1/5 w-96 h-96 bg-amber-200/20 rounded-full blur-3xl" />
-
-          {/* Floating Subtle Rose Petals Ambient */}
-          <div className="absolute top-12 left-10 w-3 h-3 bg-rose-400/50 rounded-full blur-[0.5px] rotate-45" />
-          <div className="absolute top-1/3 right-1/4 w-3.5 h-3.5 bg-rose-400/40 rounded-full blur-[0.5px] -rotate-12" />
-          <div className="absolute bottom-12 left-1/4 w-3 h-3 bg-orange-400/40 rounded-full blur-[0.5px]" />
-          <div className="absolute bottom-8 right-12 w-4 h-4 bg-rose-400/45 rounded-full blur-[0.5px] rotate-12" />
-        </div>
-        <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
-          {/* Top Silk Wave */}
-          <svg className="absolute top-0 left-0 w-full h-24 opacity-25 text-[#e6b980]" viewBox="0 0 1440 120" fill="none" preserveAspectRatio="none">
-            <path d="M0,0 C360,50 720,10 1080,45 C1260,60 1380,20 1440,0 L1440,0 L0,0 Z" fill="url(#silk-req-top)" />
-            <defs>
-              <linearGradient id="silk-req-top" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.3" />
-                <stop offset="100%" stopColor="#ea580c" stopOpacity="0.1" />
-              </linearGradient>
-            </defs>
-          </svg>
-
-          {/* Hanging Festive Corner Floral & Lantern Elements */}
-          <div className="absolute top-0 right-0 w-48 sm:w-72 h-48 sm:h-72 opacity-65 pointer-events-none">
-            <svg viewBox="0 0 300 300" fill="none">
-              <path d="M300,0 C220,30 160,110 140,210 C180,230 250,180 300,100 Z" fill="#ca8a04" fillOpacity="0.2" />
-              <circle cx="240" cy="60" r="22" fill="#f97316" fillOpacity="0.35" />
-              <circle cx="180" cy="120" r="14" fill="#f43f5e" fillOpacity="0.4" />
-              <circle cx="210" cy="160" r="10" fill="#fb923c" fillOpacity="0.45" />
-            </svg>
+      <section id="requirements-hub" className="relative w-full bg-[#f8fafc] py-12 sm:py-16">
+        <div className="relative z-10 w-full max-w-[1520px] mx-auto px-4 sm:px-6 lg:px-10 space-y-7">
+          <div className="max-w-3xl space-y-2">
+            <h2 className="font-heading text-3xl sm:text-4xl font-bold text-[#0f172a] tracking-tight">
+              How a booking works
+            </h2>
+            <p className="text-slate-600 text-base leading-relaxed">
+              Vendors do not set the price. You do. They bid under your budget, and you choose one.
+            </p>
           </div>
 
-          {/* Floating Subtle Rose Petals Ambient */}
-          <div className="absolute top-12 left-10 w-3 h-3 bg-rose-400/50 rounded-full blur-[0.5px] rotate-45" />
-          <div className="absolute top-1/3 right-1/4 w-3.5 h-3.5 bg-rose-400/40 rounded-full blur-[0.5px] -rotate-12" />
-          <div className="absolute bottom-12 left-1/4 w-3 h-3 bg-orange-400/40 rounded-full blur-[0.5px]" />
-          <div className="absolute bottom-8 right-12 w-4 h-4 bg-rose-400/45 rounded-full blur-[0.5px] rotate-12" />
-        </div>
-
-        <div className="relative z-10 w-full max-w-[1520px] mx-auto px-4 sm:px-6 lg:px-10 space-y-7">
-          
-          {/* Section Header with 4 Feature Pills on Right */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-1">
-            
-            {/* Left Header Title & Subtitle */}
-            <div className="space-y-2 max-w-2xl">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#f95724] animate-ping" />
-                <span className="text-[#f95724] text-xs font-black uppercase tracking-wider">
-                  LIVE NOW
-                </span>
-              </div>
-
-              <h2 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-black text-[#0f172a] tracking-tight leading-[1.12]">
-                Live <span className="text-[#f95724]">Reverse-Bidding</span> Auctions
-              </h2>
-
-              <p className="text-slate-600 text-xs sm:text-sm leading-relaxed max-w-xl">
-                Real-time competitive bids happening right now across Maharashtra. <br className="hidden sm:inline" />
-                Find the best event services from verified professionals.
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-2">
+              <span className="text-sm font-semibold text-[#f95724]">1</span>
+              <h3 className="text-base font-semibold text-slate-900">Post what you need</h3>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                Add the service, place, date, and the most you will pay.
               </p>
             </div>
-
-            {/* Right Side: 4 Feature Badge Pills */}
-            <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 sm:gap-4 overflow-x-auto pb-1">
-              
-              {/* Feature 1: Live Bids */}
-              <div className="flex items-center gap-2.5 bg-white/90 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-amber-200/70 shadow-xs shrink-0">
-                <div className="w-9 h-9 rounded-full bg-orange-100 text-[#f95724] flex items-center justify-center shrink-0">
-                  <Zap className="w-4 h-4 fill-current" />
-                </div>
-                <div>
-                  <span className="text-xs font-bold text-slate-900 block leading-tight">Live Bids</span>
-                  <span className="text-[10px] text-slate-400 block font-medium">In Real-Time</span>
-                </div>
-              </div>
-
-              {/* Feature 2: Verified Vendors */}
-              <div className="flex items-center gap-2.5 bg-white/90 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-amber-200/70 shadow-xs shrink-0">
-                <div className="w-9 h-9 rounded-full bg-orange-100 text-[#f95724] flex items-center justify-center shrink-0">
-                  <ShieldCheck className="w-4 h-4" />
-                </div>
-                <div>
-                  <span className="text-xs font-bold text-slate-900 block leading-tight">Verified Vendors</span>
-                  <span className="text-[10px] text-slate-400 block font-medium">Trusted & Rated</span>
-                </div>
-              </div>
-
-              {/* Feature 3: Better Prices */}
-              <div className="flex items-center gap-2.5 bg-white/90 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-amber-200/70 shadow-xs shrink-0">
-                <div className="w-9 h-9 rounded-full bg-orange-100 text-[#f95724] flex items-center justify-center shrink-0">
-                  <IndianRupee className="w-4 h-4" />
-                </div>
-                <div>
-                  <span className="text-xs font-bold text-slate-900 block leading-tight">Better Prices</span>
-                  <span className="text-[10px] text-slate-400 block font-medium">Save 15% – 30%</span>
-                </div>
-              </div>
-
-              {/* Feature 4: Across Maharashtra */}
-              <div className="flex items-center gap-2.5 bg-white/90 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-amber-200/70 shadow-xs shrink-0">
-                <div className="w-9 h-9 rounded-full bg-orange-100 text-[#f95724] flex items-center justify-center shrink-0">
-                  <MapPin className="w-4 h-4" />
-                </div>
-                <div>
-                  <span className="text-xs font-bold text-slate-900 block leading-tight">Across Maharashtra</span>
-                  <span className="text-[10px] text-slate-400 block font-medium">Events Near You</span>
-                </div>
-              </div>
-
+            <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-2">
+              <span className="text-sm font-semibold text-[#f95724]">2</span>
+              <h3 className="text-base font-semibold text-slate-900">Vendors bid lower</h3>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                A bid can be accepted only if it is at least 15% below your budget.
+              </p>
             </div>
-
-          </div>
-
-          {/* 4-Step Host Visual Booking Roadmap */}
-          <div className="rounded-3xl bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-slate-900/5 border border-amber-200/90 p-5 sm:p-7 shadow-xs">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-amber-200/60">
-              <div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-[#f95724] flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>HOW HOST BOOKING & ESCROW WORKS</span>
-                </span>
-                <h3 className="text-base sm:text-lg font-black text-slate-900 mt-0.5">
-                  Save 15% to 30% with 100% Escrow Protection
-                </h3>
-              </div>
-              <span className="text-xs text-slate-500">
-                4 Simple Steps • 0 Risk to You
-              </span>
+            <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-2">
+              <span className="text-sm font-semibold text-[#f95724]">3</span>
+              <h3 className="text-base font-semibold text-slate-900">Choose and pay</h3>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                You pay the bid plus a 10% fee. EzGo holds that money.
+              </p>
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mt-4">
-              <div className="p-3.5 rounded-2xl bg-white/95 border border-amber-200/80 shadow-2xs space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="w-6 h-6 rounded-full bg-orange-100 text-[#f95724] font-black text-xs flex items-center justify-center">
-                    1
-                  </span>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">Step 1</span>
-                </div>
-                <h4 className="text-xs font-bold text-slate-900">Post Event Need</h4>
-                <p className="text-[11px] text-slate-500 leading-normal">
-                  Select service, venue, date & set your maximum budget ceiling.
-                </p>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-white/95 border border-amber-200/80 shadow-2xs space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="w-6 h-6 rounded-full bg-amber-100 text-amber-800 font-black text-xs flex items-center justify-center">
-                    2
-                  </span>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">Step 2</span>
-                </div>
-                <h4 className="text-xs font-bold text-slate-900">Vendors Reverse-Bid</h4>
-                <p className="text-[11px] text-slate-500 leading-normal">
-                  Verified pros compete by bidding down (guaranteed ≥15% cheaper).
-                </p>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-white/95 border border-amber-200/80 shadow-2xs space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 font-black text-xs flex items-center justify-center">
-                    3
-                  </span>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">Step 3</span>
-                </div>
-                <h4 className="text-xs font-bold text-slate-900">Accept & Pay Escrow</h4>
-                <p className="text-[11px] text-slate-500 leading-normal">
-                  Money is safely held in EzGo escrow vault until service is delivered.
-                </p>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-white/95 border border-amber-200/80 shadow-2xs space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 font-black text-xs flex items-center justify-center">
-                    4
-                  </span>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">Step 4</span>
-                </div>
-                <h4 className="text-xs font-bold text-slate-900">Approve & Release</h4>
-                <p className="text-[11px] text-slate-500 leading-normal">
-                  Vendor executes at event. You approve and funds are released to vendor.
-                </p>
-              </div>
+            <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-2">
+              <span className="text-sm font-semibold text-[#f95724]">4</span>
+              <h3 className="text-base font-semibold text-slate-900">Release after the event</h3>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                When the work is done, you release the vendor's price. EzGo keeps the fee.
+              </p>
             </div>
           </div>
 
           {/* Navigation Tabs and New Post Button */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-2.5 overflow-x-auto pb-1 sm:pb-0">
-              <button
-                onClick={() => setActiveTab('open')}
-                className={`px-4 py-2.5 rounded-2xl text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap ${
-                  activeTab === 'open'
-                    ? 'bg-gradient-to-r from-orange-500 to-[#f95724] text-white shadow-md shadow-orange-500/25'
-                    : 'text-slate-600 hover:text-slate-900 bg-white/90 border border-slate-200/90'
-                }`}
-              >
-                <span>Live Reverse Auctions</span>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono ${
-                  activeTab === 'open' ? 'bg-[#c83c12] text-white' : 'bg-slate-100 text-slate-700'
-                }`}>
+              <span className="px-4 py-2.5 rounded-2xl text-sm font-semibold flex items-center gap-2 whitespace-nowrap bg-gradient-to-r from-orange-500 to-[#f95724] text-white shadow-md shadow-orange-500/25">
+                <span>My open requests</span>
+                <span className="px-2 py-0.5 rounded-full text-xs bg-[#c83c12] text-white">
                   {openReqs.length}
                 </span>
-              </button>
+              </span>
 
               <button
-                onClick={() => setActiveTab('active')}
-                className={`px-4 py-2.5 rounded-2xl text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap ${
-                  activeTab === 'active'
-                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/25'
-                    : 'text-slate-600 hover:text-slate-900 bg-white/90 border border-slate-200/90'
-                }`}
+                onClick={onOpenBookings}
+                className="px-4 py-2.5 rounded-2xl text-sm font-semibold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap text-slate-700 hover:text-slate-900 bg-white/90 border border-slate-200/90 hover:border-emerald-300"
               >
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Escrow Bookings</span>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono ${
-                  activeTab === 'active' ? 'bg-emerald-800 text-white' : 'bg-slate-100 text-slate-700'
-                }`}>
+                <span>My bookings</span>
+                <span className="px-2 py-0.5 rounded-full text-xs bg-emerald-50 text-emerald-800">
                   {activeBookings.length}
                 </span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('completed')}
-                className={`px-4 py-2.5 rounded-2xl text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap ${
-                  activeTab === 'completed'
-                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/25'
-                    : 'text-slate-600 hover:text-slate-900 bg-white/90 border border-slate-200/90'
-                }`}
-              >
-                <Star className="w-3.5 h-3.5" />
-                <span>Past Events & Reviews</span>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono ${
-                  activeTab === 'completed' ? 'bg-indigo-800 text-white' : 'bg-slate-100 text-slate-700'
-                }`}>
-                  {completedBookings.length}
-                </span>
+                <ArrowRight className="w-4 h-4" />
               </button>
             </div>
 
@@ -1584,7 +1327,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
           </div>
 
           {/* Search and Category Filter Bar matching screenshot */}
-          {activeTab === 'open' && (
+          {openReqs.length > 0 && (
             <div className="flex flex-col md:flex-row items-center justify-between gap-3 bg-white/95 backdrop-blur-md p-3 sm:p-3.5 rounded-2xl border border-slate-200/90 shadow-sm">
               <div className="relative w-full md:w-80">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -1616,28 +1359,20 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                   );
                 })}
 
-                <button
-                  type="button"
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 flex items-center gap-1.5 cursor-pointer shrink-0 ml-1"
-                >
-                  <Filter className="w-3.5 h-3.5 text-slate-500" />
-                  <span>Filter</span>
-                </button>
               </div>
             </div>
           )}
 
-          {/* TAB 1: OPEN REQUIREMENTS (AUCTIONS) */}
-          {activeTab === 'open' && (
+          {/* OPEN REQUIREMENTS (AUCTIONS) */}
             <div className="space-y-4 sm:space-y-5">
               {filteredOpenReqs.length === 0 ? (
                 <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center space-y-4">
                   <div className="w-16 h-16 rounded-2xl bg-orange-50 text-[#f95724] flex items-center justify-center mx-auto">
                     <Sparkles className="w-8 h-8" />
                   </div>
-                  <h3 className="text-lg font-bold text-slate-800">No Active Reverse Auctions Found</h3>
-                  <p className="text-slate-500 text-xs max-w-md mx-auto">
-                    You don't have any open requirement posts matching your criteria. Post your event need and watch verified pros bid down!
+                  <h3 className="text-lg font-semibold text-slate-800">No open requests</h3>
+                  <p className="text-slate-600 text-sm max-w-md mx-auto">
+                    Post a request with your budget. Vendors will bid at least 15% below it.
                   </p>
                   <button
                     onClick={() => onOpenPostModal()}
@@ -1648,7 +1383,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                   </button>
                 </div>
               ) : (
-                filteredOpenReqs.map((req, index) => {
+                filteredOpenReqs.map((req) => {
                   const isExpanded = expandedReqId === req._id;
                   const eligibleBids = (req.bids || []).filter((b) => b.isEligibleForAccept);
                   const reqImage = req.imageUrl || getCategoryImage(req.category);
@@ -1656,9 +1391,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                   // Calculate discount percentage if lowest bid exists
                   const discountPct = req.lowestBid 
                     ? Math.round(((req.budget - req.lowestBid) / req.budget) * 100) 
-                    : 20;
-
-                  const timeLeft = index === 0 ? '18m left' : index === 1 ? '42m left' : '1h 10m left';
+                    : 0;
 
                   return (
                     <div
@@ -1673,9 +1406,8 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                           <div className="w-full lg:w-56 h-36 rounded-2xl overflow-hidden relative shrink-0 bg-slate-100 shadow-xs border border-slate-100">
                             {/* Floating Green Live Bidding Badge */}
                             <div className="absolute top-2.5 left-2.5 z-10">
-                              <span className="px-2.5 py-0.5 rounded-full bg-white/95 backdrop-blur-md text-emerald-700 border border-emerald-300 text-[10px] font-black flex items-center gap-1.5 shadow-sm">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-                                <span>LIVE BIDDING</span>
+                              <span className="px-2.5 py-1 rounded-full bg-white text-slate-700 border border-slate-200 text-xs font-semibold">
+                                Open for bids
                               </span>
                             </div>
 
@@ -1691,12 +1423,8 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                             
                             {/* Tags Row */}
                             <div className="flex flex-wrap items-center gap-2">
-                              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-50/80 text-rose-700 border border-rose-200">
-                                {getCategoryIcon(req.category)}
-                                <span>{req.category}</span>
-                              </span>
-                              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-orange-50 text-orange-600 border border-orange-200">
-                                Reverse Auction
+                              <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">
+                                {req.category}
                               </span>
                             </div>
 
@@ -1731,28 +1459,28 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                           </div>
 
                           {/* Right Column: Host Budget Ceiling + Lowest Active Bid + Action Button */}
-                          <div className="flex items-center justify-between lg:justify-end gap-3 sm:gap-4 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100 shrink-0">
+                          <div className="grid grid-cols-2 sm:flex items-center justify-between lg:justify-end gap-2.5 sm:gap-4 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100 shrink-0 w-full lg:w-auto">
                             
                             {/* Host Budget Ceiling */}
-                            <div className="text-center sm:text-right px-2">
-                              <span className="text-[10px] text-slate-400 font-medium block leading-none mb-1">
-                                Host Budget Ceiling ⓘ
+                            <div className="text-center sm:text-right p-2 rounded-2xl bg-slate-50 sm:bg-transparent border sm:border-0 border-slate-100">
+                              <span className="text-xs text-slate-500 font-medium block leading-none mb-1">
+                                Your budget
                               </span>
-                              <span className="text-sm sm:text-base font-bold text-slate-700 line-through font-mono">
+                              <span className="text-sm sm:text-base font-semibold text-slate-800">
                                 ₹{req.budget.toLocaleString()}
                               </span>
-                              <span className="text-[10px] text-[#f95724] font-bold block mt-0.5">
-                                15% Cap: ₹{req.maxAcceptableBid.toLocaleString()}
+                              <span className="text-xs text-[#f95724] font-medium block mt-1">
+                                Accept ₹{req.maxAcceptableBid.toLocaleString()} or less
                               </span>
                             </div>
 
                             {/* Lowest Active Bid (Green Highlight Box) */}
-                            <div className="p-2 sm:p-3 rounded-2xl bg-[#eafaf1] border border-[#bbf0d2] text-center sm:text-right min-w-[110px]">
-                              <span className="text-[10px] text-emerald-800 font-bold block leading-none mb-1">
-                                Lowest Active Bid
+                            <div className="p-2 sm:p-3 rounded-2xl bg-[#eafaf1] border border-[#bbf0d2] text-center sm:text-right sm:min-w-[110px]">
+                              <span className="text-xs text-emerald-800 font-medium block leading-none mb-1">
+                                Lowest bid
                               </span>
-                              <span className="text-base sm:text-xl font-black text-emerald-700 font-mono">
-                                {req.lowestBid ? `₹${req.lowestBid.toLocaleString()}` : 'Awaiting Bids'}
+                              <span className="text-sm sm:text-xl font-semibold text-emerald-700">
+                                {req.lowestBid ? `₹${req.lowestBid.toLocaleString()}` : 'No bids yet'}
                               </span>
                               {req.lowestBid && (
                                 <span className="text-[10px] text-emerald-700 font-bold flex items-center justify-center sm:justify-end gap-0.5 mt-0.5">
@@ -1763,22 +1491,17 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                             </div>
 
                             {/* Countdown & Action Button */}
-                            <div className="flex flex-col items-center justify-center min-w-[115px]">
-                              <span className="text-xs text-rose-600 font-bold flex items-center gap-1 mb-1.5">
-                                <Clock className="w-3.5 h-3.5 text-rose-600" />
-                                <span>{timeLeft}</span>
-                              </span>
-
+                            <div className="col-span-2 sm:col-span-1 flex flex-col items-center justify-center sm:min-w-[115px] pt-1 sm:pt-0">
                               <button
                                 onClick={() => setExpandedReqId(isExpanded ? null : req._id)}
-                                className="w-full py-2 px-4 rounded-xl bg-gradient-to-r from-orange-500 to-[#f95724] hover:from-orange-600 hover:to-[#f95724] text-white font-bold text-xs shadow-md shadow-orange-500/20 flex items-center justify-center gap-1 cursor-pointer transition active:scale-95"
+                                className="w-full py-2.5 sm:py-2 px-4 rounded-xl bg-gradient-to-r from-orange-500 to-[#f95724] hover:from-orange-600 hover:to-[#f95724] text-white font-bold text-xs shadow-md shadow-orange-500/20 flex items-center justify-center gap-1 cursor-pointer transition active:scale-95"
                               >
-                                <span>{isExpanded ? 'Hide Bids' : 'View Bids'}</span>
+                                <span>{isExpanded ? 'Hide bids' : 'See bids'}</span>
                                 <ArrowRight className="w-3.5 h-3.5" />
                               </button>
 
-                              <span className="text-[10px] text-slate-400 font-medium block mt-1 text-center">
-                                {req.bidsCount || (req.bids ? req.bids.length : 0)} Quotes Submitted
+                              <span className="text-xs text-slate-500 block mt-1 text-center">
+                                {req.bidsCount || (req.bids ? req.bids.length : 0)} bids
                               </span>
                             </div>
 
@@ -1792,26 +1515,24 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                       <div className="p-5 sm:p-6 bg-slate-50/70 border-t border-slate-100 space-y-4">
                         <div className="flex items-center justify-between">
                           <div>
-                            <h4 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
-                              <Sparkles className="w-4 h-4 text-[#f95724]" />
-                              <span>Live Bids Comparison Matrix ({req.bids?.length || 0})</span>
+                            <h4 className="text-base font-semibold text-slate-900">
+                              Vendor bids ({req.bids?.length || 0})
                             </h4>
-                            <p className="text-xs text-slate-500">
-                              Bids with ≥15% discount are eligible for instant 1-click escrow acceptance.
+                            <p className="text-sm text-slate-600">
+                              Accept a bid only if it is ₹{req.maxAcceptableBid.toLocaleString()} or less. You then pay that bid plus 10%.
                             </p>
                           </div>
 
-                          <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full">
-                            {eligibleBids.length} Eligible Bids
+                          <span className="text-xs font-medium text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full">
+                            {eligibleBids.length} you can accept
                           </span>
                         </div>
 
                         {(!req.bids || req.bids.length === 0) ? (
                           <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center space-y-2">
-                            <Clock className="w-8 h-8 text-[#f95724] mx-auto animate-spin" />
-                            <h5 className="font-bold text-slate-800 text-sm">Waiting for Verified Pros to Quote</h5>
-                            <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                              Your requirement is live on the provider board. Local vendors usually submit competitive quotes within 15-30 minutes.
+                            <h5 className="font-semibold text-slate-800 text-base">No bids yet</h5>
+                            <p className="text-sm text-slate-600 max-w-sm mx-auto">
+                              Vendors can see this request. Their prices will show here.
                             </p>
                           </div>
                         ) : (
@@ -1884,15 +1605,15 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                                     {/* Pricing & Fee Breakdown */}
                                     <div className="space-y-1 pt-1 text-xs">
                                       <div className="flex justify-between text-slate-600">
-                                        <span>Quoted Bid Amount:</span>
+                                        <span>Vendor bid</span>
                                         <span className="font-bold font-mono text-slate-900">₹{bid.amount.toLocaleString()}</span>
                                       </div>
                                       <div className="flex justify-between text-slate-500 text-[11px]">
-                                        <span>+ 10% Escrow Platform Fee:</span>
+                                        <span>EzGo fee (10%)</span>
                                         <span className="font-mono text-amber-700 font-semibold">+₹{platformFee.toLocaleString()}</span>
                                       </div>
                                       <div className="flex justify-between text-slate-900 font-extrabold pt-1 border-t border-slate-200">
-                                        <span>Total Payable (In Escrow):</span>
+                                        <span>You pay</span>
                                         <span className="text-sm font-mono text-emerald-700">₹{totalPayable.toLocaleString()}</span>
                                       </div>
                                       {savings > 0 && (
@@ -1911,11 +1632,11 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                                         className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold text-xs shadow-md shadow-emerald-600/20 flex items-center justify-center gap-1.5 cursor-pointer transition active:scale-95"
                                       >
                                         <ShieldCheck className="w-4 h-4" />
-                                        <span>Accept & Fund Escrow (₹{totalPayable.toLocaleString()})</span>
+                                        <span>Choose this vendor · Pay ₹{totalPayable.toLocaleString()}</span>
                                       </button>
                                     ) : (
                                       <div className="p-2 rounded-xl bg-rose-50 border border-rose-200 text-center text-[10px] font-bold text-rose-700">
-                                        Ineligible under 15% rule (Discount is &lt; 15%)
+                                        Too high to accept. The bid must be ₹{req.maxAcceptableBid.toLocaleString()} or less.
                                       </div>
                                     )}
                                   </div>
@@ -1933,287 +1654,6 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
               })
             )}
           </div>
-        )}
-
-        {/* TAB 2: ACTIVE BOOKINGS (ESCROW PROTECTED) */}
-        {activeTab === 'active' && (
-          <div className="space-y-6">
-            {activeBookings.length === 0 ? (
-              <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center space-y-4">
-                <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
-                  <ShieldCheck className="w-8 h-8" />
-                </div>
-                <h3 className="text-lg font-bold text-slate-800">No Active Escrow Bookings</h3>
-                <p className="text-slate-500 text-xs max-w-md mx-auto">
-                  When you accept an eligible bid and fund the escrow, your booking will appear here with full provider contact details and live milestone tracking.
-                </p>
-                <button
-                  onClick={() => setActiveTab('open')}
-                  className="px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs inline-flex items-center gap-2 cursor-pointer"
-                >
-                  <span>View Open Requirements</span>
-                </button>
-              </div>
-            ) : (
-              activeBookings.map((booking) => {
-                const isPaid = booking.status === 'ACTIVE';
-
-                return (
-                  <div
-                    key={booking._id}
-                    className="bg-white rounded-3xl border border-slate-200/90 shadow-md overflow-hidden space-y-6 p-6 sm:p-8"
-                  >
-                    {/* Status Header */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider flex items-center gap-1.5 ${
-                            isPaid 
-                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
-                              : 'bg-amber-100 text-amber-800 border border-amber-200'
-                          }`}>
-                            <ShieldCheck className="w-3.5 h-3.5" />
-                            {isPaid ? 'Escrow Secured • Provider Booked' : 'Awaiting Escrow Deposit'}
-                          </span>
-                          <span className="text-xs text-slate-400 font-mono">
-                            Booking #{booking._id.substring(0, 8)}
-                          </span>
-                        </div>
-                        <h3 className="text-xl font-black text-slate-900 mt-2">
-                          {booking.requirementId?.title || 'Event Booking'}
-                        </h3>
-                      </div>
-
-                      <div className="text-left sm:text-right">
-                        <span className="text-xs text-slate-500 block">Total Escrow Amount:</span>
-                        <span className="text-2xl font-black text-emerald-600 font-mono">
-                          ₹{booking.totalPaid.toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Milestone Progress Bar */}
-                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                      <div className="text-xs font-extrabold text-slate-800 mb-3">Event Execution Pipeline</div>
-                      <div className="grid grid-cols-4 gap-2 text-center text-[10px] font-bold">
-                        
-                        <div className="space-y-1.5">
-                          <div className="h-2 rounded-full bg-emerald-500" />
-                          <span className="text-emerald-700">1. Bid Accepted</span>
-                        </div>
-
-                        <div className="space-y-1.5">
-                          <div className={`h-2 rounded-full ${isPaid ? 'bg-emerald-500' : 'bg-slate-300'}`} />
-                          <span className={isPaid ? 'text-emerald-700' : 'text-slate-400'}>2. Escrow Funded</span>
-                        </div>
-
-                        <div className="space-y-1.5">
-                          <div className={`h-2 rounded-full ${isPaid ? 'bg-emerald-500' : 'bg-slate-300'}`} />
-                          <span className={isPaid ? 'text-emerald-700' : 'text-slate-400'}>3. Contact Revealed</span>
-                        </div>
-
-                        <div className="space-y-1.5">
-                          <div className="h-2 rounded-full bg-slate-300" />
-                          <span className="text-slate-400">4. Final Sign-off</span>
-                        </div>
-
-                      </div>
-                    </div>
-
-                    {/* Details */}
-                    <div className="grid md:grid-cols-2 gap-6">
-                      
-                      {/* Left: Contact Card */}
-                      <div className="p-5 rounded-2xl bg-orange-50/50 border border-orange-200/80 space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-xs font-black uppercase tracking-wider text-orange-950 flex items-center gap-1.5">
-                            <Award className="w-4 h-4 text-[#f95724]" />
-                            <span>Assigned Verified Provider</span>
-                          </h4>
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                            Verified Specialist
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={booking.providerId?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80'}
-                            alt={booking.providerId?.name}
-                            className="w-12 h-12 rounded-2xl object-cover border-2 border-white shadow-2xs"
-                          />
-                          <div>
-                            <div className="text-sm font-extrabold text-slate-900">
-                              {booking.providerId?.businessName || booking.providerId?.name}
-                            </div>
-                            <div className="text-xs text-slate-500">
-                              Direct Lead Contact • {booking.providerId?.serviceArea || 'Pune / Hyderabad'}
-                            </div>
-                          </div>
-                        </div>
-
-                        {booking.isContactRevealed ? (
-                          <div className="space-y-2 pt-2 border-t border-orange-200/60">
-                            <div className="flex items-center justify-between text-xs font-bold text-slate-800">
-                              <span className="flex items-center gap-1.5">
-                                <Phone className="w-4 h-4 text-emerald-600" />
-                                <span>{booking.providerId?.phone || '+91 91234 56789'}</span>
-                              </span>
-                              <a
-                                href={`tel:${booking.providerId?.phone || '+919123456789'}`}
-                                className="px-3 py-1 rounded-lg bg-white border border-slate-300 text-[11px] text-slate-700 hover:bg-slate-50 transition"
-                              >
-                                Call Now
-                              </a>
-                            </div>
-
-                            <a
-                              href={`https://wa.me/919123456789?text=Hi%20${encodeURIComponent(booking.providerId?.name || '')},%20regarding%20our%20EzGo%20booking%20#${booking._id}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
-                            >
-                              <MessageCircle className="w-4 h-4" />
-                              <span>Chat on WhatsApp (Instant Pre-Event Briefing)</span>
-                            </a>
-                          </div>
-                        ) : (
-                          <div className="p-3 rounded-xl bg-white border border-slate-200 text-center text-xs text-slate-500">
-                            Complete the Escrow deposit below to reveal direct phone number and WhatsApp chat.
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Right: Escrow Vault */}
-                      <div className="p-5 rounded-2xl bg-slate-900 text-white space-y-4 flex flex-col justify-between">
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                              <Shield className="w-4 h-4 text-emerald-400" />
-                              <span>Escrow Vault Summary</span>
-                            </h4>
-                            <span className="text-[10px] text-emerald-400 font-mono font-bold bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-500/30">
-                              {booking.paymentDetails?.escrowStatus || 'HELD'}
-                            </span>
-                          </div>
-
-                          <div className="space-y-1.5 text-xs">
-                            <div className="flex justify-between text-slate-300">
-                              <span>Vendor Agreed Bid:</span>
-                              <span className="font-mono font-bold text-white">₹{booking.bidAmount.toLocaleString()}</span>
-                            </div>
-                            <div className="flex justify-between text-slate-400">
-                              <span>Platform Escrow Fee (10%):</span>
-                              <span className="font-mono font-bold text-amber-400">+₹{booking.platformFee.toLocaleString()}</span>
-                            </div>
-                            <div className="flex justify-between text-emerald-400 font-black pt-2 border-t border-slate-800 text-sm">
-                              <span>Total Protected in Escrow:</span>
-                              <span className="font-mono">₹{booking.totalPaid.toLocaleString()}</span>
-                            </div>
-                          </div>
-
-                          <p className="text-[11px] text-slate-400 leading-relaxed">
-                            Provider will receive 100% of ₹{booking.bidAmount.toLocaleString()} only after you confirm service delivery at the event.
-                          </p>
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div>
-                          {!isPaid ? (
-                            <button
-                              onClick={() => onOpenPaymentModal(booking)}
-                              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-extrabold text-xs shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 cursor-pointer active:scale-95"
-                            >
-                              <ShieldCheck className="w-4 h-4" />
-                              <span>Pay ₹{booking.totalPaid.toLocaleString()} into Escrow & Reveal Contact</span>
-                            </button>
-                          ) : (
-                            <div className="flex gap-2">
-                              <button
-                                onClick={async () => {
-                                  await onCompleteBooking(booking._id);
-                                  onOpenReviewModal(booking);
-                                }}
-                                className="w-full py-3.5 rounded-xl bg-[#f95724] hover:bg-[#e04818] text-white font-black text-xs shadow-lg shadow-[#f95724]/25 flex items-center justify-center gap-2 cursor-pointer active:scale-95"
-                              >
-                                <CheckCircle2 className="w-4 h-4" />
-                                <span>Event Done? Release Payout & Review</span>
-                              </button>
-                            </div>
-                          )}
-                        </div>
-
-                      </div>
-
-                    </div>
-
-                  </div>
-                );
-              })
-            )}
-          </div>
-        )}
-
-        {/* TAB 3: COMPLETED EVENTS & REVIEWS */}
-        {activeTab === 'completed' && (
-          <div className="space-y-6">
-            {completedBookings.length === 0 ? (
-              <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center space-y-4">
-                <div className="w-16 h-16 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
-                  <Star className="w-8 h-8" />
-                </div>
-                <h3 className="text-lg font-bold text-slate-800">No Completed Events Yet</h3>
-                <p className="text-slate-500 text-xs max-w-md mx-auto">
-                  Once your event concludes and you mark the booking completed, your event history and review receipts will be safely archived here.
-                </p>
-              </div>
-            ) : (
-              completedBookings.map((booking) => (
-                <div
-                  key={booking._id}
-                  className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-6"
-                >
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-100 text-purple-800 border border-purple-200">
-                        SUCCESSFULLY COMPLETED
-                      </span>
-                      <span className="text-xs text-slate-400 font-mono">
-                        #{booking._id.substring(0, 8)}
-                      </span>
-                    </div>
-
-                    <h4 className="text-lg font-extrabold text-slate-900">
-                      {booking.requirementId?.title || 'Event Service'}
-                    </h4>
-
-                    <div className="text-xs text-slate-500 flex items-center gap-4">
-                      <span>Provider: <strong className="text-slate-800">{booking.providerId?.businessName || booking.providerId?.name}</strong></span>
-                      <span>•</span>
-                      <span>Total Settled: <strong className="font-mono text-slate-800">₹{booking.totalPaid.toLocaleString()}</strong></span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => onOpenReviewModal(booking)}
-                      className="px-5 py-2.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-900 font-bold text-xs border border-orange-200 transition flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                      <span>Rate & Leave Review</span>
-                    </button>
-
-                    <button
-                      onClick={() => onOpenPostModal(booking.requirementId?.category)}
-                      className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition cursor-pointer"
-                    >
-                      <span>Book Similar Service</span>
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        )}
 
         </div>
       </section>
@@ -2265,161 +1705,46 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
           <div className="text-center max-w-2xl mx-auto space-y-3">
             <div className="inline-flex items-center gap-1.5 px-4 py-1 rounded-full bg-white/90 border border-orange-200/90 shadow-2xs">
               <ArrowUpRight className="w-3.5 h-3.5 text-[#f95724] stroke-[2.5]" />
-              <span className="text-[11px] font-black uppercase tracking-wider text-[#f95724]">
-                REAL HOST EXPERIENCES
+              <span className="text-xs font-semibold uppercase tracking-wider text-[#f95724]">
+                Why hosts use EzGo
               </span>
             </div>
 
             <h2 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-black text-[#0f172a] tracking-tight leading-[1.12]">
-              Over ₹4.8 Lakhs Saved by <br className="hidden sm:inline" />
-              <span className="text-[#f95724]">Event Hosts</span>
+              Book with <span className="text-[#f95724]">no risk</span>
             </h2>
 
-            <p className="text-slate-600 text-xs sm:text-sm font-medium leading-relaxed">
-              Read how hosts celebrated weddings, sangeets, and corporate galas with zero stress.
+            <p className="text-slate-600 text-base leading-relaxed">
+              Three simple promises on every booking.
             </p>
           </div>
 
-          {/* Testimonial Cards Carousel / Grid with Left & Right Arrows */}
-          <div className="relative max-w-[1400px] mx-auto">
-            
-            {/* Left Circular Navigation Arrow Button */}
-            <button 
-              aria-label="Previous testimonials"
-              className="absolute -left-3 sm:-left-5 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white/95 border border-amber-200/90 shadow-md text-[#f95724] hover:bg-orange-50 hover:scale-105 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
-            >
-              <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
-            </button>
-
-            {/* Right Circular Navigation Arrow Button */}
-            <button 
-              aria-label="Next testimonials"
-              className="absolute -right-3 sm:-right-5 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white/95 border border-amber-200/90 shadow-md text-[#f95724] hover:bg-orange-50 hover:scale-105 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
-            >
-              <ChevronRight className="w-5 h-5 stroke-[2.5]" />
-            </button>
-
-            {/* 3 Testimonial Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 px-4 sm:px-6">
-              {TESTIMONIALS.map((t, idx) => (
-                <div
-                  key={idx}
-                  className="bg-white/95 backdrop-blur-md rounded-[28px] p-5 sm:p-6 border border-amber-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between space-y-4"
-                >
-                  {/* Top Section: Left Square Photo + Right Stars, Saved Badge & Quote */}
-                  <div className="flex items-start gap-3.5 sm:gap-4">
-                    
-                    {/* Left Event Thumbnail Photo */}
-                    <img
-                      src={t.cardImage || t.avatar}
-                      alt={t.name}
-                      className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover shadow-2xs shrink-0 border border-amber-100"
-                    />
-
-                    {/* Right Details: Rating Stars + Saved Amount Pill + Quote */}
-                    <div className="space-y-2 flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-1 flex-wrap">
-                        <div className="flex items-center gap-0.5 text-amber-400">
-                          {[...Array(t.rating)].map((_, i) => (
-                            <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                          ))}
-                        </div>
-
-                        <span className="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-black px-2 py-0.5 rounded-full bg-[#e8f8f0] text-[#059669] border border-[#a7f3d0]">
-                          <ArrowUpRight className="w-3 h-3 stroke-[2.5]" />
-                          <span>{t.savedAmount}</span>
-                        </span>
-                      </div>
-
-                      <p className="text-[11px] sm:text-xs text-slate-700 leading-relaxed font-medium line-clamp-4">
-                        "{t.quote}"
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Bottom Section: Profile Avatar, Name, Occasion & Location */}
-                  <div className="flex items-center gap-3 pt-3 border-t border-slate-100">
-                    <img
-                      src={t.avatar}
-                      alt={t.name}
-                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover border-2 border-orange-200/70 shadow-2xs shrink-0"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="text-xs font-black text-slate-900 flex items-center gap-1">
-                        <span className="truncate">{t.name}</span>
-                        {t.verified && (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 fill-emerald-100 shrink-0" />
-                        )}
-                      </div>
-                      <div className="text-[11px] text-slate-500 font-medium truncate mt-0.5">
-                        {t.occasion}
-                      </div>
-                      <div className="text-[10px] text-slate-400 font-medium flex items-center gap-1 truncate">
-                        <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
-                        <span>{t.location}</span>
-                      </div>
-                    </div>
-                  </div>
-
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 max-w-5xl mx-auto">
+            {[
+              {
+                Icon: IndianRupee,
+                title: 'At least 15% below your budget',
+                text: 'You can only pick a vendor whose price is 15% or more below the budget you set.',
+              },
+              {
+                Icon: Shield,
+                title: 'Money held until the event is done',
+                text: 'EzGo keeps your payment safe. The vendor gets paid only after you click "Event done".',
+              },
+              {
+                Icon: CheckCircle2,
+                title: 'Full refund if cancelled',
+                text: 'If a paid booking is cancelled, you get back everything you paid, including the EzGo fee.',
+              },
+            ].map(({ Icon, title, text }) => (
+              <div key={title} className="bg-white/95 rounded-3xl p-6 border border-amber-200/80 shadow-sm space-y-3">
+                <div className="w-11 h-11 rounded-full bg-orange-100 text-[#f95724] flex items-center justify-center">
+                  <Icon className="w-5 h-5" />
                 </div>
-              ))}
-            </div>
-
-          </div>
-
-          {/* Bottom Trust Metrics Bar */}
-          <div className="flex flex-wrap items-center justify-around gap-4 sm:gap-6 bg-white/85 backdrop-blur-md py-4 px-6 sm:px-10 rounded-2xl border border-amber-200/70 shadow-xs max-w-4xl mx-auto">
-            
-            {/* Metric 1 */}
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-orange-100 text-[#f95724] flex items-center justify-center shrink-0">
-                <Users className="w-4 h-4 sm:w-5 sm:h-5" />
+                <h3 className="text-lg font-bold text-slate-900">{title}</h3>
+                <p className="text-sm text-slate-600 leading-relaxed">{text}</p>
               </div>
-              <div>
-                <div className="text-sm sm:text-base font-black text-slate-900 leading-tight">500+</div>
-                <div className="text-[10px] sm:text-[11px] text-slate-500 font-medium">Happy Event Hosts</div>
-              </div>
-            </div>
-
-            <div className="hidden sm:block w-px h-8 bg-amber-200/70" />
-
-            {/* Metric 2 */}
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-orange-100 text-[#f95724] flex items-center justify-center shrink-0">
-                <IndianRupee className="w-4 h-4 sm:w-5 sm:h-5" />
-              </div>
-              <div>
-                <div className="text-sm sm:text-base font-black text-slate-900 leading-tight">₹4.8 Lakhs+</div>
-                <div className="text-[10px] sm:text-[11px] text-slate-500 font-medium">Total Savings</div>
-              </div>
-            </div>
-
-            <div className="hidden sm:block w-px h-8 bg-amber-200/70" />
-
-            {/* Metric 3 */}
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-orange-100 text-[#f95724] flex items-center justify-center shrink-0">
-                <Shield className="w-4 h-4 sm:w-5 sm:h-5" />
-              </div>
-              <div>
-                <div className="text-sm sm:text-base font-black text-slate-900 leading-tight">4.9/5</div>
-                <div className="text-[10px] sm:text-[11px] text-slate-500 font-medium">Host Satisfaction</div>
-              </div>
-            </div>
-
-            <div className="hidden sm:block w-px h-8 bg-amber-200/70" />
-
-            {/* Metric 4 */}
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-orange-100 text-[#f95724] flex items-center justify-center shrink-0">
-                <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
-              </div>
-              <div>
-                <div className="text-sm sm:text-base font-black text-slate-900 leading-tight">1,000+</div>
-                <div className="text-[10px] sm:text-[11px] text-slate-500 font-medium">Events Successfully Planned</div>
-              </div>
-            </div>
-
+            ))}
           </div>
 
           {/* Bottom CTA Button */}
@@ -2428,7 +1753,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
               onClick={() => onOpenPostModal()}
               className="inline-flex items-center justify-center gap-2 px-7 py-3 rounded-full bg-gradient-to-r from-orange-500 to-[#f95724] hover:from-orange-600 hover:to-[#f95724] text-white font-black text-xs sm:text-sm shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer"
             >
-              <span>Read More Stories</span>
+              <span>Post your requirement</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>

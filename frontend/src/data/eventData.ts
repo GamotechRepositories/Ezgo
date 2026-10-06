@@ -228,61 +228,25 @@ export const EVENT_CATEGORIES: EventCategoryData[] = [
   }
 ];
 
-export const TESTIMONIALS = [
-  {
-    name: 'Sneha & Karthik Reddy',
-    occasion: 'Sangeet & Reception',
-    location: 'Gachibowli, Hyderabad',
-    savedAmount: '₹8,500 Saved',
-    quote: 'We set a ₹35,000 budget for our Sangeet DJ setup. 3 providers placed bids and we locked in a top-rated DJ with full truss lights for ₹26,500! Escrow gave us complete peace of mind.',
-    rating: 5,
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
-    cardImage: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=500&auto=format&fit=crop&q=80',
-    verified: true
-  },
-  {
-    name: 'Vikram Malhotra',
-    occasion: 'Corporate Annual Gala',
-    location: 'Hitec City, Hyderabad',
-    savedAmount: '₹14,000 Saved',
-    quote: 'The 15% guaranteed savings rule is revolutionary. We got a 4K drone cinematography team that delivered Hollywood-grade video below our budget ceiling. Zero commission hassle!',
-    rating: 5,
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80',
-    cardImage: 'https://images.unsplash.com/photo-1508614589041-895b88991e3e?w=500&auto=format&fit=crop&q=80',
-    verified: true
-  },
-  {
-    name: 'Pooja Iyer',
-    occasion: 'Griha Pravesh Puja',
-    location: 'Madhapur, Hyderabad',
-    savedAmount: '₹3,200 Saved',
-    quote: 'Finding a reliable Vedic Purohit in Hyderabad was so simple. The pandit arrived right on time with all authentic samagri. The phone number was revealed instantly once escrow was funded.',
-    rating: 5,
-    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&auto=format&fit=crop&q=80',
-    cardImage: 'https://images.unsplash.com/photo-1609137144822-26f6eb8b973c?w=500&auto=format&fit=crop&q=80',
-    verified: true
-  }
-];
-
 export const FAQS = [
   {
-    question: 'How does the EzGo 15% Minimum Discount rule benefit me?',
-    answer: 'When you post your event requirement, you specify your budget. Providers can ONLY submit bids that are at least 15% lower than your budget ceiling. This guarantees you real savings on every confirmed booking compared to traditional offline negotiations.'
+    question: 'How does the 15% rule help me?',
+    answer: 'You set a budget when you post. Vendors can bid any price below it, but you can only pick a bid that is at least 15% below your budget. So every booking saves you at least 15%.'
   },
   {
-    question: 'How is my money protected with Escrow?',
-    answer: 'When you accept an eligible bid, your payment (bid amount + 10% platform fee) is deposited into an RBI-compliant Escrow account. The provider does NOT receive the payout until you inspect the service at your event and mark the job as Completed.'
+    question: 'How is my money kept safe?',
+    answer: 'When you pick a vendor, you pay their price plus a 10% EzGo fee. EzGo holds this money. The vendor is paid only after you click "Event done".'
   },
   {
-    question: 'When will I get the service provider\'s phone number and direct contact?',
-    answer: 'To prevent disintermediation and protect both parties, vendor phone numbers and direct chat are unmasked instantly as soon as you accept the bid and fund the escrow.'
+    question: 'When do I get the vendor\'s phone number?',
+    answer: 'Right after you pay. You can then call or WhatsApp the vendor directly.'
   },
   {
-    question: 'What if a provider fails to show up or cancels last minute?',
-    answer: 'Your escrow payment is 100% refundable. Furthermore, EzGo\'s Emergency Provider Dispatch matches you with an instant standby verified provider in your city at no extra surcharge.'
+    question: 'What if the booking is cancelled?',
+    answer: 'If a paid booking is cancelled, you get back everything you paid, including the EzGo fee. Your request opens again so you can pick another vendor.'
   },
   {
-    question: 'Do providers pay any hidden commission on EzGo?',
-    answer: 'None! Providers receive 100% of their quoted bid amount upon completion. EzGo charges zero commission to vendors, which encourages top-quality pros to give you the most aggressive competitive rates.'
+    question: 'Do vendors pay a commission?',
+    answer: 'No. Vendors get 100% of their bid after the event. The only fee is the 10% the host pays on top.'
   }
 ];

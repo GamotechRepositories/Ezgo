@@ -7,6 +7,15 @@ export const placeBid = async (req, res, next) => {
   try {
     const { requirementId, providerId, amount, proposalNotes, equipmentDetails } = req.body;
 
+    if (!req.user || req.user.role !== 'provider') {
+      res.status(403);
+      throw new Error('Only a logged-in vendor can place a bid.');
+    }
+    if (req.user._id.toString() !== String(providerId)) {
+      res.status(403);
+      throw new Error('You can only place a bid as yourself.');
+    }
+
     if (!requirementId || !providerId || !amount) {
       res.status(400);
       throw new Error('Requirement ID, Provider ID, and Bid Amount are required');
@@ -23,8 +32,18 @@ export const placeBid = async (req, res, next) => {
       throw new Error('This requirement is no longer accepting bids');
     }
 
+    const provider = await User.findById(providerId);
+    if (!provider || provider.role !== 'provider') {
+      res.status(403);
+      throw new Error('Only vendor accounts can place bids');
+    }
+
     // Bid must be strictly lower than budget
     const bidAmount = Number(amount);
+    if (!Number.isFinite(bidAmount) || bidAmount <= 0) {
+      res.status(400);
+      throw new Error('Please enter a valid bid amount');
+    }
     if (bidAmount >= requirement.budget) {
       res.status(400);
       throw new Error(`Bid amount must be strictly lower than the requester's budget of ₹${requirement.budget.toLocaleString()}`);

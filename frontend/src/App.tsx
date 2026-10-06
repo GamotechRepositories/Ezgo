@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Navbar } from './components/Navbar';
 import { RequesterView } from './components/RequesterView';
 import { RuleExplainer } from './components/RuleExplainer';
@@ -8,14 +8,49 @@ import { ReviewModal } from './components/ReviewModal';
 import { Footer } from './components/Footer';
 import { ToastContainer } from './components/Toast';
 import type { ToastMessage } from './components/Toast';
-import { api, mockCategories, mockUsers } from './services/api';
+import { LoginPage } from './components/LoginPage';
+import { MyBookingsPage } from './components/MyBookingsPage';
+import { api, getToken, clearToken } from './services/api';
 import type { User, Requirement, Booking, Category, Occasion } from './types';
 
+type Page = 'home' | 'bookings';
+const pageFromUrl = (): Page => (window.location.hash === '#bookings' ? 'bookings' : 'home');
+
 export default function App() {
-  const [currentUser, setCurrentUser] = useState<User>(mockUsers.requester);
-  
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (!getToken()) {
+      setReady(true);
+      return;
+    }
+    api.me()
+      .then(setCurrentUser)
+      .catch(() => clearToken())
+      .finally(() => setReady(true));
+  }, []);
+
+  if (!ready) {
+    return <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center text-slate-600">Loading...</div>;
+  }
+  if (!currentUser) return <LoginPage onSuccess={setCurrentUser} />;
+  return (
+    <HostApp
+      currentUser={currentUser}
+      onLogout={() => {
+        clearToken();
+        setCurrentUser(null);
+      }}
+    />
+  );
+}
+
+function HostApp({ currentUser, onLogout }: { currentUser: User; onLogout: () => void }) {
+  const [loadError, setLoadError] = useState('');
+
   // Data State
-  const [categories, setCategories] = useState<Category[]>(mockCategories);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [occasions, setOccasions] = useState<Occasion[]>([]);
   const [requirements, setRequirements] = useState<Requirement[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -44,34 +79,40 @@ export default function App() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  // Initial Load
-  const loadData = async () => {
-    try {
-      const [catsRes, reqsRes, bookingsRes, userRes, occsRes] = await Promise.allSettled([
-        api.getCategories(),
-        api.getRequirements(),
-        api.getBookings(),
-        api.getUserByRole('requester'),
-        api.getOccasions(),
-      ]);
+  const loadMyActivity = useCallback(async (userId: string) => {
+    const [reqs, bks] = await Promise.all([
+      api.getRequirements({ requesterId: userId }),
+      api.getBookings({ userId, role: 'requester' }),
+    ]);
+    setRequirements(reqs);
+    setBookings(bks);
+  }, []);
 
-      if (userRes.status === 'fulfilled' && userRes.value) {
-        setCurrentUser(userRes.value);
-      }
-      if (catsRes.status === 'fulfilled' && catsRes.value.length > 0) {
-        setCategories(catsRes.value);
-      }
-      if (reqsRes.status === 'fulfilled' && reqsRes.value.length > 0) {
-        setRequirements(reqsRes.value);
-      }
-      if (bookingsRes.status === 'fulfilled' && bookingsRes.value.length > 0) {
-        setBookings(bookingsRes.value);
-      }
-      if (occsRes.status === 'fulfilled' && occsRes.value.length > 0) {
-        setOccasions(occsRes.value);
-      }
-    } catch (_) {
-      // Fallbacks already initialized in state
+  // Initial Load
+  const loadData = useCallback(async () => {
+    setLoadError('');
+    const [catsRes, occsRes, activityRes] = await Promise.allSettled([
+      api.getCategories(),
+      api.getOccasions(),
+      loadMyActivity(currentUser._id),
+    ]);
+
+    const errors: string[] = [];
+    if (catsRes.status === 'fulfilled') setCategories(catsRes.value);
+    else errors.push(catsRes.reason?.message);
+    if (occsRes.status === 'fulfilled') setOccasions(occsRes.value);
+    else errors.push(occsRes.reason?.message);
+    if (activityRes.status === 'rejected') errors.push(activityRes.reason?.message);
+
+    if (errors.length) setLoadError(errors[0] || 'Something went wrong while loading.');
+  }, [currentUser._id, loadMyActivity]);
+
+  const refreshMine = async () => {
+    if (!currentUser._id) return;
+    try {
+      await loadMyActivity(currentUser._id);
+    } catch (err: any) {
+      addToast('error', 'Could not refresh', err.message);
     }
   };
 
@@ -79,9 +120,7 @@ export default function App() {
     loadData();
 
     const refreshOccasions = () => {
-      api.getOccasions().then((occs) => {
-        if (occs && occs.length > 0) setOccasions(occs);
-      }).catch(() => {});
+      api.getOccasions().then(setOccasions).catch(() => {});
     };
 
     window.addEventListener('focus', refreshOccasions);
@@ -91,7 +130,7 @@ export default function App() {
       window.removeEventListener('focus', refreshOccasions);
       clearInterval(interval);
     };
-  }, []);
+  }, [loadData]);
 
   const handleOpenPostModal = (categoryName?: string) => {
     setPostModalCategory(categoryName);
@@ -105,150 +144,117 @@ export default function App() {
       setRequirements((prev) => [newReq, ...prev]);
       addToast(
         'success',
-        'Requirement Broadcasted Live!',
-        `Your event is now live on the marketplace. Verified providers in ${newReq.location.city} are being notified.`
+        'Request posted',
+        `Vendors in ${newReq.location.city} can now see it and send you prices.`
       );
     } catch (err: any) {
-      addToast('error', 'Failed to Post', err.message);
+      addToast('error', 'Could not post request', err.message);
+      throw err;
     }
   };
 
   // 2. Accept Bid
   const handleAcceptBid = async (requirementId: string, bidId: string) => {
-    try {
-      const targetReq = requirements.find((r) => r._id === requirementId);
-      if (!targetReq) return;
+    const targetReq = requirements.find((r) => r._id === requirementId);
+    const targetBid = targetReq?.bids?.find((b) => b._id === bidId);
+    if (!targetReq || !targetBid) return;
 
-      const targetBid = targetReq.bids?.find((b) => b._id === bidId);
-      if (!targetBid) return;
-
-      if (targetBid.amount > targetReq.maxAcceptableBid) {
-        addToast(
-          'error',
-          'Bid Ineligible Under 15% Rule',
-          `This bid of ₹${targetBid.amount.toLocaleString()} does not meet the minimum 15% discount threshold (max allowed: ₹${targetReq.maxAcceptableBid.toLocaleString()}).`
-        );
-        return;
-      }
-
-      let newBooking: Booking;
-      try {
-        newBooking = await api.acceptBid(requirementId, bidId, currentUser._id);
-      } catch (_) {
-        const platformFee = Math.round(targetBid.amount * 0.10);
-        newBooking = {
-          _id: 'bk-' + Math.random().toString(36).substring(2, 9),
-          requirementId: targetReq,
-          bidId: targetBid,
-          requesterId: currentUser,
-          providerId: targetBid.providerId,
-          bidAmount: targetBid.amount,
-          platformFee: platformFee,
-          totalPaid: targetBid.amount + platformFee,
-          status: 'AWAITING_PAYMENT',
-          paymentDetails: {
-            transactionId: 'TXN-INIT-' + Math.random().toString(36).substring(2, 9).toUpperCase(),
-            method: 'PENDING',
-            escrowStatus: 'HELD',
-          },
-          isContactRevealed: false,
-          createdAt: new Date().toISOString(),
-        };
-      }
-
-      setBookings((prev) => [newBooking, ...prev]);
-      setRequirements((prev) =>
-        prev.map((r) => (r._id === requirementId ? { ...r, status: 'ACCEPTED' } : r))
+    if (targetBid.amount > targetReq.maxAcceptableBid) {
+      addToast(
+        'error',
+        'Price too high',
+        `You can only pick prices of ₹${targetReq.maxAcceptableBid.toLocaleString()} or less (at least 15% below your budget).`
       );
+      return;
+    }
 
+    try {
+      const newBooking = await api.acceptBid(requirementId, bidId, currentUser._id);
+      await refreshMine();
       setSelectedBookingForPay(newBooking);
-
       addToast(
         'success',
-        'Bid Accepted! Complete Escrow Deposit',
-        `Provider selected. Please fund the Escrow (₹${newBooking.totalPaid.toLocaleString()}) to reveal full contact details.`
+        'Vendor selected',
+        `Pay ₹${newBooking.totalPaid.toLocaleString()} to confirm the booking and see the vendor's phone number.`
       );
     } catch (err: any) {
-      addToast('error', 'Acceptance Failed', err.message);
+      addToast('error', 'Could not select vendor', err.message);
     }
   };
 
-  // 3. Pay Booking
-  const handlePaySuccess = async (bookingId: string, paymentMethod: string) => {
+  // 3. Pay Booking. A Razorpay payment is already marked paid by /verify-payment.
+  const handlePaySuccess = async (bookingId: string, paymentMethod: string, transactionId?: string) => {
+    if (!transactionId) {
+      await api.payBooking(bookingId, paymentMethod);
+    }
+    await refreshMine();
+    addToast(
+      'success',
+      'Payment done',
+      'EzGo is holding your money safely. You can now call or WhatsApp the vendor.'
+    );
+  };
+
+  // 4. Cancel booking (unpaid: pick another vendor, paid: full refund)
+  const handleCancelBooking = async (bookingId: string) => {
     try {
-      try {
-        await api.payBooking(bookingId, paymentMethod);
-      } catch (_) {}
-
-      setBookings((prev) =>
-        prev.map((b) => {
-          if (b._id === bookingId) {
-            return {
-              ...b,
-              status: 'ACTIVE',
-              isContactRevealed: true,
-              paymentDetails: {
-                ...b.paymentDetails,
-                method: paymentMethod,
-                paidAt: new Date().toISOString(),
-                escrowStatus: 'HELD',
-              },
-            };
-          }
-          return b;
-        })
-      );
-
-      addToast(
-        'success',
-        'Escrow Funded & Contact Revealed!',
-        'Funds securely deposited in Escrow. Provider phone and WhatsApp are now available.'
-      );
+      const res = await api.cancelBooking(bookingId, 'Cancelled by host');
+      await refreshMine();
+      addToast('info', 'Booking cancelled', res.message);
     } catch (err: any) {
-      addToast('error', 'Payment Failed', err.message);
+      addToast('error', 'Could not cancel', err.message);
+      throw err;
     }
   };
 
-  // 4. Complete Booking
+  // 5. Complete Booking
   const handleCompleteBooking = async (bookingId: string) => {
     try {
-      try {
-        await api.completeBooking(bookingId);
-      } catch (_) {}
-
-      setBookings((prev) =>
-        prev.map((b) => {
-          if (b._id === bookingId) {
-            return {
-              ...b,
-              status: 'COMPLETED',
-              completedAt: new Date().toISOString(),
-              payoutDetails: {
-                transferId: 'PAYOUT-' + Math.random().toString(36).substring(2, 9).toUpperCase(),
-                releasedAt: new Date().toISOString(),
-                amountToProvider: b.bidAmount,
-                commissionRetained: b.platformFee,
-              },
-            };
-          }
-          return b;
-        })
-      );
-
-      addToast(
-        'success',
-        'Booking Completed & Payout Released!',
-        '100% of the bid amount has been dispatched to the provider with zero deductions.'
-      );
+      await api.completeBooking(bookingId);
+      await refreshMine();
+      addToast('success', 'Event marked as done', 'EzGo has sent the full price to the vendor.');
     } catch (err: any) {
-      addToast('error', 'Completion Error', err.message);
+      addToast('error', 'Could not mark as done', err.message);
+      throw err;
     }
   };
 
-  // 5. Submit Review
-  const handleSubmitReview = async (_data: any) => {
-    addToast('success', 'Thank You for Rating!', 'Your review helps keep our verified pro network top-tier.');
+  // 6. Submit Review
+  const handleSubmitReview = async (data: Parameters<typeof api.submitReview>[0]) => {
+    try {
+      await api.submitReview(data);
+      await refreshMine();
+      addToast('success', 'Thanks for rating', 'Your rating helps other hosts pick good vendors.');
+    } catch (err: any) {
+      addToast('error', 'Could not save rating', err.message);
+      throw err;
+    }
   };
+
+  const [page, setPage] = useState<Page>(pageFromUrl);
+
+  useEffect(() => {
+    const onPopState = () => setPage(pageFromUrl());
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  const goTo = (next: Page) => {
+    if (next !== pageFromUrl()) {
+      window.history.pushState(null, '', next === 'bookings' ? '#bookings' : window.location.pathname);
+    }
+    setPage(next);
+    window.scrollTo({ top: 0 });
+  };
+
+  const handleOpenBookings = () => {
+    goTo('bookings');
+    refreshMine();
+  };
+
+  const activeBookingsCount = bookings.filter(
+    (b) => b.status === 'ACTIVE' || b.status === 'AWAITING_PAYMENT'
+  ).length;
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans flex flex-col justify-between selection:bg-amber-100 selection:text-amber-900">
@@ -259,25 +265,55 @@ export default function App() {
       {/* Top Navbar */}
       <Navbar
         currentUser={currentUser}
+        onLogout={onLogout}
         onOpenExplainer={() => setIsExplainerOpen(true)}
         onOpenPostModal={() => handleOpenPostModal()}
+        onOpenBookings={handleOpenBookings}
+        onGoHome={() => goTo('home')}
+        isBookingsPage={page === 'bookings'}
+        activeBookingsCount={activeBookingsCount}
       />
+
+      {loadError && (
+        <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 pt-24">
+          <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <p className="text-sm">{loadError}</p>
+            <button
+              onClick={loadData}
+              className="px-4 py-2 rounded-full bg-white border border-rose-200 text-sm font-semibold hover:bg-rose-100 transition cursor-pointer shrink-0"
+            >
+              Try again
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Main Workspace Body */}
       <main className="w-full flex-1">
-        <RequesterView
-          requirements={requirements}
-          bookings={bookings}
-          categories={categories}
-          occasions={occasions}
-          currentUser={currentUser}
-          onOpenPostModal={handleOpenPostModal}
-          onAcceptBid={handleAcceptBid}
-          onOpenPaymentModal={(b) => setSelectedBookingForPay(b)}
-          onCompleteBooking={handleCompleteBooking}
-          onOpenReviewModal={(b) => setSelectedBookingForReview(b)}
-          onOpenExplainer={() => setIsExplainerOpen(true)}
-        />
+        {page === 'bookings' ? (
+          <MyBookingsPage
+            bookings={bookings}
+            categories={categories}
+            onBack={() => goTo('home')}
+            onOpenPostModal={handleOpenPostModal}
+            onOpenPaymentModal={(b) => setSelectedBookingForPay(b)}
+            onCancelBooking={handleCancelBooking}
+            onCompleteBooking={handleCompleteBooking}
+            onOpenReviewModal={(b) => setSelectedBookingForReview(b)}
+          />
+        ) : (
+          <RequesterView
+            requirements={requirements}
+            bookings={bookings}
+            categories={categories}
+            occasions={occasions}
+            currentUser={currentUser}
+            onOpenPostModal={handleOpenPostModal}
+            onAcceptBid={handleAcceptBid}
+            onOpenBookings={handleOpenBookings}
+            onOpenExplainer={() => setIsExplainerOpen(true)}
+          />
+        )}
       </main>
 
       {/* Modals */}
@@ -300,6 +336,8 @@ export default function App() {
         onClose={() => setSelectedBookingForPay(null)}
         booking={selectedBookingForPay}
         onPaySuccess={handlePaySuccess}
+        onCancelBooking={handleCancelBooking}
+        onNavigateToBookings={handleOpenBookings}
       />
 
       <ReviewModal

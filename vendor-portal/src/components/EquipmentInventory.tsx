@@ -1,9 +1,19 @@
-import React, { useState } from 'react';
-import { Sparkles, Plus, Upload, Image as ImageIcon, Loader2, X, Camera } from 'lucide-react';
-import { mockEquipmentList, api } from '../services/api';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Plus, Upload, Loader2, X, Camera } from 'lucide-react';
+import { api } from '../services/api';
+import type { EquipmentItem } from '../types';
 
-export const EquipmentInventory: React.FC = () => {
-  const [equipment, setEquipment] = useState(mockEquipmentList);
+const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1545454675-3531b543be5d?w=400&auto=format&fit=crop&q=80';
+
+interface EquipmentInventoryProps {
+  vendorId: string;
+}
+
+export const EquipmentInventory: React.FC<EquipmentInventoryProps> = ({ vendorId }) => {
+  const [equipment, setEquipment] = useState<EquipmentItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [busyId, setBusyId] = useState<string | null>(null);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [newCat, setNewCat] = useState('Sound Systems');
@@ -11,10 +21,53 @@ export const EquipmentInventory: React.FC = () => {
   const [newSpecs, setNewSpecs] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [uploadError, setUploadError] = useState('');
 
-  const handleToggle = (id: string) => {
-    setEquipment(equipment.map((eq) => (eq.id === id ? { ...eq, isAvailable: !eq.isAvailable } : eq)));
+  const loadEquipment = useCallback(async () => {
+    if (!vendorId) return;
+    setIsLoading(true);
+    setError('');
+    try {
+      setEquipment(await api.getEquipment(vendorId));
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [vendorId]);
+
+  useEffect(() => {
+    loadEquipment();
+  }, [loadEquipment]);
+
+  const replaceItem = (updated: EquipmentItem) =>
+    setEquipment((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
+
+  const handleToggle = async (item: EquipmentItem) => {
+    setBusyId(item._id);
+    setError('');
+    try {
+      replaceItem(await api.updateEquipment(item._id, { isAvailable: !item.isAvailable }));
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleRemove = async (item: EquipmentItem) => {
+    if (!window.confirm(`Remove "${item.name}" from your equipment?`)) return;
+    setBusyId(item._id);
+    setError('');
+    try {
+      await api.deleteEquipment(item._id);
+      setEquipment((prev) => prev.filter((eq) => eq._id !== item._id));
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setBusyId(null);
+    }
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -35,51 +88,56 @@ export const EquipmentInventory: React.FC = () => {
 
   const handleCardImageChange = async (itemId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (file) {
+      setBusyId(itemId);
+      setError('');
       try {
         const cloudUrl = await api.uploadImage(file, 'ezgo/equipment');
-        setEquipment((prev) =>
-          prev.map((item) => (item.id === itemId ? { ...item, image: cloudUrl } : item))
-        );
+        replaceItem(await api.updateEquipment(itemId, { image: cloudUrl }));
       } catch (err: any) {
-        alert('Upload failed: ' + err.message);
+        setError('Photo not changed: ' + err.message);
+      } finally {
+        setBusyId(null);
       }
     }
   };
 
-  const handleAdd = (e: React.FormEvent) => {
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newName) return;
-    setEquipment([
-      ...equipment,
-      {
-        id: 'eq-' + Date.now(),
-        name: newName,
+    if (!newName.trim() || !vendorId) return;
+    setIsSaving(true);
+    setUploadError('');
+    try {
+      const saved = await api.addEquipment(vendorId, {
+        name: newName.trim(),
         category: newCat,
-        specs: newSpecs.trim() || 'Verified professional grade equipment',
+        specs: newSpecs.trim(),
         dailyRate: Number(newRate),
         isAvailable: true,
         condition: 'Excellent',
-        image: imageUrl.trim() || 'https://images.unsplash.com/photo-1545454675-3531b543be5d?w=400&auto=format&fit=crop&q=80',
-      },
-    ]);
-    setNewName('');
-    setNewSpecs('');
-    setImageUrl('');
-    setNewRate('3500');
-    setIsAddOpen(false);
+        image: imageUrl.trim() || DEFAULT_IMAGE,
+      });
+      setEquipment((prev) => [saved, ...prev]);
+      setNewName('');
+      setNewSpecs('');
+      setImageUrl('');
+      setNewRate('3500');
+      setIsAddOpen(false);
+    } catch (err: any) {
+      setUploadError(err.message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2">
-            <Sparkles className="w-6 h-6 text-[#f95724]" />
-            <span>Equipment & Inventory Catalog</span>
-          </h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Registered gear available for reverse-bidding deployments in Pune & PCMC.
+          <h2 className="text-2xl font-bold text-slate-900">My equipment</h2>
+          <p className="text-base text-slate-600 mt-1">
+            List what you own so you can quickly mention it in your bids.
           </p>
         </div>
 
@@ -89,64 +147,101 @@ export const EquipmentInventory: React.FC = () => {
             setUploadError('');
             setIsAddOpen(true);
           }}
-          className="px-5 py-2.5 rounded-full bg-[#f95724] hover:bg-[#e04818] text-white font-bold text-xs shadow-md shadow-[#f95724]/25 flex items-center gap-1.5 cursor-pointer"
+          disabled={!vendorId}
+          className="px-5 py-2.5 rounded-full bg-[#f95724] hover:bg-[#e04818] text-white font-semibold text-sm flex items-center gap-1.5 cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus className="w-4 h-4" />
-          <span>Add New Equipment</span>
+          <span>Add equipment</span>
         </button>
       </div>
+
+      {error && (
+        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <p className="text-sm">{error}</p>
+          <button
+            onClick={loadEquipment}
+            className="px-4 py-2 rounded-full bg-white border border-rose-200 text-sm font-semibold hover:bg-rose-100 transition cursor-pointer shrink-0"
+          >
+            Try again
+          </button>
+        </div>
+      )}
+
+      {(isLoading || !vendorId) && !error && (
+        <div className="py-16 flex items-center justify-center gap-2 text-slate-500 text-sm">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          <span>Loading your equipment...</span>
+        </div>
+      )}
+
+      {!isLoading && vendorId && !error && equipment.length === 0 && (
+        <div className="py-16 px-6 rounded-3xl border-2 border-dashed border-slate-200 bg-white text-center space-y-2">
+          <p className="text-base font-semibold text-slate-800">You have not added any equipment yet</p>
+          <p className="text-sm text-slate-500">Click "Add equipment" to list speakers, lights, cameras or anything else you rent out.</p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {equipment.map((item) => (
           <div
-            key={item.id}
+            key={item._id}
             className="rounded-3xl bg-white border border-slate-200 overflow-hidden space-y-3 p-4 flex flex-col justify-between shadow-sm hover:shadow-md transition group"
           >
             <div className="space-y-3">
               <div className="relative h-36 rounded-2xl overflow-hidden bg-slate-100">
-                <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                <span className="absolute top-2 left-2 px-2.5 py-0.5 rounded-full bg-white/90 backdrop-blur-md text-[10px] font-bold text-[#f95724] shadow-xs">
+                <img src={item.image || DEFAULT_IMAGE} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <span className="absolute top-2 left-2 px-2.5 py-0.5 rounded-full bg-white/90 text-xs font-medium text-slate-700">
                   {item.category}
                 </span>
 
                 {/* Quick Photo Upload Trigger on Card */}
                 <label
-                  htmlFor={`card-img-${item.id}`}
-                  title="Upload / Change Photo from Device (Cloudinary)"
-                  className="absolute bottom-2 right-2 p-1.5 rounded-full bg-black/60 hover:bg-[#f95724] text-white backdrop-blur-md cursor-pointer transition-all duration-200 shadow-md opacity-0 group-hover:opacity-100"
+                  htmlFor={`card-img-${item._id}`}
+                  title="Change photo"
+                  aria-label="Change photo"
+                  className={`absolute bottom-2 right-2 p-1.5 rounded-full bg-black/60 hover:bg-[#f95724] text-white cursor-pointer transition ${busyId === item._id ? 'pointer-events-none opacity-60' : ''}`}
                 >
-                  <Camera className="w-3.5 h-3.5" />
+                  {busyId === item._id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
                   <input
                     type="file"
-                    id={`card-img-${item.id}`}
+                    id={`card-img-${item._id}`}
                     accept="image/*"
-                    onChange={(e) => handleCardImageChange(item.id, e)}
+                    onChange={(e) => handleCardImageChange(item._id, e)}
                     className="hidden"
                   />
                 </label>
               </div>
 
               <div>
-                <h4 className="text-sm font-bold text-slate-900 group-hover:text-[#f95724] transition">{item.name}</h4>
-                <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">{item.specs}</p>
+                <h4 className="text-base font-semibold text-slate-900">{item.name}</h4>
+                {item.specs && <p className="text-sm text-slate-500 mt-0.5 line-clamp-2">{item.specs}</p>}
+                <button
+                  onClick={() => handleRemove(item)}
+                  disabled={busyId === item._id}
+                  className="mt-1 text-xs text-slate-400 hover:text-rose-600 underline underline-offset-2 cursor-pointer disabled:opacity-50"
+                >
+                  Remove
+                </button>
               </div>
             </div>
 
             <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
               <div>
-                <div className="text-[10px] text-slate-400 font-bold uppercase">Daily Standard Rate</div>
-                <div className="text-xs font-black text-[#f95724]">₹{item.dailyRate.toLocaleString()} / day</div>
+                <div className="text-xs text-slate-500">Rent per day</div>
+                <div className="text-sm font-semibold text-slate-900">₹{item.dailyRate.toLocaleString()}</div>
               </div>
 
               <button
-                onClick={() => handleToggle(item.id)}
-                className={`px-3 py-1 rounded-full text-[11px] font-bold transition cursor-pointer ${
+                onClick={() => handleToggle(item)}
+                disabled={busyId === item._id}
+                title="Click to change"
+                className={`px-3 py-1 rounded-full text-sm font-medium transition cursor-pointer disabled:opacity-50 ${
                   item.isAvailable
                     ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                    : 'bg-slate-100 text-slate-400'
+                    : 'bg-slate-100 text-slate-500 border border-slate-200'
                 }`}
               >
-                {item.isAvailable ? 'Ready for Gigs' : 'In Service'}
+                {item.isAvailable ? 'Available' : 'Not available'}
               </button>
             </div>
           </div>
@@ -159,11 +254,12 @@ export const EquipmentInventory: React.FC = () => {
           <div className="w-full max-w-lg rounded-3xl bg-white border border-slate-200 p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
-                <h3 className="text-base font-bold text-slate-900">Add Equipment to Gear Catalog</h3>
-                <p className="text-[11px] text-slate-500">Upload photos from device and showcase gear for bids</p>
+                <h3 className="text-lg font-bold text-slate-900">Add equipment</h3>
+                <p className="text-sm text-slate-500">Add a name, photo, and daily rent</p>
               </div>
               <button
                 type="button"
+                aria-label="Close"
                 onClick={() => setIsAddOpen(false)}
                 className="p-1 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100"
               >
@@ -171,9 +267,9 @@ export const EquipmentInventory: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleAdd} className="space-y-4 text-xs">
+            <form onSubmit={handleAdd} className="space-y-4 text-sm">
               <div>
-                <label className="font-bold text-slate-700">Equipment Name & Model *</label>
+                <label className="font-medium text-slate-700">Name and model</label>
                 <input
                   type="text"
                   value={newName}
@@ -186,13 +282,7 @@ export const EquipmentInventory: React.FC = () => {
 
               {/* Cloudinary Device Image Upload Section */}
               <div className="space-y-1.5">
-                <label className="font-bold text-slate-700 flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <ImageIcon className="w-3.5 h-3.5 text-[#f95724]" />
-                    <span>Equipment Photo (Upload from Device)</span>
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-normal">Stored on Cloudinary</span>
-                </label>
+                <p className="font-medium text-slate-700">Photo (optional)</p>
 
                 <div className="border-2 border-dashed border-slate-200 hover:border-orange-400 rounded-2xl p-4 bg-slate-50/60 transition text-center">
                   <input
@@ -210,38 +300,33 @@ export const EquipmentInventory: React.FC = () => {
                     {isUploading ? (
                       <div className="flex flex-col items-center gap-1.5 py-2">
                         <Loader2 className="w-6 h-6 text-[#f95724] animate-spin" />
-                        <span className="font-bold text-xs text-[#f95724]">Uploading to Cloudinary...</span>
+                        <span className="font-medium text-sm text-[#f95724]">Uploading...</span>
                       </div>
                     ) : (
                       <>
                         <Upload className="w-6 h-6 text-[#f95724]" />
-                        <span className="font-bold text-xs text-slate-800">
-                          {imageUrl ? 'Change Photo from Device' : 'Click to Upload Gear Photo from Device'}
+                        <span className="font-medium text-sm text-slate-800">
+                          {imageUrl ? 'Change photo' : 'Upload a photo'}
                         </span>
-                        <span className="text-[10px] text-slate-400">PNG, JPG, WebP up to 10MB</span>
+                        <span className="text-xs text-slate-500">PNG, JPG or WebP, up to 10 MB</span>
                       </>
                     )}
                   </label>
 
                   {uploadError && (
-                    <p className="text-[11px] text-red-500 font-medium mt-2">{uploadError}</p>
+                    <p className="text-sm text-red-600 mt-2">{uploadError}</p>
                   )}
 
                   {imageUrl && (
-                    <div className="mt-3 relative rounded-xl overflow-hidden h-36 border border-slate-200 bg-slate-900 group">
+                    <div className="mt-3 relative rounded-xl overflow-hidden h-36 border border-slate-200 bg-slate-900">
                       <img src={imageUrl} alt="Uploaded equipment" className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                        <span className="text-white text-xs font-bold bg-emerald-600 px-2.5 py-1 rounded-lg">
-                          ✓ Cloudinary Stored
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setImageUrl('')}
-                          className="bg-red-600 text-white text-xs px-2 py-1 rounded-lg hover:bg-red-700"
-                        >
-                          Remove
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setImageUrl('')}
+                        className="absolute top-2 right-2 bg-white/90 text-slate-800 text-sm px-2.5 py-1 rounded-lg hover:bg-white"
+                      >
+                        Remove
+                      </button>
                     </div>
                   )}
                 </div>
@@ -249,7 +334,7 @@ export const EquipmentInventory: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-slate-700">Category *</label>
+                  <label className="font-medium text-slate-700">Category</label>
                   <select
                     value={newCat}
                     onChange={(e) => setNewCat(e.target.value)}
@@ -266,7 +351,7 @@ export const EquipmentInventory: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700">Daily Rental Benchmark (₹) *</label>
+                  <label className="font-medium text-slate-700">Rent per day (₹)</label>
                   <input
                     type="number"
                     value={newRate}
@@ -278,7 +363,7 @@ export const EquipmentInventory: React.FC = () => {
               </div>
 
               <div>
-                <label className="font-bold text-slate-700">Specifications / Gear Details</label>
+                <label className="font-medium text-slate-700">Details (optional)</label>
                 <textarea
                   rows={2}
                   value={newSpecs}
@@ -292,16 +377,16 @@ export const EquipmentInventory: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsAddOpen(false)}
-                  className="px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold cursor-pointer"
+                  className="px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={isUploading}
-                  className="px-6 py-2 rounded-full bg-[#f95724] hover:bg-[#e04818] text-white font-bold disabled:opacity-50 cursor-pointer shadow-md shadow-[#f95724]/20"
+                  disabled={isUploading || isSaving}
+                  className="px-6 py-2 rounded-full bg-[#f95724] hover:bg-[#e04818] text-white font-semibold disabled:opacity-50 cursor-pointer"
                 >
-                  Save Equipment
+                  {isSaving ? 'Saving...' : 'Save'}
                 </button>
               </div>
             </form>

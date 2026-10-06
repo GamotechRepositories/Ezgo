@@ -1,8 +1,11 @@
 import express from 'express';
 import { getAdminMetrics, getProviders, verifyProvider } from '../controllers/adminController.js';
 import { seedDatabase } from '../config/seedData.js';
+import { requireAuth, requireRole } from '../middlewares/auth.js';
 
 const router = express.Router();
+
+router.use(requireAuth, requireRole('admin'));
 
 router.get('/metrics', getAdminMetrics);
 router.get('/providers', getProviders);

@@ -9,19 +9,50 @@ import { OccasionManager } from './components/OccasionManager';
 import { AuditLogViewer } from './components/AuditLogViewer';
 import { ToastContainer } from './components/Toast';
 import type { ToastMessage } from './components/Toast';
-import { api, mockAdminUser, mockMetrics, mockProviders, mockCategories } from './services/api';
+import { LoginPage } from './components/LoginPage';
+import { api, getToken, clearToken, emptyMetrics } from './services/api';
 import type { AdminMetrics, Booking, Category, Occasion, User } from './types';
 
 export default function App() {
-  const [currentAdmin, setCurrentAdmin] = useState<User>(mockAdminUser);
+  const [currentAdmin, setCurrentAdmin] = useState<User | null>(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (!getToken()) {
+      setReady(true);
+      return;
+    }
+    api.me()
+      .then(setCurrentAdmin)
+      .catch(() => clearToken())
+      .finally(() => setReady(true));
+  }, []);
+
+  if (!ready) {
+    return <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center text-slate-600">Loading...</div>;
+  }
+  if (!currentAdmin) return <LoginPage onSuccess={setCurrentAdmin} />;
+  return (
+    <AdminApp
+      currentAdmin={currentAdmin}
+      onLogout={() => {
+        clearToken();
+        setCurrentAdmin(null);
+      }}
+    />
+  );
+}
+
+function AdminApp({ currentAdmin, onLogout }: { currentAdmin: User; onLogout: () => void }) {
   const [activeTab, setActiveTab] = useState<'metrics' | 'kyc' | 'escrow' | 'categories' | 'occasions' | 'logs'>('metrics');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  
-  const [metrics, setMetrics] = useState<AdminMetrics>(mockMetrics);
-  const [providers, setProviders] = useState<User[]>(mockProviders);
+
+  const [metrics, setMetrics] = useState<AdminMetrics>(emptyMetrics);
+  const [providers, setProviders] = useState<User[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [categories, setCategories] = useState<Category[]>(mockCategories);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [occasions, setOccasions] = useState<Occasion[]>([]);
+  const [loadError, setLoadError] = useState('');
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   const addToast = (type: ToastMessage['type'], title: string, message: string) => {
@@ -34,22 +65,21 @@ export default function App() {
   };
 
   const loadData = async () => {
-    try {
-      const [m, p, b, c, u, o] = await Promise.allSettled([
-        api.getMetrics(),
-        api.getProviders(),
-        api.getBookings(),
-        api.getCategories(),
-        api.getAdminUser(),
-        api.getOccasions(),
-      ]);
-      if (m.status === 'fulfilled' && m.value) setMetrics(m.value);
-      if (p.status === 'fulfilled' && p.value && p.value.length > 0) setProviders(p.value);
-      if (b.status === 'fulfilled' && b.value) setBookings(b.value);
-      if (c.status === 'fulfilled' && c.value && c.value.length > 0) setCategories(c.value);
-      if (u.status === 'fulfilled' && u.value) setCurrentAdmin(u.value);
-      if (o.status === 'fulfilled' && o.value && o.value.length > 0) setOccasions(o.value);
-    } catch (_) {}
+    const results = await Promise.allSettled([
+      api.getMetrics(),
+      api.getProviders(),
+      api.getBookings(),
+      api.getCategories(),
+      api.getOccasions(),
+    ]);
+    const [m, p, b, c, o] = results;
+    if (m.status === 'fulfilled') setMetrics(m.value);
+    if (p.status === 'fulfilled') setProviders(p.value);
+    if (b.status === 'fulfilled') setBookings(b.value);
+    if (c.status === 'fulfilled') setCategories(c.value);
+    if (o.status === 'fulfilled') setOccasions(o.value);
+    const failed = results.find((r): r is PromiseRejectedResult => r.status === 'rejected');
+    setLoadError(failed ? (failed.reason as Error).message : '');
   };
 
   useEffect(() => {
@@ -78,55 +108,100 @@ export default function App() {
       }));
       addToast(
         'success',
-        isVerified ? 'KYC Verification Approved' : 'KYC Verification Revoked',
-        `Provider KYC credentials have been ${isVerified ? 'verified & activated' : 'revoked'}.`
+        isVerified ? 'Vendor approved' : 'Approval removed',
+        isVerified ? 'This vendor is now marked as verified.' : 'This vendor is no longer marked as verified.'
       );
-    } catch (_) {
-      addToast('error', 'Update Failed', 'Could not update provider KYC status.');
+    } catch (err: any) {
+      addToast('error', 'Update failed', err.message);
     }
   };
 
-  const handleReleasePayout = (bookingId: string) => {
-    setBookings((prev) =>
-      prev.map((b) => (b._id === bookingId ? { ...b, status: 'PAYOUT_RELEASED' } : b))
-    );
-    addToast('success', 'Escrow Released to Vendor', `Payout dispatched for booking ID: ${bookingId.substring(0, 8)}.`);
+  const refreshMoney = async () => {
+    const [m, b] = await Promise.all([api.getMetrics(), api.getBookings()]);
+    setMetrics(m);
+    setBookings(b);
   };
 
-  const handleIssueRefund = (bookingId: string) => {
-    setBookings((prev) =>
-      prev.map((b) => (b._id === bookingId ? { ...b, status: 'CANCELLED' } : b))
-    );
-    addToast('info', 'Refund Processed', `100% refund initiated to host for booking ID: ${bookingId.substring(0, 8)}.`);
+  const handleReleasePayout = async (bookingId: string) => {
+    const booking = bookings.find((b) => b._id === bookingId);
+    if (booking && !window.confirm(`Pay ₹${booking.bidAmount.toLocaleString()} to the vendor? This cannot be undone.`)) return;
+    try {
+      await api.completeBooking(bookingId);
+      await refreshMoney();
+      addToast('success', 'Vendor paid', 'The event is marked done and the vendor gets their full bid.');
+    } catch (err: any) {
+      addToast('error', 'Could not pay vendor', err.message);
+    }
+  };
+
+  const handleIssueRefund = async (bookingId: string) => {
+    const booking = bookings.find((b) => b._id === bookingId);
+    const wasPaid = booking?.status === 'ACTIVE';
+    const question = wasPaid
+      ? `Cancel this booking and refund ₹${booking!.totalPaid.toLocaleString()} to the host?`
+      : 'Cancel this booking? The host can then choose another vendor.';
+    if (!window.confirm(question)) return;
+    try {
+      await api.cancelBooking(bookingId, 'Cancelled by admin');
+      await refreshMoney();
+      addToast(
+        'info',
+        wasPaid ? 'Cancelled and refunded' : 'Booking cancelled',
+        wasPaid ? 'The host gets back everything they paid. The request is open for bids again.' : 'The request is open for bids again.'
+      );
+    } catch (err: any) {
+      addToast('error', 'Could not cancel booking', err.message);
+    }
   };
 
   const handleAddCategory = async (catData: Partial<Category>) => {
     try {
       const newCat = await api.addCategory(catData);
       setCategories((prev) => [...prev, newCat]);
-      addToast('success', 'Category Created', `${newCat.name} is now available platform-wide.`);
-    } catch (_) {}
+      addToast('success', 'Category added', `${newCat.name} is now available.`);
+    } catch (err: any) {
+      addToast('error', 'Could not add category', err.message);
+    }
+  };
+
+  const handleUpdateCategory = async (id: string, catData: Partial<Category>) => {
+    try {
+      const updated = await api.updateCategory(id, catData);
+      setCategories((prev) => prev.map((c) => (c._id === id ? updated : c)));
+      addToast('success', 'Photo changed', `${updated.name} has a new photo.`);
+    } catch (err: any) {
+      addToast('error', 'Could not change photo', err.message);
+    }
   };
 
   const handleAddOccasion = async (occData: Partial<Occasion>) => {
     try {
       const newOcc = await api.addOccasion(occData);
-      setOccasions((prev) => {
-        const filtered = prev.filter(o => o.slug !== newOcc.slug && (o._id ? o._id !== newOcc._id : true));
-        return [...filtered, newOcc];
-      });
-      addToast('success', 'Occasion Card Added', `${newOcc.name} is now live in the 3D gallery.`);
+      setOccasions((prev) => [...prev, newOcc]);
+      addToast('success', 'Occasion added', `${newOcc.name} now shows in the host app.`);
     } catch (err: any) {
-      addToast('error', 'Failed to Add Occasion', err.message);
+      addToast('error', 'Could not add occasion', err.message);
+    }
+  };
+
+  const handleUpdateOccasion = async (id: string, occData: Partial<Occasion>) => {
+    try {
+      const updated = await api.updateOccasion(id, occData);
+      setOccasions((prev) => prev.map((o) => (o._id === id ? updated : o)));
+      addToast('success', 'Photo changed', `${updated.name} has a new photo.`);
+    } catch (err: any) {
+      addToast('error', 'Could not change photo', err.message);
     }
   };
 
   const handleDeleteOccasion = async (id: string) => {
     try {
       await api.deleteOccasion(id);
-      setOccasions((prev) => prev.filter((o) => o._id !== id && o.id !== id && o.slug !== id));
-      addToast('info', 'Occasion Removed', 'The occasion card has been removed.');
-    } catch (_) {}
+      setOccasions((prev) => prev.filter((o) => o._id !== id));
+      addToast('info', 'Occasion removed', 'It no longer shows in the host app.');
+    } catch (err: any) {
+      addToast('error', 'Could not remove occasion', err.message);
+    }
   };
 
   const pendingKycCount = (providers || []).filter((p) => !p.isVerified).length;
@@ -156,9 +231,22 @@ export default function App() {
           pendingKycCount={pendingKycCount}
           activeEscrowCount={activeEscrowCount}
           onTabChange={setActiveTab}
+          onLogout={onLogout}
         />
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+          {loadError && (
+            <div className="mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <p className="text-sm">{loadError} Some numbers below may be missing.</p>
+              <button
+                onClick={loadData}
+                className="px-4 py-2 rounded-full bg-white border border-rose-200 text-sm font-semibold hover:bg-rose-100 transition cursor-pointer shrink-0"
+              >
+                Try again
+              </button>
+            </div>
+          )}
+
           {activeTab === 'metrics' && (
             <PlatformMetricsView metrics={metrics} />
           )}
@@ -182,6 +270,7 @@ export default function App() {
             <CategoryManager
               categories={categories}
               onAddCategory={handleAddCategory}
+              onUpdateCategory={handleUpdateCategory}
             />
           )}
 
@@ -189,17 +278,18 @@ export default function App() {
             <OccasionManager
               occasions={occasions}
               onAddOccasion={handleAddOccasion}
+              onUpdateOccasion={handleUpdateOccasion}
               onDeleteOccasion={handleDeleteOccasion}
             />
           )}
 
           {activeTab === 'logs' && (
-            <AuditLogViewer />
+            <AuditLogViewer transactions={metrics.recentTransactions || []} />
           )}
         </main>
 
         <footer className="py-4 px-6 border-t border-slate-200/80 text-center text-xs text-slate-400 bg-white/50">
-          EzGo Admin Operations Control Center • Protected by Smart Escrow Vault Custody
+          EzGo admin
         </footer>
       </div>
     </div>

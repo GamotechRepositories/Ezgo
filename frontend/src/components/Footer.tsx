@@ -356,14 +356,14 @@ export const Footer: React.FC<FooterProps> = ({ onOpenExplainer, onOpenPostModal
 
             <div className="hidden sm:block w-px h-8 bg-amber-200/80" />
 
-            {/* Value 3: RBI-Compliant Split Escrow */}
+            {/* Value 3: Money held until event */}
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 rounded-full bg-indigo-100/90 text-indigo-600 border border-indigo-200/80 flex items-center justify-center shrink-0 shadow-2xs">
                 <Building2 className="w-5 h-5" />
               </div>
               <div>
-                <h5 className="text-xs font-black text-slate-900 leading-tight">RBI-Compliant Split Escrow</h5>
-                <p className="text-[11px] text-slate-500 font-medium">Safe & Secure Payments</p>
+                <h5 className="text-xs font-black text-slate-900 leading-tight">Money held until event</h5>
+                <p className="text-[11px] text-slate-500 font-medium">Full refund if cancelled</p>
               </div>
             </div>
 

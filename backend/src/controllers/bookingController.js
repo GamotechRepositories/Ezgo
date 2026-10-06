@@ -4,11 +4,30 @@ import Requirement from '../models/Requirement.js';
 import User from '../models/User.js';
 import Transaction from '../models/Transaction.js';
 import Review from '../models/Review.js';
+import razorpayInstance from '../config/razorpay.js';
+
+const requesterOf = (booking) => (booking.requesterId?._id || booking.requesterId).toString();
+
+const assertHostOrAdmin = (req, res, booking) => {
+  if (!req.user) {
+    res.status(401);
+    throw new Error('Please log in.');
+  }
+  if (req.user.role !== 'admin' && requesterOf(booking) !== req.user._id.toString()) {
+    res.status(403);
+    throw new Error('You can only change your own bookings.');
+  }
+};
 
 // Accept a bid with strict 15% minimum-discount validation
 export const acceptBid = async (req, res, next) => {
   try {
     const { requirementId, bidId, requesterId } = req.body;
+
+    if (req.user.role !== 'admin' && req.user._id.toString() !== String(requesterId)) {
+      res.status(403);
+      throw new Error('You can only accept bids on your own request.');
+    }
 
     const requirement = await Requirement.findById(requirementId);
     if (!requirement) {
@@ -92,6 +111,12 @@ export const processPayment = async (req, res, next) => {
   try {
     const { bookingId, paymentMethod } = req.body;
 
+    // Marks a booking paid without taking money, so it must never be reachable in production
+    if (process.env.NODE_ENV === 'production') {
+      res.status(403);
+      throw new Error('Simulated payments are disabled. Pay through Razorpay.');
+    }
+
     const booking = await Booking.findById(bookingId)
       .populate('providerId')
       .populate('requesterId')
@@ -101,6 +126,8 @@ export const processPayment = async (req, res, next) => {
       res.status(404);
       throw new Error('Booking not found');
     }
+
+    assertHostOrAdmin(req, res, booking);
 
     if (booking.status !== 'AWAITING_PAYMENT') {
       res.status(400);
@@ -163,6 +190,8 @@ export const completeBooking = async (req, res, next) => {
       res.status(404);
       throw new Error('Booking not found');
     }
+
+    assertHostOrAdmin(req, res, booking);
 
     if (booking.status !== 'ACTIVE') {
       res.status(400);
@@ -230,15 +259,108 @@ export const completeBooking = async (req, res, next) => {
   }
 };
 
+// Cancels an unpaid or paid booking -> refunds the host if they paid, restores requirement to OPEN
+export const cancelBooking = async (req, res, next) => {
+  try {
+    const { bookingId, reason } = req.body;
+
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      res.status(404);
+      throw new Error('Booking not found');
+    }
+
+    assertHostOrAdmin(req, res, booking);
+
+    if (booking.status !== 'AWAITING_PAYMENT' && booking.status !== 'ACTIVE') {
+      res.status(400);
+      throw new Error(`Cannot cancel booking with status: ${booking.status}`);
+    }
+
+    const wasPaid = booking.status === 'ACTIVE';
+    let refundRef = '';
+
+    if (wasPaid) {
+      const paymentId = booking.paymentDetails?.transactionId || '';
+      // Only real Razorpay payments ("pay_...") can be refunded through the gateway
+      if (paymentId.startsWith('pay_')) {
+        try {
+          const refund = await razorpayInstance.payments.refund(paymentId, {
+            amount: Math.round(booking.totalPaid * 100),
+            notes: { bookingId: booking._id.toString(), reason: reason || 'Booking cancelled' },
+          });
+          refundRef = refund.id;
+        } catch (err) {
+          const reason =
+            err?.error?.description ||
+            err?.message ||
+            (err?.statusCode === 404 ? 'payment not found on Razorpay' : `Razorpay returned status ${err?.statusCode || 'unknown'}`);
+          res.status(502);
+          throw new Error(`Razorpay refund failed: ${reason}. The booking was not cancelled.`);
+        }
+      } else {
+        refundRef = 'RFND-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+      }
+
+      booking.paymentDetails.escrowStatus = 'REFUNDED';
+      booking.paymentDetails.refundId = refundRef;
+    }
+
+    booking.status = 'CANCELLED';
+    booking.disputeReason = reason || 'Payment cancelled by user / Acceptance revoked';
+    await booking.save();
+
+    if (wasPaid) {
+      await Transaction.create({
+        bookingId: booking._id,
+        type: 'REFUND',
+        amount: booking.totalPaid,
+        fromUser: null,
+        toUser: booking.requesterId,
+        status: 'SUCCESS',
+        referenceId: refundRef,
+        metadata: { reason: booking.disputeReason },
+      });
+    }
+
+    // Restore requirement status to OPEN so other providers can bid or host can choose another bid
+    if (booking.requirementId) {
+      await Requirement.findByIdAndUpdate(booking.requirementId, { status: 'OPEN' });
+      // Reset rejected bids back to PENDING
+      await Bid.updateMany(
+        { requirementId: booking.requirementId, status: { $in: ['ACCEPTED', 'REJECTED'] } },
+        { status: 'PENDING' }
+      );
+    }
+
+    res.json({
+      success: true,
+      message: wasPaid
+        ? `Booking cancelled. ₹${booking.totalPaid.toLocaleString()} refunded to the host. Requirement re-opened for bidding.`
+        : 'Booking cancelled. Requirement has been re-opened for bidding.',
+      data: booking,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Get bookings (filtered by user or role)
 export const getBookings = async (req, res, next) => {
+
   try {
     const { userId, role, status } = req.query;
     const filter = {};
-
-    if (role === 'requester' && userId) filter.requesterId = userId;
-    if (role === 'provider' && userId) filter.providerId = userId;
     if (status) filter.status = status;
+
+    if (req.user.role === 'admin') {
+      if (role === 'requester' && userId) filter.requesterId = userId;
+      if (role === 'provider' && userId) filter.providerId = userId;
+    } else if (req.user.role === 'provider') {
+      filter.providerId = req.user._id;
+    } else {
+      filter.requesterId = req.user._id;
+    }
 
     const bookings = await Booking.find(filter)
       .sort({ createdAt: -1 })
@@ -246,7 +368,18 @@ export const getBookings = async (req, res, next) => {
       .populate('requesterId', 'name phone')
       .populate('requirementId');
 
-    res.json({ success: true, count: bookings.length, data: bookings });
+    const myReviews = await Review.find({
+      fromUserId: req.user._id,
+      bookingId: { $in: bookings.map((b) => b._id) },
+    }).select('bookingId rating');
+    const ratingByBooking = new Map(myReviews.map((r) => [r.bookingId.toString(), r.rating]));
+
+    const data = bookings.map((b) => ({
+      ...b.toJSON(),
+      myRating: ratingByBooking.get(b._id.toString()) ?? null,
+    }));
+
+    res.json({ success: true, count: data.length, data });
   } catch (error) {
     next(error);
   }
@@ -255,13 +388,47 @@ export const getBookings = async (req, res, next) => {
 // Add two-way review
 export const addReview = async (req, res, next) => {
   try {
-    const { bookingId, fromUserId, toUserId, rating, comment, role } = req.body;
+    const { bookingId, comment } = req.body;
+    const rating = Number(req.body.rating);
+
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      res.status(400);
+      throw new Error('Please choose a rating from 1 to 5 stars.');
+    }
+
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      res.status(404);
+      throw new Error('Booking not found.');
+    }
+
+    const userId = req.user._id.toString();
+    const isHost = booking.requesterId.toString() === userId;
+    const isVendor = booking.providerId.toString() === userId;
+    if (!isHost && !isVendor) {
+      res.status(403);
+      throw new Error('You can only rate your own bookings.');
+    }
+
+    if (booking.status !== 'COMPLETED') {
+      res.status(400);
+      throw new Error('You can rate only after the event is done.');
+    }
+
+    const fromUserId = userId;
+    const toUserId = isHost ? booking.providerId : booking.requesterId;
+    const role = isHost ? 'requester_to_provider' : 'provider_to_requester';
+
+    if (await Review.exists({ bookingId, fromUserId })) {
+      res.status(409);
+      throw new Error('You have already rated this booking.');
+    }
 
     const review = await Review.create({
       bookingId,
       fromUserId,
       toUserId,
-      rating: Number(rating),
+      rating,
       comment,
       role,
     });

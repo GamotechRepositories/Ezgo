@@ -5,6 +5,7 @@ interface EzGoLogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   theme?: 'light' | 'dark';
   showBadge?: boolean;
+  hideTaglineOnMobile?: boolean;
   className?: string;
 }
 
@@ -13,6 +14,7 @@ export const EzGoLogo: React.FC<EzGoLogoProps> = ({
   size = 'md',
   theme = 'light',
   showBadge = true,
+  hideTaglineOnMobile = false,
   className = '',
 }) => {
   const sizeMap = {
@@ -78,8 +80,8 @@ export const EzGoLogo: React.FC<EzGoLogoProps> = ({
         </div>
 
         {variant !== 'simple' && (
-          <span className={`font-semibold tracking-wide ${currentSize.subtext} ${isDark ? 'text-slate-400' : 'text-slate-500'} mt-0.5`}>
-            {variant === 'vendor' ? 'Reverse-Bidding Partner' : variant === 'admin' ? 'Enterprise Operations' : 'Event Reverse Auctions'}
+          <span className={`font-semibold tracking-wide whitespace-nowrap ${hideTaglineOnMobile ? 'hidden sm:block' : ''} ${currentSize.subtext} ${isDark ? 'text-slate-400' : 'text-slate-500'} mt-0.5`}>
+            {variant === 'vendor' ? 'Reverse-Bidding Partner' : variant === 'admin' ? 'Enterprise Operations' : 'Vendors bid under your budget'}
           </span>
         )}
       </div>

@@ -18,13 +18,32 @@ export const createRequirement = async (req, res, next) => {
       imageUrl,
     } = req.body;
 
-    if (!requesterId || !category || !title || !budget || !eventDate || !location?.area) {
+    if (!req.user || (req.user.role !== 'requester' && req.user.role !== 'admin')) {
+      res.status(403);
+      throw new Error('Only a logged-in host can post a request.');
+    }
+
+    const ownerId = req.user.role === 'admin' ? requesterId : req.user._id;
+
+    if (!ownerId || !category || !title || !budget || !eventDate || !location?.area) {
       res.status(400);
       throw new Error('Please provide all mandatory fields (category, title, budget, date, location)');
     }
 
+    if (!Number.isFinite(Number(budget)) || Number(budget) < 1000) {
+      res.status(400);
+      throw new Error('Budget must be at least ₹1,000');
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (Number.isNaN(new Date(eventDate).getTime()) || new Date(eventDate) < today) {
+      res.status(400);
+      throw new Error('Event date must be today or later');
+    }
+
     const requirement = await Requirement.create({
-      requesterId,
+      requesterId: ownerId,
       category,
       title,
       description,

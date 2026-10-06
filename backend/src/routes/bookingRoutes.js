@@ -3,11 +3,15 @@ import {
   acceptBid,
   processPayment,
   completeBooking,
+  cancelBooking,
   getBookings,
   addReview,
 } from '../controllers/bookingController.js';
+import { requireAuth } from '../middlewares/auth.js';
 
 const router = express.Router();
+
+router.use(requireAuth);
 
 router.get('/', getBookings);
 router.get('/provider/:providerId', (req, res, next) => {
@@ -23,7 +27,9 @@ router.get('/user/:userId', (req, res, next) => {
 
 router.post('/accept-bid', acceptBid);
 router.post('/pay', processPayment);
+router.post('/cancel', cancelBooking);
 router.post('/complete', completeBooking);
 router.post('/review', addReview);
+
 
 export default router;

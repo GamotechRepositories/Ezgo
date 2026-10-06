@@ -2,7 +2,11 @@ import express from 'express';
 import multer from 'multer';
 import cloudinary from '../config/cloudinary.js';
 
+import { requireAuth } from '../middlewares/auth.js';
+
 const router = express.Router();
+
+router.use(requireAuth);
 
 // Configure multer with memory storage (max 10MB per file)
 const storage = multer.memoryStorage();

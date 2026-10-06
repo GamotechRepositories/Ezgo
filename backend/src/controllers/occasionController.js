@@ -89,6 +89,25 @@ export const createOccasion = async (req, res, next) => {
   }
 };
 
+// @desc    Update occasion card (name, image, icon)
+// @route   PUT /api/occasions/:id
+export const updateOccasion = async (req, res, next) => {
+  try {
+    const updates = {};
+    for (const key of ['name', 'image', 'iconType', 'order']) {
+      if (req.body[key] !== undefined) updates[key] = req.body[key];
+    }
+    const occasion = await Occasion.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true });
+    if (!occasion) {
+      res.status(404);
+      throw new Error('Occasion not found');
+    }
+    res.json({ success: true, data: occasion });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Delete occasion card
 // @route   DELETE /api/occasions/:id
 export const deleteOccasion = async (req, res, next) => {

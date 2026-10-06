@@ -17,6 +17,15 @@ const userSchema = new mongoose.Schema(
       trim: true,
       default: '',
     },
+    passwordHash: {
+      type: String,
+      default: '',
+      select: false,
+    },
+    usesDemoPassword: {
+      type: Boolean,
+      default: false,
+    },
     role: {
       type: String,
       enum: ['requester', 'provider', 'admin'],
@@ -68,6 +77,13 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+userSchema.set('toJSON', {
+  transform(_doc, ret) {
+    delete ret.passwordHash;
+    return ret;
+  },
+});
 
 const User = mongoose.model('User', userSchema);
 export default User;

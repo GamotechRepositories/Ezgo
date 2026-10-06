@@ -4,8 +4,11 @@ import {
   getRequirements,
   getRequirementById,
 } from '../controllers/requirementController.js';
+import { requireAuth } from '../middlewares/auth.js';
 
 const router = express.Router();
+
+router.use(requireAuth);
 
 router.route('/')
   .post(createRequirement)

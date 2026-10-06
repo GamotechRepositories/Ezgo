@@ -53,11 +53,11 @@ export const RuleExplainer: React.FC<RuleExplainerProps> = ({ isOpen, onClose })
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-orange-50 border border-orange-200 text-[#f95724] text-[11px] font-black tracking-wide uppercase mb-1">
               How EzGo Works • Platform Guide
             </div>
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-              EzGo Simple 3-Way Ecosystem (Host, Vendor & Admin)
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+              How bidding works
             </h2>
-            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-              Transparent live bidding, 100% safe escrow protection, and guaranteed 15%+ savings!
+            <p className="text-sm text-slate-600 mt-1 leading-relaxed">
+              You post a budget. Vendors bid at least 15% lower. You pay the bid plus 10%, and that money stays with EzGo until the event is finished.
             </p>
           </div>
         </div>
@@ -252,9 +252,9 @@ export const RuleExplainer: React.FC<RuleExplainerProps> = ({ isOpen, onClose })
                 <div className="flex items-start gap-3 p-3 bg-white rounded-xl border border-orange-100 shadow-2xs">
                   <span className="w-6 h-6 rounded-full bg-[#f95724] text-white flex items-center justify-center font-bold shrink-0">3</span>
                   <div>
-                    <strong className="text-slate-900 font-bold block text-sm">Deposit in Escrow & Release on Completion:</strong>
+                    <strong className="text-slate-900 font-bold block text-sm">Pay now, vendor gets paid after the event:</strong>
                     <p className="text-slate-600 mt-0.5">
-                      Your payment stays safely locked in EzGo RBI Escrow. Only after the vendor completes the service on your event day do you approve release of funds.
+                      EzGo holds your payment. The vendor is paid only after you click "Event done". If the booking is cancelled, you get a full refund.
                     </p>
                   </div>
                 </div>

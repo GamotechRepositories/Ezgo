@@ -102,6 +102,7 @@ export interface Booking {
     transactionId: string;
     method: string;
     paidAt?: string;
+    refundId?: string;
     escrowStatus: 'HELD' | 'RELEASED_TO_PROVIDER' | 'REFUNDED';
   };
   payoutDetails?: {
@@ -113,6 +114,8 @@ export interface Booking {
   isContactRevealed: boolean;
   completedAt?: string;
   createdAt: string;
+  updatedAt?: string;
+  myRating?: number | null;
 }
 
 export interface AdminMetrics {

@@ -19,8 +19,10 @@ export const getAdminMetrics = async (req, res, next) => {
     const activeBookingsList = allBookings.filter((b) => b.status === 'ACTIVE');
     const completedList = allBookings.filter((b) => b.status === 'COMPLETED' || b.status === 'PAYOUT_RELEASED');
 
-    const totalGMV = allBookings.reduce((acc, b) => acc + (b.totalPaid || 0), 0);
-    const totalCommissionEarned = allBookings.reduce((acc, b) => acc + (b.platformFee || 0), 0);
+    const paidList = allBookings.filter((b) => ['ACTIVE', 'COMPLETED', 'PAYOUT_RELEASED', 'DISPUTED'].includes(b.status));
+
+    const totalGMV = paidList.reduce((acc, b) => acc + (b.totalPaid || 0), 0);
+    const totalCommissionEarned = completedList.reduce((acc, b) => acc + (b.platformFee || 0), 0);
     const totalEscrowHeld = activeBookingsList.reduce((acc, b) => acc + (b.totalPaid || 0), 0);
     const totalPayoutsReleased = completedList.reduce((acc, b) => acc + (b.bidAmount || 0), 0);
 

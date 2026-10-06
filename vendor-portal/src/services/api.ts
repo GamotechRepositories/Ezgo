@@ -1,201 +1,111 @@
-import type { Requirement, Bid, Booking, Category, User } from '../types';
+import type { Requirement, Bid, Booking, User, EquipmentItem } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const TOKEN_KEY = 'ezgo_token_vendor';
 
-export const mockVendor: User = {
-  _id: 'usr-p1',
-  name: 'Rajesh Sound & FX Pro',
-  phone: '+91 98231 45678',
-  email: 'rajesh@punesoundpros.in',
+export interface DemoAccount {
+  role: 'requester' | 'provider' | 'admin';
+  name: string;
+  businessName?: string;
+  phone: string;
+  password: string;
+}
+
+export const getToken = () => localStorage.getItem(TOKEN_KEY) || '';
+export const setToken = (token: string) => localStorage.setItem(TOKEN_KEY, token);
+export const clearToken = () => localStorage.removeItem(TOKEN_KEY);
+
+export const emptyVendor: User = {
+  _id: '',
+  name: 'Vendor',
+  phone: '',
   role: 'provider',
-  businessName: 'Rajesh Pro Audio & Lightings',
-  categories: ['DJ & Sound Systems', 'Lighting & Trussing', 'Stage & Mandap Decoration'],
-  serviceArea: 'Pune, MH',
-  rating: 4.9,
-  reviewCount: 42,
-  completedJobs: 58,
-  isVerified: true,
-  bankDetails: {
-    accountHolder: 'Rajesh Pro Audio LLP',
-    accountNumber: '••••••••9812',
-    ifscCode: 'HDFC0001234',
-    upiId: 'rajeshsound@okhdfc',
-    isKycCompleted: true,
-  },
-  avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop&q=80',
+  isVerified: false,
 };
 
-export const mockCategories: Category[] = [
-  {
-    _id: 'cat-1',
-    name: 'DJ & Sound Systems',
-    slug: 'dj-sound',
-    icon: 'Speaker',
-    description: 'Line arrays, active tops, subwoofers, Pioneer DDJ, wireless mics',
-    avgPriceRange: '₹8,000 - ₹45,000',
-    isActive: true,
-  },
-  {
-    _id: 'cat-2',
-    name: 'Stage & Mandap Decoration',
-    slug: 'decor',
-    icon: 'Sparkles',
-    description: 'Custom flower arches, fairy light canopies, royal wedding backdrops',
-    avgPriceRange: '₹15,000 - ₹1,20,000',
-    isActive: true,
-  },
-  {
-    _id: 'cat-3',
-    name: '4K Photography & Drone',
-    slug: 'photography',
-    icon: 'Camera',
-    description: 'Cinematic 4K coverage, drone flybys, live stream mix, gimbal rigs',
-    avgPriceRange: '₹12,000 - ₹65,000',
-    isActive: true,
-  },
-  {
-    _id: 'cat-4',
-    name: 'Catering Buffets',
-    slug: 'catering',
-    icon: 'Utensils',
-    description: 'Multi-cuisine live counters, traditional thalis, chaat stalls',
-    avgPriceRange: '₹350 - ₹1,200 / plate',
-    isActive: true,
-  },
-  {
-    _id: 'cat-5',
-    name: 'Lighting & Trussing',
-    slug: 'lighting',
-    icon: 'Zap',
-    description: 'Sharpy moving heads, LED par cans, aluminum box truss grids',
-    avgPriceRange: '₹10,000 - ₹50,000',
-    isActive: true,
-  },
-];
+async function request<T>(path: string, options: RequestInit = {}, fallbackError = 'Request failed'): Promise<T> {
+  const headers = new Headers(options.headers);
+  const token = getToken();
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+  if (options.body && !(options.body instanceof FormData) && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  } catch (_) {
+    throw new Error('Cannot reach the EzGo server. Is the backend running?');
+  }
+  if (res.status === 401 && token && !path.startsWith('/auth/')) {
+    clearToken();
+    window.location.reload();
+  }
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json.message || fallbackError);
+  return (json.data ?? json) as T;
+}
 
-export const mockEquipmentList = [
-  {
-    id: 'eq-1',
-    name: 'JBL VRX932LA Line Array Pair',
-    category: 'Sound Systems',
-    specs: 'Constant Curvature 1750W Peak, Dual Active Tops',
-    dailyRate: 6500,
-    isAvailable: true,
-    condition: 'Excellent' as const,
-    image: 'https://images.unsplash.com/photo-1545454675-3531b543be5d?w=300&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'eq-2',
-    name: 'Pioneer DDJ-1000 4-Channel DJ Controller',
-    category: 'DJ Gear',
-    specs: 'Full size jog wheels, Magvel crossfader, Rekordbox ready',
-    dailyRate: 4000,
-    isAvailable: true,
-    condition: 'Excellent' as const,
-    image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'eq-3',
-    name: 'Beam 230W 7R Sharpy Moving Heads (Set of 4)',
-    category: 'Lighting',
-    specs: '14 colors + open, 17 gobos, 8-facet prism with flight case',
-    dailyRate: 5000,
-    isAvailable: true,
-    condition: 'Good' as const,
-    image: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=300&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'eq-4',
-    name: 'Shure BLX288/PG58 Dual Wireless Vocal System',
-    category: 'Microphones',
-    specs: 'Dual channel UHF receiver, 300ft operating range',
-    dailyRate: 1800,
-    isAvailable: true,
-    condition: 'Excellent' as const,
-    image: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=300&auto=format&fit=crop&q=80',
-  },
-];
+const jsonBody = (method: string, body: unknown): RequestInit => ({
+  method,
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(body),
+});
 
 export const api = {
-  async getVendorUser(): Promise<User> {
-    try {
-      const res = await fetch(`${API_BASE}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: 'provider' }),
-      });
-      if (res.ok) {
-        const json = await res.json();
-        if (json.data) return json.data;
-      }
-    } catch (_) {}
-    return mockVendor;
+  async login(phone: string, password: string): Promise<User> {
+    const data = await request<{ token: string; user: User }>(
+      '/auth/login',
+      jsonBody('POST', { phone, password, role: 'provider' }),
+      'Could not log in'
+    );
+    setToken(data.token);
+    return data.user;
   },
 
-  async getRequirements(): Promise<Requirement[]> {
-    try {
-      const res = await fetch(`${API_BASE}/requirements`);
-      if (res.ok) {
-        const data = await res.json();
-        return data.data || data;
-      }
-    } catch (_) {}
-    return [];
+  async register(input: { name: string; phone: string; password: string; businessName: string; serviceArea?: string }): Promise<User> {
+    const data = await request<{ token: string; user: User }>(
+      '/auth/register',
+      jsonBody('POST', { ...input, role: 'provider' }),
+      'Could not create your account'
+    );
+    setToken(data.token);
+    return data.user;
   },
 
-  async placeBid(reqId: string, bidData: { amount: number; proposalNotes: string; equipmentDetails?: string; providerId: string }): Promise<Bid> {
-    const res = await fetch(`${API_BASE}/bids`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ requirementId: reqId, ...bidData }),
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.message || 'Bid submission rejected');
-    }
-    const data = await res.json();
-    return data.data || data;
+  me(): Promise<User> {
+    return request<User>('/auth/me', {}, 'Could not load your account');
   },
 
-  async getMyBookings(vendorId?: string): Promise<Booking[]> {
-    try {
-      const targetId = vendorId || mockVendor._id;
-      const res = await fetch(`${API_BASE}/bookings/provider/${targetId}`);
-      if (res.ok) {
-        const data = await res.json();
-        return data.data || data;
-      }
-    } catch (_) {}
-    return [];
+  demoAccounts(): Promise<DemoAccount[]> {
+    return request<DemoAccount[]>('/auth/demo-accounts', {}, 'Could not load demo accounts');
   },
 
-  async getCategories(): Promise<Category[]> {
-    let baseList = mockCategories;
-    try {
-      const res = await fetch(`${API_BASE}/categories`);
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data.data) && data.data.length > 0) {
-          baseList = data.data;
-        }
-      }
-    } catch (_) {}
+  getRequirements(): Promise<Requirement[]> {
+    return request<Requirement[]>('/requirements', {}, 'Could not load open requests');
+  },
 
-    try {
-      const raw = localStorage.getItem('ezgo_custom_categories');
-      if (raw) {
-        const customCats: Category[] = JSON.parse(raw);
-        const combined = [...baseList];
-        for (const cat of customCats) {
-          if (!combined.some((c) => c._id === cat._id || c.slug === cat.slug)) {
-            combined.push(cat);
-          }
-        }
-        return combined;
-      }
-    } catch (_) {}
+  placeBid(reqId: string, bidData: { amount: number; proposalNotes: string; equipmentDetails?: string; providerId: string }): Promise<Bid> {
+    return request<Bid>('/bids', jsonBody('POST', { requirementId: reqId, ...bidData }), 'Bid submission rejected');
+  },
 
-    return baseList;
+  getMyBookings(vendorId: string): Promise<Booking[]> {
+    return request<Booking[]>(`/bookings/provider/${vendorId}`, {}, 'Could not load your orders');
+  },
+
+  getEquipment(vendorId: string): Promise<EquipmentItem[]> {
+    return request<EquipmentItem[]>(`/items?providerId=${encodeURIComponent(vendorId)}`, {}, 'Could not load your equipment');
+  },
+
+  addEquipment(vendorId: string, item: Partial<EquipmentItem>): Promise<EquipmentItem> {
+    return request<EquipmentItem>('/items', jsonBody('POST', { ...item, providerId: vendorId }), 'Could not save equipment');
+  },
+
+  updateEquipment(itemId: string, changes: Partial<EquipmentItem>): Promise<EquipmentItem> {
+    return request<EquipmentItem>(`/items/${itemId}`, jsonBody('PUT', changes), 'Could not update equipment');
+  },
+
+  deleteEquipment(itemId: string): Promise<void> {
+    return request<void>(`/items/${itemId}`, { method: 'DELETE' }, 'Could not remove equipment');
   },
 
   async uploadImage(file: File, folder = 'ezgo/equipment'): Promise<string> {
@@ -203,17 +113,16 @@ export const api = {
     formData.append('image', file);
     formData.append('folder', folder);
 
-    const res = await fetch(`${API_BASE}/upload`, {
-      method: 'POST',
-      body: formData,
-    });
-
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.message || 'Image upload failed');
+    const headers: HeadersInit = {};
+    if (getToken()) headers.Authorization = `Bearer ${getToken()}`;
+    let res: Response;
+    try {
+      res = await fetch(`${API_BASE}/upload`, { method: 'POST', headers, body: formData });
+    } catch (_) {
+      throw new Error('Cannot reach the EzGo server. Is the backend running?');
     }
-
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.message || 'Image upload failed');
     return data.url;
   },
 };

@@ -35,13 +35,13 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
   onSubmitReview,
   fromUserId,
 }) => {
-  if (!isOpen || !booking) return null;
-
   const [rating, setRating] = useState<number>(5);
   const [hoverRating, setHoverRating] = useState<number>(0);
   const [selectedTags, setSelectedTags] = useState<string[]>(['Punctual & On-Time', 'Crowd Loved It!']);
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
+
+  if (!isOpen || !booking) return null;
 
   const toggleTag = (tag: string) => {
     setSelectedTags(prev => 
@@ -66,8 +66,8 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
         role: 'requester_to_provider',
       });
       onClose();
-    } catch (err) {
-      console.error(err);
+    } catch (_) {
+      // The parent shows the error; keep the form open so the host can retry
     } finally {
       setLoading(false);
     }

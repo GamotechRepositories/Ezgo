@@ -48,6 +48,8 @@ const bookingSchema = new mongoose.Schema(
     },
     paymentDetails: {
       transactionId: { type: String, default: '' },
+      orderId: { type: String, default: '' },
+      refundId: { type: String, default: '' },
       method: { type: String, default: 'UPI' },
       paidAt: { type: Date, default: null },
       escrowStatus: {

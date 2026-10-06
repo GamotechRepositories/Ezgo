@@ -1,321 +1,180 @@
-import type { User, Requirement, Bid, Booking, Category, Occasion, AdminMetrics, UserRole } from '../types';
+import type { User, Requirement, Bid, Booking, Category, Occasion } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const TOKEN_KEY = 'ezgo_token_host';
 
-export const mockCategories: Category[] = [
-  { _id: 'cat-1', name: 'DJ & Sound Systems', slug: 'dj-sound', icon: 'Speaker', image: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&auto=format&fit=crop&q=80', description: 'DJ setup, teenmar beats, truss lights & fog machines', avgPriceRange: '₹8,000 - ₹35,000', isActive: true },
-  { _id: 'cat-2', name: 'Catering Buffets', slug: 'catering', icon: 'Utensils', image: 'https://images.unsplash.com/photo-1555244162-803834f70033?w=600&auto=format&fit=crop&q=80', description: 'South & North Indian vegetarian & non-vegetarian buffets', avgPriceRange: '₹15,000 - ₹1,50,000', isActive: true },
-  { _id: 'cat-3', name: 'Stage & Mandap Decoration', slug: 'decor', icon: 'Sparkles', image: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&auto=format&fit=crop&q=80', description: 'Floral stage, mandap, entrance arch & theme lighting', avgPriceRange: '₹10,000 - ₹75,000', isActive: true },
-  { _id: 'cat-4', name: 'Lighting & Trussing', slug: 'lighting', icon: 'Zap', image: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=600&auto=format&fit=crop&q=80', description: 'Ambient LED serial lights, focus beams & architectural wash', avgPriceRange: '₹5,000 - ₹25,000', isActive: true },
-  { _id: 'cat-5', name: 'Purohit & Priest Services', slug: 'purohit', icon: 'Flame', image: 'https://images.unsplash.com/photo-1609137144822-26f6eb8b973c?w=600&auto=format&fit=crop&q=80', description: 'Vedic rituals, Griha Pravesh, Satyanarayana Puja & Weddings', avgPriceRange: '₹3,500 - ₹15,000', isActive: true },
-  { _id: 'cat-6', name: '4K Photography & Drone', slug: 'photography', icon: 'Camera', image: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&auto=format&fit=crop&q=80', description: 'Candid wedding photography, cinematic 4K video & drones', avgPriceRange: '₹15,000 - ₹80,000', isActive: true },
-  { _id: 'cat-7', name: 'Bridal Mehendi & Makeup', slug: 'mehendi-makeup', icon: 'Heart', image: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=600&auto=format&fit=crop&q=80', description: 'Bridal organic Rajasthani & Arabic Mehendi artists', avgPriceRange: '₹4,000 - ₹20,000', isActive: true },
-  { _id: 'cat-8', name: 'Tent & Stage Setup', slug: 'tent-stage', icon: 'Tent', image: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&auto=format&fit=crop&q=80', description: 'German shamiana tents, VIP lounge chairs & stage trussing', avgPriceRange: '₹15,000 - ₹60,000', isActive: true },
-];
-
-export const mockUsers: Record<UserRole, User> = {
-  requester: {
-    _id: 'usr-req-1',
-    name: 'Ananya Sharma',
-    phone: '+91 98765 43210',
-    email: 'ananya.sharma@ezgo.in',
-    role: 'requester',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-  },
-  provider: {
-    _id: 'usr-prov-1',
-    name: 'Rajesh Sound & FX Pro',
-    businessName: 'Rajesh Pro Audio & Lightings',
-    phone: '+91 98231 45678',
-    email: 'rajesh@punesoundpros.in',
-    role: 'provider',
-    categories: ['DJ & Sound Systems', 'Lighting & Trussing'],
-    serviceArea: 'Pune, MH',
-    rating: 4.9,
-    reviewCount: 42,
-    completedJobs: 58,
-    isVerified: true,
-    bankDetails: {
-      accountHolder: 'Rajesh Pro Audio LLP',
-      accountNumber: '••••••••9812',
-      ifscCode: 'HDFC0001234',
-      upiId: 'rajeshsound@okhdfc',
-      isKycCompleted: true,
-    },
-    avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop&q=80',
-  },
-  admin: {
-    _id: 'usr-admin-1',
-    name: 'EzGo Operations Desk',
-    phone: '+91 90000 00001',
-    email: 'ops@ezgo.in',
-    role: 'admin',
-    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-  },
+export const emptyUser: User = {
+  _id: '',
+  name: 'Guest',
+  phone: '',
+  role: 'requester',
 };
 
-// Live Dynamic API Client
+export interface DemoAccount {
+  role: 'requester' | 'provider' | 'admin';
+  name: string;
+  businessName?: string;
+  phone: string;
+  password: string;
+}
+
+export const getToken = () => localStorage.getItem(TOKEN_KEY) || '';
+export const setToken = (token: string) => localStorage.setItem(TOKEN_KEY, token);
+export const clearToken = () => localStorage.removeItem(TOKEN_KEY);
+
+async function request<T>(path: string, options: RequestInit = {}, fallbackError = 'Request failed'): Promise<T> {
+  const headers = new Headers(options.headers);
+  const token = getToken();
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+  if (options.body && !(options.body instanceof FormData) && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
+
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  } catch (_) {
+    throw new Error('Cannot reach the EzGo server. Is the backend running?');
+  }
+  if (res.status === 401 && token && !path.startsWith('/auth/')) {
+    clearToken();
+    window.location.reload();
+  }
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json.message || fallbackError);
+  return json as T;
+}
+
+const unwrap = async <T>(promise: Promise<{ data?: T }>): Promise<T> => {
+  const json = await promise;
+  return (json.data ?? json) as T;
+};
+
+const jsonBody = (method: string, body: unknown): RequestInit => ({
+  method,
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(body),
+});
+
+const toQuery = (params?: Record<string, string | undefined>) => {
+  const clean = Object.entries(params || {}).filter(([, v]) => v) as [string, string][];
+  return clean.length ? `?${new URLSearchParams(clean).toString()}` : '';
+};
+
 export const api = {
-  async getUserByRole(role: 'requester' | 'provider' | 'admin'): Promise<User> {
-    try {
-      const res = await fetch(`${API_BASE}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role }),
-      });
-      if (res.ok) {
-        const json = await res.json();
-        if (json.data) return json.data;
-      }
-    } catch (_) {}
-    return mockUsers[role];
+  async login(phone: string, password: string): Promise<User> {
+    const data = await unwrap<{ token: string; user: User }>(
+      request('/auth/login', jsonBody('POST', { phone, password, role: 'requester' }), 'Could not log in')
+    );
+    setToken(data.token);
+    return data.user;
   },
 
-  async getCategories(): Promise<Category[]> {
-    let baseList = mockCategories;
-    try {
-      const res = await fetch(`${API_BASE}/categories`);
-      if (res.ok) {
-        const json = await res.json();
-        if (Array.isArray(json.data) && json.data.length > 0) {
-          baseList = json.data;
-        }
-      }
-    } catch (_) {}
-
-    try {
-      const raw = localStorage.getItem('ezgo_custom_categories');
-      if (raw) {
-        const customCats: Category[] = JSON.parse(raw);
-        const combined = [...baseList];
-        for (const cat of customCats) {
-          if (!combined.some((c) => c._id === cat._id || c.slug === cat.slug)) {
-            combined.push(cat);
-          }
-        }
-        return combined;
-      }
-    } catch (_) {}
-
-    return baseList;
+  async register(input: { name: string; phone: string; password: string }): Promise<User> {
+    const data = await unwrap<{ token: string; user: User }>(
+      request('/auth/register', jsonBody('POST', { ...input, role: 'requester' }), 'Could not create your account')
+    );
+    setToken(data.token);
+    return data.user;
   },
 
-  async getRequirements(params?: { category?: string; status?: string; requesterId?: string }): Promise<Requirement[]> {
-    try {
-      const query = new URLSearchParams(params as any).toString();
-      const res = await fetch(`${API_BASE}/requirements?${query}`);
-      if (res.ok) {
-        const json = await res.json();
-        return json.data || json;
-      }
-    } catch (_) {}
-    return [];
+  me(): Promise<User> {
+    return unwrap(request('/auth/me', {}, 'Could not load your account'));
   },
 
-  async getRequirementById(id: string): Promise<Requirement | null> {
-    try {
-      const res = await fetch(`${API_BASE}/requirements/${id}`);
-      if (res.ok) {
-        const json = await res.json();
-        return json.data || json;
-      }
-    } catch (_) {}
-    return null;
+  demoAccounts(): Promise<DemoAccount[]> {
+    return unwrap(request('/auth/demo-accounts', {}, 'Could not load demo accounts'));
   },
 
-  async createRequirement(data: Partial<Requirement>): Promise<Requirement> {
-    const res = await fetch(`${API_BASE}/requirements`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.message || 'Failed to post requirement');
-    }
-    const json = await res.json();
-    return json.data || json;
+  getCategories(): Promise<Category[]> {
+    return unwrap(request('/categories', {}, 'Could not load services'));
   },
 
-  async placeBid(data: {
+  getOccasions(): Promise<Occasion[]> {
+    return unwrap(request('/occasions', {}, 'Could not load occasions'));
+  },
+
+  getRequirements(params?: { category?: string; status?: string; requesterId?: string }): Promise<Requirement[]> {
+    return unwrap(request(`/requirements${toQuery(params)}`, {}, 'Could not load your requests'));
+  },
+
+  createRequirement(data: Partial<Requirement>): Promise<Requirement> {
+    return unwrap(request('/requirements', jsonBody('POST', data), 'Failed to post requirement'));
+  },
+
+  placeBid(data: {
     requirementId: string;
     providerId: string;
     amount: number;
     proposalNotes: string;
     equipmentDetails?: string;
   }): Promise<{ message: string; data: Bid }> {
-    const res = await fetch(`${API_BASE}/bids`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.message || 'Failed to place bid');
-    }
-    return await res.json();
+    return request('/bids', jsonBody('POST', data), 'Failed to place bid');
   },
 
-  async acceptBid(requirementId: string, bidId: string, requesterId: string): Promise<Booking> {
-    const res = await fetch(`${API_BASE}/bookings/accept-bid`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ requirementId, bidId, requesterId }),
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.message || 'Failed to accept bid');
-    }
-    const json = await res.json();
-    return json.data || json;
+  acceptBid(requirementId: string, bidId: string, requesterId: string): Promise<Booking> {
+    return unwrap(request('/bookings/accept-bid', jsonBody('POST', { requirementId, bidId, requesterId }), 'Failed to accept bid'));
   },
 
-  async payBooking(bookingId: string, paymentMethod: string): Promise<Booking> {
-    const res = await fetch(`${API_BASE}/bookings/pay`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bookingId, paymentMethod }),
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.message || 'Payment processing failed');
-    }
-    const json = await res.json();
-    return json.data || json;
+  createRazorpayOrder(data: {
+    amount?: number;
+    currency?: string;
+    receipt?: string;
+    bookingId?: string;
+    notes?: Record<string, any>;
+  }): Promise<{
+    success: boolean;
+    order_id: string;
+    id: string;
+    amount: number;
+    currency: string;
+    receipt?: string;
+    key_id?: string;
+  }> {
+    return request('/create-order', jsonBody('POST', data), 'Failed to create Razorpay order');
   },
 
-  async completeBooking(bookingId: string): Promise<{ message: string; data: Booking }> {
-    const res = await fetch(`${API_BASE}/bookings/complete`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bookingId }),
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.message || 'Failed to complete booking');
-    }
-    return await res.json();
+  verifyRazorpayPayment(data: {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+    bookingId?: string;
+  }): Promise<{ success: boolean; message: string; data?: any }> {
+    return request('/verify-payment', jsonBody('POST', data), 'Payment signature verification failed');
   },
 
-  async getBookings(params?: { userId?: string; role?: string; status?: string }): Promise<Booking[]> {
-    try {
-      const query = new URLSearchParams(params as any).toString();
-      const res = await fetch(`${API_BASE}/bookings?${query}`);
-      if (res.ok) {
-        const json = await res.json();
-        return json.data || json;
-      }
-    } catch (_) {}
-    return [];
+  payBooking(bookingId: string, paymentMethod: string): Promise<Booking> {
+    return unwrap(request('/bookings/pay', jsonBody('POST', { bookingId, paymentMethod }), 'Payment processing failed'));
   },
 
-  async getAdminMetrics(): Promise<AdminMetrics | null> {
-    try {
-      const res = await fetch(`${API_BASE}/admin/metrics`);
-      if (res.ok) {
-        const json = await res.json();
-        return json.data || json;
-      }
-    } catch (_) {}
-    return null;
+  cancelBooking(bookingId: string, reason?: string): Promise<{ message: string; data: Booking }> {
+    return request('/bookings/cancel', jsonBody('POST', { bookingId, reason }), 'Failed to cancel booking');
   },
 
-  async verifyProvider(providerId: string, isVerified: boolean) {
-    const res = await fetch(`${API_BASE}/admin/providers/${providerId}/verify`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ isVerified }),
-    });
-    return await res.json();
+  completeBooking(bookingId: string): Promise<{ message: string; data: Booking }> {
+    return request('/bookings/complete', jsonBody('POST', { bookingId }), 'Failed to complete booking');
+  },
+
+  submitReview(data: {
+    bookingId: string;
+    fromUserId: string;
+    toUserId: string;
+    rating: number;
+    comment: string;
+    role: 'requester_to_provider' | 'provider_to_requester';
+  }): Promise<unknown> {
+    return unwrap(request('/bookings/review', jsonBody('POST', data), 'Could not save your rating'));
+  },
+
+  getBookings(params?: { userId?: string; role?: string; status?: string }): Promise<Booking[]> {
+    return unwrap(request(`/bookings${toQuery(params)}`, {}, 'Could not load your bookings'));
   },
 
   async uploadImage(file: File, folder = 'ezgo/uploads'): Promise<string> {
     const formData = new FormData();
     formData.append('image', file);
     formData.append('folder', folder);
-
-    const res = await fetch(`${API_BASE}/upload`, {
-      method: 'POST',
-      body: formData,
-    });
-
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.message || 'Image upload failed');
-    }
-
-    const data = await res.json();
+    const data = await request<{ url: string }>('/upload', { method: 'POST', body: formData }, 'Image upload failed');
     return data.url;
-  },
-
-  async getOccasions(): Promise<Occasion[]> {
-    const defaults: Occasion[] = [
-      { id: 'occ-weddings', name: 'Weddings', slug: 'weddings', image: '/occasion_weddings.jpg', iconType: 'rings' },
-      { id: 'occ-festivals', name: 'Festivals', slug: 'festivals', image: '/occasion_festivals.jpg', iconType: 'lotus' },
-      { id: 'occ-corporate', name: 'Corporate Events', slug: 'corporate-events', image: '/occasion_corporate.jpg', iconType: 'corporate' },
-      { id: 'occ-parties', name: 'Private Parties', slug: 'private-parties', image: '/occasion_parties.jpg', iconType: 'party' },
-      { id: 'occ-birthdays', name: 'Birthdays', slug: 'birthdays', image: '/occasion_birthdays.jpg', iconType: 'birthday' },
-    ];
-
-    let baseList = defaults;
-    try {
-      const res = await fetch(`${API_BASE}/occasions`);
-      if (res.ok) {
-        const json = await res.json();
-        if (Array.isArray(json.data) && json.data.length > 0) {
-          baseList = json.data;
-        }
-      }
-    } catch (_) {}
-
-    try {
-      const stored = localStorage.getItem('ezgo_custom_occasions');
-      if (stored) {
-        const parsed: Occasion[] = JSON.parse(stored);
-        const combined = [...baseList];
-        for (const item of parsed) {
-          if (!combined.some(o => o.slug === item.slug || (o._id && o._id === item._id))) {
-            combined.push(item);
-          }
-        }
-        return combined;
-      }
-    } catch (_) {}
-
-    return baseList;
-  },
-
-  async addOccasion(occasionData: Partial<Occasion>): Promise<Occasion> {
-    let created: Occasion | null = null;
-    try {
-      const res = await fetch(`${API_BASE}/occasions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(occasionData),
-      });
-      if (res.ok) {
-        const json = await res.json();
-        created = json.data || json;
-      }
-    } catch (_) {}
-
-    if (!created) {
-      created = {
-        _id: 'occ-' + Date.now(),
-        name: occasionData.name || 'New Occasion',
-        slug: occasionData.slug || (occasionData.name || '').toLowerCase().replace(/[^a-z0-9]/g, '-'),
-        image: occasionData.image || '/occasion_parties.jpg',
-        iconType: occasionData.iconType || 'sparkles',
-        isActive: true,
-      };
-    }
-
-    try {
-      const stored = localStorage.getItem('ezgo_custom_occasions');
-      const list: Occasion[] = stored ? JSON.parse(stored) : [];
-      localStorage.setItem('ezgo_custom_occasions', JSON.stringify([...list.filter(o => o.slug !== created!._id), created]));
-    } catch (_) {}
-
-    return created;
   },
 };

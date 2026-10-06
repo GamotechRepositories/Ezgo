@@ -71,7 +71,7 @@ export const EzGoLogo: React.FC<EzGoLogoProps> = ({
 
         {variant !== 'simple' && (
           <span className={`font-semibold tracking-wide ${currentSize.subtext} ${isDark ? 'text-slate-400' : 'text-slate-500'} mt-0.5`}>
-            Reverse-Bidding Partner
+            For vendors
           </span>
         )}
       </div>
