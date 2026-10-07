@@ -8,7 +8,6 @@ import {
   Users, 
   Truck, 
   Shield, 
-  Sparkles, 
   BadgeCheck 
 } from 'lucide-react';
 
@@ -47,17 +46,17 @@ export const RuleExplainer: React.FC<RuleExplainerProps> = ({ isOpen, onClose })
         {/* Header Title */}
         <div className="flex items-start gap-4 mb-6 pr-10">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#f95724] to-amber-500 flex items-center justify-center shadow-lg shadow-[#f95724]/20 shrink-0">
-            <Sparkles className="w-6 h-6 text-white" />
+            <ShieldCheck className="w-6 h-6 text-white" />
           </div>
           <div>
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-orange-50 border border-orange-200 text-[#f95724] text-[11px] font-black tracking-wide uppercase mb-1">
-              How EzGo Works • Platform Guide
+              How EzzyGo Works • Platform Guide
             </div>
             <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
               How bidding works
             </h2>
             <p className="text-sm text-slate-600 mt-1 leading-relaxed">
-              You post a budget. Vendors bid at least 15% lower. You pay the bid plus 10%, and that money stays with EzGo until the event is finished.
+              You post a budget. Vendors bid at least 15% lower. You pay the bid plus 10%, and that money stays with EzzyGo until the event is finished.
             </p>
           </div>
         </div>
@@ -72,7 +71,7 @@ export const RuleExplainer: React.FC<RuleExplainerProps> = ({ isOpen, onClose })
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <Sparkles className="w-3.5 h-3.5 text-[#f95724]" />
+            <Shield className="w-3.5 h-3.5 text-[#f95724]" />
             <span>Complete Overview</span>
           </button>
 
@@ -244,7 +243,7 @@ export const RuleExplainer: React.FC<RuleExplainerProps> = ({ isOpen, onClose })
                   <div>
                     <strong className="text-slate-900 font-bold block text-sm">Receive Discounted Bids (Min 15% Off):</strong>
                     <p className="text-slate-600 mt-0.5">
-                      Under EzGo rules, every vendor bid must start at least 15% lower than your ceiling budget. Review their equipment gear list, past ratings, and photos.
+                      Under EzzyGo rules, every vendor bid must start at least 15% lower than your ceiling budget. Review their equipment gear list, past ratings, and photos.
                     </p>
                   </div>
                 </div>
@@ -254,7 +253,7 @@ export const RuleExplainer: React.FC<RuleExplainerProps> = ({ isOpen, onClose })
                   <div>
                     <strong className="text-slate-900 font-bold block text-sm">Pay now, vendor gets paid after the event:</strong>
                     <p className="text-slate-600 mt-0.5">
-                      EzGo holds your payment. The vendor is paid only after you click "Event done". If the booking is cancelled, you get a full refund.
+                      EzzyGo holds your payment. The vendor is paid only after you click "Event done". If the booking is cancelled, you get a full refund.
                     </p>
                   </div>
                 </div>
@@ -444,7 +443,7 @@ export const RuleExplainer: React.FC<RuleExplainerProps> = ({ isOpen, onClose })
         <div className="mt-6 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
             <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            <span>EzGo 100% Escrow Protection Guaranteed</span>
+            <span>EzzyGo 100% Escrow Protection Guaranteed</span>
           </div>
 
           <button

@@ -5,7 +5,9 @@ import {
   Calendar, 
   CheckCircle2, 
   ShieldCheck, 
-  Sparkles, 
+  Palette,
+  Tag,
+  PartyPopper,
   Phone, 
   Star, 
   ArrowRight, 
@@ -223,7 +225,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
       case 'food':
         return <Utensils className="w-5 h-5 text-[#f95724]" />;
       default:
-        return <Sparkles className="w-5 h-5 text-[#f95724]" />;
+        return <Calendar className="w-5 h-5 text-[#f95724]" />;
     }
   };
 
@@ -284,14 +286,14 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
 
   const getCategoryIcon = (categoryName: string) => {
     if (categoryName.includes('DJ') || categoryName.includes('Sound')) return <Volume2 className="w-4 h-4 text-amber-500" />;
-    if (categoryName.includes('Decor')) return <Sparkles className="w-4 h-4 text-pink-500" />;
+    if (categoryName.includes('Decor')) return <Palette className="w-4 h-4 text-pink-500" />;
     if (categoryName.includes('Photo')) return <Camera className="w-4 h-4 text-indigo-500" />;
     if (categoryName.includes('Cater')) return <Utensils className="w-4 h-4 text-emerald-500" />;
     if (categoryName.includes('Purohit') || categoryName.includes('Priest')) return <Flame className="w-4 h-4 text-orange-500" />;
     if (categoryName.includes('Mehendi')) return <Heart className="w-4 h-4 text-rose-500" />;
     if (categoryName.includes('Lighting')) return <Lightbulb className="w-4 h-4 text-yellow-500" />;
     if (categoryName.includes('Tent') || categoryName.includes('Stage')) return <Tent className="w-4 h-4 text-cyan-500" />;
-    return <Sparkles className="w-4 h-4 text-amber-500" />;
+    return <Tag className="w-4 h-4 text-amber-500" />;
   };
 
   const getCategoryImage = (categoryName: string) => {
@@ -333,7 +335,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
             </h1>
 
             <p className="text-slate-700 text-base sm:text-lg leading-relaxed max-w-xl">
-              You set the most you will pay. A vendor can win only by bidding at least 15% below that. You pay the bid plus a 10% fee, and EzGo holds the money until the event is done.
+              You set the most you will pay. A vendor can win only by bidding at least 15% below that. You pay the bid plus a 10% fee, and EzzyGo holds the money until the event is done.
             </p>
 
             {/* Redesigned 100% Responsive Interactive Search / Requirement Bar */}
@@ -923,7 +925,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                           }`}>
                             {evt.id === 'Wedding' && <Heart className="w-3 h-3 text-[#f95724] fill-orange-100" />}
                             {evt.id === 'Sangeet & Haldi' && <Music className="w-3 h-3 text-pink-500" />}
-                            {evt.id === 'Reception' && <Sparkles className="w-3 h-3 text-amber-500" />}
+                            {evt.id === 'Reception' && <PartyPopper className="w-3 h-3 text-amber-500" />}
                             {evt.id === 'Birthday Bash' && <Cake className="w-3 h-3 text-indigo-500" />}
                             {evt.id === 'Corporate Gala' && <Briefcase className="w-3 h-3 text-blue-600" />}
                             {evt.id === 'Other Events' && <MoreHorizontal className="w-3 h-3 text-slate-600" />}
@@ -1187,7 +1189,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                 <div className="flex items-center justify-between pt-1">
                   <div>
                     <span className="text-xs font-black text-slate-900 block leading-tight">
-                      EzGo Target Bid Price:
+                      EzzyGo Target Bid Price:
                     </span>
                     <span className="text-[11px] text-emerald-600 font-bold">
                       Reverse-Bid Estimate
@@ -1281,14 +1283,14 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
               <span className="text-sm font-semibold text-[#f95724]">3</span>
               <h3 className="text-base font-semibold text-slate-900">Choose and pay</h3>
               <p className="text-sm text-slate-600 leading-relaxed">
-                You pay the bid plus a 10% fee. EzGo holds that money.
+                You pay the bid plus a 10% fee. EzzyGo holds that money.
               </p>
             </div>
             <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-2">
               <span className="text-sm font-semibold text-[#f95724]">4</span>
               <h3 className="text-base font-semibold text-slate-900">Release after the event</h3>
               <p className="text-sm text-slate-600 leading-relaxed">
-                When the work is done, you release the vendor's price. EzGo keeps the fee.
+                When the work is done, you release the vendor's price. EzzyGo keeps the fee.
               </p>
             </div>
           </div>
@@ -1368,7 +1370,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
               {filteredOpenReqs.length === 0 ? (
                 <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center space-y-4">
                   <div className="w-16 h-16 rounded-2xl bg-orange-50 text-[#f95724] flex items-center justify-center mx-auto">
-                    <Sparkles className="w-8 h-8" />
+                    <Calendar className="w-8 h-8" />
                   </div>
                   <h3 className="text-lg font-semibold text-slate-800">No open requests</h3>
                   <p className="text-slate-600 text-sm max-w-md mx-auto">
@@ -1609,7 +1611,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                                         <span className="font-bold font-mono text-slate-900">₹{bid.amount.toLocaleString()}</span>
                                       </div>
                                       <div className="flex justify-between text-slate-500 text-[11px]">
-                                        <span>EzGo fee (10%)</span>
+                                        <span>EzzyGo fee (10%)</span>
                                         <span className="font-mono text-amber-700 font-semibold">+₹{platformFee.toLocaleString()}</span>
                                       </div>
                                       <div className="flex justify-between text-slate-900 font-extrabold pt-1 border-t border-slate-200">
@@ -1706,7 +1708,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
             <div className="inline-flex items-center gap-1.5 px-4 py-1 rounded-full bg-white/90 border border-orange-200/90 shadow-2xs">
               <ArrowUpRight className="w-3.5 h-3.5 text-[#f95724] stroke-[2.5]" />
               <span className="text-xs font-semibold uppercase tracking-wider text-[#f95724]">
-                Why hosts use EzGo
+                Why hosts use EzzyGo
               </span>
             </div>
 
@@ -1729,12 +1731,12 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
               {
                 Icon: Shield,
                 title: 'Money held until the event is done',
-                text: 'EzGo keeps your payment safe. The vendor gets paid only after you click "Event done".',
+                text: 'EzzyGo keeps your payment safe. The vendor gets paid only after you click "Event done".',
               },
               {
                 Icon: CheckCircle2,
                 title: 'Full refund if cancelled',
-                text: 'If a paid booking is cancelled, you get back everything you paid, including the EzGo fee.',
+                text: 'If a paid booking is cancelled, you get back everything you paid, including the EzzyGo fee.',
               },
             ].map(({ Icon, title, text }) => (
               <div key={title} className="bg-white/95 rounded-3xl p-6 border border-amber-200/80 shadow-sm space-y-3">
@@ -1955,7 +1957,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                 </div>
 
                 <button
-                  onClick={() => alert('Support team is available 24/7 at support@ezgo.in')}
+                  onClick={() => alert('Support team is available 24/7 at support@ezzygo.in')}
                   className="w-full py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-orange-500 to-[#f95724] hover:from-orange-600 hover:to-[#f95724] text-white font-extrabold text-xs sm:text-sm shadow-md shadow-orange-500/25 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-all"
                 >
                   <span>Contact Support</span>

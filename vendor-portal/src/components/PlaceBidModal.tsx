@@ -220,11 +220,11 @@ const PlaceBidForm: React.FC<PlaceBidFormProps> = ({
               <span>₹{bidAmount.toLocaleString()}</span>
             </div>
             <div className="flex justify-between text-slate-600">
-              <span>Host pays (your bid + 10% EzGo fee)</span>
+              <span>Host pays (your bid + 10% EzzyGo fee)</span>
               <span>₹{(bidAmount + hostFee).toLocaleString()}</span>
             </div>
             <p className="text-slate-500">
-              EzGo holds the host's payment and sends you the full bid after the event.
+              EzzyGo holds the host's payment and sends you the full bid after the event.
             </p>
           </div>
 

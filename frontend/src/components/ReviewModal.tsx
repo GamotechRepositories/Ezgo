@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Star, Sparkles, Check } from 'lucide-react';
+import { X, Star, Check } from 'lucide-react';
 import type { Booking } from '../types';
 
 interface ReviewModalProps {
@@ -86,7 +86,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
         </button>
 
         <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/25 mb-4">
-          <Sparkles className="w-7 h-7 text-white" />
+          <Star className="w-7 h-7 text-white fill-white" />
         </div>
 
         <h2 className="text-xl font-black text-slate-900 mb-1">Rate Your Event Experience</h2>

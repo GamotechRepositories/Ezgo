@@ -132,7 +132,7 @@ export const EVENT_CATEGORIES: EventCategoryData[] = [
     id: 'cat-2',
     name: 'Decoration & Stage Design',
     slug: 'decoration',
-    iconName: 'Sparkles',
+    iconName: 'Palette',
     image: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&auto=format&fit=crop&q=80',
     tagline: 'Floral mandaps, grand entrance arches & theme stages',
     description: 'Exquisite fresh floral setups, luxury velvet draping, fairytale fairy light canopies, photo booth backdrops and bridal stage designs.',
@@ -235,7 +235,7 @@ export const FAQS = [
   },
   {
     question: 'How is my money kept safe?',
-    answer: 'When you pick a vendor, you pay their price plus a 10% EzGo fee. EzGo holds this money. The vendor is paid only after you click "Event done".'
+    answer: 'When you pick a vendor, you pay their price plus a 10% EzzyGo fee. EzzyGo holds this money. The vendor is paid only after you click "Event done".'
   },
   {
     question: 'When do I get the vendor\'s phone number?',
@@ -243,7 +243,7 @@ export const FAQS = [
   },
   {
     question: 'What if the booking is cancelled?',
-    answer: 'If a paid booking is cancelled, you get back everything you paid, including the EzGo fee. Your request opens again so you can pick another vendor.'
+    answer: 'If a paid booking is cancelled, you get back everything you paid, including the EzzyGo fee. Your request opens again so you can pick another vendor.'
   },
   {
     question: 'Do vendors pay a commission?',

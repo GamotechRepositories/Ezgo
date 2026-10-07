@@ -77,7 +77,7 @@ export const openRazorpayCheckout = async (options: RazorpayCheckoutOptions): Pr
     key: razorpayKey,
     amount: options.amount,
     currency: options.currency || 'INR',
-    name: options.name || 'EzGo Event Marketplace',
+    name: options.name || 'EzzyGo Event Marketplace',
     description: options.description || 'Escrow Payment for Event Services',
     image: options.image || 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=120&auto=format&fit=crop&q=80',
     order_id: options.order_id,

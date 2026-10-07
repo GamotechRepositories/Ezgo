@@ -148,7 +148,7 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
                     isPaid ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'
                   }`}
                 >
-                  {isPaid ? 'Paid · EzGo is holding your money' : 'Payment pending'}
+                  {isPaid ? 'Paid · EzzyGo is holding your money' : 'Payment pending'}
                 </span>
                 <h3 className="text-lg sm:text-xl font-bold text-slate-900 break-words">
                   {b.requirementId?.title || 'Event booking'}
@@ -209,7 +209,7 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
                         <Phone className="w-4 h-4" /> Call
                       </a>
                       <a
-                        href={`https://wa.me/${phone.length === 10 ? '91' + phone : phone}?text=${encodeURIComponent(`Hi, this is about my EzGo booking: ${b.requirementId?.title || ''}`)}`}
+                        href={`https://wa.me/${phone.length === 10 ? '91' + phone : phone}?text=${encodeURIComponent(`Hi, this is about my EzzyGo booking: ${b.requirementId?.title || ''}`)}`}
                         target="_blank"
                         rel="noreferrer"
                         className="py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm flex items-center justify-center gap-1.5"
@@ -230,7 +230,7 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
                     <dd className="font-medium text-slate-900">{rupees(b.bidAmount)}</dd>
                   </div>
                   <div className="flex justify-between text-slate-600">
-                    <dt>EzGo fee (10%)</dt>
+                    <dt>EzzyGo fee (10%)</dt>
                     <dd className="font-medium text-slate-900">{rupees(b.platformFee)}</dd>
                   </div>
                   <div className="flex justify-between pt-1.5 border-t border-slate-100 font-semibold text-slate-900">

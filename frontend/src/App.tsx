@@ -191,7 +191,7 @@ function HostApp({ currentUser, onLogout }: { currentUser: User; onLogout: () =>
     addToast(
       'success',
       'Payment done',
-      'EzGo is holding your money safely. You can now call or WhatsApp the vendor.'
+      'EzzyGo is holding your money safely. You can now call or WhatsApp the vendor.'
     );
   };
 
@@ -212,7 +212,7 @@ function HostApp({ currentUser, onLogout }: { currentUser: User; onLogout: () =>
     try {
       await api.completeBooking(bookingId);
       await refreshMine();
-      addToast('success', 'Event marked as done', 'EzGo has sent the full price to the vendor.');
+      addToast('success', 'Event marked as done', 'EzzyGo has sent the full price to the vendor.');
     } catch (err: any) {
       addToast('error', 'Could not mark as done', err.message);
       throw err;

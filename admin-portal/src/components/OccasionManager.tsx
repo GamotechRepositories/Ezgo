@@ -42,7 +42,7 @@ export const OccasionManager: React.FC<OccasionManagerProps> = ({
       try {
         setIsUploading(true);
         setUploadError('');
-        const cloudUrl = await api.uploadImage(file, 'ezgo/occasions');
+        const cloudUrl = await api.uploadImage(file, 'ezzygo/occasions');
         setImageUrl(cloudUrl);
       } catch (err: any) {
         setUploadError(err.message || 'Failed to upload photo to Cloudinary');
@@ -57,7 +57,7 @@ export const OccasionManager: React.FC<OccasionManagerProps> = ({
     if (file) {
       try {
         setUpdatingId(occ._id || occ.id || occ.slug);
-        const cloudUrl = await api.uploadImage(file, 'ezgo/occasions');
+        const cloudUrl = await api.uploadImage(file, 'ezzygo/occasions');
         if (!occ._id) throw new Error('This occasion is not saved on the server yet');
         await onUpdateOccasion(occ._id, { image: cloudUrl });
       } catch (err: any) {

@@ -9,7 +9,7 @@ interface EscrowDisputeManagerProps {
 
 const statusInfo: Record<string, { label: string; className: string }> = {
   AWAITING_PAYMENT: { label: 'Not paid yet', className: 'bg-amber-50 text-amber-800 border-amber-200' },
-  ACTIVE: { label: 'EzGo holding money', className: 'bg-blue-50 text-blue-800 border-blue-200' },
+  ACTIVE: { label: 'EzzyGo holding money', className: 'bg-blue-50 text-blue-800 border-blue-200' },
   COMPLETED: { label: 'Vendor paid', className: 'bg-emerald-50 text-emerald-800 border-emerald-200' },
   PAYOUT_RELEASED: { label: 'Vendor paid', className: 'bg-emerald-50 text-emerald-800 border-emerald-200' },
   CANCELLED: { label: 'Cancelled', className: 'bg-slate-100 text-slate-600 border-slate-200' },
@@ -52,7 +52,7 @@ export const EscrowDisputeManager: React.FC<EscrowDisputeManagerProps> = ({
                 <th className="pb-3 pr-4 font-medium">Vendor</th>
                 <th className="pb-3 pr-4 font-medium">Host paid</th>
                 <th className="pb-3 pr-4 font-medium">Vendor gets</th>
-                <th className="pb-3 pr-4 font-medium">EzGo fee</th>
+                <th className="pb-3 pr-4 font-medium">EzzyGo fee</th>
                 <th className="pb-3 pr-4 font-medium">Status</th>
                 <th className="pb-3 font-medium text-right">Action</th>
               </tr>

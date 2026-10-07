@@ -49,7 +49,7 @@ if (process.env.NODE_ENV === 'development') {
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
-    app: 'EzGo Event Services Reverse-Bidding API',
+    app: 'EzzyGo Event Services Reverse-Bidding API',
     version: '1.0.0',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
@@ -80,5 +80,5 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`🚀 EzGo Backend running on http://localhost:${PORT}`);
+  console.log(`🚀 EzzyGo Backend running on http://localhost:${PORT}`);
 });

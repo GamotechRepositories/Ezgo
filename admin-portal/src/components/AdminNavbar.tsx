@@ -17,10 +17,9 @@ import {
   X,
   CheckCircle2,
   AlertTriangle,
-  Zap,
-  Sparkles
+  Zap
 } from 'lucide-react';
-import { EzGoLogo } from './EzGoLogo';
+import { EzzyGoLogo } from './EzzyGoLogo';
 import type { User } from '../types';
 
 interface AdminNavbarProps {
@@ -145,9 +144,9 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
               <a 
                 href="/" 
                 className="flex items-center select-none transition-transform hover:scale-[1.02] active:scale-95 py-1"
-                title="EzGo Admin Portal"
+                title="EzzyGo Admin Portal"
               >
-                <EzGoLogo variant="admin" size="lg" />
+                <EzzyGoLogo variant="admin" size="lg" />
               </a>
             </div>
 
@@ -248,7 +247,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
                   onClick={() => setIsPortalsOpen(!isPortalsOpen)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200 text-slate-700 text-xs font-bold hover:border-slate-300 hover:text-slate-900 shadow-2xs transition cursor-pointer"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <ExternalLink className="w-3.5 h-3.5 text-amber-500" />
                   <span>Portals</span>
                   <ChevronDown className="w-3 h-3 text-slate-400" />
                 </button>
@@ -397,7 +396,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
                   <div className="absolute right-0 mt-2 w-60 bg-white rounded-2xl border border-slate-200 shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95">
                     <div className="p-3 bg-gradient-to-br from-rose-50 to-amber-50 rounded-xl mb-1 border border-rose-100">
                       <div className="text-xs font-black text-slate-900">{admin.name}</div>
-                      <div className="text-[11px] text-slate-500">{admin.email || 'admin@ezgo.events'}</div>
+                      <div className="text-[11px] text-slate-500">{admin.email || 'admin@ezzygo.events'}</div>
                       <div className="mt-2 flex items-center gap-1.5 text-[10px] font-extrabold text-rose-700">
                         <Zap className="w-3 h-3 text-rose-500" />
                         <span>Root Privilege Level 4</span>

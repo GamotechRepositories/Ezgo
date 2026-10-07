@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, MapPin, ArrowRight, ShieldCheck } from 'lucide-react';
-import { EzGoLogo } from './EzGoLogo';
+import { EzzyGoLogo } from './EzzyGoLogo';
 import type { User } from '../types';
 
 interface NavbarProps {
@@ -59,7 +59,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }}
               className="flex items-center select-none transition-transform hover:scale-[1.02] active:scale-95 py-1"
             >
-              <EzGoLogo variant="host" size="lg" hideTaglineOnMobile />
+              <EzzyGoLogo variant="host" size="lg" hideTaglineOnMobile />
             </a>
 
             {/* Nav Links */}

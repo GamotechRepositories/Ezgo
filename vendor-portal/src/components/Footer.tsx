@@ -13,7 +13,7 @@ import {
   MapPin, 
   CheckCircle2
 } from 'lucide-react';
-import { EzGoLogo } from './EzGoLogo';
+import { EzzyGoLogo } from './EzzyGoLogo';
 
 interface FooterProps {
   onOpenExplainer?: () => void;
@@ -136,7 +136,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenExplainer, onOpenPostModal
           {/* Column 1: Brand Info (3 cols) */}
           <div className="lg:col-span-3 space-y-4">
             <div className="flex items-center gap-2.5">
-              <EzGoLogo variant="vendor" size="md" />
+              <EzzyGoLogo variant="vendor" size="md" />
             </div>
 
             <p className="text-xs text-slate-600 leading-relaxed font-medium max-w-sm">
@@ -377,7 +377,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenExplainer, onOpenPostModal
           
           {/* Copyright */}
           <div>
-            © 2026 EzGo Event Services Marketplace Pvt. Ltd. All rights reserved.
+            © 2026 EzzyGo Event Services Marketplace Pvt. Ltd. All rights reserved.
           </div>
 
           {/* Cities & Payment Logos */}

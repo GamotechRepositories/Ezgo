@@ -1,7 +1,7 @@
 import type { Requirement, Bid, Booking, User, EquipmentItem } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-const TOKEN_KEY = 'ezgo_token_vendor';
+const TOKEN_KEY = 'ezzygo_token_vendor';
 
 export interface DemoAccount {
   role: 'requester' | 'provider' | 'admin';
@@ -11,7 +11,7 @@ export interface DemoAccount {
   password: string;
 }
 
-export const getToken = () => localStorage.getItem(TOKEN_KEY) || '';
+export const getToken = () => localStorage.getItem(TOKEN_KEY) || localStorage.getItem('ezgo_token_vendor') || '';
 export const setToken = (token: string) => localStorage.setItem(TOKEN_KEY, token);
 export const clearToken = () => localStorage.removeItem(TOKEN_KEY);
 
@@ -34,7 +34,7 @@ async function request<T>(path: string, options: RequestInit = {}, fallbackError
   try {
     res = await fetch(`${API_BASE}${path}`, { ...options, headers });
   } catch (_) {
-    throw new Error('Cannot reach the EzGo server. Is the backend running?');
+    throw new Error('Cannot reach the EzzyGo server. Is the backend running?');
   }
   if (res.status === 401 && token && !path.startsWith('/auth/')) {
     clearToken();
@@ -108,7 +108,7 @@ export const api = {
     return request<void>(`/items/${itemId}`, { method: 'DELETE' }, 'Could not remove equipment');
   },
 
-  async uploadImage(file: File, folder = 'ezgo/equipment'): Promise<string> {
+  async uploadImage(file: File, folder = 'ezzygo/equipment'): Promise<string> {
     const formData = new FormData();
     formData.append('image', file);
     formData.append('folder', folder);
@@ -119,7 +119,7 @@ export const api = {
     try {
       res = await fetch(`${API_BASE}/upload`, { method: 'POST', headers, body: formData });
     } catch (_) {
-      throw new Error('Cannot reach the EzGo server. Is the backend running?');
+      throw new Error('Cannot reach the EzzyGo server. Is the backend running?');
     }
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.message || 'Image upload failed');

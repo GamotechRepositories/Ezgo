@@ -12,10 +12,10 @@ const statusInfo: Record<string, { label: string; className: string; step: numbe
   COMPLETED: { label: 'Done, you are paid', className: 'bg-emerald-50 border-emerald-200 text-emerald-800', step: 4 },
   PAYOUT_RELEASED: { label: 'Done, you are paid', className: 'bg-emerald-50 border-emerald-200 text-emerald-800', step: 4 },
   CANCELLED: { label: 'Cancelled', className: 'bg-slate-100 border-slate-200 text-slate-600', step: 0 },
-  DISPUTED: { label: 'Under review by EzGo', className: 'bg-rose-50 border-rose-200 text-rose-800', step: 3 },
+  DISPUTED: { label: 'Under review by EzzyGo', className: 'bg-rose-50 border-rose-200 text-rose-800', step: 3 },
 };
 
-const steps = ['Host picked you', 'Host paid EzGo', 'Event day', 'You get paid'];
+const steps = ['Host picked you', 'Host paid EzzyGo', 'Event day', 'You get paid'];
 
 export const ActiveOrdersDesk: React.FC<ActiveOrdersDeskProps> = ({ bookings }) => {
   return (
@@ -132,14 +132,14 @@ export const ActiveOrdersDesk: React.FC<ActiveOrdersDeskProps> = ({ bookings }) 
                       <div className="text-base font-medium text-slate-700">
                         ₹{(booking.totalPaid || booking.bidAmount + booking.platformFee).toLocaleString()}
                       </div>
-                      <div className="text-xs text-slate-400">includes 10% EzGo fee</div>
+                      <div className="text-xs text-slate-400">includes 10% EzzyGo fee</div>
                     </div>
                   </div>
                 </div>
 
                 {booking.status === 'ACTIVE' && (
                   <p className="pt-4 border-t border-slate-100 text-sm text-slate-600">
-                    After the event, the host confirms it is done. Then EzGo sends you ₹{booking.bidAmount.toLocaleString()}.
+                    After the event, the host confirms it is done. Then EzzyGo sends you ₹{booking.bidAmount.toLocaleString()}.
                   </p>
                 )}
               </div>

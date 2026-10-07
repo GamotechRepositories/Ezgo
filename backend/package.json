@@ -1,7 +1,7 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "Node.js and MongoDB backend for Ezgo",
+  "description": "Node.js and MongoDB backend for Ezzygo",
   "type": "module",
   "main": "src/server.js",
   "scripts": {

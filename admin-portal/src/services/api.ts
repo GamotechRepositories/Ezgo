@@ -1,7 +1,7 @@
 import type { AdminMetrics, Booking, Category, Occasion, User } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-const TOKEN_KEY = 'ezgo_token_admin';
+const TOKEN_KEY = 'ezzygo_token_admin';
 
 export interface DemoAccount {
   role: 'requester' | 'provider' | 'admin';
@@ -11,7 +11,7 @@ export interface DemoAccount {
   password: string;
 }
 
-export const getToken = () => localStorage.getItem(TOKEN_KEY) || '';
+export const getToken = () => localStorage.getItem(TOKEN_KEY) || localStorage.getItem('ezgo_token_admin') || '';
 export const setToken = (token: string) => localStorage.setItem(TOKEN_KEY, token);
 export const clearToken = () => localStorage.removeItem(TOKEN_KEY);
 
@@ -46,7 +46,7 @@ async function request<T>(path: string, options: RequestInit = {}, fallbackError
   try {
     res = await fetch(`${API_BASE}${path}`, { ...options, headers });
   } catch {
-    throw new Error('Cannot reach the EzGo server. Is the backend running?');
+    throw new Error('Cannot reach the EzzyGo server. Is the backend running?');
   }
   if (res.status === 401 && token && !path.startsWith('/auth/')) {
     clearToken();
@@ -97,7 +97,7 @@ export const api = {
   updateCategory: (id: string, catData: Partial<Category>) =>
     request<Category>(`/categories/${id}`, json('PUT', catData), 'Could not update category'),
 
-  async uploadImage(file: File, folder = 'ezgo/categories'): Promise<string> {
+  async uploadImage(file: File, folder = 'ezzygo/categories'): Promise<string> {
     const formData = new FormData();
     formData.append('image', file);
     formData.append('folder', folder);
@@ -107,7 +107,7 @@ export const api = {
     try {
       res = await fetch(`${API_BASE}/upload`, { method: 'POST', headers, body: formData });
     } catch {
-      throw new Error('Cannot reach the EzGo server. Is the backend running?');
+      throw new Error('Cannot reach the EzzyGo server. Is the backend running?');
     }
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.message || 'Image upload failed');

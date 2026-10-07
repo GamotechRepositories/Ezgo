@@ -86,7 +86,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         amount: orderData.amount || amountInPaise,
         currency: orderData.currency || 'INR',
         order_id: orderData.order_id,
-        name: 'EzGo',
+        name: 'EzzyGo',
         description: `Booking payment for ${providerName}`,
         prefill: {
           name: requester?.name || '',
@@ -164,7 +164,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             <div>
               <h2 className="text-2xl font-bold text-slate-900">Vendor booked</h2>
               <p className="text-base text-slate-600 mt-1">
-                ₹{booking.totalPaid.toLocaleString()} is held by EzGo until the event is done.
+                ₹{booking.totalPaid.toLocaleString()} is held by EzzyGo until the event is done.
               </p>
               {transactionId && (
                 <p className="text-xs font-mono text-slate-400 mt-1">Payment ref: {transactionId}</p>
@@ -192,7 +192,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     <span>Call</span>
                   </a>
                   <a
-                    href={`https://wa.me/${cleanPhone}?text=Hi%20${encodeURIComponent(provider?.name || '')},%20regarding%20my%20EzGo%20booking`}
+                    href={`https://wa.me/${cleanPhone}?text=Hi%20${encodeURIComponent(provider?.name || '')},%20regarding%20my%20EzzyGo%20booking`}
                     target="_blank"
                     rel="noreferrer"
                     className="py-3 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm flex items-center justify-center gap-2 transition"
@@ -208,7 +208,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               <p className="text-sm font-semibold text-slate-900 mb-1.5">What happens next</p>
               <ol className="text-sm space-y-1 text-slate-600 list-decimal list-inside leading-relaxed">
                 <li>Call the vendor and share the event time and address.</li>
-                <li>Your money stays with EzGo until the event is over.</li>
+                <li>Your money stays with EzzyGo until the event is over.</li>
                 <li>After the event, click "Event done" and the vendor gets paid.</li>
               </ol>
             </div>
@@ -239,7 +239,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-left text-sm text-slate-700 leading-relaxed">
               {paidAfterVerifyError
-                ? 'If money was taken from your account, do not pay again. Open My bookings in a minute to check the status, or contact EzGo support with the payment ref.'
+                ? 'If money was taken from your account, do not pay again. Open My bookings in a minute to check the status, or contact EzzyGo support with the payment ref.'
                 : 'You can try again, pay later from My bookings, or choose another vendor.'}
             </div>
 
@@ -286,7 +286,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               </div>
               <div>
                 <h2 className="text-lg sm:text-xl font-semibold text-slate-900">Pay to confirm the booking</h2>
-                <p className="text-sm text-slate-600">EzGo holds this money until you confirm the event is done.</p>
+                <p className="text-sm text-slate-600">EzzyGo holds this money until you confirm the event is done.</p>
               </div>
             </div>
 
@@ -303,7 +303,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 <span className="font-semibold text-slate-900">₹{booking.bidAmount.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-sm text-slate-600">
-                <span>EzGo fee (10%)</span>
+                <span>EzzyGo fee (10%)</span>
                 <span className="font-semibold text-slate-900">+ ₹{booking.platformFee.toLocaleString()}</span>
               </div>
               <div className="pt-2 border-t border-slate-200 flex justify-between items-baseline">

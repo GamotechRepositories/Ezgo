@@ -1,11 +1,11 @@
-# Ezgo
+# Ezzygo
 
 Full-stack application built with React, Vite, Tailwind CSS v4, Node.js, Express, and MongoDB.
 
 ## Project Structure
 
 ```
-Ezgo/
+Ezzygo/
 ├── frontend/    # Vite + React (TypeScript) + Tailwind CSS v4
 └── backend/     # Node.js + Express + MongoDB (Mongoose)
 ```

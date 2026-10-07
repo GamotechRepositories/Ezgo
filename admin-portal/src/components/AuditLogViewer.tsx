@@ -7,7 +7,7 @@ interface AuditLogViewerProps {
 const typeLabels: Record<string, { label: string; className: string }> = {
   PAYMENT_HELD_ESCROW: { label: 'Host paid', className: 'bg-blue-50 text-blue-800' },
   PAYOUT_RELEASED_PROVIDER: { label: 'Vendor paid', className: 'bg-emerald-50 text-emerald-800' },
-  COMMISSION_EARNED: { label: 'EzGo fee', className: 'bg-orange-50 text-orange-800' },
+  COMMISSION_EARNED: { label: 'EzzyGo fee', className: 'bg-orange-50 text-orange-800' },
   REFUND: { label: 'Refund', className: 'bg-rose-50 text-rose-800' },
 };
 
@@ -18,13 +18,13 @@ const describe = (t: any) => {
   const to = personName(t.toUser);
   switch (t.type) {
     case 'PAYMENT_HELD_ESCROW':
-      return `${from || 'A host'} paid EzGo for a booking.`;
+      return `${from || 'A host'} paid EzzyGo for a booking.`;
     case 'PAYOUT_RELEASED_PROVIDER':
-      return `EzGo sent the full bid to ${to || 'the vendor'}.`;
+      return `EzzyGo sent the full bid to ${to || 'the vendor'}.`;
     case 'COMMISSION_EARNED':
-      return 'EzGo kept the 10% fee for a finished event.';
+      return 'EzzyGo kept the 10% fee for a finished event.';
     case 'REFUND':
-      return `EzGo refunded ${to || 'the host'}.`;
+      return `EzzyGo refunded ${to || 'the host'}.`;
     default:
       return t.type;
   }
@@ -40,7 +40,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({ transactions }) 
     <div className="space-y-6 animate-in fade-in duration-300">
       <div>
         <h2 className="text-2xl font-bold text-slate-900">Money activity</h2>
-        <p className="text-base text-slate-600 mt-1">The last 10 payments, payouts, and fees on EzGo.</p>
+        <p className="text-base text-slate-600 mt-1">The last 10 payments, payouts, and fees on EzzyGo.</p>
       </div>
 
       <div className="rounded-3xl bg-white border border-slate-200 p-6 shadow-sm">

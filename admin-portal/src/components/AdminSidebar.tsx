@@ -9,7 +9,7 @@ import {
   X,
   PartyPopper,
 } from 'lucide-react';
-import { EzGoLogo } from './EzGoLogo';
+import { EzzyGoLogo } from './EzzyGoLogo';
 import type { User } from '../types';
 
 interface AdminSidebarProps {
@@ -57,7 +57,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         <div className="p-5 border-b border-slate-100">
           <div className="flex items-center justify-between">
             <a href="/" className="flex items-center select-none">
-              <EzGoLogo variant="admin" size="md" showBadge={false} />
+              <EzzyGoLogo variant="admin" size="md" showBadge={false} />
             </a>
             <button
               onClick={onClose}
@@ -100,7 +100,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           })}
 
           <div className="pt-5 mt-4 border-t border-slate-100 space-y-1">
-            <div className="px-3 pb-1 text-xs text-slate-400">Other EzGo apps</div>
+            <div className="px-3 pb-1 text-xs text-slate-400">Other EzzyGo apps</div>
             <a
               href="http://localhost:5173"
               target="_blank"

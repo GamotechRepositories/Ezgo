@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
-export const JWT_SECRET = process.env.JWT_SECRET || 'ezgo-dev-only-secret';
+export const JWT_SECRET = process.env.JWT_SECRET || 'ezzygo-dev-only-secret';
 
 export const signToken = (user) =>
   jwt.sign({ id: user._id.toString(), role: user.role }, JWT_SECRET, { expiresIn: '7d' });

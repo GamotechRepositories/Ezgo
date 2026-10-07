@@ -9,8 +9,8 @@ interface RuleExplainerProps {
 const steps = [
   { title: 'The host posts a request', body: 'They add the event date, place, guests, and the most they want to pay (their budget).' },
   { title: 'You bid at least 15% lower', body: 'Your bid must be 85% of the budget or less. On a ₹40,000 budget, you can bid up to ₹34,000.' },
-  { title: 'The host picks a bid and pays', body: 'The host pays your bid plus a 10% EzGo fee. EzGo holds this money. You can now see their phone number.' },
-  { title: 'You do the event and get paid', body: 'When the host confirms the event is done, EzGo sends you 100% of your bid. Nothing is cut from your side.' },
+  { title: 'The host picks a bid and pays', body: 'The host pays your bid plus a 10% EzzyGo fee. EzzyGo holds this money. You can now see their phone number.' },
+  { title: 'You do the event and get paid', body: 'When the host confirms the event is done, EzzyGo sends you 100% of your bid. Nothing is cut from your side.' },
 ];
 
 export const RuleExplainer: React.FC<RuleExplainerProps> = ({ isOpen, onClose }) => {
@@ -85,7 +85,7 @@ export const RuleExplainer: React.FC<RuleExplainerProps> = ({ isOpen, onClose })
 
           <dl className="rounded-xl border border-slate-200 bg-white divide-y divide-slate-100 text-sm">
             <div className="flex justify-between px-4 py-3">
-              <dt className="text-slate-600">Host pays (your bid + 10% EzGo fee)</dt>
+              <dt className="text-slate-600">Host pays (your bid + 10% EzzyGo fee)</dt>
               <dd className="font-medium text-slate-900">₹{(testBid + hostFee).toLocaleString()}</dd>
             </div>
             <div className="flex justify-between px-4 py-3 bg-emerald-50/60">

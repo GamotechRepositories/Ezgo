@@ -289,7 +289,7 @@ function AdminApp({ currentAdmin, onLogout }: { currentAdmin: User; onLogout: ()
         </main>
 
         <footer className="py-4 px-6 border-t border-slate-200/80 text-center text-xs text-slate-400 bg-white/50">
-          EzGo admin
+          EzzyGo admin
         </footer>
       </div>
     </div>

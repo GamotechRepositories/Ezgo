@@ -14,7 +14,7 @@ export const seedDatabase = async (forceReset = false) => {
       return;
     }
 
-    console.log('🚀 Seeding EzGo dynamic database on MongoDB Atlas...');
+    console.log('🚀 Seeding EzzyGo dynamic database on MongoDB Atlas...');
 
     // Clear old data if forceReset is requested
     if (forceReset) {
@@ -43,7 +43,7 @@ export const seedDatabase = async (forceReset = false) => {
       {
         name: 'Stage & Mandap Decoration',
         slug: 'decor',
-        icon: 'Sparkles',
+        icon: 'Palette',
         image: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&auto=format&fit=crop&q=80',
         description: 'Custom flower arches, fairy light canopies, royal wedding mandap backdrops',
         avgPriceRange: '₹15,000 - ₹1,20,000',
@@ -110,7 +110,7 @@ export const seedDatabase = async (forceReset = false) => {
     const host1 = await User.create({
       name: 'Ananya Sharma',
       phone: '+91 98765 43210',
-      email: 'ananya.sharma@ezgoevents.in',
+      email: 'ananya.sharma@ezzygoevents.in',
       role: 'requester',
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
     });
@@ -198,9 +198,9 @@ export const seedDatabase = async (forceReset = false) => {
     });
 
     const admin = await User.create({
-      name: 'EzGo Operations Desk',
+      name: 'EzzyGo Operations Desk',
       phone: '+91 90000 00001',
-      email: 'ops@ezgoevents.in',
+      email: 'ops@ezzygoevents.in',
       role: 'admin',
       avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
     });
@@ -475,7 +475,7 @@ export const seedDatabase = async (forceReset = false) => {
     ];
     await Item.insertMany(equipmentItems);
 
-    console.log('✅ EzGo MongoDB database successfully seeded with live dynamic data!');
+    console.log('✅ EzzyGo MongoDB database successfully seeded with live dynamic data!');
   } catch (error) {
     console.error('❌ Seeding error:', error.message);
   }

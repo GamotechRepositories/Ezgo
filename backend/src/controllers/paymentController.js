@@ -70,7 +70,7 @@ export const createOrder = async (req, res, next) => {
       receipt: receipt || `rcpt_${Date.now().toString().slice(-10)}`,
       notes: {
         ...notes,
-        createdVia: 'EzGo Razorpay Web Checkout',
+        createdVia: 'EzzyGo Razorpay Web Checkout',
       },
     };
 
@@ -188,7 +188,7 @@ export const verifyPayment = async (req, res, next) => {
       if (booking.status !== 'AWAITING_PAYMENT') {
         return res.status(409).json({
           success: false,
-          message: `Payment received but this booking is ${booking.status.toLowerCase()}. Please contact EzGo support with payment ref ${razorpay_payment_id} for a refund.`,
+          message: `Payment received but this booking is ${booking.status.toLowerCase()}. Please contact EzzyGo support with payment ref ${razorpay_payment_id} for a refund.`,
         });
       }
 
@@ -220,7 +220,7 @@ export const verifyPayment = async (req, res, next) => {
           razorpayPaymentId: razorpay_payment_id,
           bidAmount: booking.bidAmount,
           platformFee: booking.platformFee,
-          note: 'Funds held in EzGo Escrow via Razorpay Standard Checkout',
+          note: 'Funds held in EzzyGo Escrow via Razorpay Standard Checkout',
         },
       });
 

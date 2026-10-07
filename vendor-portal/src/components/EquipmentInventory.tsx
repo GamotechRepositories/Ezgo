@@ -76,7 +76,7 @@ export const EquipmentInventory: React.FC<EquipmentInventoryProps> = ({ vendorId
       try {
         setIsUploading(true);
         setUploadError('');
-        const cloudUrl = await api.uploadImage(file, 'ezgo/equipment');
+        const cloudUrl = await api.uploadImage(file, 'ezzygo/equipment');
         setImageUrl(cloudUrl);
       } catch (err: any) {
         setUploadError(err.message || 'Failed to upload image to Cloudinary');
@@ -93,7 +93,7 @@ export const EquipmentInventory: React.FC<EquipmentInventoryProps> = ({ vendorId
       setBusyId(itemId);
       setError('');
       try {
-        const cloudUrl = await api.uploadImage(file, 'ezgo/equipment');
+        const cloudUrl = await api.uploadImage(file, 'ezzygo/equipment');
         replaceItem(await api.updateEquipment(itemId, { image: cloudUrl }));
       } catch (err: any) {
         setError('Photo not changed: ' + err.message);

@@ -176,7 +176,7 @@ function VendorApp({ currentVendor, onLogout }: { currentVendor: User; onLogout:
         </main>
 
         <footer className="py-4 px-6 border-t border-slate-200/80 text-center text-xs text-slate-400 bg-white/50">
-          EzGo for vendors · You get your full bid after every event
+          EzzyGo for vendors · You get your full bid after every event
         </footer>
       </div>
 

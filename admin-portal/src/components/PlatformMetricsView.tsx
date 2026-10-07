@@ -8,8 +8,8 @@ interface PlatformMetricsViewProps {
 const steps = [
   { title: 'Host posts a request', body: 'Sets the event details and a budget.' },
   { title: 'Vendors bid 15% lower or more', body: 'Only bids at 85% of the budget or less can be picked.' },
-  { title: 'Host picks and pays', body: 'Host pays the bid + 10% fee. EzGo holds the money.' },
-  { title: 'Event done, vendor paid', body: 'Vendor gets 100% of the bid. EzGo keeps the 10% fee.' },
+  { title: 'Host picks and pays', body: 'Host pays the bid + 10% fee. EzzyGo holds the money.' },
+  { title: 'Event done, vendor paid', body: 'Vendor gets 100% of the bid. EzzyGo keeps the 10% fee.' },
 ];
 
 export const PlatformMetricsView: React.FC<PlatformMetricsViewProps> = ({ metrics }) => {
@@ -24,8 +24,8 @@ export const PlatformMetricsView: React.FC<PlatformMetricsViewProps> = ({ metric
 
   const moneyCards = [
     { label: 'Paid by hosts', value: `₹${gmv.toLocaleString()}`, note: 'All bookings that were paid, including the 10% fee', tone: 'text-slate-900' },
-    { label: 'EzGo fees earned', value: `₹${commission.toLocaleString()}`, note: 'The 10% fee from finished events', tone: 'text-emerald-700' },
-    { label: 'Money EzGo is holding', value: `₹${escrowHeld.toLocaleString()}`, note: 'Paid bookings whose event is not done yet', tone: 'text-blue-700' },
+    { label: 'EzzyGo fees earned', value: `₹${commission.toLocaleString()}`, note: 'The 10% fee from finished events', tone: 'text-emerald-700' },
+    { label: 'Money EzzyGo is holding', value: `₹${escrowHeld.toLocaleString()}`, note: 'Paid bookings whose event is not done yet', tone: 'text-blue-700' },
     { label: 'Vendors', value: String(totalProviders), note: pendingKyc > 0 ? `${pendingKyc} waiting for your check` : 'All checked', tone: 'text-slate-900' },
   ];
 
@@ -40,7 +40,7 @@ export const PlatformMetricsView: React.FC<PlatformMetricsViewProps> = ({ metric
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Overview</h1>
         <p className="text-base text-slate-600 mt-1">
-          Money and bookings across EzGo. Hosts pay the bid plus a 10% fee. Vendors get the full bid.
+          Money and bookings across EzzyGo. Hosts pay the bid plus a 10% fee. Vendors get the full bid.
         </p>
       </div>
 

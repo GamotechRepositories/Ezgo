@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
   X,
-  Sparkles,
+  Palette,
+  Tag,
   ShieldCheck,
   Calendar,
   Clock,
@@ -39,7 +40,7 @@ interface PostRequirementModalProps {
 
 const CATEGORY_ICONS: Record<string, any> = {
   'DJ & Sound Setup': Music,
-  'Decoration & Stage Setup': Sparkles,
+  'Decoration & Stage Setup': Palette,
   'Photography & 4K Videography': Camera,
   'Catering & Live Food Counters': Utensils,
   'Lighting & Stage Trussing': SunMedium,
@@ -110,7 +111,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
       try {
         setIsUploadingImage(true);
         setUploadError('');
-        const cloudUrl = await api.uploadImage(file, 'ezgo/requirements');
+        const cloudUrl = await api.uploadImage(file, 'ezzygo/requirements');
         setCustomImageUrl(cloudUrl);
       } catch (err: any) {
         setUploadError(err.message || 'Failed to upload photo to Cloudinary');
@@ -138,7 +139,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
         _id: c.id,
         name: c.name,
         slug: c.id,
-        icon: 'Sparkles',
+        icon: 'Palette',
         image: c.image,
         description: c.description,
         avgPriceRange: c.avgPriceRange,
@@ -244,8 +245,8 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
         {/* Simple & Friendly Intro Banner */}
         <div className="mb-6 sm:mb-8">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-100/90 text-orange-800 text-xs font-bold uppercase tracking-wider mb-2">
-            <Sparkles className="w-3.5 h-3.5 text-orange-600" />
-            <span>Ezgo Reverse Bidding</span>
+            <ShieldCheck className="w-3.5 h-3.5 text-orange-600" />
+            <span>Ezzygo Reverse Bidding</span>
           </div>
           
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight font-heading">
@@ -278,7 +279,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3.5 lg:gap-4">
               {mergedCategories.map((cat) => {
                 const isSelected = activeCategoryData.name === cat.name;
-                const Icon = CATEGORY_ICONS[cat.name] || Sparkles;
+                const Icon = CATEGORY_ICONS[cat.name] || Tag;
                 const catImg = cat.image && cat.image.trim().length > 0
                   ? cat.image
                   : 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=400&auto=format&fit=crop&q=80';

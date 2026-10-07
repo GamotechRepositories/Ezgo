@@ -58,7 +58,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({
       try {
         setIsUploading(true);
         setUploadError('');
-        const cloudUrl = await api.uploadImage(file, 'ezgo/categories');
+        const cloudUrl = await api.uploadImage(file, 'ezzygo/categories');
         setImageUrl(cloudUrl);
       } catch (err: any) {
         setUploadError(err.message || 'Failed to upload to Cloudinary');
@@ -73,7 +73,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({
     if (file) {
       try {
         setUpdatingCatId(cat._id);
-        const cloudUrl = await api.uploadImage(file, 'ezgo/categories');
+        const cloudUrl = await api.uploadImage(file, 'ezzygo/categories');
         await onUpdateCategory(cat._id, { image: cloudUrl });
       } catch (err: any) {
         alert('Upload failed: ' + err.message);
@@ -93,7 +93,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({
       description,
       avgPriceRange: avgPrice,
       image: finalImage,
-      icon: 'Sparkles',
+      icon: 'Palette',
       isActive: true,
     });
     setName('');

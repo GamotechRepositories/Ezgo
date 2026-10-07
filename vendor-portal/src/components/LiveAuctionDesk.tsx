@@ -70,7 +70,7 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
             <span className="text-sm font-semibold text-[#f95724]">3</span>
             <h3 className="text-base font-semibold text-slate-900">Host picks and pays</h3>
             <p className="text-sm text-slate-600 leading-relaxed">
-              EzGo holds the payment. You then see the host's phone number.
+              EzzyGo holds the payment. You then see the host's phone number.
             </p>
           </div>
           <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-2">

@@ -1,7 +1,7 @@
 import type { User, Requirement, Bid, Booking, Category, Occasion } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-const TOKEN_KEY = 'ezgo_token_host';
+const TOKEN_KEY = 'ezzygo_token_host';
 
 export const emptyUser: User = {
   _id: '',
@@ -18,7 +18,7 @@ export interface DemoAccount {
   password: string;
 }
 
-export const getToken = () => localStorage.getItem(TOKEN_KEY) || '';
+export const getToken = () => localStorage.getItem(TOKEN_KEY) || localStorage.getItem('ezgo_token_host') || '';
 export const setToken = (token: string) => localStorage.setItem(TOKEN_KEY, token);
 export const clearToken = () => localStorage.removeItem(TOKEN_KEY);
 
@@ -34,7 +34,7 @@ async function request<T>(path: string, options: RequestInit = {}, fallbackError
   try {
     res = await fetch(`${API_BASE}${path}`, { ...options, headers });
   } catch (_) {
-    throw new Error('Cannot reach the EzGo server. Is the backend running?');
+    throw new Error('Cannot reach the EzzyGo server. Is the backend running?');
   }
   if (res.status === 401 && token && !path.startsWith('/auth/')) {
     clearToken();
@@ -170,7 +170,7 @@ export const api = {
     return unwrap(request(`/bookings${toQuery(params)}`, {}, 'Could not load your bookings'));
   },
 
-  async uploadImage(file: File, folder = 'ezgo/uploads'): Promise<string> {
+  async uploadImage(file: File, folder = 'ezzygo/uploads'): Promise<string> {
     const formData = new FormData();
     formData.append('image', file);
     formData.append('folder', folder);

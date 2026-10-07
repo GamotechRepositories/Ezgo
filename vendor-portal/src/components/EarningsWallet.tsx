@@ -22,7 +22,7 @@ export const EarningsWallet: React.FC<EarningsWalletProps> = ({ vendor, bookings
       <div>
         <h2 className="text-2xl font-bold text-slate-900">Earnings</h2>
         <p className="text-base text-slate-600 mt-1">
-          You get 100% of your bid. EzGo sends it to your bank after the host confirms the event is done.
+          You get 100% of your bid. EzzyGo sends it to your bank after the host confirms the event is done.
         </p>
       </div>
 
@@ -54,7 +54,7 @@ export const EarningsWallet: React.FC<EarningsWalletProps> = ({ vendor, bookings
                 : 'bg-amber-50 border-amber-200 text-amber-800'
             }`}
           >
-            {vendor.isVerified ? 'Verified by EzGo' : 'Waiting for EzGo check'}
+            {vendor.isVerified ? 'Verified by EzzyGo' : 'Waiting for EzzyGo check'}
           </span>
         </div>
 
@@ -77,7 +77,7 @@ export const EarningsWallet: React.FC<EarningsWalletProps> = ({ vendor, bookings
             </div>
           </div>
         ) : (
-          <p className="text-sm text-slate-500">No bank account added yet. Contact EzGo support to add one.</p>
+          <p className="text-sm text-slate-500">No bank account added yet. Contact EzzyGo support to add one.</p>
         )}
       </div>
 

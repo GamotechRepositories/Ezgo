@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { EzGoLogo } from './EzGoLogo';
+import { EzzyGoLogo } from './EzzyGoLogo';
 import { api, type DemoAccount } from '../services/api';
 import type { User } from '../types';
 
@@ -13,7 +13,7 @@ const fieldClass =
 const points = [
   'You set the budget for the event.',
   'You can only pick a vendor at least 15% below that budget.',
-  'EzGo holds your payment until you confirm the event is done.',
+  'EzzyGo holds your payment until you confirm the event is done.',
 ];
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
@@ -53,7 +53,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-2 bg-[#f8fafc] lg:bg-white">
       <aside className="hidden lg:flex flex-col justify-between bg-[#fff6f1] border-r border-orange-100 px-12 xl:px-16 py-10">
-        <EzGoLogo variant="host" size="lg" />
+        <EzzyGoLogo variant="host" size="lg" />
         <div className="max-w-md">
           <h2 className="text-4xl font-bold text-slate-900 leading-tight">Vendors bid under the budget you set</h2>
           <ol className="mt-8 space-y-4">
@@ -78,7 +78,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
       <main className="min-h-dvh lg:h-dvh lg:overflow-y-auto flex flex-col px-4 py-6 sm:px-8 lg:px-12 xl:px-16">
         <div className="w-full max-w-[440px] mx-auto my-auto bg-white border border-slate-200 rounded-3xl shadow-sm p-5 sm:p-8 lg:border-0 lg:shadow-none lg:p-0 lg:bg-transparent">
           <div className="lg:hidden mb-6">
-            <EzGoLogo variant="host" size="lg" />
+            <EzzyGoLogo variant="host" size="lg" />
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">

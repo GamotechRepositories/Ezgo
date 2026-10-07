@@ -23,7 +23,7 @@ const upload = multer({
 });
 
 // Helper function to upload buffer to Cloudinary
-const uploadBufferToCloudinary = (buffer, folder = 'ezgo/general') => {
+const uploadBufferToCloudinary = (buffer, folder = 'ezzygo/general') => {
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {
@@ -49,7 +49,7 @@ router.post('/', upload.single('image'), async (req, res, next) => {
       throw new Error('Please select an image file to upload');
     }
 
-    const folder = req.query.folder || req.body.folder || 'ezgo/uploads';
+    const folder = req.query.folder || req.body.folder || 'ezzygo/uploads';
     const result = await uploadBufferToCloudinary(req.file.buffer, folder);
 
     res.status(200).json({
@@ -77,7 +77,7 @@ router.post('/multiple', upload.array('images', 8), async (req, res, next) => {
       throw new Error('Please select at least one image file');
     }
 
-    const folder = req.query.folder || req.body.folder || 'ezgo/gallery';
+    const folder = req.query.folder || req.body.folder || 'ezzygo/gallery';
     const uploadPromises = req.files.map((file) =>
       uploadBufferToCloudinary(file.buffer, folder)
     );

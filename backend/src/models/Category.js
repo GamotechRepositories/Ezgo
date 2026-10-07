@@ -14,7 +14,7 @@ const categorySchema = new mongoose.Schema(
     },
     icon: {
       type: String,
-      default: 'Sparkles',
+      default: 'Palette',
     },
     description: {
       type: String,

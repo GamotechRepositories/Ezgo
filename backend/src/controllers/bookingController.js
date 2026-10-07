@@ -162,13 +162,13 @@ export const processPayment = async (req, res, next) => {
       metadata: {
         bidAmount: booking.bidAmount,
         platformFee: booking.platformFee,
-        note: 'Funds held in EzGo Escrow until service completion',
+        note: 'Funds held in EzzyGo Escrow until service completion',
       },
     });
 
     res.json({
       success: true,
-      message: 'Payment confirmed! Funds are safely held in EzGo Escrow. Provider contact has been unlocked.',
+      message: 'Payment confirmed! Funds are safely held in EzzyGo Escrow. Provider contact has been unlocked.',
       data: booking,
     });
   } catch (error) {
@@ -208,7 +208,7 @@ export const completeBooking = async (req, res, next) => {
       transferId: payoutRef,
       releasedAt: new Date(),
       amountToProvider: booking.bidAmount, // 100% of bid amount to provider
-      commissionRetained: booking.platformFee, // 10% platform fee retained by EzGo
+      commissionRetained: booking.platformFee, // 10% platform fee retained by EzzyGo
     };
     await booking.save();
 
@@ -235,23 +235,23 @@ export const completeBooking = async (req, res, next) => {
       },
     });
 
-    // Record EzGo Commission transaction
+    // Record EzzyGo Commission transaction
     await Transaction.create({
       bookingId: booking._id,
       type: 'COMMISSION_EARNED',
       amount: booking.platformFee,
       fromUser: booking.requesterId._id,
-      toUser: null, // EzGo Platform
+      toUser: null, // EzzyGo Platform
       status: 'SUCCESS',
       referenceId: 'COMM-' + payoutRef,
       metadata: {
-        note: '10% platform fee retained by EzGo',
+        note: '10% platform fee retained by EzzyGo',
       },
     });
 
     res.json({
       success: true,
-      message: `Job marked complete! ₹${booking.bidAmount.toLocaleString()} has been released to ${booking.providerId.businessName || booking.providerId.name}. EzGo retained ₹${booking.platformFee.toLocaleString()} commission.`,
+      message: `Job marked complete! ₹${booking.bidAmount.toLocaleString()} has been released to ${booking.providerId.businessName || booking.providerId.name}. EzzyGo retained ₹${booking.platformFee.toLocaleString()} commission.`,
       data: booking,
     });
   } catch (error) {
