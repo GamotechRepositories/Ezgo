@@ -328,10 +328,10 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
           <div className="max-w-3xl space-y-3 sm:space-y-5">
             
             {/* Main Headline - Exactly 3 Clean Lines with Expanded Mobile Height */}
-            <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl font-bold text-[#0f172a] leading-[1.15] tracking-tight">
+            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl xl:text-[68px] font-extrabold text-[#0f172a] leading-[1.12] tracking-tight">
               Post your budget.<br />
               Vendors bid lower.<br />
-              <span className="text-[#f95724]">You pick the best one.</span>
+              <span className="text-[#f95724] font-extrabold">You pick the best one.</span>
             </h1>
 
             <p className="text-slate-700 text-base sm:text-lg leading-relaxed max-w-xl">
