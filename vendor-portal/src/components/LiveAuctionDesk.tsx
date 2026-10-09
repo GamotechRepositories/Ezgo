@@ -141,20 +141,37 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
                   </span>
                 </div>
 
+                {/* Image Banner */}
+                <div className="mb-3.5 w-full aspect-[16/9] max-h-52 rounded-2xl overflow-hidden border border-slate-200/80 bg-slate-100 shadow-2xs relative group/img">
+                  <img
+                    src={
+                      req.imageUrl ||
+                      (req.category?.toLowerCase().includes('sound') || req.category?.toLowerCase().includes('dj')
+                        ? 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop&q=80'
+                        : req.category?.toLowerCase().includes('decor') || req.category?.toLowerCase().includes('mandap') || req.category?.toLowerCase().includes('stage')
+                        ? 'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&auto=format&fit=crop&q=80'
+                        : req.category?.toLowerCase().includes('photo') || req.category?.toLowerCase().includes('drone') || req.category?.toLowerCase().includes('camera')
+                        ? 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&auto=format&fit=crop&q=80'
+                        : req.category?.toLowerCase().includes('cater') || req.category?.toLowerCase().includes('food')
+                        ? 'https://images.unsplash.com/photo-1555244162-803834f70033?w=800&auto=format&fit=crop&q=80'
+                        : req.category?.toLowerCase().includes('light')
+                        ? 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=800&auto=format&fit=crop&q=80'
+                        : 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&auto=format&fit=crop&q=80')
+                    }
+                    alt={req.title}
+                    className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&auto=format&fit=crop&q=80';
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
+                  <div className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white text-[11px] font-semibold border border-white/20">
+                    {req.category}
+                  </div>
+                </div>
+
                 {/* Title & Description */}
                 <div>
-                  {req.imageUrl && (
-                    <div className="mb-3.5 w-full aspect-[16/9] max-h-52 rounded-2xl overflow-hidden border border-slate-200/80 bg-slate-100 shadow-2xs">
-                      <img
-                        src={req.imageUrl}
-                        alt={req.title}
-                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&auto=format&fit=crop&q=80';
-                        }}
-                      />
-                    </div>
-                  )}
                   <h3 className="text-lg font-bold text-slate-900 group-hover:text-[#f95724] transition">
                     {req.title}
                   </h3>

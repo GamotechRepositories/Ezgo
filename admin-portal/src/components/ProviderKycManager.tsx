@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Phone, X, Star } from 'lucide-react';
+import { Search, Phone, X, Star, Eye, FileText, Download, ShieldCheck } from 'lucide-react';
 import type { User } from '../types';
 
 interface ProviderKycManagerProps {
@@ -21,6 +21,7 @@ export const ProviderKycManager: React.FC<ProviderKycManagerProps> = ({
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'ALL' | 'VERIFIED' | 'PENDING'>('ALL');
   const [selectedProvider, setSelectedProvider] = useState<User | null>(null);
+  const [previewDoc, setPreviewDoc] = useState<{ title: string; url: string } | null>(null);
 
   const list = providers || [];
   const pendingCount = list.filter((p) => !p.isVerified).length;
@@ -271,40 +272,104 @@ export const ProviderKycManager: React.FC<ProviderKycManagerProps> = ({
                   selectedProvider.kycDocuments?.panCard ||
                   selectedProvider.kycDocuments?.gstDoc) && (
                   <div className="pt-2">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Uploaded Document Copies</p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2.5">
+                      Uploaded Document Copies (Click to Preview)
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {/* Aadhaar Front */}
                       {selectedProvider.kycDocuments?.aadhaarFront && (
-                        <a
-                          href={selectedProvider.kycDocuments.aadhaarFront}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-orange-300 block text-center transition"
+                        <div
+                          onClick={() =>
+                            setPreviewDoc({
+                              title: `Aadhaar Front - ${selectedProvider.name}`,
+                              url: selectedProvider.kycDocuments!.aadhaarFront!,
+                            })
+                          }
+                          className="group relative p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-orange-400 hover:bg-orange-50/50 transition cursor-pointer flex flex-col items-center justify-between text-center overflow-hidden"
                         >
-                          <span className="text-xs font-medium text-slate-700 block">Aadhaar Front</span>
-                          <span className="text-xs text-[#f95724] font-semibold mt-1 block">View File ↗</span>
-                        </a>
+                          <div className="w-full h-24 mb-2 rounded-xl bg-white border border-slate-100 overflow-hidden flex items-center justify-center relative">
+                            {selectedProvider.kycDocuments.aadhaarFront.toLowerCase().includes('.pdf') ? (
+                              <FileText className="w-10 h-10 text-orange-500" />
+                            ) : (
+                              <img
+                                src={selectedProvider.kycDocuments.aadhaarFront}
+                                alt="Aadhaar"
+                                className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                              />
+                            )}
+                            <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs font-semibold gap-1">
+                              <Eye className="w-3.5 h-3.5" /> Preview
+                            </div>
+                          </div>
+                          <span className="text-xs font-semibold text-slate-800">Aadhaar Front</span>
+                          <span className="text-xs text-[#f95724] font-medium mt-0.5 flex items-center gap-1">
+                            <Eye className="w-3 h-3" /> View Preview
+                          </span>
+                        </div>
                       )}
+
+                      {/* PAN Card */}
                       {selectedProvider.kycDocuments?.panCard && (
-                        <a
-                          href={selectedProvider.kycDocuments.panCard}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-orange-300 block text-center transition"
+                        <div
+                          onClick={() =>
+                            setPreviewDoc({
+                              title: `PAN Card - ${selectedProvider.name}`,
+                              url: selectedProvider.kycDocuments!.panCard!,
+                            })
+                          }
+                          className="group relative p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-orange-400 hover:bg-orange-50/50 transition cursor-pointer flex flex-col items-center justify-between text-center overflow-hidden"
                         >
-                          <span className="text-xs font-medium text-slate-700 block">PAN Card</span>
-                          <span className="text-xs text-[#f95724] font-semibold mt-1 block">View File ↗</span>
-                        </a>
+                          <div className="w-full h-24 mb-2 rounded-xl bg-white border border-slate-100 overflow-hidden flex items-center justify-center relative">
+                            {selectedProvider.kycDocuments.panCard.toLowerCase().includes('.pdf') ? (
+                              <FileText className="w-10 h-10 text-orange-500" />
+                            ) : (
+                              <img
+                                src={selectedProvider.kycDocuments.panCard}
+                                alt="PAN Card"
+                                className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                              />
+                            )}
+                            <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs font-semibold gap-1">
+                              <Eye className="w-3.5 h-3.5" /> Preview
+                            </div>
+                          </div>
+                          <span className="text-xs font-semibold text-slate-800">PAN Card</span>
+                          <span className="text-xs text-[#f95724] font-medium mt-0.5 flex items-center gap-1">
+                            <Eye className="w-3 h-3" /> View Preview
+                          </span>
+                        </div>
                       )}
+
+                      {/* GST Doc */}
                       {selectedProvider.kycDocuments?.gstDoc && (
-                        <a
-                          href={selectedProvider.kycDocuments.gstDoc}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-orange-300 block text-center transition"
+                        <div
+                          onClick={() =>
+                            setPreviewDoc({
+                              title: `GST Certificate - ${selectedProvider.businessName || selectedProvider.name}`,
+                              url: selectedProvider.kycDocuments!.gstDoc!,
+                            })
+                          }
+                          className="group relative p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-orange-400 hover:bg-orange-50/50 transition cursor-pointer flex flex-col items-center justify-between text-center overflow-hidden"
                         >
-                          <span className="text-xs font-medium text-slate-700 block">GST Certificate</span>
-                          <span className="text-xs text-[#f95724] font-semibold mt-1 block">View File ↗</span>
-                        </a>
+                          <div className="w-full h-24 mb-2 rounded-xl bg-white border border-slate-100 overflow-hidden flex items-center justify-center relative">
+                            {selectedProvider.kycDocuments.gstDoc.toLowerCase().includes('.pdf') ? (
+                              <FileText className="w-10 h-10 text-orange-500" />
+                            ) : (
+                              <img
+                                src={selectedProvider.kycDocuments.gstDoc}
+                                alt="GST"
+                                className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                              />
+                            )}
+                            <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs font-semibold gap-1">
+                              <Eye className="w-3.5 h-3.5" /> Preview
+                            </div>
+                          </div>
+                          <span className="text-xs font-semibold text-slate-800">GST Certificate</span>
+                          <span className="text-xs text-[#f95724] font-medium mt-0.5 flex items-center gap-1">
+                            <Eye className="w-3 h-3" /> View Preview
+                          </span>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -324,16 +389,83 @@ export const ProviderKycManager: React.FC<ProviderKycManagerProps> = ({
                   onClick={() => approve(selectedProvider, false)}
                   className="px-5 py-2 rounded-full bg-white text-rose-700 hover:bg-rose-50 border border-rose-200 font-semibold text-sm transition cursor-pointer"
                 >
-                  Remove approval
+                  Revoke Approval
                 </button>
               ) : (
                 <button
                   onClick={() => approve(selectedProvider, true)}
-                  className="px-5 py-2 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition cursor-pointer"
+                  className="px-5 py-2 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition cursor-pointer flex items-center gap-1.5"
                 >
-                  Approve vendor
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>Approve Vendor</span>
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* In-Place Full Screen Document Preview Lightbox */}
+      {previewDoc && (
+        <div
+          className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[70] flex items-center justify-center p-4 sm:p-6 animate-in fade-in"
+          onClick={() => setPreviewDoc(null)}
+        >
+          <div
+            className="bg-white rounded-3xl max-w-4xl w-full max-h-[92vh] flex flex-col overflow-hidden shadow-2xl border border-slate-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+              <div className="flex items-center gap-2.5">
+                <FileText className="w-5 h-5 text-[#f95724]" />
+                <h4 className="font-bold text-slate-900 text-base sm:text-lg">{previewDoc.title}</h4>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={previewDoc.url}
+                  download
+                  className="p-2 rounded-full hover:bg-slate-200 text-slate-600 transition"
+                  title="Download File"
+                >
+                  <Download className="w-4 h-4" />
+                </a>
+                <button
+                  onClick={() => setPreviewDoc(null)}
+                  className="p-2 rounded-full hover:bg-slate-200 text-slate-600 transition cursor-pointer"
+                  title="Close Preview"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Document Viewer Area */}
+            <div className="flex-1 bg-slate-900 flex items-center justify-center p-4 overflow-auto min-h-[350px] max-h-[75vh]">
+              {previewDoc.url.toLowerCase().includes('.pdf') ? (
+                <iframe
+                  src={previewDoc.url}
+                  title={previewDoc.title}
+                  className="w-full h-[70vh] rounded-xl bg-white border-0"
+                />
+              ) : (
+                <img
+                  src={previewDoc.url}
+                  alt={previewDoc.title}
+                  className="max-w-full max-h-[70vh] object-contain rounded-xl shadow-lg"
+                />
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-3 bg-white border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+              <span>Previewing uploaded KYC document inline</span>
+              <button
+                onClick={() => setPreviewDoc(null)}
+                className="px-4 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition cursor-pointer"
+              >
+                Close Preview
+              </button>
             </div>
           </div>
         </div>

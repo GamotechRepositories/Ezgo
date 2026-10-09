@@ -119,15 +119,6 @@ export const VendorSidebar: React.FC<VendorSidebarProps> = ({
               <span>Host app</span>
               <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
             </a>
-            <a
-              href="http://localhost:5175"
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center justify-between px-3.5 py-2 rounded-xl text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"
-            >
-              <span>Admin</span>
-              <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
-            </a>
           </div>
         </nav>
 

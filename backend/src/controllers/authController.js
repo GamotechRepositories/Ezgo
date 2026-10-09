@@ -83,7 +83,17 @@ export const verifyOtpAndLogin = async (req, res, next) => {
 
 export const register = async (req, res, next) => {
   try {
-    const { name, phone, password, role, businessName, serviceArea, email } = req.body;
+    const {
+      name,
+      phone,
+      password,
+      role,
+      businessName,
+      serviceArea,
+      email,
+      bankDetails,
+      kycDocuments,
+    } = req.body;
     const digits = normalizePhone(phone);
 
     if (!name || !String(name).trim()) {
@@ -113,6 +123,13 @@ export const register = async (req, res, next) => {
       throw new Error('An account with this mobile number already exists. Log in instead.');
     }
 
+    const hasKycOrBank = Boolean(
+      bankDetails?.accountNumber ||
+      bankDetails?.upiId ||
+      kycDocuments?.aadhaarNumber ||
+      kycDocuments?.panNumber
+    );
+
     const user = await User.create({
       name: String(name).trim(),
       phone: digits,
@@ -123,6 +140,25 @@ export const register = async (req, res, next) => {
       businessName: role === 'provider' ? String(businessName).trim() : '',
       serviceArea: serviceArea || 'Pune',
       isVerified: false,
+      bankDetails: {
+        accountHolder: bankDetails?.accountHolder ? String(bankDetails.accountHolder).trim() : '',
+        accountNumber: bankDetails?.accountNumber ? String(bankDetails.accountNumber).trim() : '',
+        ifscCode: bankDetails?.ifscCode ? String(bankDetails.ifscCode).trim().toUpperCase() : '',
+        upiId: bankDetails?.upiId ? String(bankDetails.upiId).trim() : '',
+        isKycCompleted: false,
+      },
+      kycDocuments: {
+        aadhaarNumber: kycDocuments?.aadhaarNumber ? String(kycDocuments.aadhaarNumber).trim() : '',
+        aadhaarFront: kycDocuments?.aadhaarFront ? String(kycDocuments.aadhaarFront).trim() : '',
+        aadhaarBack: kycDocuments?.aadhaarBack ? String(kycDocuments.aadhaarBack).trim() : '',
+        panNumber: kycDocuments?.panNumber ? String(kycDocuments.panNumber).trim().toUpperCase() : '',
+        panCard: kycDocuments?.panCard ? String(kycDocuments.panCard).trim() : '',
+        gstNumber: kycDocuments?.gstNumber ? String(kycDocuments.gstNumber).trim().toUpperCase() : '',
+        gstDoc: kycDocuments?.gstDoc ? String(kycDocuments.gstDoc).trim() : '',
+        businessAddress: kycDocuments?.businessAddress ? String(kycDocuments.businessAddress).trim() : '',
+        submittedAt: hasKycOrBank ? new Date() : null,
+        rejectionReason: '',
+      },
     });
 
     // Send welcome notification
@@ -131,7 +167,7 @@ export const register = async (req, res, next) => {
       title: 'Welcome to EzzyGo! 🎉',
       message:
         role === 'provider'
-          ? 'Welcome to EzzyGo Vendor Desk. Complete your KYC and submit bank details to get verified!'
+          ? 'Welcome to EzzyGo Vendor Desk. Your KYC and bank details have been submitted for review.'
           : 'Welcome to EzzyGo! Post your event requirements and receive competitive bids at least 15% below your budget.',
       type: 'SYSTEM',
     });

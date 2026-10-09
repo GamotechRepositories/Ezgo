@@ -138,7 +138,14 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
     return (
       <article key={b._id} className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="flex flex-col md:flex-row">
-          <img src={imageFor(b)} alt="" className="w-full md:w-60 h-40 md:h-auto object-cover bg-slate-100 shrink-0" />
+          <img
+            src={imageFor(b)}
+            alt=""
+            className="w-full md:w-60 h-40 md:h-auto object-cover bg-slate-100 shrink-0"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = FALLBACK_IMAGE;
+            }}
+          />
 
           <div className="flex-1 p-5 sm:p-6 space-y-5 min-w-0">
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
@@ -181,7 +188,14 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
                 <div className="text-sm text-slate-500">Your vendor</div>
                 <div className="flex items-center gap-3">
                   {b.providerId?.avatar ? (
-                    <img src={b.providerId.avatar} alt="" className="w-12 h-12 rounded-xl object-cover" />
+                    <img
+                      src={b.providerId.avatar}
+                      alt=""
+                      className="w-12 h-12 rounded-xl object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80';
+                      }}
+                    />
                   ) : (
                     <div className="w-12 h-12 rounded-xl bg-orange-100 text-[#f95724] font-bold flex items-center justify-center">
                       {vendorName(b).charAt(0)}
@@ -300,7 +314,14 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
 
   const renderFinished = (b: Booking) => (
     <article key={b._id} className="bg-white rounded-3xl border border-slate-200 p-5 sm:p-6 flex flex-col md:flex-row md:items-center gap-5">
-      <img src={imageFor(b)} alt="" className="w-full md:w-32 h-32 md:h-24 rounded-2xl object-cover bg-slate-100 shrink-0" />
+      <img
+        src={imageFor(b)}
+        alt=""
+        className="w-full md:w-32 h-32 md:h-24 rounded-2xl object-cover bg-slate-100 shrink-0"
+        onError={(e) => {
+          (e.target as HTMLImageElement).src = FALLBACK_IMAGE;
+        }}
+      />
       <div className="flex-1 min-w-0 space-y-2">
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-800 border border-indigo-200">
           <CheckCircle2 className="w-3.5 h-3.5" /> Event done

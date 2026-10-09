@@ -6,18 +6,16 @@ import { requireAuth } from '../middlewares/auth.js';
 
 const router = express.Router();
 
-router.use(requireAuth);
-
 // Configure multer with memory storage (max 10MB per file)
 const storage = multer.memoryStorage();
 const upload = multer({
   storage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
+    if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
       cb(null, true);
     } else {
-      cb(new Error('Only image files (JPG, PNG, WEBP, GIF, SVG) are allowed!'), false);
+      cb(new Error('Only images (JPG, PNG, WEBP) and PDF documents are allowed!'), false);
     }
   },
 });

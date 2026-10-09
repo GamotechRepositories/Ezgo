@@ -72,7 +72,30 @@ export const api = {
     return data.user;
   },
 
-  async register(input: { name: string; phone: string; password: string; businessName: string; serviceArea?: string; email?: string }): Promise<User> {
+  async register(input: {
+    name: string;
+    phone: string;
+    password: string;
+    businessName: string;
+    serviceArea?: string;
+    email?: string;
+    bankDetails?: {
+      accountHolder?: string;
+      accountNumber?: string;
+      ifscCode?: string;
+      upiId?: string;
+    };
+    kycDocuments?: {
+      aadhaarNumber?: string;
+      aadhaarFront?: string;
+      aadhaarBack?: string;
+      panNumber?: string;
+      panCard?: string;
+      gstNumber?: string;
+      gstDoc?: string;
+      businessAddress?: string;
+    };
+  }): Promise<User> {
     const data = await request<{ token: string; user: User }>(
       '/auth/register',
       jsonBody('POST', { ...input, role: 'provider' }),

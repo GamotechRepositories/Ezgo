@@ -48,19 +48,37 @@ export const ActiveOrdersDesk: React.FC<ActiveOrdersDeskProps> = ({ bookings }) 
                 key={booking._id}
                 className="rounded-3xl bg-white border border-slate-200 p-6 sm:p-7 space-y-5 shadow-sm flex flex-col justify-between"
               >
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm text-slate-500">{req.category}</span>
-                    <span className={`px-3 py-1 rounded-full border text-sm font-medium ${info.className}`}>
-                      {info.label}
+                  <div className="w-full h-36 rounded-2xl overflow-hidden bg-slate-100 relative border border-slate-200/80">
+                    <img
+                      src={
+                        req?.imageUrl ||
+                        (req?.category?.toLowerCase().includes('sound') || req?.category?.toLowerCase().includes('dj')
+                          ? 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop&q=80'
+                          : req?.category?.toLowerCase().includes('decor') || req?.category?.toLowerCase().includes('mandap') || req?.category?.toLowerCase().includes('stage')
+                          ? 'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&auto=format&fit=crop&q=80'
+                          : req?.category?.toLowerCase().includes('photo') || req?.category?.toLowerCase().includes('drone') || req?.category?.toLowerCase().includes('camera')
+                          ? 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&auto=format&fit=crop&q=80'
+                          : req?.category?.toLowerCase().includes('cater') || req?.category?.toLowerCase().includes('food')
+                          ? 'https://images.unsplash.com/photo-1555244162-803834f70033?w=800&auto=format&fit=crop&q=80'
+                          : 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&auto=format&fit=crop&q=80')
+                      }
+                      alt={req?.title || 'Event'}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&auto=format&fit=crop&q=80';
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
+                    <span className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-white/90 text-xs font-semibold text-slate-800 shadow-xs">
+                      {req?.category}
                     </span>
                   </div>
 
                   <div>
-                    <h3 className="text-lg font-bold text-slate-900">{req.title}</h3>
+                    <h3 className="text-lg font-bold text-slate-900">{req?.title}</h3>
                     <p className="text-sm text-slate-500 mt-1">
-                      {req.eventDate}
-                      {req.timeWindow?.start && ` · ${req.timeWindow.start}–${req.timeWindow.end}`}
+                      {req?.eventDate}
+                      {req?.timeWindow?.start && ` · ${req.timeWindow.start}–${req.timeWindow.end}`}
                     </p>
                   </div>
 

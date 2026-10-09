@@ -188,11 +188,13 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
   const initialCleanCity = normalizeCity(
     (initialData && typeof initialData !== 'string' && initialData.city) || initialCity
   );
-  const [category, setCategory] = useState(
-    (initialData && (typeof initialData === 'string' ? initialData : initialData.category)) ||
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(() => {
+    const rawCat = (initialData && (typeof initialData === 'string' ? initialData : initialData.category)) ||
       initialCategory ||
-      EVENT_CATEGORIES[0]?.name
-  );
+      EVENT_CATEGORIES[0]?.name ||
+      'Stage & Mandap Decoration';
+    return rawCat.includes('+') ? rawCat.split('+').map((s) => s.trim()).filter(Boolean) : [rawCat];
+  });
   const [title, setTitle] = useState(
     (initialData && typeof initialData !== 'string' && initialData.title) || ''
   );
@@ -248,14 +250,18 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
 
     if (initialData) {
       if (typeof initialData === 'string') {
-        setCategory(initialData);
+        const cats = initialData.includes('+') ? initialData.split('+').map((s) => s.trim()).filter(Boolean) : [initialData];
+        setSelectedCategories(cats);
         const isRealCategory = (_categories || []).some((c) => c.name.toLowerCase() === initialData.toLowerCase());
         if (!isRealCategory) {
           setTitle((prev) => prev || initialData);
         }
         setPackageSummary(null);
       } else {
-        if (initialData.category) setCategory(initialData.category);
+        if (initialData.category) {
+          const cats = initialData.category.includes('+') ? initialData.category.split('+').map((s) => s.trim()).filter(Boolean) : [initialData.category];
+          setSelectedCategories(cats);
+        }
         if (initialData.title) setTitle(initialData.title);
         if (initialData.description) setDescription(initialData.description);
         if (typeof initialData.budget === 'number' && initialData.budget > 0) setBudget(initialData.budget);
@@ -277,7 +283,8 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
         }
       }
     } else if (initialCategory) {
-      setCategory(initialCategory);
+      const cats = initialCategory.includes('+') ? initialCategory.split('+').map((s) => s.trim()).filter(Boolean) : [initialCategory];
+      setSelectedCategories(cats);
       const isRealCategory = (_categories || []).some((c) => c.name.toLowerCase() === initialCategory.toLowerCase());
       if (!isRealCategory) {
         setTitle((prev) => prev || initialCategory);
@@ -311,7 +318,8 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
         isActive: true,
       }));
 
-  const activeCategoryData = findCategory(mergedCategories, category) || mergedCategories[0] || {
+  const primaryCategoryName = selectedCategories[0] || mergedCategories[0]?.name || 'Stage & Mandap Decoration';
+  const activeCategoryData = findCategory(mergedCategories, primaryCategoryName) || mergedCategories[0] || {
     name: 'Event Services',
     image: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&auto=format&fit=crop&q=80',
     avgPriceRange: '₹10,000 - ₹50,000',
@@ -319,6 +327,15 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
   const numericBudget = typeof budget === 'number' ? budget : 0;
   const maxAcceptableBid = Math.floor(numericBudget * 0.85);
   const guaranteedMinSavings = numericBudget - maxAcceptableBid;
+
+  const combinedSampleEquipments = Array.from(
+    new Set(
+      selectedCategories.flatMap((catName) => {
+        const found = EVENT_CATEGORIES.find((c) => c.name.toLowerCase() === catName.toLowerCase());
+        return found?.sampleEquipments || [];
+      })
+    )
+  );
 
   const toggleEquipment = (eq: string) => {
     setSelectedEquipments((prev) =>
@@ -328,31 +345,48 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
 
   const handleClearPackage = () => {
     setPackageSummary(null);
-    const catData = EVENT_CATEGORIES.find((c) => c.name === category);
-    if (catData && catData.sampleEquipments && catData.sampleEquipments.length > 0) {
-      setSelectedEquipments(catData.sampleEquipments.slice(0, 2));
-    } else {
-      setSelectedEquipments([]);
-    }
-    setTitle(`${category.split('&')[0].trim()} for ${guestCount || 200} Guests in ${area}`);
+    setSelectedCategories([EVENT_CATEGORIES[0]?.name || 'Stage & Mandap Decoration']);
+    setSelectedEquipments([]);
+    setTitle(`Stage & Mandap Decoration for ${guestCount || 200} Guests in ${area}`);
     setDescription('');
     setBudget(25000);
   };
 
-  const handleSelectCategory = (catName: string) => {
-    setCategory(catName);
-    const catData = EVENT_CATEGORIES.find((c) => c.name === catName);
-    if (catData && catData.sampleEquipments && catData.sampleEquipments.length > 0) {
-      setSelectedEquipments(catData.sampleEquipments.slice(0, 2));
-    } else {
-      setSelectedEquipments([]);
-    }
-    if (packageSummary) {
-      setPackageSummary(null);
-      setDescription('');
-      setBudget(25000);
-    }
-    setTitle(`${catName.split('&')[0].trim()} for ${guestCount || 200} Guests in ${area}`);
+  const handleToggleCategory = (catName: string) => {
+    setSelectedCategories((prev) => {
+      const exists = prev.includes(catName);
+      let next: string[];
+      if (exists) {
+        if (prev.length === 1) return prev; // Keep at least one category selected
+        next = prev.filter((c) => c !== catName);
+      } else {
+        next = [...prev, catName];
+      }
+
+      // Auto update title based on selected categories
+      const shortNames = next.map((c) => c.split('&')[0].trim());
+      const titlePrefix = shortNames.length <= 2 ? shortNames.join(' + ') : `${shortNames[0]} + ${next.length - 1} more`;
+      setTitle(`${titlePrefix} for ${guestCount || 200} Guests in ${area}`);
+
+      // Suggest equipments from the chosen categories
+      const allSampleEquipments = Array.from(
+        new Set(
+          next.flatMap((cn) => {
+            const cData = EVENT_CATEGORIES.find((c) => c.name.toLowerCase() === cn.toLowerCase());
+            return cData?.sampleEquipments || [];
+          })
+        )
+      );
+      if (allSampleEquipments.length > 0) {
+        setSelectedEquipments(allSampleEquipments.slice(0, 3));
+      }
+
+      if (packageSummary) {
+        setPackageSummary(null);
+      }
+
+      return next;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -364,7 +398,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
     try {
       await onSubmit({
         requesterId,
-        category: activeCategoryData.name,
+        category: selectedCategories.join(' + '),
         title,
         description,
         imageUrl: customImageUrl || activeCategoryData.image,
@@ -479,23 +513,48 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
           
           {/* STEP 1: What service do you need? */}
           <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-7 shadow-xs space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3.5 flex-wrap gap-2">
               <div className="flex items-center gap-2.5">
                 <span className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center shadow-xs">
                   1
                 </span>
-                <h2 className="text-base sm:text-lg font-bold text-slate-900 font-heading">
-                  What service do you need?
-                </h2>
+                <div>
+                  <h2 className="text-base sm:text-lg font-bold text-slate-900 font-heading leading-tight">
+                    What service do you need?
+                  </h2>
+                  <p className="text-[11px] sm:text-xs text-slate-500 font-medium">
+                    You can select multiple services (e.g. Stage + Lighting + DJ) for a single combined booking
+                  </p>
+                </div>
               </div>
-              <span className="text-xs sm:text-sm font-bold text-orange-600 bg-orange-50 px-3 py-1 rounded-lg border border-orange-200">
-                {category}
-              </span>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {selectedCategories.map((catName) => (
+                  <span
+                    key={catName}
+                    className="text-xs font-bold text-orange-600 bg-orange-50 px-2.5 py-1 rounded-lg border border-orange-200 flex items-center gap-1.5 shadow-2xs"
+                  >
+                    <span>{catName}</span>
+                    {selectedCategories.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleCategory(catName);
+                        }}
+                        className="w-3.5 h-3.5 rounded-full hover:bg-orange-200 text-orange-700 flex items-center justify-center text-[10px] font-bold"
+                        title="Remove service"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </span>
+                ))}
+              </div>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3.5 lg:gap-4">
               {mergedCategories.map((cat) => {
-                const isSelected = activeCategoryData.name === cat.name;
+                const isSelected = selectedCategories.includes(cat.name);
                 const Icon = CATEGORY_ICONS[cat.name] || Tag;
                 const catImg = cat.image && cat.image.trim().length > 0
                   ? cat.image
@@ -505,10 +564,10 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                   <button
                     key={cat._id || cat.name}
                     type="button"
-                    onClick={() => handleSelectCategory(cat.name)}
-                    className={`p-2.5 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer group overflow-hidden ${
+                    onClick={() => handleToggleCategory(cat.name)}
+                    className={`p-2.5 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer group overflow-hidden relative ${
                       isSelected
-                        ? 'border-orange-500 bg-orange-50/80 ring-2 ring-orange-500/20 shadow-md shadow-orange-500/10 scale-[1.02]'
+                        ? 'border-orange-500 bg-orange-50/80 ring-2 ring-orange-500/30 shadow-md shadow-orange-500/10 scale-[1.02]'
                         : 'border-slate-200 bg-white hover:border-orange-300 hover:shadow-md hover:scale-[1.01]'
                     }`}
                   >
@@ -529,16 +588,18 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                       </div>
 
                       {isSelected && (
-                        <div className="absolute top-2 right-2 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-orange-500 flex items-center justify-center text-white shadow-md">
-                          <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 stroke-[3]" />
+                        <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-orange-500 ring-2 ring-white flex items-center justify-center text-white shadow-md">
+                          <Check className="w-3.5 h-3.5 stroke-[3]" />
                         </div>
                       )}
                     </div>
 
                     <div className="px-1 pb-1">
-                      <span className="text-xs sm:text-sm font-bold text-slate-900 block leading-tight truncate">
-                        {cat.name}
-                      </span>
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="text-xs sm:text-sm font-bold text-slate-900 block leading-tight truncate">
+                          {cat.name}
+                        </span>
+                      </div>
                       <span className="text-[11px] sm:text-xs font-semibold text-[#f95724] block mt-0.5 truncate">
                         Avg. {cat.avgPriceRange || '₹10,000 - ₹50,000'}
                       </span>
@@ -865,13 +926,13 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                 </div>
 
                 {/* Smart Equipment Tags */}
-                {(activeCategoryData as any).sampleEquipments && (activeCategoryData as any).sampleEquipments.length > 0 && (
+                {combinedSampleEquipments.length > 0 && (
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-2">
                       Select Equipment Needed (Optional)
                     </label>
                     <div className="flex flex-wrap gap-2">
-                      {(activeCategoryData as any).sampleEquipments.map((eq: string) => {
+                      {combinedSampleEquipments.map((eq: string) => {
                         const isSelected = selectedEquipments.includes(eq);
                         return (
                           <button
