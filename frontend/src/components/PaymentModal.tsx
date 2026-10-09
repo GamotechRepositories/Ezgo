@@ -8,7 +8,7 @@ interface PaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
   booking: Booking | null;
-  onPaySuccess: (bookingId: string, paymentMethod: string, transactionId?: string) => Promise<void>;
+  onPaySuccess: (bookingId: string, paymentMethod: string, transactionId?: string, verifiedBooking?: Booking) => Promise<void>;
   onCancelBooking?: (bookingId: string) => Promise<void>;
   onNavigateToBookings?: () => void;
 }
@@ -107,7 +107,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               return;
             }
             setTransactionId(response.razorpay_payment_id);
-            await onPaySuccess(booking._id, 'Razorpay Standard Checkout', response.razorpay_payment_id);
+            await onPaySuccess(booking._id, 'Razorpay Standard Checkout', response.razorpay_payment_id, verifyRes.data?.booking);
             setStep('success');
             setLoading(false);
           } catch (verifyErr: any) {

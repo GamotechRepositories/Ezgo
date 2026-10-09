@@ -53,7 +53,7 @@ const requirementSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['OPEN', 'ACCEPTED', 'ACTIVE', 'COMPLETED', 'CANCELLED'],
+      enum: ['DRAFT', 'OPEN', 'ACCEPTED', 'ACTIVE', 'COMPLETED', 'CANCELLED'],
       default: 'OPEN',
     },
     bidsCount: {

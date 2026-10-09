@@ -144,11 +144,14 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
                 {/* Title & Description */}
                 <div>
                   {req.imageUrl && (
-                    <div className="mb-3 h-32 w-full rounded-2xl overflow-hidden border border-slate-200/80 bg-slate-100">
+                    <div className="mb-3.5 w-full aspect-[16/9] max-h-52 rounded-2xl overflow-hidden border border-slate-200/80 bg-slate-100 shadow-2xs">
                       <img
                         src={req.imageUrl}
                         alt={req.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&auto=format&fit=crop&q=80';
+                        }}
                       />
                     </div>
                   )}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { AdminSidebar } from './components/AdminSidebar';
 import { AdminHeader } from './components/AdminHeader';
 import { PlatformMetricsView } from './components/PlatformMetricsView';
@@ -12,6 +12,16 @@ import type { ToastMessage } from './components/Toast';
 import { LoginPage } from './components/LoginPage';
 import { api, getToken, clearToken, emptyMetrics } from './services/api';
 import type { AdminMetrics, Booking, Category, Occasion, User } from './types';
+
+type AdminTab = 'metrics' | 'kyc' | 'escrow' | 'categories' | 'occasions' | 'logs';
+
+const tabFromUrl = (): AdminTab => {
+  const hash = window.location.hash.replace('#', '');
+  if (['kyc', 'escrow', 'categories', 'occasions', 'logs', 'metrics'].includes(hash)) {
+    return hash as AdminTab;
+  }
+  return 'metrics';
+};
 
 export default function App() {
   const [currentAdmin, setCurrentAdmin] = useState<User | null>(null);
@@ -44,7 +54,7 @@ export default function App() {
 }
 
 function AdminApp({ currentAdmin, onLogout }: { currentAdmin: User; onLogout: () => void }) {
-  const [activeTab, setActiveTab] = useState<'metrics' | 'kyc' | 'escrow' | 'categories' | 'occasions' | 'logs'>('metrics');
+  const [activeTab, setActiveTab] = useState<AdminTab>(tabFromUrl);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const [metrics, setMetrics] = useState<AdminMetrics>(emptyMetrics);
@@ -85,6 +95,40 @@ function AdminApp({ currentAdmin, onLogout }: { currentAdmin: User; onLogout: ()
   useEffect(() => {
     loadData();
   }, []);
+
+  const closeModals = useCallback(() => {
+    setIsSidebarOpen(false);
+  }, []);
+
+  // Handle Browser Back / Forward via popstate
+  useEffect(() => {
+    const onPopState = () => {
+      closeModals();
+      setActiveTab(tabFromUrl());
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [closeModals]);
+
+  // Handle Escape Key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        closeModals();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [closeModals]);
+
+  const handleTabChange = (tab: AdminTab) => {
+    closeModals();
+    if (tab !== tabFromUrl()) {
+      window.history.pushState(null, '', `#${tab}`);
+    }
+    setActiveTab(tab);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const handleToggleVerify = async (providerId: string, isVerified: boolean) => {
     try {
@@ -136,7 +180,7 @@ function AdminApp({ currentAdmin, onLogout }: { currentAdmin: User; onLogout: ()
 
   const handleIssueRefund = async (bookingId: string) => {
     const booking = bookings.find((b) => b._id === bookingId);
-    const wasPaid = booking?.status === 'ACTIVE';
+    const wasPaid = booking?.status === 'ACTIVE' || booking?.status === 'DISPUTED';
     const question = wasPaid
       ? `Cancel this booking and refund ₹${booking!.totalPaid.toLocaleString()} to the host?`
       : 'Cancel this booking? The host can then choose another vendor.';
@@ -215,7 +259,7 @@ function AdminApp({ currentAdmin, onLogout }: { currentAdmin: User; onLogout: ()
       <AdminSidebar
         admin={currentAdmin}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
         pendingKycCount={pendingKycCount}
         activeEscrowCount={activeEscrowCount}
         isOpen={isSidebarOpen}
@@ -230,7 +274,7 @@ function AdminApp({ currentAdmin, onLogout }: { currentAdmin: User; onLogout: ()
           onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
           pendingKycCount={pendingKycCount}
           activeEscrowCount={activeEscrowCount}
-          onTabChange={setActiveTab}
+          onTabChange={handleTabChange}
           onLogout={onLogout}
         />
 

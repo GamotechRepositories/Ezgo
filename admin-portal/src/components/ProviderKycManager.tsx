@@ -258,6 +258,58 @@ export const ProviderKycManager: React.FC<ProviderKycManagerProps> = ({
                   <Field label="UPI ID" value={selectedProvider.bankDetails?.upiId} />
                 </div>
               </section>
+
+              <section className="space-y-3">
+                <h4 className="text-base font-semibold text-slate-900">KYC Documents</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Field label="Aadhaar Number" value={selectedProvider.kycDocuments?.aadhaarNumber} />
+                  <Field label="PAN Card Number" value={selectedProvider.kycDocuments?.panNumber} />
+                  <Field label="GST Number" value={selectedProvider.kycDocuments?.gstNumber} />
+                  <Field label="Business Address" value={selectedProvider.kycDocuments?.businessAddress} />
+                </div>
+                {(selectedProvider.kycDocuments?.aadhaarFront ||
+                  selectedProvider.kycDocuments?.panCard ||
+                  selectedProvider.kycDocuments?.gstDoc) && (
+                  <div className="pt-2">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Uploaded Document Copies</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {selectedProvider.kycDocuments?.aadhaarFront && (
+                        <a
+                          href={selectedProvider.kycDocuments.aadhaarFront}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-orange-300 block text-center transition"
+                        >
+                          <span className="text-xs font-medium text-slate-700 block">Aadhaar Front</span>
+                          <span className="text-xs text-[#f95724] font-semibold mt-1 block">View File ↗</span>
+                        </a>
+                      )}
+                      {selectedProvider.kycDocuments?.panCard && (
+                        <a
+                          href={selectedProvider.kycDocuments.panCard}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-orange-300 block text-center transition"
+                        >
+                          <span className="text-xs font-medium text-slate-700 block">PAN Card</span>
+                          <span className="text-xs text-[#f95724] font-semibold mt-1 block">View File ↗</span>
+                        </a>
+                      )}
+                      {selectedProvider.kycDocuments?.gstDoc && (
+                        <a
+                          href={selectedProvider.kycDocuments.gstDoc}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-orange-300 block text-center transition"
+                        >
+                          <span className="text-xs font-medium text-slate-700 block">GST Certificate</span>
+                          <span className="text-xs text-[#f95724] font-semibold mt-1 block">View File ↗</span>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </section>
             </div>
 
             <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3">

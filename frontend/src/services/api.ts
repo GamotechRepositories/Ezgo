@@ -18,6 +18,16 @@ export interface DemoAccount {
   password: string;
 }
 
+export interface AppNotification {
+  _id: string;
+  title: string;
+  message: string;
+  type: string;
+  link?: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
 export const getToken = () => localStorage.getItem(TOKEN_KEY) || localStorage.getItem('ezgo_token_host') || '';
 export const setToken = (token: string) => localStorage.setItem(TOKEN_KEY, token);
 export const clearToken = () => localStorage.removeItem(TOKEN_KEY);
@@ -70,12 +80,36 @@ export const api = {
     return data.user;
   },
 
-  async register(input: { name: string; phone: string; password: string }): Promise<User> {
+  async register(input: { name: string; phone: string; password: string; email?: string }): Promise<User> {
     const data = await unwrap<{ token: string; user: User }>(
       request('/auth/register', jsonBody('POST', { ...input, role: 'requester' }), 'Could not create your account')
     );
     setToken(data.token);
     return data.user;
+  },
+
+  async sendOtp(phone: string, purpose = 'login'): Promise<{ phone: string; demoOtp?: string }> {
+    const res = await request<{ success: boolean; data: { phone: string; demoOtp?: string } }>(
+      '/auth/send-otp',
+      jsonBody('POST', { phone, purpose }),
+      'Could not send OTP'
+    );
+    return res.data;
+  },
+
+  async verifyOtpAndLogin(phone: string, otp: string): Promise<{ isNewUser: boolean; user?: User; phone: string }> {
+    const res = await request<{
+      success: boolean;
+      isNewUser: boolean;
+      phone: string;
+      data?: { token: string; user: User };
+    }>('/auth/verify-otp', jsonBody('POST', { phone, otp, role: 'requester' }), 'Invalid OTP code');
+
+    if (res.data?.token) {
+      setToken(res.data.token);
+      return { isNewUser: false, user: res.data.user, phone: res.phone };
+    }
+    return { isNewUser: true, phone: res.phone };
   },
 
   me(): Promise<User> {
@@ -94,12 +128,24 @@ export const api = {
     return unwrap(request('/occasions', {}, 'Could not load occasions'));
   },
 
-  getRequirements(params?: { category?: string; status?: string; requesterId?: string }): Promise<Requirement[]> {
+  getRequirements(params?: { category?: string; status?: string; requesterId?: string; includeDrafts?: string }): Promise<Requirement[]> {
     return unwrap(request(`/requirements${toQuery(params)}`, {}, 'Could not load your requests'));
   },
 
   createRequirement(data: Partial<Requirement>): Promise<Requirement> {
     return unwrap(request('/requirements', jsonBody('POST', data), 'Failed to post requirement'));
+  },
+
+  updateRequirement(id: string, data: Partial<Requirement>): Promise<Requirement> {
+    return unwrap(request(`/requirements/${id}`, jsonBody('PUT', data), 'Failed to update requirement'));
+  },
+
+  publishDraftRequirement(id: string): Promise<Requirement> {
+    return unwrap(request(`/requirements/${id}/publish`, jsonBody('PATCH', {}), 'Failed to publish draft'));
+  },
+
+  deleteRequirement(id: string): Promise<void> {
+    return unwrap(request(`/requirements/${id}`, { method: 'DELETE' }, 'Failed to delete requirement'));
   },
 
   placeBid(data: {
@@ -151,6 +197,10 @@ export const api = {
     return request('/bookings/cancel', jsonBody('POST', { bookingId, reason }), 'Failed to cancel booking');
   },
 
+  raiseDispute(bookingId: string, reason: string): Promise<{ message: string; data: Booking }> {
+    return request(`/bookings/${bookingId}/dispute`, jsonBody('POST', { reason }), 'Failed to raise dispute');
+  },
+
   completeBooking(bookingId: string): Promise<{ message: string; data: Booking }> {
     return request('/bookings/complete', jsonBody('POST', { bookingId }), 'Failed to complete booking');
   },
@@ -168,6 +218,17 @@ export const api = {
 
   getBookings(params?: { userId?: string; role?: string; status?: string }): Promise<Booking[]> {
     return unwrap(request(`/bookings${toQuery(params)}`, {}, 'Could not load your bookings'));
+  },
+
+  getNotifications(): Promise<{ notifications: AppNotification[]; unreadCount: number }> {
+    return request<{ success: boolean; data: AppNotification[]; unreadCount: number }>('/notifications').then((r) => ({
+      notifications: r.data || [],
+      unreadCount: r.unreadCount || 0,
+    }));
+  },
+
+  markNotificationRead(id: string): Promise<void> {
+    return request(`/notifications/${id}/read`, { method: 'PATCH' });
   },
 
   async uploadImage(file: File, folder = 'ezzygo/uploads'): Promise<string> {

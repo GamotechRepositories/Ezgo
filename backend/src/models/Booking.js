@@ -76,6 +76,19 @@ const bookingSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    disputeDetails: {
+      isDisputed: { type: Boolean, default: false },
+      reason: { type: String, default: '' },
+      raisedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      raisedAt: { type: Date, default: null },
+      resolutionAction: {
+        type: String,
+        enum: ['NONE', 'REFUND_HOST', 'PAYOUT_VENDOR', 'DISMISSED'],
+        default: 'NONE',
+      },
+      resolutionNote: { type: String, default: '' },
+      resolvedAt: { type: Date, default: null },
+    },
   },
   { timestamps: true }
 );

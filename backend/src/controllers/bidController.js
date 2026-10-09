@@ -1,6 +1,8 @@
 import Bid from '../models/Bid.js';
 import Requirement from '../models/Requirement.js';
 import User from '../models/User.js';
+import { notifyUser } from '../services/notificationService.js';
+import { broadcastBidPlaced, broadcastRequirementUpdated } from '../services/socketService.js';
 
 // Submit a bid by a provider
 export const placeBid = async (req, res, next) => {
@@ -56,6 +58,7 @@ export const placeBid = async (req, res, next) => {
 
     // Check if provider already bid on this requirement
     let bid = await Bid.findOne({ requirementId, providerId });
+    const isUpdate = Boolean(bid);
 
     if (bid) {
       // Update existing bid
@@ -90,6 +93,32 @@ export const placeBid = async (req, res, next) => {
       'providerId',
       'name businessName rating completedJobs isVerified avatar'
     );
+
+    // Broadcast live real-time bid update via Socket.io
+    broadcastBidPlaced({
+      requirementId: String(requirementId),
+      bid: populatedBid,
+      isUpdate,
+      lowestBid: lowest,
+      bidsCount: allBids.length,
+      requirement: {
+        _id: String(requirement._id),
+        lowestBid: lowest,
+        bidsCount: allBids.length,
+        status: requirement.status,
+      },
+    });
+
+    // Notify the host about the new / revised bid
+    const providerDisplayName = provider.businessName || provider.name;
+    await notifyUser({
+      userId: requirement.requesterId,
+      title: isUpdate ? 'Bid Updated 🏷️' : 'New Bid Received! 🎉',
+      message: `${providerDisplayName} submitted a bid of ₹${bidAmount.toLocaleString()} (${discountPercent}% below your budget) for "${requirement.title}".`,
+      type: 'BID_RECEIVED',
+      link: '/#requests',
+      metadata: { requirementId, bidId: bid._id, amount: bidAmount },
+    });
 
     res.status(201).json({
       success: true,

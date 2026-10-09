@@ -5,6 +5,7 @@ import User from '../models/User.js';
 import Transaction from '../models/Transaction.js';
 import Review from '../models/Review.js';
 import razorpayInstance from '../config/razorpay.js';
+import { notifyUser } from '../services/notificationService.js';
 
 const requesterOf = (booking) => (booking.requesterId?._id || booking.requesterId).toString();
 
@@ -96,6 +97,15 @@ export const acceptBid = async (req, res, next) => {
       .populate('requesterId', 'name phone')
       .populate('requirementId');
 
+    // Notify vendor that their bid was accepted
+    await notifyUser({
+      userId: bid.providerId._id,
+      title: 'Bid Accepted! 🎉',
+      message: `Your bid of ₹${bidAmount.toLocaleString()} for "${requirement.title}" was accepted! Awaiting host payment.`,
+      type: 'BID_ACCEPTED',
+      metadata: { bookingId: booking._id, requirementId },
+    });
+
     res.status(201).json({
       success: true,
       message: 'Bid accepted! Please proceed to payment to confirm the booking.',
@@ -128,6 +138,14 @@ export const processPayment = async (req, res, next) => {
     }
 
     assertHostOrAdmin(req, res, booking);
+
+    if (booking.status === 'ACTIVE') {
+      return res.json({
+        success: true,
+        message: 'Payment already confirmed and booking is active.',
+        data: booking,
+      });
+    }
 
     if (booking.status !== 'AWAITING_PAYMENT') {
       res.status(400);
@@ -166,6 +184,15 @@ export const processPayment = async (req, res, next) => {
       },
     });
 
+    // Notify vendor that payment is confirmed
+    await notifyUser({
+      userId: booking.providerId._id,
+      title: 'Payment Secured in Escrow 🛡️',
+      message: `Payment of ₹${booking.totalPaid.toLocaleString()} for "${booking.requirementId.title}" is confirmed and held in EzzyGo Escrow. Host contact is now unlocked!`,
+      type: 'PAYMENT_CONFIRMED',
+      metadata: { bookingId: booking._id },
+    });
+
     res.json({
       success: true,
       message: 'Payment confirmed! Funds are safely held in EzzyGo Escrow. Provider contact has been unlocked.',
@@ -193,9 +220,9 @@ export const completeBooking = async (req, res, next) => {
 
     assertHostOrAdmin(req, res, booking);
 
-    if (booking.status !== 'ACTIVE') {
+    if (booking.status !== 'ACTIVE' && booking.status !== 'DISPUTED') {
       res.status(400);
-      throw new Error('Only active bookings can be marked as completed');
+      throw new Error(`Only active bookings can be marked as completed (status: ${booking.status})`);
     }
 
     const payoutRef = 'POUT-' + Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -210,6 +237,10 @@ export const completeBooking = async (req, res, next) => {
       amountToProvider: booking.bidAmount, // 100% of bid amount to provider
       commissionRetained: booking.platformFee, // 10% platform fee retained by EzzyGo
     };
+    if (booking.disputeDetails?.isDisputed) {
+      booking.disputeDetails.resolutionAction = 'PAYOUT_VENDOR';
+      booking.disputeDetails.resolvedAt = new Date();
+    }
     await booking.save();
 
     // Update requirement status
@@ -249,6 +280,15 @@ export const completeBooking = async (req, res, next) => {
       },
     });
 
+    // Notify vendor that payout has been released
+    await notifyUser({
+      userId: booking.providerId._id,
+      title: 'Payout Released! 💰',
+      message: `Full payout of ₹${booking.bidAmount.toLocaleString()} has been released to your account for "${booking.requirementId.title}".`,
+      type: 'PAYOUT_RELEASED',
+      metadata: { bookingId: booking._id, payoutRef },
+    });
+
     res.json({
       success: true,
       message: `Job marked complete! ₹${booking.bidAmount.toLocaleString()} has been released to ${booking.providerId.businessName || booking.providerId.name}. EzzyGo retained ₹${booking.platformFee.toLocaleString()} commission.`,
@@ -264,7 +304,7 @@ export const cancelBooking = async (req, res, next) => {
   try {
     const { bookingId, reason } = req.body;
 
-    const booking = await Booking.findById(bookingId);
+    const booking = await Booking.findById(bookingId).populate('providerId').populate('requirementId');
     if (!booking) {
       res.status(404);
       throw new Error('Booking not found');
@@ -272,12 +312,12 @@ export const cancelBooking = async (req, res, next) => {
 
     assertHostOrAdmin(req, res, booking);
 
-    if (booking.status !== 'AWAITING_PAYMENT' && booking.status !== 'ACTIVE') {
+    if (booking.status !== 'AWAITING_PAYMENT' && booking.status !== 'ACTIVE' && booking.status !== 'DISPUTED') {
       res.status(400);
       throw new Error(`Cannot cancel booking with status: ${booking.status}`);
     }
 
-    const wasPaid = booking.status === 'ACTIVE';
+    const wasPaid = booking.status === 'ACTIVE' || booking.status === 'DISPUTED';
     let refundRef = '';
 
     if (wasPaid) {
@@ -308,6 +348,11 @@ export const cancelBooking = async (req, res, next) => {
 
     booking.status = 'CANCELLED';
     booking.disputeReason = reason || 'Payment cancelled by user / Acceptance revoked';
+    if (booking.disputeDetails?.isDisputed) {
+      booking.disputeDetails.resolutionAction = 'REFUND_HOST';
+      booking.disputeDetails.resolvedAt = new Date();
+      booking.disputeDetails.resolutionNote = reason || 'Refund issued on cancellation';
+    }
     await booking.save();
 
     if (wasPaid) {
@@ -325,12 +370,32 @@ export const cancelBooking = async (req, res, next) => {
 
     // Restore requirement status to OPEN so other providers can bid or host can choose another bid
     if (booking.requirementId) {
-      await Requirement.findByIdAndUpdate(booking.requirementId, { status: 'OPEN' });
+      const reqId = booking.requirementId._id || booking.requirementId;
+      await Requirement.findByIdAndUpdate(reqId, { status: 'OPEN' });
       // Reset rejected bids back to PENDING
       await Bid.updateMany(
-        { requirementId: booking.requirementId, status: { $in: ['ACCEPTED', 'REJECTED'] } },
+        { requirementId: reqId, status: { $in: ['ACCEPTED', 'REJECTED'] } },
         { status: 'PENDING' }
       );
+    }
+
+    // Notify both host and vendor
+    await notifyUser({
+      userId: booking.requesterId,
+      title: wasPaid ? 'Booking Cancelled & Refunded 💳' : 'Booking Cancelled',
+      message: wasPaid
+        ? `Booking cancelled. ₹${booking.totalPaid.toLocaleString()} has been refunded to your source account.`
+        : 'Your booking has been cancelled and request reopened.',
+      type: 'BOOKING_CANCELLED',
+    });
+
+    if (booking.providerId) {
+      await notifyUser({
+        userId: booking.providerId._id || booking.providerId,
+        title: 'Booking Cancelled',
+        message: `Booking for "${booking.requirementId?.title || 'event'}" has been cancelled.`,
+        type: 'BOOKING_CANCELLED',
+      });
     }
 
     res.json({
@@ -345,9 +410,109 @@ export const cancelBooking = async (req, res, next) => {
   }
 };
 
+// Raise a dispute on an active booking
+export const raiseDispute = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+
+    if (!reason || !String(reason).trim()) {
+      res.status(400);
+      throw new Error('Please enter a dispute reason.');
+    }
+
+    const booking = await Booking.findById(id).populate('providerId').populate('requesterId').populate('requirementId');
+    if (!booking) {
+      res.status(404);
+      throw new Error('Booking not found');
+    }
+
+    const userId = req.user._id.toString();
+    const isHost = booking.requesterId._id.toString() === userId;
+    const isVendor = booking.providerId._id.toString() === userId;
+    if (!isHost && !isVendor && req.user.role !== 'admin') {
+      res.status(403);
+      throw new Error('You can only raise disputes on your own bookings.');
+    }
+
+    if (booking.status !== 'ACTIVE') {
+      res.status(400);
+      throw new Error(`Disputes can only be raised on active paid bookings (Current: ${booking.status})`);
+    }
+
+    booking.status = 'DISPUTED';
+    booking.disputeReason = String(reason).trim();
+    booking.disputeDetails = {
+      isDisputed: true,
+      reason: String(reason).trim(),
+      raisedBy: req.user._id,
+      raisedAt: new Date(),
+      resolutionAction: 'NONE',
+      resolutionNote: '',
+      resolvedAt: null,
+    };
+    await booking.save();
+
+    // Notify other party and admin
+    const otherUser = isHost ? booking.providerId : booking.requesterId;
+    await notifyUser({
+      userId: otherUser._id,
+      title: 'Dispute Raised ⚠️',
+      message: `A dispute has been raised regarding "${booking.requirementId?.title}". EzzyGo Support is reviewing it. Reason: ${reason}`,
+      type: 'DISPUTE_RAISED',
+      metadata: { bookingId: booking._id },
+    });
+
+    res.json({
+      success: true,
+      message: 'Dispute submitted. EzzyGo support team will review and mediate the payment.',
+      data: booking,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Admin resolves dispute
+export const resolveDispute = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { action, note } = req.body;
+
+    if (!['PAYOUT_VENDOR', 'REFUND_HOST', 'DISMISS'].includes(action)) {
+      res.status(400);
+      throw new Error('Invalid resolution action. Must be PAYOUT_VENDOR, REFUND_HOST, or DISMISS');
+    }
+
+    const booking = await Booking.findById(id);
+    if (!booking) {
+      res.status(404);
+      throw new Error('Booking not found');
+    }
+
+    if (action === 'PAYOUT_VENDOR') {
+      req.body.bookingId = id;
+      return await completeBooking(req, res, next);
+    } else if (action === 'REFUND_HOST') {
+      req.body.bookingId = id;
+      req.body.reason = note || 'Admin resolved dispute with refund to host';
+      return await cancelBooking(req, res, next);
+    } else {
+      booking.status = 'ACTIVE';
+      booking.disputeDetails.isDisputed = false;
+      booking.disputeDetails.resolutionAction = 'DISMISSED';
+      booking.disputeDetails.resolutionNote = note || 'Dispute dismissed by admin';
+      booking.disputeDetails.resolvedAt = new Date();
+      await booking.save();
+      return res.json({ success: true, message: 'Dispute dismissed. Booking remains active.', data: booking });
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Get bookings (filtered by user or role)
 export const getBookings = async (req, res, next) => {
-
   try {
     const { userId, role, status } = req.query;
     const filter = {};
@@ -364,8 +529,8 @@ export const getBookings = async (req, res, next) => {
 
     const bookings = await Booking.find(filter)
       .sort({ createdAt: -1 })
-      .populate('providerId', 'name businessName phone rating reviewCount completedJobs isVerified avatar bankDetails')
-      .populate('requesterId', 'name phone')
+      .populate('providerId', 'name businessName phone rating reviewCount completedJobs isVerified avatar bankDetails kycDocuments')
+      .populate('requesterId', 'name phone email')
       .populate('requirementId');
 
     const myReviews = await Review.find({
@@ -442,6 +607,14 @@ export const addReview = async (req, res, next) => {
         reviewCount: allReviews.length,
       });
     }
+
+    // Notify recipient of new review
+    await notifyUser({
+      userId: toUserId,
+      title: 'New Review Received! ⭐',
+      message: `You received a ${rating}-star review${comment ? `: "${comment}"` : '.'}`,
+      type: 'SYSTEM',
+    });
 
     res.status(201).json({ success: true, data: review });
   } catch (error) {

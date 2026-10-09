@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ezzygo-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - NODE_ENV=production
+      - MONGODB_URI=${MONGODB_URI}
+      - JWT_SECRET=${JWT_SECRET}
+      - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID}
+      - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ezzygo-host-portal
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+  vendor-portal:
+    build:
+      context: ./vendor-portal
+      dockerfile: Dockerfile
+    container_name: ezzygo-vendor-portal
+    restart: unless-stopped
+    ports:
+      - "3001:80"
+    depends_on:
+      - backend
+
+  admin-portal:
+    build:
+      context: ./admin-portal
+      dockerfile: Dockerfile
+    container_name: ezzygo-admin-portal
+    restart: unless-stopped
+    ports:
+      - "3002:80"
+    depends_on:
+      - backend

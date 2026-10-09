@@ -70,6 +70,18 @@ const userSchema = new mongoose.Schema(
       upiId: { type: String, default: '' },
       isKycCompleted: { type: Boolean, default: false },
     },
+    kycDocuments: {
+      aadhaarNumber: { type: String, default: '' },
+      aadhaarFront: { type: String, default: '' },
+      aadhaarBack: { type: String, default: '' },
+      panNumber: { type: String, default: '' },
+      panCard: { type: String, default: '' },
+      gstNumber: { type: String, default: '' },
+      gstDoc: { type: String, default: '' },
+      businessAddress: { type: String, default: '' },
+      submittedAt: { type: Date, default: null },
+      rejectionReason: { type: String, default: '' },
+    },
     avatar: {
       type: String,
       default: '',

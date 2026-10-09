@@ -18,6 +18,18 @@ export interface User {
     upiId: string;
     isKycCompleted: boolean;
   };
+  kycDocuments?: {
+    aadhaarNumber?: string;
+    aadhaarFront?: string;
+    aadhaarBack?: string;
+    panNumber?: string;
+    panCard?: string;
+    gstNumber?: string;
+    gstDoc?: string;
+    businessAddress?: string;
+    submittedAt?: string;
+    rejectionReason?: string;
+  };
   avatar?: string;
 }
 

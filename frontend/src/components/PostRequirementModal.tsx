@@ -10,7 +10,6 @@ import {
   Users,
   Check,
   ArrowRight,
-  ArrowLeft,
   Lock,
   Building2,
   Music,
@@ -25,7 +24,7 @@ import {
   Image as ImageIcon,
   Loader2,
 } from 'lucide-react';
-import type { Category, Requirement } from '../types';
+import type { Category, Requirement, PostRequirementInitialData } from '../types';
 import { EVENT_CATEGORIES } from '../data/eventData';
 import { api } from '../services/api';
 
@@ -35,8 +34,15 @@ interface PostRequirementModalProps {
   categories: Category[];
   onSubmit: (data: Partial<Requirement>) => Promise<void>;
   requesterId: string;
+  initialData?: string | PostRequirementInitialData;
   initialCategory?: string;
+  initialCity?: string;
 }
+
+const normalizeCity = (c?: string) => {
+  if (!c) return 'Pune';
+  return c.split(',')[0].trim();
+};
 
 const CATEGORY_ICONS: Record<string, any> = {
   'DJ & Sound Setup': Music,
@@ -49,13 +55,102 @@ const CATEGORY_ICONS: Record<string, any> = {
   'Tent, Shamiana & VIP Stage Seating': Tent,
 };
 
+const ALL_INDIA_CITIES = [
+  'Pune',
+  'Mumbai',
+  'Delhi NCR',
+  'Bangalore',
+  'Hyderabad',
+  'Nagpur',
+  'Nashik',
+  'Ahmedabad',
+  'Jaipur',
+  'Goa',
+  'Kolkata',
+  'Chennai',
+  'Surat',
+  'Lucknow',
+  'Indore',
+  'Thane',
+  'Bhopal',
+  'Visakhapatnam',
+  'Pimpri-Chinchwad',
+  'Patna',
+  'Vadodara',
+  'Ghaziabad',
+  'Ludhiana',
+  'Agra',
+  'Faridabad',
+  'Meerut',
+  'Rajkot',
+  'Varanasi',
+  'Srinagar',
+  'Aurangabad (Chhatrapati Sambhaji Nagar)',
+  'Dhanbad',
+  'Amritsar',
+  'Navi Mumbai',
+  'Allahabad (Prayagraj)',
+  'Ranchi',
+  'Howrah',
+  'Coimbatore',
+  'Jabalpur',
+  'Gwalior',
+  'Vijayawada',
+  'Jodhpur',
+  'Madurai',
+  'Raipur',
+  'Kota',
+  'Chandigarh',
+  'Guwahati',
+  'Solapur',
+  'Hubli-Dharwad',
+  'Mysore',
+  'Gurgaon (Gurugram)',
+  'Noida',
+  'Kolhapur',
+  'Udaipur',
+  'Dehradun',
+  'Kochi (Cochin)',
+  'Mangalore',
+  'Satara',
+  'Sangli',
+  'Ahmednagar',
+  'Jalgaon',
+  'Amravati',
+  'Nanded',
+];
+
+const POPULAR_CITY_SHORTCUTS = [
+  'Pune',
+  'Mumbai',
+  'Delhi NCR',
+  'Bangalore',
+  'Hyderabad',
+  'Nagpur',
+  'Nashik',
+  'Ahmedabad',
+  'Jaipur',
+  'Goa',
+  'Kolkata',
+  'Chennai',
+];
+
 const POPULAR_AREAS_BY_CITY: Record<string, string[]> = {
-  Hyderabad: ['Gachibowli', 'Madhapur / Hitec City', 'Banjara Hills', 'Jubilee Hills', 'Kukatpally', 'Kondapur', 'Shamshabad'],
-  Bangalore: ['Indiranagar', 'Koramangala', 'Whitefield', 'HSR Layout', 'JP Nagar', 'Electronic City', 'Yelahanka'],
-  Mumbai: ['Bandra West', 'Andheri East', 'Juhu', 'Powai', 'Thane West', 'Navi Mumbai', 'Worli'],
-  Pune: ['Koregaon Park', 'Baner', 'Wakad', 'Kothrud', 'Viman Nagar', 'Hadapsar', 'Hinjewadi'],
+  Pune: ['Wakad', 'Baner', 'Koregaon Park', 'Kothrud', 'Hinjewadi', 'Viman Nagar', 'Hadapsar', 'Aundh', 'Pimple Saudagar', 'Kalyani Nagar'],
+  Mumbai: ['Bandra', 'Andheri', 'Juhu', 'Powai', 'Dadar', 'Borivali', 'Thane', 'Navi Mumbai', 'Worli', 'Goregaon'],
+  'Delhi NCR': ['Connaught Place', 'South Extension', 'Hauz Khas', 'Dwarka', 'Noida Sector 18', 'Cyber City Gurgaon', 'Rohini', 'Saket'],
+  Bangalore: ['Indiranagar', 'Koramangala', 'Whitefield', 'HSR Layout', 'JP Nagar', 'Electronic City', 'MG Road', 'Hebbal'],
+  Hyderabad: ['Gachibowli', 'Madhapur / Hitec City', 'Banjara Hills', 'Jubilee Hills', 'Kukatpally', 'Kondapur', 'Secunderabad'],
+  Nagpur: ['Dharampeth', 'Civil Lines', 'Ramdaspeth', 'Manish Nagar', 'Wardha Road', 'Sitabuldi'],
+  Nashik: ['College Road', 'Gangapur Road', 'Indira Nagar', 'Panchavati', 'Mahatma Nagar'],
+  Ahmedabad: ['SG Highway', 'Prahlad Nagar', 'Bodakdev', 'Satellite', 'Vastrapur', 'Maninagar'],
+  Jaipur: ['C-Scheme', 'Malviya Nagar', 'Vaishali Nagar', 'Mansarovar', 'Tonk Road', 'Raja Park'],
+  Goa: ['Panaji', 'Calangute', 'Candolim', 'Margao', 'Porvorim', 'Vasco'],
+  Kolkata: ['Park Street', 'Salt Lake', 'New Town', 'Ballygunge', 'Alipore'],
+  Chennai: ['T. Nagar', 'Adyar', 'Anna Nagar', 'Velachery', 'OMR', 'Nungambakkam'],
+  Kolhapur: ['Tarabai Park', 'Rajarampuri', 'Shahupuri', 'Nagala Park'],
+  'Aurangabad (Chhatrapati Sambhaji Nagar)': ['CIDCO', 'Samarth Nagar', 'Garkheda', 'Cannaught Place'],
   Secunderabad: ['Sainikpuri', 'Trimulgherry', 'Marredpally', 'Begumpet', 'Alwal'],
-  Chennai: ['T. Nagar', 'Adyar', 'Anna Nagar', 'Velachery', 'OMR / ECR', 'Nungambakkam'],
 };
 
 const findCategory = <T extends { name: string }>(list: T[], name?: string): T | undefined => {
@@ -86,24 +181,50 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
   categories: _categories,
   onSubmit,
   requesterId,
+  initialData,
   initialCategory,
+  initialCity,
 }) => {
-  const [category, setCategory] = useState(initialCategory || EVENT_CATEGORIES[0]?.name);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [city, setCity] = useState('Hyderabad');
-  const [area, setArea] = useState('Gachibowli');
+  const initialCleanCity = normalizeCity(
+    (initialData && typeof initialData !== 'string' && initialData.city) || initialCity
+  );
+  const [category, setCategory] = useState(
+    (initialData && (typeof initialData === 'string' ? initialData : initialData.category)) ||
+      initialCategory ||
+      EVENT_CATEGORIES[0]?.name
+  );
+  const [title, setTitle] = useState(
+    (initialData && typeof initialData !== 'string' && initialData.title) || ''
+  );
+  const [description, setDescription] = useState(
+    (initialData && typeof initialData !== 'string' && initialData.description) || ''
+  );
+  const [city, setCity] = useState(initialCleanCity);
+  const [area, setArea] = useState(POPULAR_AREAS_BY_CITY[initialCleanCity]?.[0] || 'Main Area');
   const [venueAddress, setVenueAddress] = useState('');
   const [eventDate, setEventDate] = useState(twoWeeksFromNowIso);
   const [startTime, setStartTime] = useState('18:00');
   const [endTime, setEndTime] = useState('23:00');
-  const [guestCount, setGuestCount] = useState<number>(200);
-  const [budget, setBudget] = useState<number>(25000);
-  const [selectedEquipments, setSelectedEquipments] = useState<string[]>([]);
+  const [guestCount, setGuestCount] = useState<number | ''>(
+    (initialData && typeof initialData !== 'string' && typeof initialData.guestCount === 'number')
+      ? initialData.guestCount
+      : 200
+  );
+  const [budget, setBudget] = useState<number | ''>(
+    (initialData && typeof initialData !== 'string' && typeof initialData.budget === 'number')
+      ? initialData.budget
+      : 25000
+  );
+  const [selectedEquipments, setSelectedEquipments] = useState<string[]>(
+    (initialData && typeof initialData !== 'string' && initialData.selectedEquipments)
+      ? initialData.selectedEquipments
+      : []
+  );
   const [customImageUrl, setCustomImageUrl] = useState<string>('');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [packageSummary, setPackageSummary] = useState<PostRequirementInitialData['packageSummary'] | null>(null);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -121,15 +242,59 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
     }
   };
 
-  // Sync initial category if changed
+  // Sync initial data, package builder, category and city when opened or changed
   useEffect(() => {
-    if (!initialCategory) return;
-    setCategory(initialCategory);
-    const isRealCategory = (_categories || []).some((c) => c.name.toLowerCase() === initialCategory.toLowerCase());
-    if (!isRealCategory) {
-      setTitle((prev) => prev || initialCategory);
+    if (!isOpen) return;
+
+    if (initialData) {
+      if (typeof initialData === 'string') {
+        setCategory(initialData);
+        const isRealCategory = (_categories || []).some((c) => c.name.toLowerCase() === initialData.toLowerCase());
+        if (!isRealCategory) {
+          setTitle((prev) => prev || initialData);
+        }
+        setPackageSummary(null);
+      } else {
+        if (initialData.category) setCategory(initialData.category);
+        if (initialData.title) setTitle(initialData.title);
+        if (initialData.description) setDescription(initialData.description);
+        if (typeof initialData.budget === 'number' && initialData.budget > 0) setBudget(initialData.budget);
+        if (typeof initialData.guestCount === 'number' && initialData.guestCount > 0) setGuestCount(initialData.guestCount);
+        if (initialData.selectedEquipments && initialData.selectedEquipments.length > 0) {
+          setSelectedEquipments(initialData.selectedEquipments);
+        }
+        if (initialData.city) {
+          const cleanCity = normalizeCity(initialData.city);
+          setCity(cleanCity);
+          if (POPULAR_AREAS_BY_CITY[cleanCity]?.[0]) {
+            setArea(POPULAR_AREAS_BY_CITY[cleanCity][0]);
+          }
+        }
+        if (initialData.packageSummary) {
+          setPackageSummary(initialData.packageSummary);
+        } else {
+          setPackageSummary(null);
+        }
+      }
+    } else if (initialCategory) {
+      setCategory(initialCategory);
+      const isRealCategory = (_categories || []).some((c) => c.name.toLowerCase() === initialCategory.toLowerCase());
+      if (!isRealCategory) {
+        setTitle((prev) => prev || initialCategory);
+      }
+      setPackageSummary(null);
+    } else {
+      setPackageSummary(null);
     }
-  }, [initialCategory, _categories]);
+
+    if (initialCity && (!initialData || typeof initialData === 'string' || !initialData.city)) {
+      const cleanCity = normalizeCity(initialCity);
+      setCity(cleanCity);
+      if (POPULAR_AREAS_BY_CITY[cleanCity]?.[0]) {
+        setArea(POPULAR_AREAS_BY_CITY[cleanCity][0]);
+      }
+    }
+  }, [initialData, initialCategory, initialCity, isOpen, _categories]);
 
   if (!isOpen) return null;
 
@@ -151,13 +316,27 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
     image: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&auto=format&fit=crop&q=80',
     avgPriceRange: '₹10,000 - ₹50,000',
   };
-  const maxAcceptableBid = Math.floor(budget * 0.85);
-  const guaranteedMinSavings = budget - maxAcceptableBid;
+  const numericBudget = typeof budget === 'number' ? budget : 0;
+  const maxAcceptableBid = Math.floor(numericBudget * 0.85);
+  const guaranteedMinSavings = numericBudget - maxAcceptableBid;
 
   const toggleEquipment = (eq: string) => {
     setSelectedEquipments((prev) =>
       prev.includes(eq) ? prev.filter((item) => item !== eq) : [...prev, eq]
     );
+  };
+
+  const handleClearPackage = () => {
+    setPackageSummary(null);
+    const catData = EVENT_CATEGORIES.find((c) => c.name === category);
+    if (catData && catData.sampleEquipments && catData.sampleEquipments.length > 0) {
+      setSelectedEquipments(catData.sampleEquipments.slice(0, 2));
+    } else {
+      setSelectedEquipments([]);
+    }
+    setTitle(`${category.split('&')[0].trim()} for ${guestCount || 200} Guests in ${area}`);
+    setDescription('');
+    setBudget(25000);
   };
 
   const handleSelectCategory = (catName: string) => {
@@ -168,14 +347,19 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
     } else {
       setSelectedEquipments([]);
     }
-    if (!title || title.includes('Guests in') || title.includes('for ')) {
-      setTitle(`${catName.split('&')[0].trim()} for ${guestCount} Guests in ${area}`);
+    if (packageSummary) {
+      setPackageSummary(null);
+      setDescription('');
+      setBudget(25000);
     }
+    setTitle(`${catName.split('&')[0].trim()} for ${guestCount || 200} Guests in ${area}`);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !budget || !eventDate || !area) return;
+    const finalBudget = typeof budget === 'number' ? budget : 0;
+    const finalGuestCount = typeof guestCount === 'number' ? guestCount : 50;
+    if (!title || finalBudget <= 0 || !eventDate || !area) return;
     setLoading(true);
     try {
       await onSubmit({
@@ -188,8 +372,8 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
         location: { city, area, venueAddress },
         eventDate,
         timeWindow: { start: startTime, end: endTime },
-        guestCount,
-        budget,
+        guestCount: finalGuestCount,
+        budget: finalBudget,
       });
       onClose();
     } catch (_) {
@@ -206,17 +390,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 sm:px-8 lg:px-12 py-3.5 shadow-xs">
         <div className="w-full max-w-[1440px] mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition cursor-pointer border border-slate-200"
-            >
-              <ArrowLeft className="w-4 h-4 text-slate-600" />
-              <span>Back to Home</span>
-            </button>
-            
-            <div className="h-4 w-px bg-slate-200 hidden sm:block"></div>
-            <span className="text-xs font-semibold text-slate-500 hidden sm:inline">
+            <span className="text-sm font-bold text-slate-800">
               Post Event Requirement
             </span>
           </div>
@@ -259,6 +433,49 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+
+          {/* Pre-loaded from Package Builder Alert Banner */}
+          {packageSummary && (
+            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/10 to-orange-500/5 border border-orange-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in">
+              <div className="flex items-start sm:items-center gap-3.5">
+                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#f95724] to-[#ea4a17] text-white flex items-center justify-center font-bold text-xl shadow-sm shrink-0">
+                  ✨
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm sm:text-base font-black text-slate-900">
+                      {packageSummary.eventType} Custom Package Loaded
+                    </span>
+                    <span className="text-[11px] font-black uppercase tracking-wider bg-[#f95724] text-white px-2.5 py-0.5 rounded-full shadow-xs">
+                      {packageSummary.servicesCount} Services Selected
+                    </span>
+                  </div>
+                  <p className="text-xs font-semibold text-slate-600 mt-1">
+                    Included: <span className="text-slate-800 font-bold">{packageSummary.serviceNames.join(', ')}</span>
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3 sm:gap-4 shrink-0 border-t sm:border-t-0 sm:border-l border-orange-200/60 pt-2 sm:pt-0 sm:pl-4 justify-between sm:justify-end">
+                <div>
+                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Standard Rate</span>
+                  <span className="text-xs text-slate-400 line-through font-mono font-bold">₹{packageSummary.retailTotal.toLocaleString()}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider block">Target Reverse-Bid</span>
+                  <span className="text-base font-black text-[#f95724] font-mono">₹{packageSummary.targetBid.toLocaleString()}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleClearPackage}
+                  className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:border-red-300 hover:bg-red-50 text-slate-600 hover:text-red-700 text-xs font-bold transition cursor-pointer shrink-0 ml-2 shadow-2xs"
+                  title="Switch back to single service"
+                >
+                  Clear Package ✕
+                </button>
+              </div>
+            </div>
+          )}
           
           {/* STEP 1: What service do you need? */}
           <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-7 shadow-xs space-y-4">
@@ -332,49 +549,59 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
             </div>
           </div>
 
-          {/* STEP 2: Location & Venue */}
+          {/* STEP 2: Event Location (All India Enabled) */}
           <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-7 shadow-xs space-y-4">
-            <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3.5">
-              <span className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center shadow-xs">
-                2
-              </span>
-              <h2 className="text-base sm:text-lg font-bold text-slate-900 font-heading">
-                Where will the event take place?
-              </h2>
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
+              <div className="flex items-center gap-2.5">
+                <span className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center shadow-xs">
+                  2
+                </span>
+                <div>
+                  <h2 className="text-base sm:text-lg font-bold text-slate-900 font-heading">
+                    Where will the event take place?
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Available across all cities, districts & towns in India 🇮🇳
+                  </p>
+                </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-5">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
                   <MapPin className="w-3.5 h-3.5 text-orange-500" />
-                  <span>City *</span>
+                  <span>City / Town / District *</span>
                 </label>
-                <select
+                <input
+                  type="text"
+                  list="all-india-cities-list"
+                  placeholder="e.g. Pune, Mumbai, Delhi NCR, Nagpur, Goa..."
                   value={city}
                   onChange={(e) => {
                     const newCity = e.target.value;
                     setCity(newCity);
-                    const defaultArea = POPULAR_AREAS_BY_CITY[newCity]?.[0] || 'Central Area';
-                    setArea(defaultArea);
+                    if (POPULAR_AREAS_BY_CITY[newCity]?.[0]) {
+                      setArea(POPULAR_AREAS_BY_CITY[newCity][0]);
+                    }
                   }}
+                  required
                   className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs sm:text-sm font-bold focus:outline-none focus:border-orange-500 focus:bg-white transition"
-                >
-                  <option value="Hyderabad">Hyderabad</option>
-                  <option value="Bangalore">Bangalore</option>
-                  <option value="Secunderabad">Secunderabad</option>
-                  <option value="Mumbai">Mumbai</option>
-                  <option value="Pune">Pune</option>
-                  <option value="Chennai">Chennai</option>
-                </select>
+                />
+                <datalist id="all-india-cities-list">
+                  {ALL_INDIA_CITIES.map((c) => (
+                    <option key={c} value={c} />
+                  ))}
+                </datalist>
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Area / Locality *
+                  Area / Locality / PIN Code *
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Gachibowli, Hitec City, Baner"
+                  placeholder="e.g. Wakad, Baner, PIN 411057..."
                   value={area}
                   onChange={(e) => setArea(e.target.value)}
                   required
@@ -391,11 +618,11 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
                   <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Venue Name (Optional)</span>
+                  <span>Venue Name / Address (Optional)</span>
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Fort Grand Convention / Home"
+                  placeholder="e.g. Hotel Sayaji, Grand Ballroom, Lawn, Home"
                   value={venueAddress}
                   onChange={(e) => setVenueAddress(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs sm:text-sm font-medium focus:outline-none focus:border-orange-500 focus:bg-white transition"
@@ -403,21 +630,51 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
               </div>
             </div>
 
-            {/* Popular Localities Shortcuts */}
-            <div className="flex items-center gap-2 flex-wrap text-xs pt-1">
-              <span className="text-slate-400 text-xs font-medium">Quick Pick in {city}:</span>
-              {(POPULAR_AREAS_BY_CITY[city] || []).slice(0, 7).map((popArea) => (
-                <button
-                  key={popArea}
-                  type="button"
-                  onClick={() => setArea(popArea)}
-                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                    area === popArea ? 'bg-orange-100 text-orange-900 font-bold border border-orange-300 shadow-2xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
-                >
-                  {popArea}
-                </button>
-              ))}
+            {/* Popular City Shortcuts */}
+            <div className="pt-1 space-y-2">
+              <div className="flex items-center gap-1.5 flex-wrap text-xs">
+                <span className="text-slate-400 text-xs font-medium">Quick Select:</span>
+                {POPULAR_CITY_SHORTCUTS.map((popCity) => (
+                  <button
+                    key={popCity}
+                    type="button"
+                    onClick={() => {
+                      setCity(popCity);
+                      if (POPULAR_AREAS_BY_CITY[popCity]?.[0]) {
+                        setArea(POPULAR_AREAS_BY_CITY[popCity][0]);
+                      }
+                    }}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                      city === popCity
+                        ? 'bg-orange-600 text-white font-bold shadow-xs'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {popCity}
+                  </button>
+                ))}
+              </div>
+
+              {/* Localities Shortcuts for selected city */}
+              {POPULAR_AREAS_BY_CITY[city] && POPULAR_AREAS_BY_CITY[city].length > 0 && (
+                <div className="flex items-center gap-1.5 flex-wrap text-xs pt-1 border-t border-slate-100">
+                  <span className="text-slate-400 text-xs font-medium">Popular in {city}:</span>
+                  {POPULAR_AREAS_BY_CITY[city].slice(0, 8).map((popArea) => (
+                    <button
+                      key={popArea}
+                      type="button"
+                      onClick={() => setArea(popArea)}
+                      className={`px-2.5 py-0.5 rounded-md text-[11px] font-medium transition cursor-pointer ${
+                        area === popArea
+                          ? 'bg-orange-100 text-orange-900 font-bold border border-orange-300'
+                          : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
+                      }`}
+                    >
+                      {popArea}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -483,7 +740,17 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                   min="10"
                   step="10"
                   value={guestCount}
-                  onChange={(e) => setGuestCount(Number(e.target.value))}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '') {
+                      setGuestCount('');
+                    } else {
+                      const parsed = parseInt(val, 10);
+                      setGuestCount(isNaN(parsed) ? '' : parsed);
+                    }
+                  }}
+                  onWheel={(e) => e.currentTarget.blur()}
+                  placeholder="e.g. 200"
                   className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs sm:text-sm font-bold focus:outline-none focus:border-orange-500 focus:bg-white transition"
                 />
               </div>
@@ -538,7 +805,17 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                   step="500"
                   min="2000"
                   value={budget}
-                  onChange={(e) => setBudget(Number(e.target.value))}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '') {
+                      setBudget('');
+                    } else {
+                      const parsed = parseInt(val, 10);
+                      setBudget(isNaN(parsed) ? '' : parsed);
+                    }
+                  }}
+                  onWheel={(e) => e.currentTarget.blur()}
+                  placeholder="Enter budget"
                   required
                   className="w-full text-right font-black text-slate-900 text-2xl sm:text-3xl focus:outline-none bg-transparent"
                 />

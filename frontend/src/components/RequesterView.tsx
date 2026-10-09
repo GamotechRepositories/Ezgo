@@ -40,7 +40,7 @@ import {
   Briefcase,
   MoreHorizontal
 } from 'lucide-react';
-import type { Requirement, Booking, User, Category, Occasion } from '../types';
+import type { Requirement, Booking, User, Category, Occasion, PostRequirementInitialData } from '../types';
 import { EVENT_CATEGORIES, FAQS, OCCASION_CARDS } from '../data/eventData';
 
 const EVENT_TYPE_OPTIONS = [
@@ -148,7 +148,7 @@ interface RequesterViewProps {
   categories: Category[];
   occasions?: Occasion[];
   currentUser: User;
-  onOpenPostModal: (initialCategory?: string) => void;
+  onOpenPostModal: (initial?: string | PostRequirementInitialData) => void;
   onAcceptBid: (requirementId: string, bidId: string) => Promise<void>;
   onOpenBookings: () => void;
   onOpenExplainer: () => void;
@@ -480,39 +480,6 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                 <stop offset="100%" stopColor="#ea580c" stopOpacity="0.2" />
               </linearGradient>
             </defs>
-          </svg>
-        </div>
-
-        {/* Decorative Botanical Corner Foliage (Top-Left) */}
-        <div className="absolute top-0 left-0 w-40 sm:w-56 h-40 sm:h-56 opacity-45 pointer-events-none">
-          <svg viewBox="0 0 220 220" fill="none">
-            <path d="M0,0 C70,25 130,90 150,160 C110,180 45,135 0,70 Z" fill="#4d7c0f" fillOpacity="0.35" />
-            <path d="M25,0 C80,35 120,100 110,170 C75,135 35,80 15,25 Z" fill="#65a30d" fillOpacity="0.4" />
-            <circle cx="55" cy="55" r="16" fill="#f87171" fillOpacity="0.45" />
-            <circle cx="50" cy="50" r="11" fill="#fca5a5" fillOpacity="0.55" />
-            <circle cx="95" cy="85" r="9" fill="#fb923c" fillOpacity="0.5" />
-          </svg>
-        </div>
-
-        {/* Decorative Botanical Corner Foliage (Bottom-Left) */}
-        <div className="absolute bottom-0 left-0 w-48 sm:w-64 h-48 sm:h-64 opacity-50 pointer-events-none">
-          <svg viewBox="0 0 260 260" fill="none">
-            <circle cx="35" cy="225" r="50" fill="#fb923c" fillOpacity="0.25" />
-            <circle cx="75" cy="190" r="38" fill="#f43f5e" fillOpacity="0.3" />
-            <circle cx="80" cy="185" r="24" fill="#fda4af" fillOpacity="0.4" />
-            <circle cx="125" cy="220" r="18" fill="#f97316" fillOpacity="0.35" />
-            <path d="M0,195 C45,150 130,160 155,225 C90,260 25,235 0,195 Z" fill="#365314" fillOpacity="0.3" />
-            <path d="M35,160 C75,130 140,140 130,195 Z" fill="#4d7c0f" fillOpacity="0.3" />
-          </svg>
-        </div>
-
-        {/* Decorative Botanical Corner Foliage (Bottom-Right) */}
-        <div className="absolute bottom-0 right-0 w-48 sm:w-64 h-48 sm:h-64 opacity-45 pointer-events-none rotate-180">
-          <svg viewBox="0 0 220 220" fill="none">
-            <path d="M0,0 C70,25 130,90 150,160 C110,180 45,135 0,70 Z" fill="#4d7c0f" fillOpacity="0.35" />
-            <path d="M25,0 C80,35 120,100 110,170 C75,135 35,80 15,25 Z" fill="#65a30d" fillOpacity="0.4" />
-            <circle cx="65" cy="65" r="8" fill="#f87171" fillOpacity="0.6" />
-            <circle cx="105" cy="95" r="6" fill="#fb923c" fillOpacity="0.5" />
           </svg>
         </div>
 
@@ -1219,7 +1186,37 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
               {/* CTA Action Button */}
               <button
                 type="button"
-                onClick={() => onOpenPostModal(`${packageEventType} Package (${selectedPackageServices.length} services, ${packageGuests} guests)`)}
+                onClick={() => {
+                  const selectedSrvs = PACKAGE_SERVICE_OPTIONS.filter((s) => selectedPackageServices.includes(s.id));
+                  const serviceNames = selectedSrvs.map((s) => s.name);
+                  
+                  // Pick the most relevant primary category
+                  const primaryCategory = 
+                    selectedPackageServices.includes('decor') ? 'Decoration & Stage Setup' :
+                    selectedPackageServices.includes('dj') ? 'DJ & Sound Setup' :
+                    selectedPackageServices.includes('catering') ? 'Catering & Live Food Counters' :
+                    selectedPackageServices.includes('photo') ? 'Photography & 4K Videography' :
+                    'Decoration & Stage Setup';
+
+                  onOpenPostModal({
+                    category: primaryCategory,
+                    title: `${packageEventType} - ${selectedPackageServices.length} Services Event Package`,
+                    eventType: packageEventType,
+                    guestCount: packageGuests,
+                    budget: packageRetailTotal,
+                    selectedEquipments: serviceNames,
+                    description: `Complete ${packageEventType} Package for ${packageGuests} guests.\n\nIncluded Services Needed:\n${serviceNames.map((s) => `• ${s}`).join('\n')}\n\nTarget reverse-bid budget: ₹${packageRetailTotal.toLocaleString()} (Looking for verified quotes around ₹${estimatedWinningBid.toLocaleString()}).`,
+                    isPackage: true,
+                    packageSummary: {
+                      eventType: packageEventType,
+                      servicesCount: selectedPackageServices.length,
+                      serviceNames,
+                      retailTotal: packageRetailTotal,
+                      targetBid: estimatedWinningBid,
+                      estimatedSavings,
+                    },
+                  });
+                }}
                 className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#f95724] to-[#ff6b3d] hover:from-[#e04818] hover:to-[#f95724] text-white font-black text-sm shadow-md shadow-orange-500/20 flex items-center justify-center gap-2 cursor-pointer transition active:scale-98"
               >
                 <span>Get Competitive Quotes Now</span>
@@ -1405,10 +1402,10 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                         <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-5">
                           
                           {/* Left Column: Landscape Image with Live Bidding Badge */}
-                          <div className="w-full lg:w-56 h-36 rounded-2xl overflow-hidden relative shrink-0 bg-slate-100 shadow-xs border border-slate-100">
+                          <div className="w-full sm:w-72 lg:w-60 aspect-[16/10] sm:aspect-auto sm:h-40 rounded-2xl overflow-hidden relative shrink-0 bg-slate-100 shadow-xs border border-slate-100">
                             {/* Floating Green Live Bidding Badge */}
                             <div className="absolute top-2.5 left-2.5 z-10">
-                              <span className="px-2.5 py-1 rounded-full bg-white text-slate-700 border border-slate-200 text-xs font-semibold">
+                              <span className="px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-xs text-slate-800 border border-slate-200 text-xs font-semibold shadow-xs">
                                 Open for bids
                               </span>
                             </div>
@@ -1416,7 +1413,10 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                             <img
                               src={reqImage}
                               alt={req.title}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full object-cover object-center"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&auto=format&fit=crop&q=80';
+                              }}
                             />
                           </div>
 
@@ -1678,22 +1678,6 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
             </defs>
           </svg>
 
-          {/* Festive Hanging Floral Corner Accents */}
-          <div className="absolute top-0 left-0 w-48 sm:w-64 h-48 sm:h-64 opacity-50 pointer-events-none -scale-x-100">
-            <svg viewBox="0 0 300 300" fill="none">
-              <path d="M300,0 C220,30 160,110 140,210 C180,230 250,180 300,100 Z" fill="#ca8a04" fillOpacity="0.2" />
-              <circle cx="240" cy="60" r="20" fill="#f97316" fillOpacity="0.3" />
-              <circle cx="180" cy="120" r="12" fill="#f43f5e" fillOpacity="0.35" />
-            </svg>
-          </div>
-          <div className="absolute top-0 right-0 w-48 sm:w-64 h-48 sm:h-64 opacity-50 pointer-events-none">
-            <svg viewBox="0 0 300 300" fill="none">
-              <path d="M300,0 C220,30 160,110 140,210 C180,230 250,180 300,100 Z" fill="#ca8a04" fillOpacity="0.2" />
-              <circle cx="240" cy="60" r="20" fill="#f97316" fillOpacity="0.3" />
-              <circle cx="180" cy="120" r="12" fill="#f43f5e" fillOpacity="0.35" />
-            </svg>
-          </div>
-
           {/* Floating Subtle Ambient Petals */}
           <div className="absolute top-10 left-12 w-3.5 h-3.5 bg-rose-400/50 rounded-full blur-[0.5px] rotate-45" />
           <div className="absolute top-1/4 right-1/6 w-3 h-3 bg-rose-400/40 rounded-full blur-[0.5px] -rotate-12" />
@@ -1781,15 +1765,6 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
               </linearGradient>
             </defs>
           </svg>
-
-          {/* Festive Hanging Floral Corner Accents */}
-          <div className="absolute top-0 right-0 w-48 sm:w-72 h-48 sm:h-72 opacity-50 pointer-events-none">
-            <svg viewBox="0 0 300 300" fill="none">
-              <path d="M300,0 C220,30 160,110 140,210 C180,230 250,180 300,100 Z" fill="#ca8a04" fillOpacity="0.2" />
-              <circle cx="240" cy="60" r="22" fill="#f97316" fillOpacity="0.35" />
-              <circle cx="180" cy="120" r="14" fill="#f43f5e" fillOpacity="0.4" />
-            </svg>
-          </div>
 
           {/* Floating Subtle Ambient Petals */}
           <div className="absolute top-12 left-10 w-3.5 h-3.5 bg-rose-400/50 rounded-full blur-[0.5px] rotate-45" />

@@ -4,6 +4,8 @@ import razorpayInstance from '../config/razorpay.js';
 import Booking from '../models/Booking.js';
 import Requirement from '../models/Requirement.js';
 import Transaction from '../models/Transaction.js';
+import { notifyUser } from '../services/notificationService.js';
+import { broadcastBookingUpdated, broadcastRequirementUpdated } from '../services/socketService.js';
 
 /**
  * @desc    Create Razorpay Order
@@ -224,7 +226,21 @@ export const verifyPayment = async (req, res, next) => {
         },
       });
 
+      // Notify vendor that payment has been received and held in escrow
+      const vendorId = booking.providerId?._id || booking.providerId;
+      await notifyUser({
+        userId: vendorId,
+        title: 'Payment Secured in Escrow 🛡️',
+        message: `Payment of ₹${booking.totalPaid.toLocaleString()} is secured in Escrow! Host contact details have been unlocked.`,
+        type: 'PAYMENT_CONFIRMED',
+        metadata: { bookingId: booking._id },
+      });
+
       updatedBooking = booking;
+      broadcastBookingUpdated(updatedBooking);
+      if (booking.requirementId) {
+        broadcastRequirementUpdated(booking.requirementId);
+      }
     }
 
     return res.status(200).json({

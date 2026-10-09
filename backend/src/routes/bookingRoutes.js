@@ -6,8 +6,10 @@ import {
   cancelBooking,
   getBookings,
   addReview,
+  raiseDispute,
+  resolveDispute,
 } from '../controllers/bookingController.js';
-import { requireAuth } from '../middlewares/auth.js';
+import { requireAuth, requireRole } from '../middlewares/auth.js';
 
 const router = express.Router();
 
@@ -31,5 +33,8 @@ router.post('/cancel', cancelBooking);
 router.post('/complete', completeBooking);
 router.post('/review', addReview);
 
+// Dispute management
+router.post('/:id/dispute', raiseDispute);
+router.post('/:id/resolve-dispute', requireRole('admin'), resolveDispute);
 
 export default router;

@@ -68,7 +68,7 @@ export interface Requirement {
   guestCount: number;
   budget: number;
   maxAcceptableBid: number; // 85% of budget
-  status: 'OPEN' | 'ACCEPTED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+  status: 'DRAFT' | 'OPEN' | 'ACCEPTED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
   bidsCount: number;
   lowestBid?: number;
   createdAt: string;
@@ -129,4 +129,25 @@ export interface AdminMetrics {
   totalCommissionEarned: number;
   totalPayoutsReleased: number;
   recentTransactions: any[];
+}
+
+export interface PostRequirementInitialData {
+  category?: string;
+  title?: string;
+  description?: string;
+  guestCount?: number;
+  budget?: number;
+  selectedEquipments?: string[];
+  city?: string;
+  area?: string;
+  eventType?: string;
+  isPackage?: boolean;
+  packageSummary?: {
+    eventType: string;
+    servicesCount: number;
+    serviceNames: string[];
+    retailTotal: number;
+    targetBid: number;
+    estimatedSavings: number;
+  };
 }

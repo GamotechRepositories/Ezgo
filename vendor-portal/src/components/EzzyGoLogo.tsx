@@ -10,7 +10,6 @@ export interface EzzyGoLogoProps {
 }
 
 export const EzzyGoLogo: React.FC<EzzyGoLogoProps> = ({
-  variant = 'vendor',
   size = 'md',
   showBadge = true,
   className = '',

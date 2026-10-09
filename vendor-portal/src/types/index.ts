@@ -1,4 +1,4 @@
-﻿export type UserRole = 'requester' | 'provider' | 'admin';
+export type UserRole = 'requester' | 'provider' | 'admin';
 
 export interface User {
   _id: string;
@@ -19,6 +19,18 @@ export interface User {
     ifscCode: string;
     upiId: string;
     isKycCompleted: boolean;
+  };
+  kycDocuments?: {
+    aadhaarNumber?: string;
+    aadhaarFront?: string;
+    aadhaarBack?: string;
+    panNumber?: string;
+    panCard?: string;
+    gstNumber?: string;
+    gstDoc?: string;
+    businessAddress?: string;
+    submittedAt?: string;
+    rejectionReason?: string;
   };
   avatar?: string;
 }
@@ -55,7 +67,7 @@ export interface Requirement {
   guestCount: number;
   budget: number;
   maxAcceptableBid: number; // 85% of budget
-  status: 'OPEN' | 'ACCEPTED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+  status: 'DRAFT' | 'OPEN' | 'ACCEPTED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
   bidsCount: number;
   lowestBid?: number;
   createdAt: string;

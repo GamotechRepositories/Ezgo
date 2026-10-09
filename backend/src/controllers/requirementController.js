@@ -1,8 +1,9 @@
 import Requirement from '../models/Requirement.js';
 import Bid from '../models/Bid.js';
 import User from '../models/User.js';
+import { broadcastRequirementCreated, broadcastRequirementUpdated } from '../services/socketService.js';
 
-// Create a new requirement
+// Create a new requirement (OPEN or DRAFT)
 export const createRequirement = async (req, res, next) => {
   try {
     const {
@@ -16,6 +17,7 @@ export const createRequirement = async (req, res, next) => {
       budget,
       guestCount,
       imageUrl,
+      status = 'OPEN',
     } = req.body;
 
     if (!req.user || (req.user.role !== 'requester' && req.user.role !== 'admin')) {
@@ -42,6 +44,8 @@ export const createRequirement = async (req, res, next) => {
       throw new Error('Event date must be today or later');
     }
 
+    const targetStatus = status === 'DRAFT' ? 'DRAFT' : 'OPEN';
+
     const requirement = await Requirement.create({
       requesterId: ownerId,
       category,
@@ -57,10 +61,150 @@ export const createRequirement = async (req, res, next) => {
       timeWindow: timeWindow || { start: '18:00', end: '23:00' },
       budget: Number(budget),
       guestCount: Number(guestCount) || 100,
+      status: targetStatus,
     });
 
     const populated = await Requirement.findById(requirement._id).populate('requesterId', 'name phone rating avatar');
-    res.status(201).json({ success: true, data: populated });
+    
+    if (targetStatus === 'OPEN') {
+      broadcastRequirementCreated(populated);
+    }
+
+    res.status(201).json({
+      success: true,
+      message: targetStatus === 'DRAFT' ? 'Draft saved successfully.' : 'Requirement published successfully.',
+      data: populated,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Update an existing requirement (allowed if DRAFT or OPEN)
+export const updateRequirement = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const requirement = await Requirement.findById(id);
+
+    if (!requirement) {
+      res.status(404);
+      throw new Error('Requirement not found');
+    }
+
+    if (req.user.role !== 'admin' && requirement.requesterId.toString() !== req.user._id.toString()) {
+      res.status(403);
+      throw new Error('You can only edit your own request.');
+    }
+
+    if (!['DRAFT', 'OPEN'].includes(requirement.status)) {
+      res.status(400);
+      throw new Error(`Cannot edit request in status: ${requirement.status}`);
+    }
+
+    const {
+      title,
+      description,
+      category,
+      location,
+      eventDate,
+      timeWindow,
+      budget,
+      guestCount,
+      imageUrl,
+    } = req.body;
+
+    if (title) requirement.title = title;
+    if (description !== undefined) requirement.description = description;
+    if (category) requirement.category = category;
+    if (imageUrl !== undefined) requirement.imageUrl = imageUrl;
+    if (location) {
+      if (location.city) requirement.location.city = location.city;
+      if (location.area) requirement.location.area = location.area;
+      if (location.venueAddress !== undefined) requirement.location.venueAddress = location.venueAddress;
+    }
+    if (eventDate) requirement.eventDate = eventDate;
+    if (timeWindow) requirement.timeWindow = timeWindow;
+    if (guestCount) requirement.guestCount = Number(guestCount);
+    if (budget) {
+      const numBudget = Number(budget);
+      if (numBudget < 1000) {
+        res.status(400);
+        throw new Error('Budget must be at least ₹1,000');
+      }
+      requirement.budget = numBudget;
+      requirement.maxAcceptableBid = Math.floor(numBudget * 0.85);
+    }
+
+    await requirement.save();
+
+    const populated = await Requirement.findById(requirement._id).populate('requesterId', 'name phone rating avatar');
+    broadcastRequirementUpdated(populated);
+    res.json({ success: true, message: 'Request updated successfully.', data: populated });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Publish a draft requirement
+export const publishDraftRequirement = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const requirement = await Requirement.findById(id);
+
+    if (!requirement) {
+      res.status(404);
+      throw new Error('Requirement not found');
+    }
+
+    if (req.user.role !== 'admin' && requirement.requesterId.toString() !== req.user._id.toString()) {
+      res.status(403);
+      throw new Error('You can only publish your own request.');
+    }
+
+    if (requirement.status !== 'DRAFT') {
+      res.status(400);
+      throw new Error(`Only draft requests can be published (Current status: ${requirement.status})`);
+    }
+
+    requirement.status = 'OPEN';
+    await requirement.save();
+
+    const populated = await Requirement.findById(requirement._id).populate('requesterId', 'name phone rating avatar');
+    broadcastRequirementCreated(populated);
+    broadcastRequirementUpdated(populated);
+
+    res.json({ success: true, message: 'Draft published! Vendors can now place bids.', data: populated });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Delete a draft or open requirement
+export const deleteRequirement = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const requirement = await Requirement.findById(id);
+
+    if (!requirement) {
+      res.status(404);
+      throw new Error('Requirement not found');
+    }
+
+    if (req.user.role !== 'admin' && requirement.requesterId.toString() !== req.user._id.toString()) {
+      res.status(403);
+      throw new Error('You can only delete your own request.');
+    }
+
+    if (!['DRAFT', 'OPEN'].includes(requirement.status)) {
+      res.status(400);
+      throw new Error(`Cannot delete active or completed requirement.`);
+    }
+
+    // Delete associated bids if any
+    await Bid.deleteMany({ requirementId: requirement._id });
+    await Requirement.deleteOne({ _id: requirement._id });
+
+    res.json({ success: true, message: 'Request deleted successfully.' });
   } catch (error) {
     next(error);
   }
@@ -69,11 +213,16 @@ export const createRequirement = async (req, res, next) => {
 // Get all requirements with optional filters and populated bids
 export const getRequirements = async (req, res, next) => {
   try {
-    const { category, status, city, requesterId } = req.query;
+    const { category, status, city, requesterId, includeDrafts } = req.query;
     const filter = {};
 
     if (category) filter.category = category;
-    if (status) filter.status = status;
+    if (status) {
+      filter.status = status;
+    } else if (includeDrafts !== 'true') {
+      // By default exclude DRAFTs from public marketplace
+      filter.status = { $ne: 'DRAFT' };
+    }
     if (city) filter['location.city'] = new RegExp(city, 'i');
     if (requesterId) filter.requesterId = requesterId;
 

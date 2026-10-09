@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { VendorSidebar } from './components/VendorSidebar';
 import { VendorHeader } from './components/VendorHeader';
 import { LiveAuctionDesk } from './components/LiveAuctionDesk';
@@ -11,7 +11,18 @@ import { ToastContainer } from './components/Toast';
 import type { ToastMessage } from './components/Toast';
 import { LoginPage } from './components/LoginPage';
 import { api, getToken, clearToken } from './services/api';
+import { getSocket } from './services/socket';
 import type { Requirement, Booking, User } from './types';
+
+type VendorTab = 'auctions' | 'orders' | 'wallet' | 'inventory';
+
+const tabFromUrl = (): VendorTab => {
+  const hash = window.location.hash.replace('#', '');
+  if (['orders', 'wallet', 'inventory', 'auctions'].includes(hash)) {
+    return hash as VendorTab;
+  }
+  return 'auctions';
+};
 
 export default function App() {
   const [currentVendor, setCurrentVendor] = useState<User | null>(null);
@@ -45,7 +56,7 @@ export default function App() {
 
 function VendorApp({ currentVendor, onLogout }: { currentVendor: User; onLogout: () => void }) {
   const [loadError, setLoadError] = useState('');
-  const [activeTab, setActiveTab] = useState<'auctions' | 'orders' | 'wallet' | 'inventory'>('auctions');
+  const [activeTab, setActiveTab] = useState<VendorTab>(tabFromUrl);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   const [requirements, setRequirements] = useState<Requirement[]>([]);
@@ -82,6 +93,103 @@ function VendorApp({ currentVendor, onLogout }: { currentVendor: User; onLogout:
     loadData();
   }, []);
 
+  // Real-time WebSocket Live Bidding & Auctions
+  useEffect(() => {
+    if (!currentVendor?._id) return;
+    const socket = getSocket();
+
+    socket.emit('join:user', currentVendor._id);
+
+    const handleBidPlaced = (data: {
+      requirementId: string;
+      bid: any;
+      isUpdate: boolean;
+      lowestBid: number;
+      bidsCount: number;
+    }) => {
+      setRequirements((prev) =>
+        prev.map((req) => {
+          if (String(req._id) === String(data.requirementId)) {
+            const existingBids = req.bids || [];
+            const filteredBids = existingBids.filter((b) => String(b._id) !== String(data.bid?._id));
+            return {
+              ...req,
+              lowestBid: data.lowestBid,
+              bidsCount: data.bidsCount,
+              bids: data.bid ? [data.bid, ...filteredBids] : existingBids,
+            };
+          }
+          return req;
+        })
+      );
+      // Also background refresh to sync ranking & calculations
+      api.getRequirements().then(setRequirements).catch(() => {});
+    };
+
+    const handleRequirementCreated = (newReq: Requirement) => {
+      setRequirements((prev) => {
+        if (prev.some((r) => String(r._id) === String(newReq._id))) return prev;
+        return [newReq, ...prev];
+      });
+      addToast('info', 'New Event Request Posted!', `${newReq.title} in ${newReq.location.area}`);
+    };
+
+    const handleRequirementUpdated = (updatedReq: Requirement) => {
+      setRequirements((prev) =>
+        prev.map((r) => (String(r._id) === String(updatedReq._id) ? { ...r, ...updatedReq } : r))
+      );
+    };
+
+    socket.on('bid:placed', handleBidPlaced);
+    socket.on('requirement:created', handleRequirementCreated);
+    socket.on('requirement:updated', handleRequirementUpdated);
+
+    return () => {
+      socket.off('bid:placed', handleBidPlaced);
+      socket.off('requirement:created', handleRequirementCreated);
+      socket.off('requirement:updated', handleRequirementUpdated);
+    };
+  }, [currentVendor?._id]);
+
+  const closeAllModals = useCallback(() => {
+    setSelectedReqForBid(null);
+    setIsExplainerOpen(false);
+    setIsSidebarOpen(false);
+  }, []);
+
+  const anyModalOpen = !!selectedReqForBid || isExplainerOpen || isSidebarOpen;
+
+  // Handle Escape Key & PopState
+  useEffect(() => {
+    const onPopState = () => {
+      if (anyModalOpen) {
+        closeAllModals();
+      }
+      setActiveTab(tabFromUrl());
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [anyModalOpen, closeAllModals]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && anyModalOpen) {
+        closeAllModals();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [anyModalOpen, closeAllModals]);
+
+  const handleTabChange = (tab: VendorTab) => {
+    closeAllModals();
+    if (tab !== tabFromUrl()) {
+      window.history.pushState(null, '', `#${tab}`);
+    }
+    setActiveTab(tab);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handlePlaceBid = async (reqId: string, bidData: any) => {
     try {
       const newBid = await api.placeBid(reqId, bidData);
@@ -99,6 +207,7 @@ function VendorApp({ currentVendor, onLogout }: { currentVendor: User; onLogout:
           return r;
         })
       );
+      setSelectedReqForBid(null);
       addToast(
         'success',
         'Bid sent',
@@ -119,7 +228,7 @@ function VendorApp({ currentVendor, onLogout }: { currentVendor: User; onLogout:
       <VendorSidebar
         vendor={currentVendor}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
         onOpenExplainer={() => setIsExplainerOpen(true)}
         activeOrdersCount={activeOrdersCount}
         isOpen={isSidebarOpen}
@@ -132,7 +241,7 @@ function VendorApp({ currentVendor, onLogout }: { currentVendor: User; onLogout:
           vendor={currentVendor}
           activeTab={activeTab}
           onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-          onTabChange={setActiveTab}
+          onTabChange={handleTabChange}
           activeOrdersCount={activeOrdersCount}
           onLogout={onLogout}
         />

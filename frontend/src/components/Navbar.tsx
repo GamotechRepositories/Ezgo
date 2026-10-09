@@ -7,12 +7,34 @@ interface NavbarProps {
   currentUser: User;
   onLogout: () => void;
   onOpenExplainer: () => void;
-  onOpenPostModal: () => void;
+  onOpenPostModal: (categoryName?: string) => void;
   onOpenBookings?: () => void;
   onGoHome?: () => void;
   isBookingsPage?: boolean;
   activeBookingsCount?: number;
+  selectedCity?: string;
+  onSelectCity?: (city: string) => void;
 }
+
+const NAVBAR_CITIES = [
+  'Pune, MH',
+  'Mumbai, MH',
+  'Delhi NCR',
+  'Bangalore, KA',
+  'Hyderabad, TS',
+  'Nagpur, MH',
+  'Nashik, MH',
+  'Ahmedabad, GJ',
+  'Jaipur, RJ',
+  'Goa',
+  'Kolkata, WB',
+  'Chennai, TN',
+  'Surat, GJ',
+  'Lucknow, UP',
+  'Chandigarh',
+  'Indore, MP',
+  'Kolhapur, MH',
+];
 
 export const Navbar: React.FC<NavbarProps> = ({
   currentUser,
@@ -23,12 +45,12 @@ export const Navbar: React.FC<NavbarProps> = ({
   onGoHome,
   isBookingsPage = false,
   activeBookingsCount = 0,
+  selectedCity = 'Pune, MH',
+  onSelectCity,
 }) => {
-  const [selectedCity, setSelectedCity] = useState('Pune, MH');
   const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
   const [isServicesDropdownOpen, setIsServicesDropdownOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const cities = ['Pune, MH', 'Hyderabad, TS', 'Mumbai, MH', 'Bangalore, KA', 'Delhi NCR'];
 
   useEffect(() => {
     const handleScroll = () => {
@@ -80,9 +102,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                         key={srv}
                         onClick={() => {
                           setIsServicesDropdownOpen(false);
-                          if (onOpenPostModal) onOpenPostModal();
+                          if (onOpenPostModal) onOpenPostModal(srv);
                         }}
-                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-medium text-slate-700 hover:bg-orange-50 hover:text-orange-900 transition"
+                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-medium text-slate-700 hover:bg-orange-50 hover:text-orange-900 transition cursor-pointer"
                       >
                         {srv}
                       </button>
@@ -150,15 +172,15 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
 
               {isCityDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-44 bg-white rounded-2xl border border-slate-100 shadow-xl p-1.5 z-50">
-                  {cities.map((city) => (
+                <div className="absolute right-0 mt-2 w-52 max-h-80 overflow-y-auto bg-white rounded-2xl border border-slate-100 shadow-xl p-1.5 z-50">
+                  {NAVBAR_CITIES.map((city) => (
                     <button
                       key={city}
                       onClick={() => {
-                        setSelectedCity(city);
+                        if (onSelectCity) onSelectCity(city);
                         setIsCityDropdownOpen(false);
                       }}
-                      className={`w-full text-left px-3 py-2 rounded-xl text-xs font-medium transition ${
+                      className={`w-full text-left px-3 py-2 rounded-xl text-xs font-medium transition cursor-pointer ${
                         selectedCity === city
                           ? 'bg-orange-50 text-[#f95724] font-bold'
                           : 'text-slate-700 hover:bg-slate-50'
@@ -173,7 +195,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {/* Post Need CTA Button */}
             <button
-              onClick={onOpenPostModal}
+              onClick={() => onOpenPostModal()}
               className="px-3 sm:px-5 py-2 sm:py-2.5 rounded-full bg-[#f95724] hover:bg-[#e04818] text-white font-bold text-xs shadow-md shadow-[#f95724]/25 flex items-center gap-1 sm:gap-1.5 transition active:scale-95 cursor-pointer whitespace-nowrap"
             >
               <span className="hidden sm:inline">Post Requirement</span>

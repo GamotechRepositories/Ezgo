@@ -1,6 +1,9 @@
 import express from 'express';
 import {
   createRequirement,
+  updateRequirement,
+  publishDraftRequirement,
+  deleteRequirement,
   getRequirements,
   getRequirementById,
 } from '../controllers/requirementController.js';
@@ -15,6 +18,10 @@ router.route('/')
   .get(getRequirements);
 
 router.route('/:id')
-  .get(getRequirementById);
+  .get(getRequirementById)
+  .put(updateRequirement)
+  .delete(deleteRequirement);
+
+router.patch('/:id/publish', publishDraftRequirement);
 
 export default router;

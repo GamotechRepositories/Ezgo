@@ -11,6 +11,7 @@ import type { ToastMessage } from './components/Toast';
 import { LoginPage } from './components/LoginPage';
 import { MyBookingsPage } from './components/MyBookingsPage';
 import { api, getToken, clearToken } from './services/api';
+import { getSocket } from './services/socket';
 import type { User, Requirement, Booking, Category, Occasion } from './types';
 
 type Page = 'home' | 'bookings';
@@ -48,6 +49,7 @@ export default function App() {
 
 function HostApp({ currentUser, onLogout }: { currentUser: User; onLogout: () => void }) {
   const [loadError, setLoadError] = useState('');
+  const [selectedCity, setSelectedCity] = useState('Pune, MH');
 
   // Data State
   const [categories, setCategories] = useState<Category[]>([]);
@@ -58,7 +60,7 @@ function HostApp({ currentUser, onLogout }: { currentUser: User; onLogout: () =>
   // Modals State
   const [isExplainerOpen, setIsExplainerOpen] = useState(false);
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
-  const [postModalCategory, setPostModalCategory] = useState<string | undefined>(undefined);
+  const [postModalData, setPostModalData] = useState<string | import('./types').PostRequirementInitialData | undefined>(undefined);
   const [selectedBookingForPay, setSelectedBookingForPay] = useState<Booking | null>(null);
   const [selectedBookingForReview, setSelectedBookingForReview] = useState<Booking | null>(null);
 
@@ -124,7 +126,7 @@ function HostApp({ currentUser, onLogout }: { currentUser: User; onLogout: () =>
     };
 
     window.addEventListener('focus', refreshOccasions);
-    const interval = setInterval(refreshOccasions, 8000);
+    const interval = setInterval(refreshOccasions, 15000);
 
     return () => {
       window.removeEventListener('focus', refreshOccasions);
@@ -132,9 +134,100 @@ function HostApp({ currentUser, onLogout }: { currentUser: User; onLogout: () =>
     };
   }, [loadData]);
 
-  const handleOpenPostModal = (categoryName?: string) => {
-    setPostModalCategory(categoryName);
+  // Real-time WebSocket Live Bidding updates
+  useEffect(() => {
+    if (!currentUser?._id) return;
+    const socket = getSocket();
+
+    socket.emit('join:user', currentUser._id);
+
+    const handleBidPlaced = (data: {
+      requirementId: string;
+      bid: any;
+      isUpdate: boolean;
+      lowestBid: number;
+      bidsCount: number;
+    }) => {
+      setRequirements((prev) =>
+        prev.map((req) => {
+          if (String(req._id) === String(data.requirementId)) {
+            const existingBids = req.bids || [];
+            const filteredBids = existingBids.filter((b) => String(b._id) !== String(data.bid?._id));
+            return {
+              ...req,
+              lowestBid: data.lowestBid,
+              bidsCount: data.bidsCount,
+              bids: data.bid ? [data.bid, ...filteredBids] : existingBids,
+            };
+          }
+          return req;
+        })
+      );
+      // Background sync full state
+      loadMyActivity(currentUser._id);
+    };
+
+    const handleRequirementCreated = (newReq: Requirement) => {
+      const ownerId = String(typeof newReq.requesterId === 'object' ? (newReq.requesterId as any)?._id : newReq.requesterId);
+      if (ownerId === String(currentUser._id)) {
+        setRequirements((prev) => {
+          if (prev.some((r) => String(r._id) === String(newReq._id))) return prev;
+          return [newReq, ...prev];
+        });
+      }
+    };
+
+    const handleRequirementUpdated = (updatedReq: Requirement) => {
+      setRequirements((prev) =>
+        prev.map((r) => (String(r._id) === String(updatedReq._id) ? { ...r, ...updatedReq } : r))
+      );
+    };
+
+    socket.on('bid:placed', handleBidPlaced);
+    socket.on('requirement:created', handleRequirementCreated);
+    socket.on('requirement:updated', handleRequirementUpdated);
+
+    return () => {
+      socket.off('bid:placed', handleBidPlaced);
+      socket.off('requirement:created', handleRequirementCreated);
+      socket.off('requirement:updated', handleRequirementUpdated);
+    };
+  }, [currentUser._id, loadMyActivity]);
+
+  const closeAllModals = useCallback((triggerHistoryBack: boolean = false) => {
+    setIsExplainerOpen(false);
+    setIsPostModalOpen(false);
+    setSelectedBookingForPay(null);
+    setSelectedBookingForReview(null);
+    if (triggerHistoryBack && window.history.state?.modal) {
+      window.history.back();
+    }
+  }, []);
+
+  const anyModalOpen = isExplainerOpen || isPostModalOpen || !!selectedBookingForPay || !!selectedBookingForReview;
+
+  // Handle Escape Key to close open modals
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (anyModalOpen) {
+          closeAllModals(true);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [anyModalOpen, closeAllModals]);
+
+  const handleOpenPostModal = (data?: string | import('./types').PostRequirementInitialData) => {
+    setPostModalData(data);
+    window.history.pushState({ modal: 'post' }, '');
     setIsPostModalOpen(true);
+  };
+
+  const handleOpenExplainer = () => {
+    window.history.pushState({ modal: 'explainer' }, '');
+    setIsExplainerOpen(true);
   };
 
   // 1. Create Requirement
@@ -142,65 +235,66 @@ function HostApp({ currentUser, onLogout }: { currentUser: User; onLogout: () =>
     try {
       const newReq = await api.createRequirement(data);
       setRequirements((prev) => [newReq, ...prev]);
+      setIsPostModalOpen(false);
       addToast(
         'success',
         'Request posted',
         `Vendors in ${newReq.location.city} can now see it and send you prices.`
       );
     } catch (err: any) {
-      addToast('error', 'Could not post request', err.message);
+      addToast('error', 'Could not post', err.message);
       throw err;
     }
   };
 
   // 2. Accept Bid
   const handleAcceptBid = async (requirementId: string, bidId: string) => {
-    const targetReq = requirements.find((r) => r._id === requirementId);
-    const targetBid = targetReq?.bids?.find((b) => b._id === bidId);
-    if (!targetReq || !targetBid) return;
-
-    if (targetBid.amount > targetReq.maxAcceptableBid) {
-      addToast(
-        'error',
-        'Price too high',
-        `You can only pick prices of ₹${targetReq.maxAcceptableBid.toLocaleString()} or less (at least 15% below your budget).`
-      );
-      return;
-    }
-
     try {
-      const newBooking = await api.acceptBid(requirementId, bidId, currentUser._id);
+      const createdBooking = await api.acceptBid(requirementId, bidId, currentUser._id);
       await refreshMine();
-      setSelectedBookingForPay(newBooking);
-      addToast(
-        'success',
-        'Vendor selected',
-        `Pay ₹${newBooking.totalPaid.toLocaleString()} to confirm the booking and see the vendor's phone number.`
-      );
+      setSelectedBookingForPay(createdBooking);
+      addToast('success', 'Vendor chosen', 'Please pay to confirm the booking.');
     } catch (err: any) {
-      addToast('error', 'Could not select vendor', err.message);
+      addToast('error', 'Could not choose vendor', err.message);
     }
   };
 
-  // 3. Pay Booking. A Razorpay payment is already marked paid by /verify-payment.
-  const handlePaySuccess = async (bookingId: string, paymentMethod: string, transactionId?: string) => {
-    if (!transactionId) {
-      await api.payBooking(bookingId, paymentMethod);
+  // 3. Payment Success
+  const handlePaySuccess = async (
+    bookingId: string,
+    paymentMethod: string,
+    _transactionId?: string,
+    verifiedBooking?: Booking
+  ) => {
+    try {
+      let updated = verifiedBooking;
+      if (!updated) {
+        updated = await api.payBooking(bookingId, paymentMethod);
+      }
+      if (updated) {
+        setBookings((prev) => prev.map((b) => (b._id === bookingId ? updated! : b)));
+        setRequirements((prev) =>
+          prev.map((r) => (r._id === updated!.requirementId?._id ? { ...r, status: 'ACTIVE' } : r))
+        );
+      }
+      setSelectedBookingForPay(null);
+      addToast('success', 'Payment confirmed', 'We hold the money in Escrow until the event is done.');
+      await refreshMine();
+    } catch (err: any) {
+      addToast('error', 'Payment update failed', err.message);
+      throw err;
     }
-    await refreshMine();
-    addToast(
-      'success',
-      'Payment done',
-      'EzzyGo is holding your money safely. You can now call or WhatsApp the vendor.'
-    );
   };
 
-  // 4. Cancel booking (unpaid: pick another vendor, paid: full refund)
+  // 4. Cancel Booking
   const handleCancelBooking = async (bookingId: string) => {
     try {
-      const res = await api.cancelBooking(bookingId, 'Cancelled by host');
+      const res = await api.cancelBooking(bookingId, 'Cancelled by user');
       await refreshMine();
-      addToast('info', 'Booking cancelled', res.message);
+      if (selectedBookingForPay?._id === bookingId) {
+        setSelectedBookingForPay(null);
+      }
+      addToast('info', 'Booking cancelled', res.message || 'Request re-opened for bidding.');
     } catch (err: any) {
       addToast('error', 'Could not cancel', err.message);
       throw err;
@@ -209,12 +303,19 @@ function HostApp({ currentUser, onLogout }: { currentUser: User; onLogout: () =>
 
   // 5. Complete Booking
   const handleCompleteBooking = async (bookingId: string) => {
+    const booking = bookings.find((b) => b._id === bookingId);
+    if (!booking) return;
+    const vendorName = (booking.providerId as any)?.businessName || (booking.providerId as any)?.name || 'the vendor';
+    if (!window.confirm(`Mark this event done? EzzyGo will send ₹${booking.bidAmount.toLocaleString()} to ${vendorName}.`)) {
+      return;
+    }
     try {
-      await api.completeBooking(bookingId);
+      const res = await api.completeBooking(bookingId);
       await refreshMine();
-      addToast('success', 'Event marked as done', 'EzzyGo has sent the full price to the vendor.');
+      addToast('success', 'Event marked done', res.message || 'Payment released to vendor.');
+      setSelectedBookingForReview(res.data || booking);
     } catch (err: any) {
-      addToast('error', 'Could not mark as done', err.message);
+      addToast('error', 'Could not complete', err.message);
       throw err;
     }
   };
@@ -223,6 +324,7 @@ function HostApp({ currentUser, onLogout }: { currentUser: User; onLogout: () =>
   const handleSubmitReview = async (data: Parameters<typeof api.submitReview>[0]) => {
     try {
       await api.submitReview(data);
+      setSelectedBookingForReview(null);
       await refreshMine();
       addToast('success', 'Thanks for rating', 'Your rating helps other hosts pick good vendors.');
     } catch (err: any) {
@@ -234,17 +336,24 @@ function HostApp({ currentUser, onLogout }: { currentUser: User; onLogout: () =>
   const [page, setPage] = useState<Page>(pageFromUrl);
 
   useEffect(() => {
-    const onPopState = () => setPage(pageFromUrl());
+    const onPopState = () => {
+      // If modal was open, close modal first
+      if (anyModalOpen) {
+        closeAllModals();
+      }
+      setPage(pageFromUrl());
+    };
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
-  }, []);
+  }, [anyModalOpen, closeAllModals]);
 
   const goTo = (next: Page) => {
+    closeAllModals();
     if (next !== pageFromUrl()) {
       window.history.pushState(null, '', next === 'bookings' ? '#bookings' : window.location.pathname);
     }
     setPage(next);
-    window.scrollTo({ top: 0 });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleOpenBookings = () => {
@@ -266,12 +375,14 @@ function HostApp({ currentUser, onLogout }: { currentUser: User; onLogout: () =>
       <Navbar
         currentUser={currentUser}
         onLogout={onLogout}
-        onOpenExplainer={() => setIsExplainerOpen(true)}
-        onOpenPostModal={() => handleOpenPostModal()}
+        onOpenExplainer={handleOpenExplainer}
+        onOpenPostModal={(cat) => handleOpenPostModal(cat)}
         onOpenBookings={handleOpenBookings}
         onGoHome={() => goTo('home')}
         isBookingsPage={page === 'bookings'}
         activeBookingsCount={activeBookingsCount}
+        selectedCity={selectedCity}
+        onSelectCity={setSelectedCity}
       />
 
       {loadError && (
@@ -311,7 +422,7 @@ function HostApp({ currentUser, onLogout }: { currentUser: User; onLogout: () =>
             onOpenPostModal={handleOpenPostModal}
             onAcceptBid={handleAcceptBid}
             onOpenBookings={handleOpenBookings}
-            onOpenExplainer={() => setIsExplainerOpen(true)}
+            onOpenExplainer={handleOpenExplainer}
           />
         )}
       </main>
@@ -319,21 +430,22 @@ function HostApp({ currentUser, onLogout }: { currentUser: User; onLogout: () =>
       {/* Modals */}
       <RuleExplainer
         isOpen={isExplainerOpen}
-        onClose={() => setIsExplainerOpen(false)}
+        onClose={() => closeAllModals(true)}
       />
 
       <PostRequirementModal
         isOpen={isPostModalOpen}
-        onClose={() => setIsPostModalOpen(false)}
+        onClose={() => closeAllModals(true)}
         categories={categories}
         onSubmit={handleCreateRequirement}
         requesterId={currentUser._id}
-        initialCategory={postModalCategory}
+        initialData={postModalData}
+        initialCity={selectedCity}
       />
 
       <PaymentModal
         isOpen={!!selectedBookingForPay}
-        onClose={() => setSelectedBookingForPay(null)}
+        onClose={() => closeAllModals(true)}
         booking={selectedBookingForPay}
         onPaySuccess={handlePaySuccess}
         onCancelBooking={handleCancelBooking}
@@ -342,7 +454,7 @@ function HostApp({ currentUser, onLogout }: { currentUser: User; onLogout: () =>
 
       <ReviewModal
         isOpen={!!selectedBookingForReview}
-        onClose={() => setSelectedBookingForReview(null)}
+        onClose={() => closeAllModals(true)}
         booking={selectedBookingForReview}
         onSubmitReview={handleSubmitReview}
         fromUserId={currentUser._id}
@@ -350,7 +462,7 @@ function HostApp({ currentUser, onLogout }: { currentUser: User; onLogout: () =>
 
       {/* Exact Matching Light Aesthetic Premium Footer */}
       <Footer 
-        onOpenExplainer={() => setIsExplainerOpen(true)}
+        onOpenExplainer={handleOpenExplainer}
         onOpenPostModal={handleOpenPostModal}
       />
 

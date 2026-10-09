@@ -28,20 +28,23 @@ const PlaceBidForm: React.FC<PlaceBidFormProps> = ({
   const ceiling = requirement.maxAcceptableBid || Math.floor(requirement.budget * 0.85);
   const currentLowest = requirement.lowestBid || ceiling;
 
-  const [bidAmount, setBidAmount] = useState<number>(
+  const [bidAmount, setBidAmount] = useState<number | ''>(
     Math.min(ceiling, currentLowest > 1000 ? currentLowest - 1000 : ceiling)
   );
   const [proposalNotes, setProposalNotes] = useState('');
   const [includeOperator, setIncludeOperator] = useState(true);
   const [selectedGear, setSelectedGear] = useState<string[]>(requirement.equipmentNeeded || []);
 
-  const isValidBid = bidAmount <= ceiling && bidAmount > 0;
-  const discountPercent = Math.round(((requirement.budget - bidAmount) / requirement.budget) * 100);
-  const hostFee = Math.round(bidAmount * 0.1);
+  const numericBid = typeof bidAmount === 'number' ? bidAmount : 0;
+  const isValidBid = typeof bidAmount === 'number' && bidAmount > 0 && bidAmount <= ceiling;
+  const discountPercent = typeof bidAmount === 'number' && bidAmount > 0
+    ? Math.round(((requirement.budget - bidAmount) / requirement.budget) * 100)
+    : 0;
+  const hostFee = Math.round(numericBid * 0.1);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isValidBid) return;
+    if (!isValidBid || typeof bidAmount !== 'number') return;
 
     onSubmit(requirement._id, {
       amount: bidAmount,
@@ -121,9 +124,19 @@ const PlaceBidForm: React.FC<PlaceBidFormProps> = ({
                 id="bid-amount"
                 type="number"
                 value={bidAmount}
-                onChange={(e) => setBidAmount(Number(e.target.value))}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '') {
+                    setBidAmount('');
+                  } else {
+                    const parsed = parseInt(val, 10);
+                    setBidAmount(isNaN(parsed) ? '' : parsed);
+                  }
+                }}
+                onWheel={(e) => e.currentTarget.blur()}
                 min="1000"
                 max={ceiling}
+                placeholder="Enter price"
                 required
                 className={`w-full pl-9 pr-4 py-3.5 rounded-2xl bg-white border text-lg font-semibold text-slate-900 focus:outline-none transition ${
                   isValidBid
@@ -217,11 +230,11 @@ const PlaceBidForm: React.FC<PlaceBidFormProps> = ({
           <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-sm space-y-2">
             <div className="flex justify-between text-base font-semibold text-emerald-700">
               <span>You receive</span>
-              <span>₹{bidAmount.toLocaleString()}</span>
+              <span>₹{numericBid.toLocaleString()}</span>
             </div>
             <div className="flex justify-between text-slate-600">
               <span>Host pays (your bid + 10% EzzyGo fee)</span>
-              <span>₹{(bidAmount + hostFee).toLocaleString()}</span>
+              <span>₹{(numericBid + hostFee).toLocaleString()}</span>
             </div>
             <p className="text-slate-500">
               EzzyGo holds the host's payment and sends you the full bid after the event.
