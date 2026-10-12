@@ -34,10 +34,28 @@ export const placeBid = async (req, res, next) => {
       throw new Error('This requirement is no longer accepting bids');
     }
 
+    const now = new Date();
+    if (requirement.biddingDeadline && new Date(requirement.biddingDeadline) < now) {
+      requirement.status = 'EXPIRED';
+      await requirement.save();
+      res.status(400);
+      throw new Error('Bidding deadline has closed for this event requirement.');
+    }
+
     const provider = await User.findById(providerId);
     if (!provider || provider.role !== 'provider') {
       res.status(403);
       throw new Error('Only vendor accounts can place bids');
+    }
+
+    // Check if vendor has blocked this event date in their availability calendar (Module 04, Task 08)
+    const reqDate = requirement.eventDate ? String(requirement.eventDate).split('T')[0] : '';
+    const isDateBlocked = (provider.unavailableDates || []).some(
+      (d) => d.date === reqDate || d.date === requirement.eventDate
+    );
+    if (isDateBlocked) {
+      res.status(400);
+      throw new Error(`You have marked yourself as unavailable/booked on ${requirement.eventDate}. Please unblock this date in your Availability Calendar if you wish to place a bid.`);
     }
 
     // Bid must be strictly lower than budget
@@ -59,6 +77,11 @@ export const placeBid = async (req, res, next) => {
     // Check if provider already bid on this requirement
     let bid = await Bid.findOne({ requirementId, providerId });
     const isUpdate = Boolean(bid);
+
+    if (bid && bidAmount >= bid.amount) {
+      res.status(400);
+      throw new Error(`Your revised bid must be strictly lower than your current bid of ₹${bid.amount.toLocaleString()} to remain competitive.`);
+    }
 
     if (bid) {
       // Update existing bid
@@ -122,7 +145,9 @@ export const placeBid = async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      message: isEligibleForAccept
+      message: isUpdate
+        ? `Your bid was revised successfully to ₹${bidAmount.toLocaleString()}!`
+        : isEligibleForAccept
         ? `Bid placed successfully! ${discountPercent}% discount meets the 15% rule.`
         : `Bid placed! Note: At ${discountPercent}% discount, this bid is currently ineligible for acceptance until lowered to at least 15% discount (₹${requirement.maxAcceptableBid.toLocaleString()} or below).`,
       data: populatedBid,

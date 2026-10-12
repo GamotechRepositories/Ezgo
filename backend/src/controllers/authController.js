@@ -323,3 +323,65 @@ export const submitKyc = async (req, res, next) => {
     next(error);
   }
 };
+
+// Vendor availability management (Module 04, Task 08)
+export const blockAvailabilityDate = async (req, res, next) => {
+  try {
+    const { date, reason } = req.body;
+    if (!date) {
+      res.status(400);
+      throw new Error('Date is required in YYYY-MM-DD format');
+    }
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      res.status(404);
+      throw new Error('User not found');
+    }
+    user.unavailableDates = user.unavailableDates || [];
+    const alreadyBlocked = user.unavailableDates.some((d) => d.date === date);
+    if (alreadyBlocked) {
+      res.status(400);
+      throw new Error(`Date ${date} is already marked as unavailable.`);
+    }
+    user.unavailableDates.push({
+      date,
+      reason: reason || 'Booked / Offline Event',
+      createdAt: new Date(),
+    });
+    user.unavailableDates.sort((a, b) => a.date.localeCompare(b.date));
+    await user.save();
+    res.json({ success: true, message: `Date ${date} marked as unavailable.`, data: user });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const unblockAvailabilityDate = async (req, res, next) => {
+  try {
+    const { date } = req.params;
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      res.status(404);
+      throw new Error('User not found');
+    }
+    user.unavailableDates = (user.unavailableDates || []).filter((d) => d.date !== date);
+    await user.save();
+    res.json({ success: true, message: `Date ${date} is now available.`, data: user });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAvailability = async (req, res, next) => {
+  try {
+    const providerId = req.params.providerId || req.user._id;
+    const user = await User.findById(providerId).select('name businessName unavailableDates');
+    if (!user) {
+      res.status(404);
+      throw new Error('Provider not found');
+    }
+    res.json({ success: true, data: user.unavailableDates || [] });
+  } catch (error) {
+    next(error);
+  }
+};

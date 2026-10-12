@@ -99,4 +99,65 @@ router.post('/multiple', upload.array('images', 8), async (req, res, next) => {
   }
 });
 
+
+import User from '../models/User.js';
+import { logAudit } from '../services/auditService.js';
+
+// @route   GET /api/upload/kyc/:providerId/:documentType
+// @desc    Secure KYC document access (Admin or Owner only)
+// @access  Private (Admin or Vendor owner)
+router.get('/kyc/:providerId/:documentType', requireAuth, async (req, res, next) => {
+  try {
+    const { providerId, documentType } = req.params;
+    const userId = req.user._id.toString();
+    const isAdmin = req.user.role === 'admin';
+    const isOwner = userId === providerId;
+
+    if (!isAdmin && !isOwner) {
+      res.status(403);
+      throw new Error('Access denied. KYC documents are restricted to administrators and the verified account owner.');
+    }
+
+    const provider = await User.findById(providerId);
+    if (!provider) {
+      res.status(404);
+      throw new Error('Provider not found');
+    }
+
+    const allowedTypes = ['aadhaarFront', 'aadhaarBack', 'panCard', 'gstDoc'];
+    if (!allowedTypes.includes(documentType)) {
+      res.status(400);
+      throw new Error(`Invalid document type. Allowed: ${allowedTypes.join(', ')}`);
+    }
+
+    const docUrl = provider.kycDocuments?.[documentType];
+    if (!docUrl) {
+      res.status(404);
+      throw new Error(`Document "${documentType}" has not been uploaded for this provider.`);
+    }
+
+    if (isAdmin) {
+      await logAudit({
+        req,
+        action: 'KYC_DOCUMENT_VIEWED',
+        targetType: 'User',
+        targetId: provider._id,
+        details: `Administrator "${req.user.name || 'Admin'}" viewed ${documentType} copy for vendor "${provider.businessName || provider.name}"`,
+        metadata: { documentType },
+        status: 'INFO',
+      });
+    }
+
+    res.json({
+      success: true,
+      documentType,
+      url: docUrl,
+      providerName: provider.businessName || provider.name,
+      isVerified: provider.isVerified,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;

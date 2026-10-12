@@ -13,6 +13,8 @@ import {
   CheckCircle2,
   XCircle,
   RotateCcw,
+  AlertTriangle,
+  X,
 } from 'lucide-react';
 import type { Booking, Category } from '../types';
 
@@ -27,6 +29,7 @@ interface MyBookingsPageProps {
   onCancelBooking: (bookingId: string) => Promise<void>;
   onCompleteBooking: (bookingId: string) => Promise<void>;
   onOpenReviewModal: (booking: Booking) => void;
+  onRaiseDispute?: (bookingId: string, reason: string) => Promise<void>;
 }
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&auto=format&fit=crop&q=80';
@@ -53,9 +56,11 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
   onCancelBooking,
   onCompleteBooking,
   onOpenReviewModal,
+  onRaiseDispute,
 }) => {
   const toPay = bookings.filter((b) => b.status === 'AWAITING_PAYMENT');
   const upcoming = bookings.filter((b) => b.status === 'ACTIVE');
+  const disputed = bookings.filter((b) => b.status === 'DISPUTED');
   const finished = bookings.filter(isFinished);
   const cancelled = bookings.filter((b) => b.status === 'CANCELLED');
   const totalPaid = [...upcoming, ...finished].reduce((sum, b) => sum + b.totalPaid, 0);
@@ -64,8 +69,39 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
     toPay.length + upcoming.length > 0 || finished.length === 0 ? 'current' : 'finished'
   );
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [disputeBookingModal, setDisputeBookingModal] = useState<Booking | null>(null);
+  const [disputeReasonText, setDisputeReasonText] = useState('');
+  const [submittingDispute, setSubmittingDispute] = useState(false);
 
-  const current = [...toPay, ...upcoming].sort((a, b) => {
+  const disputeReasonsPreset = [
+    'Vendor did not show up',
+    'Severe delay / missed critical event time',
+    'Poor quality or damaged equipment delivered',
+    'Demanding extra charges not in agreed bid',
+    'Unprofessional conduct / incomplete service'
+  ];
+
+  const handleOpenDispute = (b: Booking) => {
+    setDisputeBookingModal(b);
+    setDisputeReasonText('');
+  };
+
+  const handleConfirmDispute = async () => {
+    if (!disputeBookingModal || !disputeReasonText.trim()) return;
+    if (!onRaiseDispute) return;
+    setSubmittingDispute(true);
+    try {
+      await onRaiseDispute(disputeBookingModal._id, disputeReasonText.trim());
+      setDisputeBookingModal(null);
+    } catch {
+      // toast shown by parent
+    } finally {
+      setSubmittingDispute(false);
+    }
+  };
+
+
+  const current = [...toPay, ...upcoming, ...disputed].sort((a, b) => {
     if (a.status !== b.status) return a.status === 'AWAITING_PAYMENT' ? -1 : 1;
     return (a.requirementId?.eventDate || '').localeCompare(b.requirementId?.eventDate || '');
   });
@@ -132,6 +168,7 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
 
   const renderCurrent = (b: Booking) => {
     const isPaid = b.status === 'ACTIVE';
+    const isDisputed = b.status === 'DISPUTED';
     const phone = phoneDigits(b.providerId?.phone);
     const busy = busyId === b._id;
 
@@ -174,12 +211,12 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
                 <span className="text-emerald-800">Vendor chosen</span>
               </li>
               <li className="space-y-1.5">
-                <div className={`h-2 rounded-full ${isPaid ? 'bg-emerald-500' : 'bg-amber-400'}`} />
-                <span className={isPaid ? 'text-emerald-800' : 'text-amber-800'}>{isPaid ? 'Paid' : 'Pay now'}</span>
+                <div className={`h-2 rounded-full ${isPaid || isDisputed ? 'bg-emerald-500' : 'bg-amber-400'}`} />
+                <span className={isPaid || isDisputed ? 'text-emerald-800' : 'text-amber-800'}>{isPaid || isDisputed ? 'Paid' : 'Pay now'}</span>
               </li>
               <li className="space-y-1.5">
-                <div className="h-2 rounded-full bg-slate-200" />
-                <span className="text-slate-500">Event done</span>
+                <div className={`h-2 rounded-full ${isDisputed ? 'bg-rose-500' : 'bg-slate-200'}`} />
+                <span className={isDisputed ? 'text-rose-700 font-semibold' : 'text-slate-500'}>{isDisputed ? 'In Dispute' : 'Event done'}</span>
               </li>
             </ol>
 
@@ -218,7 +255,7 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
                     <div className="grid grid-cols-2 gap-2">
                       <a
                         href={`tel:${phone}`}
-                        className="py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm flex items-center justify-center gap-1.5"
+                        className="py-3 min-h-[44px] rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm flex items-center justify-center gap-1.5 active:scale-95 transition"
                       >
                         <Phone className="w-4 h-4" /> Call
                       </a>
@@ -226,7 +263,7 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
                         href={`https://wa.me/${phone.length === 10 ? '91' + phone : phone}?text=${encodeURIComponent(`Hi, this is about my EzzyGo booking: ${b.requirementId?.title || ''}`)}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm flex items-center justify-center gap-1.5"
+                        className="py-3 min-h-[44px] rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm flex items-center justify-center gap-1.5 active:scale-95 transition"
                       >
                         <MessageCircle className="w-4 h-4" /> WhatsApp
                       </a>
@@ -253,7 +290,22 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
                   </div>
                 </dl>
 
-                {isPaid ? (
+                {isDisputed ? (
+                  <div className="space-y-3">
+                    <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 space-y-1.5">
+                      <div className="flex items-center gap-1.5 font-semibold text-sm text-rose-800">
+                        <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                        Dispute Under Review
+                      </div>
+                      <p className="text-xs text-rose-700">
+                        Reason: {b.disputeReason || b.disputeDetails?.reason || 'Service dispute reported.'}
+                      </p>
+                      <p className="text-[11px] text-rose-600/90 pt-1 border-t border-rose-200">
+                        Escrow funds ({rupees(b.totalPaid)}) are secured. EzzyGo support is mediating with the vendor.
+                      </p>
+                    </div>
+                  </div>
+                ) : isPaid ? (
                   <div className="space-y-2">
                     <p className="text-sm text-slate-500">
                       After the event, click below. The vendor then gets {rupees(b.bidAmount)}.
@@ -266,7 +318,7 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
                           onOpenReviewModal(b);
                         })
                       }
-                      className="w-full py-3 rounded-xl bg-[#f95724] hover:bg-[#e04818] disabled:opacity-60 text-white font-semibold text-sm cursor-pointer"
+                      className="w-full py-3.5 min-h-[46px] rounded-xl bg-[#f95724] hover:bg-[#e04818] disabled:opacity-60 text-white font-semibold text-sm cursor-pointer active:scale-95 transition"
                     >
                       Event done. Release payment
                     </button>
@@ -277,17 +329,27 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
                           run(b._id, () => onCancelBooking(b._id));
                         }
                       }}
-                      className="w-full py-2.5 rounded-xl text-rose-700 hover:bg-rose-50 disabled:opacity-60 font-semibold text-sm cursor-pointer"
+                      className="w-full py-2.5 min-h-[40px] rounded-xl text-rose-700 hover:bg-rose-50 disabled:opacity-60 font-semibold text-xs sm:text-sm cursor-pointer transition flex items-center justify-center active:scale-95"
                     >
                       Cancel and get a full refund
                     </button>
+                    {onRaiseDispute && (
+                      <button
+                        disabled={busy}
+                        onClick={() => handleOpenDispute(b)}
+                        className="w-full py-2.5 min-h-[40px] rounded-xl border border-rose-200 text-rose-700 hover:bg-rose-50 disabled:opacity-60 font-semibold text-xs sm:text-sm cursor-pointer transition flex items-center justify-center gap-1.5 active:scale-95"
+                      >
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                        Report Issue / Raise Dispute
+                      </button>
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-2">
                     <button
                       disabled={busy}
                       onClick={() => onOpenPaymentModal(b)}
-                      className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-semibold text-sm cursor-pointer"
+                      className="w-full py-3.5 min-h-[46px] rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-semibold text-sm cursor-pointer active:scale-95 transition"
                     >
                       Pay {rupees(b.totalPaid)}
                     </button>
@@ -341,14 +403,14 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
         ) : (
           <button
             onClick={() => onOpenReviewModal(b)}
-            className="px-4 py-2.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-900 border border-orange-200 text-sm font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
+            className="px-4 py-3 min-h-[44px] rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-900 border border-orange-200 text-sm font-semibold flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition"
           >
             <Star className="w-4 h-4 fill-amber-400 text-amber-400" /> Rate vendor
           </button>
         )}
         <button
           onClick={() => onOpenPostModal(b.requirementId?.category)}
-          className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
+          className="px-4 py-3 min-h-[44px] rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition"
         >
           <RotateCcw className="w-4 h-4" /> Book again
         </button>
@@ -409,7 +471,7 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
         </div>
         <button
           onClick={() => onOpenPostModal()}
-          className="self-start sm:self-auto px-5 py-3 rounded-full bg-[#f95724] hover:bg-[#e04818] text-white font-semibold text-sm flex items-center gap-1.5 cursor-pointer shrink-0"
+          className="w-full sm:w-auto px-5 py-3 min-h-[44px] rounded-full bg-[#f95724] hover:bg-[#e04818] text-white font-semibold text-sm flex items-center justify-center gap-1.5 cursor-pointer shrink-0 active:scale-95 transition"
         >
           <Plus className="w-4 h-4" /> Post a new request
         </button>
@@ -476,6 +538,89 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
           {tab === 'current' && list.map(renderCurrent)}
           {tab === 'finished' && list.map(renderFinished)}
           {tab === 'cancelled' && list.map(renderCancelled)}
+        </div>
+      )}
+      {/* Dispute Modal */}
+      {disputeBookingModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 space-y-5 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-lg">Raise a Dispute</h3>
+                  <p className="text-xs text-slate-500">Hold payment & request EzzyGo mediation</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setDisputeBookingModal(null)}
+                className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-sm text-slate-600">
+                If the vendor did not deliver as promised or had serious issues, let us know. Escrow payout of{' '}
+                <strong className="text-slate-900">{rupees(disputeBookingModal.totalPaid)}</strong> will be immediately held.
+              </p>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Common reasons:</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {disputeReasonsPreset.map((r) => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setDisputeReasonText(r)}
+                      className={`text-xs px-2.5 py-1 rounded-full border transition cursor-pointer ${
+                        disputeReasonText === r
+                          ? 'bg-rose-50 border-rose-300 text-rose-800 font-semibold'
+                          : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {r}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Describe the issue in detail:
+                </label>
+                <textarea
+                  value={disputeReasonText}
+                  onChange={(e) => setDisputeReasonText(e.target.value)}
+                  placeholder="Provide specific details about what happened during the event..."
+                  rows={3}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setDisputeBookingModal(null)}
+                disabled={submittingDispute}
+                className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 text-sm font-medium transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDispute}
+                disabled={!disputeReasonText.trim() || submittingDispute}
+                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white font-semibold text-sm transition cursor-pointer flex items-center gap-1.5"
+              >
+                {submittingDispute ? 'Submitting...' : 'Submit Dispute'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

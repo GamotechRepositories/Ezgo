@@ -51,9 +51,13 @@ const requirementSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    biddingDeadline: {
+      type: Date,
+      default: null,
+    },
     status: {
       type: String,
-      enum: ['DRAFT', 'OPEN', 'ACCEPTED', 'ACTIVE', 'COMPLETED', 'CANCELLED'],
+      enum: ['DRAFT', 'OPEN', 'ACCEPTED', 'ACTIVE', 'COMPLETED', 'CANCELLED', 'EXPIRED'],
       default: 'OPEN',
     },
     bidsCount: {
@@ -72,6 +76,12 @@ const requirementSchema = new mongoose.Schema(
 requirementSchema.pre('validate', function () {
   if (this.budget) {
     this.maxAcceptableBid = Math.floor(this.budget * 0.85);
+  }
+  if (!this.biddingDeadline && this.eventDate) {
+    const eventD = new Date(this.eventDate);
+    if (!Number.isNaN(eventD.getTime())) {
+      this.biddingDeadline = eventD;
+    }
   }
 });
 

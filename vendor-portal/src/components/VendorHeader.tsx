@@ -4,9 +4,9 @@ import type { User } from '../types';
 
 interface VendorHeaderProps {
   vendor: User;
-  activeTab: 'auctions' | 'orders' | 'wallet' | 'inventory';
+  activeTab: 'auctions' | 'orders' | 'availability' | 'wallet' | 'inventory';
   onToggleSidebar: () => void;
-  onTabChange: (tab: 'auctions' | 'orders' | 'wallet' | 'inventory') => void;
+  onTabChange: (tab: 'auctions' | 'orders' | 'availability' | 'wallet' | 'inventory') => void;
   activeOrdersCount: number;
   onLogout: () => void;
 }
@@ -33,7 +33,7 @@ export const VendorHeader: React.FC<VendorHeaderProps> = ({
           <button
             onClick={onToggleSidebar}
             aria-label="Open menu"
-            className="p-2 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 lg:hidden cursor-pointer"
+            className="p-2 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 lg:hidden cursor-pointer min-w-[42px] min-h-[42px] flex items-center justify-center"
           >
             <Menu className="w-5 h-5" />
           </button>
@@ -56,7 +56,7 @@ export const VendorHeader: React.FC<VendorHeaderProps> = ({
           </span>
           <button
             onClick={onLogout}
-            className="px-3 py-1.5 rounded-full text-sm font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 cursor-pointer"
+            className="px-3.5 py-2 min-h-[38px] rounded-full text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 cursor-pointer flex items-center justify-center"
           >
             Log out
           </button>

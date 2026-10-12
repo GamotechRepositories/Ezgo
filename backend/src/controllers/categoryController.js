@@ -1,3 +1,4 @@
+import { logAudit } from '../services/auditService.js';
 import Category from '../models/Category.js';
 
 export const getCategories = async (req, res, next) => {
@@ -14,6 +15,15 @@ export const createCategory = async (req, res, next) => {
     const { name, icon, description, avgPriceRange, image } = req.body;
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     const category = await Category.create({ name, slug, icon, description, avgPriceRange, image });
+    await logAudit({
+      req,
+      action: 'CATEGORY_CREATED',
+      targetType: 'Category',
+      targetId: category._id,
+      details: `Created new service category "${category.name}"`,
+      metadata: { name: category.name, slug: category.slug },
+      status: 'SUCCESS',
+    });
     res.status(201).json({ success: true, data: category });
   } catch (error) {
     next(error);
@@ -27,6 +37,15 @@ export const updateCategory = async (req, res, next) => {
     if (!category) {
       return res.status(404).json({ success: false, message: 'Category not found' });
     }
+    await logAudit({
+      req,
+      action: 'CATEGORY_UPDATED',
+      targetType: 'Category',
+      targetId: category._id,
+      details: `Updated category "${category.name}"`,
+      metadata: req.body,
+      status: 'INFO',
+    });
     res.json({ success: true, data: category });
   } catch (error) {
     next(error);
@@ -37,6 +56,14 @@ export const deleteCategory = async (req, res, next) => {
   try {
     const { id } = req.params;
     await Category.findByIdAndDelete(id);
+    await logAudit({
+      req,
+      action: 'CATEGORY_DELETED',
+      targetType: 'Category',
+      targetId: id,
+      details: `Deleted service category with ID ${id}`,
+      status: 'WARNING',
+    });
     res.json({ success: true, message: 'Category deleted successfully' });
   } catch (error) {
     next(error);

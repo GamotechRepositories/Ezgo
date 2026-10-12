@@ -61,6 +61,7 @@ export const createRequirement = async (req, res, next) => {
       timeWindow: timeWindow || { start: '18:00', end: '23:00' },
       budget: Number(budget),
       guestCount: Number(guestCount) || 100,
+      biddingDeadline: req.body.biddingDeadline ? new Date(req.body.biddingDeadline) : undefined,
       status: targetStatus,
     });
 
@@ -213,6 +214,20 @@ export const deleteRequirement = async (req, res, next) => {
 // Get all requirements with optional filters and populated bids
 export const getRequirements = async (req, res, next) => {
   try {
+    // Auto-expire requirements whose bidding deadline or event date has passed
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    await Requirement.updateMany(
+      {
+        status: 'OPEN',
+        $or: [
+          { biddingDeadline: { $exists: true, $ne: null, $lt: now } },
+          { eventDate: { $lt: todayStr } },
+        ],
+      },
+      { $set: { status: 'EXPIRED' } }
+    );
+
     const { category, status, city, requesterId, includeDrafts } = req.query;
     const filter = {};
 

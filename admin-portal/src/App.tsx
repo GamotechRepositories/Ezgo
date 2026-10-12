@@ -11,7 +11,7 @@ import { ToastContainer } from './components/Toast';
 import type { ToastMessage } from './components/Toast';
 import { LoginPage } from './components/LoginPage';
 import { api, getToken, clearToken, emptyMetrics } from './services/api';
-import type { AdminMetrics, Booking, Category, Occasion, User } from './types';
+import type { AdminMetrics, Booking, Category, Occasion, User, AuditLog } from './types';
 
 type AdminTab = 'metrics' | 'kyc' | 'escrow' | 'categories' | 'occasions' | 'logs';
 
@@ -62,6 +62,8 @@ function AdminApp({ currentAdmin, onLogout }: { currentAdmin: User; onLogout: ()
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [occasions, setOccasions] = useState<Occasion[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [isLoadingLogs, setIsLoadingLogs] = useState(false);
   const [loadError, setLoadError] = useState('');
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
@@ -74,6 +76,23 @@ function AdminApp({ currentAdmin, onLogout }: { currentAdmin: User; onLogout: ()
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
+  const handleRefreshLogs = async () => {
+    setIsLoadingLogs(true);
+    try {
+      const [logs, m] = await Promise.all([
+        api.getAuditLogs(),
+        api.getMetrics(),
+      ]);
+      setAuditLogs(logs);
+      setMetrics(m);
+      addToast('info', 'Logs Refreshed', 'Latest audit entries and ledger transactions loaded.');
+    } catch (err: any) {
+      addToast('error', 'Could not refresh logs', err.message);
+    } finally {
+      setIsLoadingLogs(false);
+    }
+  };
+
   const loadData = async () => {
     const results = await Promise.allSettled([
       api.getMetrics(),
@@ -81,13 +100,15 @@ function AdminApp({ currentAdmin, onLogout }: { currentAdmin: User; onLogout: ()
       api.getBookings(),
       api.getCategories(),
       api.getOccasions(),
+      api.getAuditLogs(),
     ]);
-    const [m, p, b, c, o] = results;
+    const [m, p, b, c, o, l] = results;
     if (m.status === 'fulfilled') setMetrics(m.value);
     if (p.status === 'fulfilled') setProviders(p.value);
     if (b.status === 'fulfilled') setBookings(b.value);
     if (c.status === 'fulfilled') setCategories(c.value);
     if (o.status === 'fulfilled') setOccasions(o.value);
+    if (l && l.status === 'fulfilled') setAuditLogs(l.value);
     const failed = results.find((r): r is PromiseRejectedResult => r.status === 'rejected');
     setLoadError(failed ? (failed.reason as Error).message : '');
   };
@@ -195,6 +216,24 @@ function AdminApp({ currentAdmin, onLogout }: { currentAdmin: User; onLogout: ()
       );
     } catch (err: any) {
       addToast('error', 'Could not cancel booking', err.message);
+    }
+  };
+
+  const handleResolveDispute = async (bookingId: string, action: 'PAYOUT_VENDOR' | 'REFUND_HOST' | 'DISMISS', note?: string) => {
+    try {
+      await api.resolveDispute(bookingId, action, note);
+      await refreshMoney();
+      addToast(
+        'success',
+        'Dispute Resolved',
+        action === 'PAYOUT_VENDOR'
+          ? 'Escrow released to vendor.'
+          : action === 'REFUND_HOST'
+          ? 'Escrow refunded to host.'
+          : 'Dispute dismissed. Booking returned to active.'
+      );
+    } catch (err: any) {
+      addToast('error', 'Could not resolve dispute', err.message);
     }
   };
 
@@ -307,6 +346,7 @@ function AdminApp({ currentAdmin, onLogout }: { currentAdmin: User; onLogout: ()
               bookings={bookings}
               onReleasePayout={handleReleasePayout}
               onIssueRefund={handleIssueRefund}
+              onResolveDispute={handleResolveDispute}
             />
           )}
 
@@ -328,7 +368,12 @@ function AdminApp({ currentAdmin, onLogout }: { currentAdmin: User; onLogout: ()
           )}
 
           {activeTab === 'logs' && (
-            <AuditLogViewer transactions={metrics.recentTransactions || []} />
+            <AuditLogViewer
+              logs={auditLogs}
+              transactions={metrics.recentTransactions || []}
+              onRefresh={handleRefreshLogs}
+              isLoading={isLoadingLogs}
+            />
           )}
         </main>
 

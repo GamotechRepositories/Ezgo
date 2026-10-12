@@ -86,6 +86,22 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    unavailableDates: [
+      {
+        date: { type: String, required: true },
+        reason: { type: String, default: 'Booked / Offline Event' },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
+    verificationAudit: [
+      {
+        status: { type: String, enum: ['PENDING', 'APPROVED', 'REJECTED', 'REVOKED'], default: 'PENDING' },
+        reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        reviewedByName: { type: String, default: 'Administrator' },
+        reviewedAt: { type: Date, default: Date.now },
+        notes: { type: String, default: '' },
+      },
+    ],
   },
   { timestamps: true }
 );

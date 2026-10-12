@@ -1,3 +1,4 @@
+import { logAudit } from '../services/auditService.js';
 import Occasion from '../models/Occasion.js';
 
 const defaultOccasions = [
@@ -83,6 +84,15 @@ export const createOccasion = async (req, res, next) => {
       isActive: true,
     });
 
+    await logAudit({
+      req,
+      action: 'OCCASION_CREATED',
+      targetType: 'Occasion',
+      targetId: occasion._id,
+      details: `Created new occasion template "${occasion.name}"`,
+      metadata: { name: occasion.name, slug: occasion.slug },
+      status: 'SUCCESS',
+    });
     res.status(201).json({ success: true, data: occasion });
   } catch (error) {
     next(error);
@@ -102,6 +112,15 @@ export const updateOccasion = async (req, res, next) => {
       res.status(404);
       throw new Error('Occasion not found');
     }
+    await logAudit({
+      req,
+      action: 'OCCASION_UPDATED',
+      targetType: 'Occasion',
+      targetId: occasion._id,
+      details: `Updated occasion template "${occasion.name}"`,
+      metadata: updates,
+      status: 'INFO',
+    });
     res.json({ success: true, data: occasion });
   } catch (error) {
     next(error);
@@ -119,6 +138,14 @@ export const deleteOccasion = async (req, res, next) => {
     }
 
     await Occasion.findByIdAndDelete(req.params.id);
+    await logAudit({
+      req,
+      action: 'OCCASION_DELETED',
+      targetType: 'Occasion',
+      targetId: req.params.id,
+      details: `Deleted occasion template "${occasion.name}"`,
+      status: 'WARNING',
+    });
     res.json({ success: true, message: 'Occasion deleted successfully' });
   } catch (error) {
     next(error);

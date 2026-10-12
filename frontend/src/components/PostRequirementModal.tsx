@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   X,
+  ChevronLeft,
   Palette,
   Tag,
   ShieldCheck,
@@ -23,6 +24,7 @@ import {
   Upload,
   Image as ImageIcon,
   Loader2,
+  FileText,
 } from 'lucide-react';
 import type { Category, Requirement, PostRequirementInitialData } from '../types';
 import { EVENT_CATEGORIES } from '../data/eventData';
@@ -175,6 +177,14 @@ const GUEST_TIERS = [
   { label: 'Grand Wedding / Reception', range: '400 - 800+ Guests', count: 500 },
 ];
 
+
+  const STEP_TITLES = [
+    { num: 1, title: 'Date & Venue', subtitle: 'When & where' },
+    { num: 2, title: 'Select Services', subtitle: 'What you need' },
+    { num: 3, title: 'Event Specs', subtitle: 'Guests & details' },
+    { num: 4, title: 'Budget & Review', subtitle: 'Ceiling & submit' },
+  ];
+
 export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
   isOpen,
   onClose,
@@ -227,6 +237,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
   const [uploadError, setUploadError] = useState('');
   const [loading, setLoading] = useState(false);
   const [packageSummary, setPackageSummary] = useState<PostRequirementInitialData['packageSummary'] | null>(null);
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -322,7 +333,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
   const activeCategoryData = findCategory(mergedCategories, primaryCategoryName) || mergedCategories[0] || {
     name: 'Event Services',
     image: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&auto=format&fit=crop&q=80',
-    avgPriceRange: '₹10,000 - ₹50,000',
+    avgPriceRange: '₹0,000 - ₹50,000',
   };
   const numericBudget = typeof budget === 'number' ? budget : 0;
   const maxAcceptableBid = Math.floor(numericBudget * 0.85);
@@ -389,11 +400,70 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
     });
   };
 
+  const handleSaveDraft = async () => {
+    const finalBudget = typeof budget === 'number' && budget > 0 ? budget : 1000;
+    const finalGuestCount = typeof guestCount === 'number' ? guestCount : 50;
+    if (!title.trim()) {
+      alert('Please enter at least a requirement title to save a draft.');
+      return;
+    }
+    setLoading(true);
+    try {
+      await onSubmit({
+        requesterId,
+        category: selectedCategories.join(' + ') || 'Event Services',
+        title,
+        description,
+        imageUrl: customImageUrl || activeCategoryData.image,
+        equipmentNeeded: selectedEquipments,
+        location: { city, area: area || 'Downtown', venueAddress },
+        eventDate: eventDate || new Date().toISOString().split('T')[0],
+        timeWindow: { start: startTime, end: endTime },
+        guestCount: finalGuestCount,
+        budget: Math.max(finalBudget, 1000),
+        status: 'DRAFT',
+      });
+      onClose();
+    } catch (err: any) {
+      console.error('Failed to save draft:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  
+  const canProceedStep1 = Boolean(city.trim() && area.trim() && eventDate);
+  const canProceedStep2 = selectedCategories.length > 0;
+  const canProceedStep3 = Boolean(title.trim() && (typeof guestCount === 'number' ? guestCount > 0 : true));
+  const canProceedStep4 = Boolean(typeof budget === 'number' && budget >= 1000);
+
+  const handleNextStep = () => {
+    if (currentStep === 1) {
+      if (!canProceedStep1) {
+        alert('Please fill in your event date, city, and area to continue.');
+        return;
+      }
+      setCurrentStep(2);
+    } else if (currentStep === 2) {
+      if (!canProceedStep2) {
+        alert('Please select at least one service category.');
+        return;
+      }
+      setCurrentStep(3);
+    } else if (currentStep === 3) {
+      if (!canProceedStep3) {
+        alert('Please enter a title for your requirement.');
+        return;
+      }
+      setCurrentStep(4);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const finalBudget = typeof budget === 'number' ? budget : 0;
     const finalGuestCount = typeof guestCount === 'number' ? guestCount : 50;
-    if (!title || finalBudget <= 0 || !eventDate || !area) return;
+    if (!canProceedStep1 || !canProceedStep4 || !title) return;
     setLoading(true);
     try {
       await onSubmit({
@@ -466,9 +536,304 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
           </p>
         </div>
 
+                {/* Step Progress Bar */}
+        <div className="mb-6 sm:mb-8">
+          <div className="sm:hidden mb-2.5 flex items-center justify-between text-xs">
+            <span className="font-bold text-slate-800">
+              Step {currentStep} of 4: <span className="text-[#f95724]">{STEP_TITLES[currentStep - 1].title}</span>
+            </span>
+            <span className="text-slate-400 font-medium font-mono">{Math.round((currentStep / 4) * 100)}% Complete</span>
+          </div>
+
+          <div className="grid grid-cols-4 gap-2">
+            {STEP_TITLES.map((s) => {
+              const isPassed = currentStep > s.num;
+              const isCurrent = currentStep === s.num;
+              return (
+                <button
+                  key={s.num}
+                  type="button"
+                  onClick={() => {
+                    if (s.num < currentStep) setCurrentStep(s.num as any);
+                  }}
+                  className={`text-left p-2 sm:p-3 rounded-xl border transition cursor-pointer flex flex-col justify-between ${
+                    isCurrent
+                      ? 'border-[#f95724] bg-orange-50/70 ring-2 ring-[#f95724]/20'
+                      : isPassed
+                      ? 'border-emerald-300 bg-emerald-50/50 hover:bg-emerald-50'
+                      : 'border-slate-200 bg-white opacity-60 pointer-events-none'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span
+                      className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full text-[10px] sm:text-xs font-bold flex items-center justify-center ${
+                        isCurrent
+                          ? 'bg-[#f95724] text-white'
+                          : isPassed
+                          ? 'bg-emerald-600 text-white'
+                          : 'bg-slate-200 text-slate-600'
+                      }`}
+                    >
+                      {isPassed ? '✓' : s.num}
+                    </span>
+                    <span className="hidden sm:inline text-[11px] font-semibold text-slate-400">Step {s.num}</span>
+                  </div>
+                  <div className="mt-1">
+                    <div className={`text-xs sm:text-sm font-bold truncate ${isCurrent ? 'text-slate-900' : 'text-slate-600'}`}>
+                      {s.title}
+                    </div>
+                    <div className="hidden sm:block text-[11px] text-slate-400 truncate">{s.subtitle}</div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-6">
 
           {/* Pre-loaded from Package Builder Alert Banner */}
+
+          {/* STEP 1: Event Date, Schedule & Location */}
+          {currentStep === 1 && (
+            <div className="space-y-5 animate-in fade-in duration-200">
+          {/* STEP 2: Event Location (All India Enabled) */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-7 shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
+              <div className="flex items-center gap-2.5">
+                <span className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center shadow-xs">
+                  2
+                </span>
+                <div>
+                  <h2 className="text-base sm:text-lg font-bold text-slate-900 font-heading">
+                    Where will the event take place?
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Available across all cities, districts & towns in India 🇮🇳
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-5">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
+                  <MapPin className="w-3.5 h-3.5 text-orange-500" />
+                  <span>City / Town / District *</span>
+                </label>
+                <input
+                  type="text"
+                  list="all-india-cities-list"
+                  placeholder="e.g. Pune, Mumbai, Delhi NCR, Nagpur, Goa..."
+                  value={city}
+                  onChange={(e) => {
+                    const newCity = e.target.value;
+                    setCity(newCity);
+                    if (POPULAR_AREAS_BY_CITY[newCity]?.[0]) {
+                      setArea(POPULAR_AREAS_BY_CITY[newCity][0]);
+                    }
+                  }}
+                  required
+                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs sm:text-sm font-bold focus:outline-none focus:border-orange-500 focus:bg-white transition"
+                />
+                <datalist id="all-india-cities-list">
+                  {ALL_INDIA_CITIES.map((c) => (
+                    <option key={c} value={c} />
+                  ))}
+                </datalist>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Area / Locality / PIN Code *
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Wakad, Baner, PIN 411057..."
+                  value={area}
+                  onChange={(e) => setArea(e.target.value)}
+                  required
+                  list="area-suggestions"
+                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs sm:text-sm font-semibold focus:outline-none focus:border-orange-500 focus:bg-white transition"
+                />
+                <datalist id="area-suggestions">
+                  {(POPULAR_AREAS_BY_CITY[city] || []).map((a) => (
+                    <option key={a} value={a} />
+                  ))}
+                </datalist>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
+                  <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Venue Name / Address (Optional)</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Hotel Sayaji, Grand Ballroom, Lawn, Home"
+                  value={venueAddress}
+                  onChange={(e) => setVenueAddress(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs sm:text-sm font-medium focus:outline-none focus:border-orange-500 focus:bg-white transition"
+                />
+              </div>
+            </div>
+
+            {/* Popular City Shortcuts */}
+            <div className="pt-1 space-y-2">
+              <div className="flex items-center gap-1.5 flex-wrap text-xs">
+                <span className="text-slate-400 text-xs font-medium">Quick Select:</span>
+                {POPULAR_CITY_SHORTCUTS.map((popCity) => (
+                  <button
+                    key={popCity}
+                    type="button"
+                    onClick={() => {
+                      setCity(popCity);
+                      if (POPULAR_AREAS_BY_CITY[popCity]?.[0]) {
+                        setArea(POPULAR_AREAS_BY_CITY[popCity][0]);
+                      }
+                    }}
+                    className={`px-3.5 py-2 sm:py-1.5 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer min-h-[36px] flex items-center justify-center active:scale-95 ${
+                      city === popCity
+                        ? 'bg-orange-600 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    {popCity}
+                  </button>
+                ))}
+              </div>
+
+              {/* Localities Shortcuts for selected city */}
+              {POPULAR_AREAS_BY_CITY[city] && POPULAR_AREAS_BY_CITY[city].length > 0 && (
+                <div className="flex items-center gap-1.5 flex-wrap text-xs pt-1 border-t border-slate-100">
+                  <span className="text-slate-400 text-xs font-medium">Popular in {city}:</span>
+                  {POPULAR_AREAS_BY_CITY[city].slice(0, 8).map((popArea) => (
+                    <button
+                      key={popArea}
+                      type="button"
+                      onClick={() => setArea(popArea)}
+                      className={`px-3.5 py-2 sm:py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer min-h-[36px] flex items-center justify-center active:scale-95 ${
+                        area === popArea
+                          ? 'bg-orange-100 text-orange-900 font-bold border border-orange-300'
+                          : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
+                      }`}
+                    >
+                      {popArea}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* STEP 3: Date, Time & Estimated Guests */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-7 shadow-xs space-y-4">
+            <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3.5">
+              <span className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center shadow-xs">
+                3
+              </span>
+              <h2 className="text-base sm:text-lg font-bold text-slate-900 font-heading">
+                When is the event & how many guests?
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5 text-orange-500" />
+                  <span>Event Date *</span>
+                </label>
+                <input
+                  type="date"
+                  value={eventDate}
+                  min={todayIso()}
+                  onChange={(e) => setEventDate(e.target.value)}
+                  required
+                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs sm:text-sm font-bold focus:outline-none focus:border-orange-500 focus:bg-white transition"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Start Time</span>
+                </label>
+                <input
+                  type="time"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs sm:text-sm font-medium focus:outline-none focus:border-orange-500 focus:bg-white transition"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  End Time
+                </label>
+                <input
+                  type="time"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs sm:text-sm font-medium focus:outline-none focus:border-orange-500 focus:bg-white transition"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
+                  <Users className="w-3.5 h-3.5 text-orange-500" />
+                  <span>Estimated Guests *</span>
+                </label>
+                <input
+                  type="number"
+                  min="10"
+                  step="10"
+                  value={guestCount}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '') {
+                      setGuestCount('');
+                    } else {
+                      const parsed = parseInt(val, 10);
+                      setGuestCount(isNaN(parsed) ? '' : parsed);
+                    }
+                  }}
+                  onWheel={(e) => e.currentTarget.blur()}
+                  placeholder="e.g. 200"
+                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs sm:text-sm font-bold focus:outline-none focus:border-orange-500 focus:bg-white transition"
+                />
+              </div>
+            </div>
+
+            {/* Quick Guest Presets */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+              {GUEST_TIERS.map((tier) => (
+                <button
+                  key={tier.label}
+                  type="button"
+                  onClick={() => setGuestCount(tier.count)}
+                  className={`p-3.5 min-h-[50px] rounded-xl border text-left transition cursor-pointer flex items-center justify-between active:scale-95 ${
+                    guestCount === tier.count
+                      ? 'border-orange-500 bg-orange-50/80 text-orange-950 font-bold shadow-xs'
+                      : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  <div>
+                    <span className="text-xs sm:text-sm block font-bold">{tier.label}</span>
+                    <span className="text-[11px] text-slate-500">{tier.range}</span>
+                  </div>
+                  {guestCount === tier.count && <Check className="w-4 h-4 text-orange-600 shrink-0" />}
+                </button>
+              ))}
+            </div>
+          </div>
+
+            </div>
+          )}
+
+
+          {/* STEP 2: Select Services */}
+          {currentStep === 2 && (
+            <div className="space-y-5 animate-in fade-in duration-200">
           {packageSummary && (
             <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/10 to-orange-500/5 border border-orange-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in">
               <div className="flex items-start sm:items-center gap-3.5">
@@ -601,7 +966,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                         </span>
                       </div>
                       <span className="text-[11px] sm:text-xs font-semibold text-[#f95724] block mt-0.5 truncate">
-                        Avg. {cat.avgPriceRange || '₹10,000 - ₹50,000'}
+                        Avg. {cat.avgPriceRange || '₹0,000 - ₹50,000'}
                       </span>
                     </div>
                   </button>
@@ -610,292 +975,13 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
             </div>
           </div>
 
-          {/* STEP 2: Event Location (All India Enabled) */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-7 shadow-xs space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
-              <div className="flex items-center gap-2.5">
-                <span className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center shadow-xs">
-                  2
-                </span>
-                <div>
-                  <h2 className="text-base sm:text-lg font-bold text-slate-900 font-heading">
-                    Where will the event take place?
-                  </h2>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Available across all cities, districts & towns in India 🇮🇳
-                  </p>
-                </div>
-              </div>
             </div>
+          )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-5">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5 text-orange-500" />
-                  <span>City / Town / District *</span>
-                </label>
-                <input
-                  type="text"
-                  list="all-india-cities-list"
-                  placeholder="e.g. Pune, Mumbai, Delhi NCR, Nagpur, Goa..."
-                  value={city}
-                  onChange={(e) => {
-                    const newCity = e.target.value;
-                    setCity(newCity);
-                    if (POPULAR_AREAS_BY_CITY[newCity]?.[0]) {
-                      setArea(POPULAR_AREAS_BY_CITY[newCity][0]);
-                    }
-                  }}
-                  required
-                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs sm:text-sm font-bold focus:outline-none focus:border-orange-500 focus:bg-white transition"
-                />
-                <datalist id="all-india-cities-list">
-                  {ALL_INDIA_CITIES.map((c) => (
-                    <option key={c} value={c} />
-                  ))}
-                </datalist>
-              </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Area / Locality / PIN Code *
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Wakad, Baner, PIN 411057..."
-                  value={area}
-                  onChange={(e) => setArea(e.target.value)}
-                  required
-                  list="area-suggestions"
-                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs sm:text-sm font-semibold focus:outline-none focus:border-orange-500 focus:bg-white transition"
-                />
-                <datalist id="area-suggestions">
-                  {(POPULAR_AREAS_BY_CITY[city] || []).map((a) => (
-                    <option key={a} value={a} />
-                  ))}
-                </datalist>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
-                  <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Venue Name / Address (Optional)</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Hotel Sayaji, Grand Ballroom, Lawn, Home"
-                  value={venueAddress}
-                  onChange={(e) => setVenueAddress(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs sm:text-sm font-medium focus:outline-none focus:border-orange-500 focus:bg-white transition"
-                />
-              </div>
-            </div>
-
-            {/* Popular City Shortcuts */}
-            <div className="pt-1 space-y-2">
-              <div className="flex items-center gap-1.5 flex-wrap text-xs">
-                <span className="text-slate-400 text-xs font-medium">Quick Select:</span>
-                {POPULAR_CITY_SHORTCUTS.map((popCity) => (
-                  <button
-                    key={popCity}
-                    type="button"
-                    onClick={() => {
-                      setCity(popCity);
-                      if (POPULAR_AREAS_BY_CITY[popCity]?.[0]) {
-                        setArea(POPULAR_AREAS_BY_CITY[popCity][0]);
-                      }
-                    }}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                      city === popCity
-                        ? 'bg-orange-600 text-white font-bold shadow-xs'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                    }`}
-                  >
-                    {popCity}
-                  </button>
-                ))}
-              </div>
-
-              {/* Localities Shortcuts for selected city */}
-              {POPULAR_AREAS_BY_CITY[city] && POPULAR_AREAS_BY_CITY[city].length > 0 && (
-                <div className="flex items-center gap-1.5 flex-wrap text-xs pt-1 border-t border-slate-100">
-                  <span className="text-slate-400 text-xs font-medium">Popular in {city}:</span>
-                  {POPULAR_AREAS_BY_CITY[city].slice(0, 8).map((popArea) => (
-                    <button
-                      key={popArea}
-                      type="button"
-                      onClick={() => setArea(popArea)}
-                      className={`px-2.5 py-0.5 rounded-md text-[11px] font-medium transition cursor-pointer ${
-                        area === popArea
-                          ? 'bg-orange-100 text-orange-900 font-bold border border-orange-300'
-                          : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
-                      }`}
-                    >
-                      {popArea}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* STEP 3: Date, Time & Estimated Guests */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-7 shadow-xs space-y-4">
-            <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3.5">
-              <span className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center shadow-xs">
-                3
-              </span>
-              <h2 className="text-base sm:text-lg font-bold text-slate-900 font-heading">
-                When is the event & how many guests?
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
-                  <Calendar className="w-3.5 h-3.5 text-orange-500" />
-                  <span>Event Date *</span>
-                </label>
-                <input
-                  type="date"
-                  value={eventDate}
-                  min={todayIso()}
-                  onChange={(e) => setEventDate(e.target.value)}
-                  required
-                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs sm:text-sm font-bold focus:outline-none focus:border-orange-500 focus:bg-white transition"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Start Time</span>
-                </label>
-                <input
-                  type="time"
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs sm:text-sm font-medium focus:outline-none focus:border-orange-500 focus:bg-white transition"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  End Time
-                </label>
-                <input
-                  type="time"
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs sm:text-sm font-medium focus:outline-none focus:border-orange-500 focus:bg-white transition"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
-                  <Users className="w-3.5 h-3.5 text-orange-500" />
-                  <span>Estimated Guests *</span>
-                </label>
-                <input
-                  type="number"
-                  min="10"
-                  step="10"
-                  value={guestCount}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === '') {
-                      setGuestCount('');
-                    } else {
-                      const parsed = parseInt(val, 10);
-                      setGuestCount(isNaN(parsed) ? '' : parsed);
-                    }
-                  }}
-                  onWheel={(e) => e.currentTarget.blur()}
-                  placeholder="e.g. 200"
-                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs sm:text-sm font-bold focus:outline-none focus:border-orange-500 focus:bg-white transition"
-                />
-              </div>
-            </div>
-
-            {/* Quick Guest Presets */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-              {GUEST_TIERS.map((tier) => (
-                <button
-                  key={tier.label}
-                  type="button"
-                  onClick={() => setGuestCount(tier.count)}
-                  className={`p-3 rounded-xl border text-left transition cursor-pointer flex items-center justify-between ${
-                    guestCount === tier.count
-                      ? 'border-orange-500 bg-orange-50/80 text-orange-950 font-bold shadow-xs'
-                      : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
-                  }`}
-                >
-                  <div>
-                    <span className="text-xs sm:text-sm block font-bold">{tier.label}</span>
-                    <span className="text-[11px] text-slate-500">{tier.range}</span>
-                  </div>
-                  {guestCount === tier.count && <Check className="w-4 h-4 text-orange-600 shrink-0" />}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* STEP 4: Maximum Budget Ceiling & Savings */}
-          <div className="rounded-2xl bg-gradient-to-br from-amber-50 via-orange-50/70 to-amber-50 border-2 border-amber-300 p-5 sm:p-7 shadow-xs space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-amber-200/80 pb-3.5">
-              <div className="flex items-center gap-2.5">
-                <span className="w-7 h-7 rounded-full bg-orange-600 text-white text-xs font-bold flex items-center justify-center shadow-xs">
-                  4
-                </span>
-                <div>
-                  <h2 className="text-base sm:text-lg font-bold text-slate-900 font-heading">
-                    What is your maximum budget ceiling?
-                  </h2>
-                  <p className="text-xs sm:text-sm text-amber-900/80 mt-0.5">
-                    Vendors cannot bid higher than this. You will only receive lower, reverse-discounted bids.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
-              <div className="lg:col-span-5 flex items-center bg-white border-2 border-amber-500 rounded-2xl px-5 py-3 shadow-xs">
-                <span className="text-2xl sm:text-3xl font-black text-amber-600 mr-3">₹</span>
-                <input
-                  type="number"
-                  step="500"
-                  min="2000"
-                  value={budget}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === '') {
-                      setBudget('');
-                    } else {
-                      const parsed = parseInt(val, 10);
-                      setBudget(isNaN(parsed) ? '' : parsed);
-                    }
-                  }}
-                  onWheel={(e) => e.currentTarget.blur()}
-                  placeholder="Enter budget"
-                  required
-                  className="w-full text-right font-black text-slate-900 text-2xl sm:text-3xl focus:outline-none bg-transparent"
-                />
-              </div>
-
-              <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div className="bg-white p-4 rounded-2xl border border-amber-200 shadow-xs flex flex-col justify-between">
-                  <span className="text-xs text-slate-500 block font-semibold">Max Winning Bid (85% Ceiling):</span>
-                  <span className="text-slate-900 font-extrabold text-lg sm:text-xl mt-1">₹{maxAcceptableBid.toLocaleString()}</span>
-                </div>
-
-                <div className="bg-gradient-to-br from-emerald-600 to-teal-700 text-white p-4 rounded-2xl shadow-md flex flex-col justify-between">
-                  <span className="text-xs text-emerald-100 block font-semibold">Guaranteed Savings (Min 15%):</span>
-                  <span className="text-white font-extrabold text-lg sm:text-xl mt-1">≥ ₹{guaranteedMinSavings.toLocaleString()}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
+          {/* STEP 3: Requirements & Inspiration */}
+          {currentStep === 3 && (
+            <div className="space-y-5 animate-in fade-in duration-200">
           {/* STEP 5: Title, Notes & Reference Image (Spacious Multi-Column on Laptop) */}
           <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-7 shadow-xs space-y-5">
             <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3.5">
@@ -939,7 +1025,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                             key={eq}
                             type="button"
                             onClick={() => toggleEquipment(eq)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer border ${
+                            className={`px-3.5 py-2 sm:py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 cursor-pointer border min-h-[38px] active:scale-95 ${
                               isSelected
                                 ? 'bg-orange-500 border-orange-600 text-white shadow-xs'
                                 : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
@@ -1036,44 +1122,188 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
             </div>
           </div>
 
-          {/* Sticky Bottom Actions */}
-          <div className="sticky bottom-4 z-30 bg-white/95 backdrop-blur-md border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3 text-xs text-slate-600">
-              <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-700 shrink-0 shadow-2xs">
-                <Lock className="w-4 h-4" />
-              </div>
-              <div>
-                <span className="font-bold text-slate-900 text-xs sm:text-sm block">100% Free to Post · Escrow Safe</span>
-                <span className="text-slate-500 text-[11px] sm:text-xs">You will receive 5-10 quotes directly from verified local pros.</span>
+            </div>
+          )}
+
+
+          {/* STEP 4: Budget & Review */}
+          {currentStep === 4 && (
+            <div className="space-y-5 animate-in fade-in duration-200">
+          {/* STEP 4: Maximum Budget Ceiling & Savings */}
+          <div className="rounded-2xl bg-gradient-to-br from-amber-50 via-orange-50/70 to-amber-50 border-2 border-amber-300 p-5 sm:p-7 shadow-xs space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-amber-200/80 pb-3.5">
+              <div className="flex items-center gap-2.5">
+                <span className="w-7 h-7 rounded-full bg-orange-600 text-white text-xs font-bold flex items-center justify-center shadow-xs">
+                  4
+                </span>
+                <div>
+                  <h2 className="text-base sm:text-lg font-bold text-slate-900 font-heading">
+                    What is your maximum budget ceiling?
+                  </h2>
+                  <p className="text-xs sm:text-sm text-amber-900/80 mt-0.5">
+                    Vendors cannot bid higher than this. You will only receive lower, reverse-discounted bids.
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 w-full sm:w-auto">
-              <button
-                type="button"
-                onClick={onClose}
-                className="w-1/3 sm:w-auto px-6 py-3 rounded-xl text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer border border-slate-200"
-              >
-                Cancel
-              </button>
-              
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-2/3 sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-orange-500 via-[#f95724] to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-xs sm:text-sm transition shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
-              >
-                {loading ? (
-                  'Publishing...'
-                ) : (
-                  <>
-                    <span>Submit Requirement & Get Bids</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+              <div className="lg:col-span-5 flex items-center bg-white border-2 border-amber-500 rounded-2xl px-5 py-3 shadow-xs">
+                <span className="text-2xl sm:text-3xl font-black text-amber-600 mr-3">₹</span>
+                <input
+                  type="number"
+                  step="500"
+                  min="2000"
+                  value={budget}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '') {
+                      setBudget('');
+                    } else {
+                      const parsed = parseInt(val, 10);
+                      setBudget(isNaN(parsed) ? '' : parsed);
+                    }
+                  }}
+                  onWheel={(e) => e.currentTarget.blur()}
+                  placeholder="Enter budget"
+                  required
+                  className="w-full text-right font-black text-slate-900 text-2xl sm:text-3xl focus:outline-none bg-transparent"
+                />
+              </div>
+
+              <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div className="bg-white p-4 rounded-2xl border border-amber-200 shadow-xs flex flex-col justify-between">
+                  <span className="text-xs text-slate-500 block font-semibold">Max Winning Bid (85% Ceiling):</span>
+                  <span className="text-slate-900 font-extrabold text-lg sm:text-xl mt-1">₹{maxAcceptableBid.toLocaleString()}</span>
+                </div>
+
+                <div className="bg-gradient-to-br from-emerald-600 to-teal-700 text-white p-4 rounded-2xl shadow-md flex flex-col justify-between">
+                  <span className="text-xs text-emerald-100 block font-semibold">Guaranteed Savings (Min 15%):</span>
+                  <span className="text-white font-extrabold text-lg sm:text-xl mt-1">≥ ₹{guaranteedMinSavings.toLocaleString()}</span>
+                </div>
+              </div>
             </div>
           </div>
 
+
+              {/* Summary Review Card */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-7 shadow-xs space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3 flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-5 h-5 text-emerald-600" />
+                    <h3 className="text-base font-bold text-slate-900 font-heading">Summary Review Before Posting</h3>
+                  </div>
+                  <span className="text-xs text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full font-bold border border-emerald-200">
+                    Ready to Receive Quotes
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 text-xs">
+                  <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/60">
+                    <span className="text-slate-400 font-semibold block mb-1 uppercase text-[10px] tracking-wider">Services</span>
+                    <span className="text-slate-900 font-bold block truncate">{selectedCategories.join(', ')}</span>
+                  </div>
+
+                  <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/60">
+                    <span className="text-slate-400 font-semibold block mb-1 uppercase text-[10px] tracking-wider">Date & Time</span>
+                    <span className="text-slate-900 font-bold block">{eventDate}</span>
+                    <span className="text-slate-500 block text-[11px]">{startTime} to {endTime}</span>
+                  </div>
+
+                  <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/60">
+                    <span className="text-slate-400 font-semibold block mb-1 uppercase text-[10px] tracking-wider">Location</span>
+                    <span className="text-slate-900 font-bold block truncate">{area}, {city}</span>
+                    {venueAddress && <span className="text-slate-500 block text-[11px] truncate">{venueAddress}</span>}
+                  </div>
+
+                  <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/60">
+                    <span className="text-slate-400 font-semibold block mb-1 uppercase text-[10px] tracking-wider">Guests & Budget</span>
+                    <span className="text-slate-900 font-bold block">{guestCount || 200} Guests</span>
+                    <span className="text-[#f95724] font-black block font-mono text-sm">Max ₹{numericBudget.toLocaleString()}</span>
+                  </div>
+                </div>
+
+                {title && (
+                  <div className="p-3.5 bg-orange-50/60 rounded-xl border border-orange-200/70 text-xs">
+                    <span className="text-slate-600 font-medium block">Requirement Title: <strong className="text-slate-900 font-bold">{title}</strong></span>
+                    {description && <span className="text-slate-600 block mt-1 line-clamp-2">Special notes: {description}</span>}
+                  </div>
+                )}
+              </div>
+
+            </div>
+          )}
+
+
+          {/* Sticky Bottom Actions */}
+          <div className="sticky bottom-0 z-30 bg-white/95 backdrop-blur-md border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-3 safe-bottom">
+            <div className="flex items-center gap-3 text-xs text-slate-600 w-full sm:w-auto">
+              <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-700 shrink-0 shadow-2xs">
+                <Lock className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <span className="font-bold text-slate-900 text-xs sm:text-sm block truncate">100% Free to Post • Escrow Safe</span>
+                <span className="text-slate-500 text-[11px] sm:text-xs hidden sm:block">You will receive quotes directly from verified local pros.</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+              {currentStep > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setCurrentStep((prev) => (prev - 1) as any)}
+                  className="px-4 py-3 min-h-[44px] rounded-xl text-xs sm:text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition cursor-pointer flex items-center gap-1.5"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span>Back</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-3.5 py-3 min-h-[44px] rounded-xl text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer border border-slate-200"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSaveDraft}
+                disabled={loading}
+                className="px-3.5 py-3 min-h-[44px] rounded-xl text-xs sm:text-sm font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 transition cursor-pointer border border-amber-200 flex items-center justify-center gap-1.5"
+              >
+                <FileText className="w-4 h-4 text-amber-600" />
+                <span className="hidden sm:inline">Save Draft</span>
+              </button>
+
+              {currentStep < 4 ? (
+                <button
+                  type="button"
+                  onClick={handleNextStep}
+                  className="flex-1 sm:flex-none px-6 py-3 min-h-[44px] rounded-xl bg-gradient-to-r from-orange-500 via-[#f95724] to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-xs sm:text-sm transition shadow-md shadow-orange-500/20 flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <span>Continue</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 sm:flex-none px-7 py-3 min-h-[44px] rounded-xl bg-gradient-to-r from-orange-500 via-[#f95724] to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-xs sm:text-sm transition shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                >
+                  {loading ? (
+                    'Publishing...'
+                  ) : (
+                    <>
+                      <span>Submit & Get Bids</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
         </form>
       </main>
     </div>

@@ -1,5 +1,5 @@
                                     import React, { useState } from 'react';
-import { CheckCircle2, Search } from 'lucide-react';
+import { CheckCircle2, Search, Calendar, Clock } from 'lucide-react';
 import type { Requirement, User } from '../types';
 
 interface LiveAuctionDeskProps {
@@ -45,7 +45,7 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
           </div>
           <button
             onClick={onOpenExplainer}
-            className="px-5 py-2.5 rounded-full bg-white border border-slate-300 hover:bg-slate-50 text-slate-800 font-semibold text-sm transition cursor-pointer shrink-0"
+            className="w-full sm:w-auto px-5 py-2.5 min-h-[42px] rounded-full bg-white border border-slate-300 hover:bg-slate-50 text-slate-800 font-semibold text-sm transition cursor-pointer shrink-0 flex items-center justify-center"
           >
             Full rules
           </button>
@@ -103,7 +103,7 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition cursor-pointer ${
+              className={`px-4 py-2 min-h-[38px] rounded-full text-sm font-medium whitespace-nowrap transition cursor-pointer flex items-center justify-center active:scale-95 ${
                 selectedCategory === cat
                   ? 'bg-[#f95724] text-white'
                   : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200'
@@ -122,6 +122,9 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
             (b) => b.providerId?._id === currentUser._id && b.amount === req.lowestBid
           );
           const hasIBidded = req.bids?.some((b) => b.providerId?._id === currentUser._id);
+            const isDateBlocked = (currentUser.unavailableDates || []).some(
+              (d) => d.date === req.eventDate || (req.eventDate && d.date === req.eventDate.split('T')[0])
+            );
           const ceiling = req.maxAcceptableBid || Math.round(req.budget * 0.85);
 
           return (
@@ -258,11 +261,27 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
                 </div>
 
                 {/* Action CTA */}
-                <div className="flex items-center gap-2">
-                  {hasIBidded ? (
+                {isDateBlocked && (
+                    <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800 flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                      <span>Date blocked in your calendar ({req.eventDate})</span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2">
+                  {isDateBlocked ? (
+                    <button
+                      disabled
+                      className="w-full sm:w-auto px-4 py-3 sm:py-2.5 min-h-[44px] rounded-full bg-slate-100 text-slate-400 font-semibold text-xs sm:text-sm border border-slate-200 cursor-not-allowed flex items-center justify-center gap-1.5"
+                      title="You marked yourself as unavailable on this date in your Availability Calendar"
+                    >
+                      <Clock className="w-4 h-4 text-slate-400" />
+                      <span>Date Blocked in Schedule</span>
+                    </button>
+                  ) : hasIBidded ? (
                     <button
                       onClick={() => onOpenBidModal(req)}
-                      className="w-full sm:w-auto px-4 py-2.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-sm border border-slate-300 transition flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="w-full sm:w-auto px-5 py-3 sm:py-2.5 min-h-[44px] rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-sm border border-slate-300 transition flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
                     >
                       {isLowestBidMine ? (
                         <>
@@ -276,7 +295,7 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
                   ) : (
                     <button
                       onClick={() => onOpenBidModal(req)}
-                      className="w-full sm:w-auto px-5 py-2.5 rounded-full bg-[#f95724] hover:bg-[#e04818] text-white font-semibold text-sm transition active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="w-full sm:w-auto px-6 py-3 sm:py-2.5 min-h-[44px] rounded-full bg-[#f95724] hover:bg-[#e04818] text-white font-bold text-sm transition active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-orange-500/20"
                     >
                       <span>Place a bid</span>
                     </button>

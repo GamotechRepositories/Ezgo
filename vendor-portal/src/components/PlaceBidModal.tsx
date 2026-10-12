@@ -8,15 +8,17 @@ interface PlaceBidModalProps {
   requirement: Requirement | null;
   providerId: string;
   onSubmit: (reqId: string, bidData: any) => void;
+  existingBid?: any;
 }
 
-export const PlaceBidModal: React.FC<PlaceBidModalProps> = ({ isOpen, requirement, ...rest }) => {
+export const PlaceBidModal: React.FC<PlaceBidModalProps> = ({ isOpen, requirement, existingBid, ...rest }) => {
   if (!isOpen || !requirement) return null;
-  return <PlaceBidForm key={requirement._id} requirement={requirement} {...rest} />;
+  return <PlaceBidForm key={requirement._id} requirement={requirement} existingBid={existingBid} {...rest} />;
 };
 
 interface PlaceBidFormProps extends Omit<PlaceBidModalProps, 'isOpen' | 'requirement'> {
   requirement: Requirement;
+  existingBid?: any;
 }
 
 const PlaceBidForm: React.FC<PlaceBidFormProps> = ({
@@ -24,19 +26,22 @@ const PlaceBidForm: React.FC<PlaceBidFormProps> = ({
   requirement,
   providerId,
   onSubmit,
+  existingBid,
 }) => {
   const ceiling = requirement.maxAcceptableBid || Math.floor(requirement.budget * 0.85);
   const currentLowest = requirement.lowestBid || ceiling;
-
   const [bidAmount, setBidAmount] = useState<number | ''>(
-    Math.min(ceiling, currentLowest > 1000 ? currentLowest - 1000 : ceiling)
+    existingBid
+      ? Math.max(1000, existingBid.amount - 500)
+      : Math.min(ceiling, currentLowest > 1000 ? currentLowest - 1000 : ceiling)
   );
   const [proposalNotes, setProposalNotes] = useState('');
   const [includeOperator, setIncludeOperator] = useState(true);
   const [selectedGear, setSelectedGear] = useState<string[]>(requirement.equipmentNeeded || []);
 
   const numericBid = typeof bidAmount === 'number' ? bidAmount : 0;
-  const isValidBid = typeof bidAmount === 'number' && bidAmount > 0 && bidAmount <= ceiling;
+  const isLowerThanExisting = !existingBid || (typeof bidAmount === 'number' && bidAmount < existingBid.amount);
+  const isValidBid = typeof bidAmount === 'number' && bidAmount > 0 && bidAmount <= ceiling && isLowerThanExisting && requirement.status !== 'EXPIRED';
   const discountPercent = typeof bidAmount === 'number' && bidAmount > 0
     ? Math.round(((requirement.budget - bidAmount) / requirement.budget) * 100)
     : 0;
@@ -69,7 +74,14 @@ const PlaceBidForm: React.FC<PlaceBidFormProps> = ({
 
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">
-            <p className="text-sm font-medium text-[#f95724]">Place a bid</p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-medium text-[#f95724]">{existingBid ? 'Revise Your Bid' : 'Place a bid'}</p>
+              {existingBid && (
+                <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-semibold">
+                  Current: ₹{existingBid.amount.toLocaleString()}
+                </span>
+              )}
+            </div>
             <h2 className="text-xl font-bold text-slate-900">{requirement.title}</h2>
             <p className="text-sm text-slate-500">
               {requirement.location.area}, {requirement.location.city} · {requirement.guestCount} guests · {requirement.eventDate}
@@ -102,6 +114,21 @@ const PlaceBidForm: React.FC<PlaceBidFormProps> = ({
           </div>
         </div>
 
+        {existingBid && (
+          <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-xs sm:text-sm text-amber-900 flex items-start gap-2.5">
+            <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <span className="font-bold">Bid Revision Rule: </span>
+              Your current bid is <strong>₹{existingBid.amount.toLocaleString()}</strong>. To remain competitive, your revised bid must be strictly lower than your current bid.
+            </div>
+          </div>
+        )}
+        {requirement.status === 'EXPIRED' && (
+          <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-xs sm:text-sm text-rose-800 flex items-center gap-2.5">
+            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+            <span>This reverse auction has closed/expired. New bids are locked.</span>
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-5">
 
           <div className="space-y-2">
@@ -163,7 +190,7 @@ const PlaceBidForm: React.FC<PlaceBidFormProps> = ({
             <button
               type="button"
               onClick={() => setBidAmount(ceiling)}
-              className="px-3.5 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition cursor-pointer"
+              className="px-4 py-2.5 min-h-[40px] rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition cursor-pointer active:scale-95 flex items-center justify-center"
             >
               Use limit (₹{ceiling.toLocaleString()})
             </button>
@@ -171,7 +198,7 @@ const PlaceBidForm: React.FC<PlaceBidFormProps> = ({
               <button
                 type="button"
                 onClick={() => setBidAmount(requirement.lowestBid! - 1000)}
-                className="px-3.5 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition cursor-pointer"
+                className="px-4 py-2.5 min-h-[40px] rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition cursor-pointer active:scale-95 flex items-center justify-center"
               >
                 ₹1,000 below lowest (₹{(requirement.lowestBid - 1000).toLocaleString()})
               </button>
@@ -241,18 +268,18 @@ const PlaceBidForm: React.FC<PlaceBidFormProps> = ({
             </p>
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-2">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition cursor-pointer"
+              className="w-full sm:w-auto px-6 py-3 min-h-[44px] rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition cursor-pointer text-center"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!isValidBid}
-              className="px-6 py-2.5 rounded-full bg-[#f95724] hover:bg-[#e04818] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm transition active:scale-95 cursor-pointer"
+              className="w-full sm:w-auto px-7 py-3 min-h-[44px] rounded-full bg-[#f95724] hover:bg-[#e04818] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm transition active:scale-95 cursor-pointer shadow-md shadow-orange-500/20 text-center"
             >
               Send bid
             </button>

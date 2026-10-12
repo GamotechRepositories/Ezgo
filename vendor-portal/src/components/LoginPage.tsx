@@ -1,12 +1,10 @@
 import { useEffect, useState, useRef } from 'react';
 import {
-  Building2,
   CheckCircle2,
   FileBadge,
   ShieldCheck,
   Store,
   Upload,
-  User as UserIcon,
   ArrowRight,
   ArrowLeft,
   Eye,

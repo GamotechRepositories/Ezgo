@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Home, Calendar, Plus, ShieldCheck, Sparkles } from 'lucide-react';
 import { Navbar } from './components/Navbar';
 import { RequesterView } from './components/RequesterView';
 import { RuleExplainer } from './components/RuleExplainer';
@@ -83,7 +84,7 @@ function HostApp({ currentUser, onLogout }: { currentUser: User; onLogout: () =>
 
   const loadMyActivity = useCallback(async (userId: string) => {
     const [reqs, bks] = await Promise.all([
-      api.getRequirements({ requesterId: userId }),
+      api.getRequirements({ requesterId: userId, includeDrafts: 'true' }),
       api.getBookings({ userId, role: 'requester' }),
     ]);
     setRequirements(reqs);
@@ -301,6 +302,19 @@ function HostApp({ currentUser, onLogout }: { currentUser: User; onLogout: () =>
     }
   };
 
+  
+  // 5b. Raise Dispute
+  const handleRaiseDispute = async (bookingId: string, reason: string) => {
+    try {
+      const res = await api.raiseDispute(bookingId, reason);
+      await refreshMine();
+      addToast('warning', 'Dispute Submitted', res.message || 'EzzyGo support team will review and mediate the payment.');
+    } catch (err: any) {
+      addToast('error', 'Could not raise dispute', err.message);
+      throw err;
+    }
+  };
+
   // 5. Complete Booking
   const handleCompleteBooking = async (bookingId: string) => {
     const booking = bookings.find((b) => b._id === bookingId);
@@ -400,7 +414,7 @@ function HostApp({ currentUser, onLogout }: { currentUser: User; onLogout: () =>
       )}
 
       {/* Main Workspace Body */}
-      <main className="w-full flex-1">
+      <main className="w-full flex-1 pb-20 lg:pb-0">
         {page === 'bookings' ? (
           <MyBookingsPage
             bookings={bookings}
@@ -411,6 +425,7 @@ function HostApp({ currentUser, onLogout }: { currentUser: User; onLogout: () =>
             onCancelBooking={handleCancelBooking}
             onCompleteBooking={handleCompleteBooking}
             onOpenReviewModal={(b) => setSelectedBookingForReview(b)}
+            onRaiseDispute={handleRaiseDispute}
           />
         ) : (
           <RequesterView
@@ -451,6 +466,79 @@ function HostApp({ currentUser, onLogout }: { currentUser: User; onLogout: () =>
         onCancelBooking={handleCancelBooking}
         onNavigateToBookings={handleOpenBookings}
       />
+
+
+      {/* Mobile Bottom Navigation Bar (Visible on Mobile/Tablet) */}
+      <nav
+        aria-label="Mobile Bottom Navigation"
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-lg px-2 py-1 safe-bottom"
+      >
+        <div className="max-w-md mx-auto grid grid-cols-5 items-center text-center">
+          {/* Home */}
+          <button
+            onClick={() => goTo('home')}
+            className={`flex flex-col items-center justify-center py-1 transition cursor-pointer ${
+              page === 'home' ? 'text-[#f95724] font-bold' : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <Home className="w-5 h-5" />
+            <span className="text-[10px] mt-0.5">Home</span>
+          </button>
+
+          {/* My Events */}
+          <button
+            onClick={() => {
+              goTo('home');
+              setTimeout(() => {
+                const el = document.getElementById('requirements-hub');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }, 100);
+            }}
+            className="flex flex-col items-center justify-center py-1 text-slate-500 hover:text-slate-800 transition cursor-pointer"
+          >
+            <Calendar className="w-5 h-5" />
+            <span className="text-[10px] mt-0.5">My Events</span>
+          </button>
+
+          {/* Center Action: Plan Event */}
+          <div className="flex items-center justify-center">
+            <button
+              onClick={() => handleOpenPostModal()}
+              aria-label="Post Requirement"
+              className="w-11 h-11 -mt-4 rounded-full bg-gradient-to-tr from-[#f95724] to-[#ff7443] text-white shadow-lg shadow-[#f95724]/35 flex items-center justify-center active:scale-90 transition cursor-pointer border-2 border-white"
+            >
+              <Plus className="w-5 h-5 stroke-[2.5]" />
+            </button>
+          </div>
+
+          {/* Bookings */}
+          <button
+            onClick={handleOpenBookings}
+            className={`flex flex-col items-center justify-center py-1 transition cursor-pointer relative ${
+              page === 'bookings' ? 'text-emerald-700 font-bold' : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <div className="relative">
+              <ShieldCheck className="w-5 h-5" />
+              {activeBookingsCount > 0 && (
+                <span className="absolute -top-1 -right-1.5 w-3.5 h-3.5 rounded-full bg-emerald-600 text-white text-[9px] font-bold flex items-center justify-center">
+                  {activeBookingsCount}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] mt-0.5">Bookings</span>
+          </button>
+
+          {/* How It Works */}
+          <button
+            onClick={handleOpenExplainer}
+            className="flex flex-col items-center justify-center py-1 text-slate-500 hover:text-slate-800 transition cursor-pointer"
+          >
+            <Sparkles className="w-5 h-5 text-amber-500" />
+            <span className="text-[10px] mt-0.5">Explainer</span>
+          </button>
+        </div>
+      </nav>
 
       <ReviewModal
         isOpen={!!selectedBookingForReview}

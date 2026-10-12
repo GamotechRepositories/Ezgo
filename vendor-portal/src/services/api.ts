@@ -204,4 +204,16 @@ export const api = {
     const data = await request<{ url: string }>('/upload', { method: 'POST', body: formData }, 'Image upload failed');
     return data.url;
   },
+
+  blockDate(date: string, reason?: string): Promise<User> {
+    return request<User>('/auth/availability/block', jsonBody('POST', { date, reason }), 'Failed to block date');
+  },
+
+  unblockDate(date: string): Promise<User> {
+    return request<User>(`/auth/availability/unblock/${encodeURIComponent(date)}`, { method: 'DELETE' }, 'Failed to unblock date');
+  },
+
+  getAvailability(providerId?: string): Promise<{ date: string; reason: string; createdAt?: string }[]> {
+    return request<{ date: string; reason: string; createdAt?: string }[]>(`/auth/availability${providerId ? '/' + providerId : ''}`, {}, 'Could not load availability');
+  },
 };

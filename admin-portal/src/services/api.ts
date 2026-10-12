@@ -1,4 +1,4 @@
-import type { AdminMetrics, Booking, Category, Occasion, User } from '../types';
+import type { AdminMetrics, Booking, Category, Occasion, User, AuditLog } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const TOKEN_KEY = 'ezzygo_token_admin';
@@ -89,6 +89,10 @@ export const api = {
   cancelBooking: (bookingId: string, reason: string) =>
     request<Booking>('/bookings/cancel', json('POST', { bookingId, reason }), 'Could not cancel the booking'),
 
+  resolveDispute: (bookingId: string, action: 'PAYOUT_VENDOR' | 'REFUND_HOST' | 'DISMISS', note?: string) =>
+    request<Booking>(`/bookings/${bookingId}/resolve-dispute`, json('POST', { action, note }), 'Could not resolve dispute'),
+
+
   getCategories: () => request<Category[]>('/categories', {}, 'Could not load categories'),
 
   addCategory: (catData: Partial<Category>) =>
@@ -123,4 +127,16 @@ export const api = {
     request<Occasion>(`/occasions/${id}`, json('PUT', occasionData), 'Could not update occasion'),
 
   deleteOccasion: (id: string) => request<unknown>(`/occasions/${id}`, { method: 'DELETE' }, 'Could not remove occasion'),
+
+  getAuditLogs: (params?: { action?: string; targetType?: string }) => {
+    const query = new URLSearchParams();
+    if (params?.action && params.action !== 'ALL') query.set('action', params.action);
+    if (params?.targetType && params.targetType !== 'ALL') query.set('targetType', params.targetType);
+    const qs = query.toString() ? `?${query.toString()}` : '';
+    return request<AuditLog[]>(`/admin/audit-logs${qs}`, {}, 'Could not load audit logs');
+  },
+
+  getProviderKyc: (providerId: string) =>
+    request<any>(`/admin/providers/${providerId}/kyc`, {}, 'Could not load provider KYC details'),
+
 };

@@ -31,6 +31,17 @@ export interface User {
     rejectionReason?: string;
   };
   avatar?: string;
+  unavailableDates?: {
+    date: string;
+    reason: string;
+    createdAt?: string;
+  }[];
+  verificationAudit?: {
+    status: string;
+    reviewedByName?: string;
+    reviewedAt: string;
+    notes?: string;
+  }[];
 }
 
 export interface Category {
@@ -99,6 +110,16 @@ export interface Booking {
     commissionRetained: number;
   };
   isContactRevealed: boolean;
+  disputeReason?: string;
+  disputeDetails?: {
+    isDisputed: boolean;
+    reason: string;
+    raisedBy?: any;
+    raisedAt?: string;
+    resolutionAction?: string;
+    resolutionNote?: string;
+    resolvedAt?: string | null;
+  };
   completedAt?: string;
   createdAt: string;
 }
@@ -117,11 +138,23 @@ export interface AdminMetrics {
 }
 
 export interface AuditLog {
-  id: string;
-  timestamp: string;
-  actor: string;
+  _id?: string;
+  id?: string;
+  actor: {
+    id?: string;
+    name: string;
+    role?: string;
+    phone?: string;
+    email?: string;
+  } | string;
   action: string;
+  targetType?: string;
+  targetId?: string;
   details: string;
-  amount?: number;
+  metadata?: Record<string, any>;
+  amount?: number | null;
   status: 'SUCCESS' | 'WARNING' | 'INFO';
+  ipAddress?: string;
+  createdAt?: string;
+  timestamp?: string;
 }

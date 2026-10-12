@@ -1,5 +1,5 @@
 import express from 'express';
-import { getAdminMetrics, getProviders, verifyProvider } from '../controllers/adminController.js';
+import { getAdminMetrics, getProviders, verifyProvider, getAuditLogs, getProviderKyc } from '../controllers/adminController.js';
 import { seedDatabase } from '../config/seedData.js';
 import { requireAuth, requireRole } from '../middlewares/auth.js';
 
@@ -9,6 +9,8 @@ router.use(requireAuth, requireRole('admin'));
 
 router.get('/metrics', getAdminMetrics);
 router.get('/providers', getProviders);
+router.get('/providers/:providerId/kyc', getProviderKyc);
+router.get('/audit-logs', getAuditLogs);
 router.patch('/providers/:providerId/verify', verifyProvider);
 router.post('/verify-provider', verifyProvider);
 router.post('/seed', async (req, res) => {

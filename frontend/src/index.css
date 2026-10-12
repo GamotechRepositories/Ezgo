@@ -90,3 +90,24 @@
 .animate-pulse-subtle {
   animation: pulse-subtle 3s ease-in-out infinite;
 }
+
+/* Mobile safe area and utility classes */
+.safe-bottom {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.75rem);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Touch target minimums and smooth interactions */
+@media (hover: none) and (pointer: coarse) {
+  button, a, input, select {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+}

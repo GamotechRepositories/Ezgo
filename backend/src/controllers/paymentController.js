@@ -66,6 +66,27 @@ export const createOrder = async (req, res, next) => {
       });
     }
 
+    // Prevent duplicate charges: If booking already has an active created order, reuse it (Module 06, Task 08)
+    if (booking && booking.paymentDetails?.orderId) {
+      try {
+        const existingOrder = await razorpayInstance.orders.fetch(booking.paymentDetails.orderId);
+        if (existingOrder && existingOrder.status === 'created' && existingOrder.amount === Math.round(numericAmount)) {
+          return res.status(200).json({
+            success: true,
+            order_id: existingOrder.id,
+            id: existingOrder.id,
+            amount: existingOrder.amount,
+            currency: existingOrder.currency,
+            receipt: existingOrder.receipt,
+            key_id: process.env.RAZORPAY_KEY_ID,
+            isReused: true,
+          });
+        }
+      } catch (err) {
+        // If order fetch fails, proceed with creating fresh order
+      }
+    }
+
     const options = {
       amount: Math.round(numericAmount),
       currency: currency.toUpperCase(),
@@ -262,3 +283,117 @@ export const verifyPayment = async (req, res, next) => {
   }
 };
 
+
+/**
+ * @desc    Handle Razorpay Webhooks (Reconcile pending/failed/captured payments - Module 06, Task 07)
+ * @route   POST /api/payments/webhook
+ * @access  Public (Signature verified via Razorpay webhook secret)
+ */
+export const handleRazorpayWebhook = async (req, res, next) => {
+  try {
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET || process.env.RAZORPAY_KEY_SECRET;
+    const signature = req.headers['x-razorpay-signature'];
+
+    if (webhookSecret && signature) {
+      const shasum = crypto.createHmac('sha256', webhookSecret);
+      shasum.update(typeof req.body === 'string' ? req.body : JSON.stringify(req.body));
+      const digest = shasum.digest('hex');
+
+      if (digest !== signature) {
+        return res.status(400).json({ success: false, message: 'Invalid webhook signature.' });
+      }
+    }
+
+    const event = req.body?.event;
+    const payload = req.body?.payload?.payment?.entity || req.body?.payload?.order?.entity;
+
+    if (!payload) {
+      return res.status(200).json({ received: true });
+    }
+
+    const orderId = payload.order_id || payload.id;
+    const paymentId = payload.id;
+
+    if (event === 'payment.captured' || event === 'order.paid') {
+      const booking = await Booking.findOne({ 'paymentDetails.orderId': orderId })
+        .populate('providerId')
+        .populate('requesterId')
+        .populate('requirementId');
+
+      if (booking && booking.status === 'AWAITING_PAYMENT') {
+        booking.status = 'ACTIVE';
+        booking.isContactRevealed = true;
+        booking.paymentDetails = {
+          transactionId: paymentId,
+          orderId: orderId,
+          method: payload.method || 'Razorpay Webhook',
+          paidAt: new Date(),
+          escrowStatus: 'HELD',
+        };
+        await booking.save();
+
+        if (booking.requirementId?._id) {
+          await Requirement.findByIdAndUpdate(booking.requirementId._id, { status: 'ACTIVE' });
+        }
+
+        await Transaction.create({
+          bookingId: booking._id,
+          type: 'PAYMENT_HELD_ESCROW',
+          amount: booking.totalPaid,
+          fromUser: booking.requesterId?._id,
+          toUser: booking.providerId?._id,
+          status: 'SUCCESS',
+          referenceId: paymentId,
+          metadata: {
+            webhookEvent: event,
+            razorpayOrderId: orderId,
+            razorpayPaymentId: paymentId,
+            note: 'Reconciled via Razorpay Webhook',
+          },
+        });
+
+        const vendorId = booking.providerId?._id || booking.providerId;
+        await notifyUser({
+          userId: vendorId,
+          title: 'Payment Secured in Escrow 🔒',
+          message: `Payment of ₹${booking.totalPaid.toLocaleString()} is secured in Escrow! Host contact details have been unlocked.`,
+          type: 'PAYMENT_CONFIRMED',
+          metadata: { bookingId: booking._id },
+        });
+
+        broadcastBookingUpdated(booking);
+      }
+    } else if (event === 'payment.failed') {
+      const booking = await Booking.findOne({ 'paymentDetails.orderId': orderId });
+      if (booking) {
+        await Transaction.create({
+          bookingId: booking._id,
+          type: 'PAYMENT_HELD_ESCROW',
+          amount: booking.totalPaid,
+          fromUser: booking.requesterId,
+          toUser: booking.providerId,
+          status: 'FAILED',
+          referenceId: paymentId,
+          metadata: {
+            webhookEvent: event,
+            errorCode: payload.error_code,
+            errorDescription: payload.error_description,
+          },
+        });
+
+        await notifyUser({
+          userId: booking.requesterId,
+          title: 'Payment Failed ⚠️',
+          message: `Payment attempt of ₹${booking.totalPaid.toLocaleString()} failed: ${payload.error_description || 'Transaction declined'}. Please retry from your bookings.`,
+          type: 'PAYMENT_FAILED',
+          metadata: { bookingId: booking._id },
+        });
+      }
+    }
+
+    return res.status(200).json({ success: true, received: true });
+  } catch (error) {
+    console.error('Webhook error:', error);
+    return res.status(500).json({ success: false, error: error.message });
+  }
+};

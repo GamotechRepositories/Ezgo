@@ -2,6 +2,7 @@ import React from 'react';
 import {
   Search,
   CalendarCheck,
+  Calendar,
   Wallet,
   Package,
   HelpCircle,
@@ -14,8 +15,8 @@ import type { User } from '../types';
 
 interface VendorSidebarProps {
   vendor: User;
-  activeTab: 'auctions' | 'orders' | 'wallet' | 'inventory';
-  onTabChange: (tab: 'auctions' | 'orders' | 'wallet' | 'inventory') => void;
+  activeTab: 'auctions' | 'orders' | 'availability' | 'wallet' | 'inventory';
+  onTabChange: (tab: 'auctions' | 'orders' | 'availability' | 'wallet' | 'inventory') => void;
   onOpenExplainer: () => void;
   activeOrdersCount: number;
   isOpen: boolean;
@@ -34,6 +35,7 @@ export const VendorSidebar: React.FC<VendorSidebarProps> = ({
   const navItems = [
     { id: 'auctions' as const, label: 'Open requests', icon: Search, count: null },
     { id: 'orders' as const, label: 'My bookings', icon: CalendarCheck, count: activeOrdersCount > 0 ? activeOrdersCount : null },
+    { id: 'availability' as const, label: 'Availability calendar', icon: Calendar, count: null },
     { id: 'wallet' as const, label: 'Earnings', icon: Wallet, count: null },
     { id: 'inventory' as const, label: 'My equipment', icon: Package, count: null },
   ];

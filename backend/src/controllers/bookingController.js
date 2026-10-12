@@ -1,3 +1,4 @@
+import { logAudit } from '../services/auditService.js';
 import Booking from '../models/Booking.js';
 import Bid from '../models/Bid.js';
 import Requirement from '../models/Requirement.js';
@@ -164,6 +165,17 @@ export const processPayment = async (req, res, next) => {
       escrowStatus: 'HELD',
     };
     await booking.save();
+
+    await logAudit({
+      req,
+      action: 'PAYOUT_RELEASED',
+      targetType: 'Booking',
+      targetId: booking._id,
+      amount: booking.bidAmount,
+      details: `Escrow payout of ?${booking.bidAmount} released to vendor "${booking.providerId?.businessName || booking.providerId?.name || ''}"`,
+      metadata: { transferId: payoutRef, platformFee: booking.platformFee },
+      status: 'SUCCESS',
+    });
 
     // Update requirement status
     await Requirement.findByIdAndUpdate(booking.requirementId._id, { status: 'ACTIVE' });
@@ -504,7 +516,16 @@ export const resolveDispute = async (req, res, next) => {
       booking.disputeDetails.resolutionNote = note || 'Dispute dismissed by admin';
       booking.disputeDetails.resolvedAt = new Date();
       await booking.save();
-      return res.json({ success: true, message: 'Dispute dismissed. Booking remains active.', data: booking });
+      await logAudit({
+      req,
+      action: 'DISPUTE_DISMISSED',
+      targetType: 'Booking',
+      targetId: booking._id,
+      details: `Dispute on booking ${id} dismissed by admin. Booking returned to active status.`,
+      metadata: { action, note: note || '' },
+      status: 'INFO',
+    });
+    return res.json({ success: true, message: 'Dispute dismissed. Booking remains active.', data: booking });
     }
   } catch (error) {
     next(error);
@@ -529,7 +550,7 @@ export const getBookings = async (req, res, next) => {
 
     const bookings = await Booking.find(filter)
       .sort({ createdAt: -1 })
-      .populate('providerId', 'name businessName phone rating reviewCount completedJobs isVerified avatar bankDetails kycDocuments')
+      .populate('providerId', req.user.role === 'admin' ? 'name businessName phone rating reviewCount completedJobs isVerified avatar bankDetails kycDocuments' : 'name businessName phone rating reviewCount completedJobs isVerified avatar')
       .populate('requesterId', 'name phone email')
       .populate('requirementId');
 

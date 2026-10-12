@@ -33,6 +33,17 @@ export interface User {
     rejectionReason?: string;
   };
   avatar?: string;
+  unavailableDates?: {
+    date: string;
+    reason: string;
+    createdAt?: string;
+  }[];
+  verificationAudit?: {
+    status: string;
+    reviewedByName?: string;
+    reviewedAt: string;
+    notes?: string;
+  }[];
 }
 
 export interface Category {
@@ -67,7 +78,8 @@ export interface Requirement {
   guestCount: number;
   budget: number;
   maxAcceptableBid: number; // 85% of budget
-  status: 'DRAFT' | 'OPEN' | 'ACCEPTED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+  biddingDeadline?: string;
+  status: 'DRAFT' | 'OPEN' | 'ACCEPTED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'EXPIRED';
   bidsCount: number;
   lowestBid?: number;
   createdAt: string;
@@ -110,6 +122,16 @@ export interface Booking {
     commissionRetained: number;
   };
   isContactRevealed: boolean;
+  disputeReason?: string;
+  disputeDetails?: {
+    isDisputed: boolean;
+    reason: string;
+    raisedBy?: any;
+    raisedAt?: string;
+    resolutionAction?: string;
+    resolutionNote?: string;
+    resolvedAt?: string | null;
+  };
   completedAt?: string;
   createdAt: string;
 }

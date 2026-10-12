@@ -1,9 +1,10 @@
-import React from 'react';
-import { MapPin, Phone, MessageCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { MapPin, Phone, MessageCircle, AlertTriangle, X } from 'lucide-react';
 import type { Booking } from '../types';
 
 interface ActiveOrdersDeskProps {
   bookings: Booking[];
+  onRaiseDispute?: (bookingId: string, reason: string) => Promise<void>;
 }
 
 const statusInfo: Record<string, { label: string; className: string; step: number }> = {
@@ -17,7 +18,36 @@ const statusInfo: Record<string, { label: string; className: string; step: numbe
 
 const steps = ['Host picked you', 'Host paid EzzyGo', 'Event day', 'You get paid'];
 
-export const ActiveOrdersDesk: React.FC<ActiveOrdersDeskProps> = ({ bookings }) => {
+export const ActiveOrdersDesk: React.FC<ActiveOrdersDeskProps> = ({ bookings, onRaiseDispute }) => {
+  const [disputeBookingModal, setDisputeBookingModal] = useState<Booking | null>(null);
+  const [disputeReasonText, setDisputeReasonText] = useState('');
+  const [submittingDispute, setSubmittingDispute] = useState(false);
+
+  const vendorDisputePresets = [
+    'Host unreachable / venue closed on event day',
+    'Host cancelled event on arrival without notice',
+    'Host demanding unagreed tasks outside bid scope',
+    'Host refused entry / dispute on service delivery',
+  ];
+
+  const handleOpenDispute = (b: Booking) => {
+    setDisputeBookingModal(b);
+    setDisputeReasonText('');
+  };
+
+  const handleConfirmDispute = async () => {
+    if (!disputeBookingModal || !disputeReasonText.trim() || !onRaiseDispute) return;
+    setSubmittingDispute(true);
+    try {
+      await onRaiseDispute(disputeBookingModal._id, disputeReasonText.trim());
+      setDisputeBookingModal(null);
+    } catch {
+      // handled in parent toast
+    } finally {
+      setSubmittingDispute(false);
+    }
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       <div>
@@ -48,6 +78,7 @@ export const ActiveOrdersDesk: React.FC<ActiveOrdersDeskProps> = ({ bookings }) 
                 key={booking._id}
                 className="rounded-3xl bg-white border border-slate-200 p-6 sm:p-7 space-y-5 shadow-sm flex flex-col justify-between"
               >
+                <div className="space-y-4">
                   <div className="w-full h-36 rounded-2xl overflow-hidden bg-slate-100 relative border border-slate-200/80">
                     <img
                       src={
@@ -112,7 +143,7 @@ export const ActiveOrdersDesk: React.FC<ActiveOrdersDeskProps> = ({ bookings }) 
                               href={`https://wa.me/91${phone.replace(/[^0-9]/g, '').slice(-10)}`}
                               target="_blank"
                               rel="noreferrer"
-                              className="px-3.5 py-2 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm flex items-center gap-1.5 transition"
+                              className="px-4 py-2.5 min-h-[42px] rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm flex items-center gap-1.5 transition active:scale-95 shadow-sm"
                             >
                               <MessageCircle className="w-4 h-4" />
                               <span>WhatsApp</span>
@@ -120,7 +151,7 @@ export const ActiveOrdersDesk: React.FC<ActiveOrdersDeskProps> = ({ bookings }) 
                             <a
                               href={`tel:${phone}`}
                               aria-label="Call host"
-                              className="p-2 rounded-full bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 transition"
+                              className="p-2.5 min-h-[42px] min-w-[42px] rounded-full bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 transition flex items-center justify-center active:scale-95"
                             >
                               <Phone className="w-4 h-4" />
                             </a>
@@ -155,14 +186,125 @@ export const ActiveOrdersDesk: React.FC<ActiveOrdersDeskProps> = ({ bookings }) 
                   </div>
                 </div>
 
+                {booking.status === 'DISPUTED' && (
+                  <div className="pt-4 border-t border-slate-100 space-y-2">
+                    <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 space-y-1">
+                      <div className="flex items-center gap-1.5 font-semibold text-sm text-rose-800">
+                        <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                        Dispute in Mediation
+                      </div>
+                      <p className="text-xs text-rose-700">
+                        Reason: {booking.disputeReason || booking.disputeDetails?.reason || 'Service dispute under mediation.'}
+                      </p>
+                      <p className="text-[11px] text-rose-600/90 pt-1 border-t border-rose-200">
+                        EzzyGo support is reviewing this booking. Escrow funds (?{booking.bidAmount.toLocaleString()}) remain safely held until resolution.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {booking.status === 'ACTIVE' && (
-                  <p className="pt-4 border-t border-slate-100 text-sm text-slate-600">
-                    After the event, the host confirms it is done. Then EzzyGo sends you ₹{booking.bidAmount.toLocaleString()}.
-                  </p>
+                  <div className="pt-4 border-t border-slate-100 space-y-2.5">
+                    <p className="text-sm text-slate-600">
+                      After the event, the host confirms it is done. Then EzzyGo sends you ?{booking.bidAmount.toLocaleString()}.
+                    </p>
+                    {onRaiseDispute && (
+                      <button
+                        type="button"
+                        onClick={() => handleOpenDispute(booking)}
+                        className="w-full sm:w-auto px-4 py-2.5 min-h-[42px] rounded-xl border border-rose-200 hover:bg-rose-50 text-rose-700 font-semibold text-xs sm:text-sm transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
+                      >
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                        Report Issue / Dispute to Support
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             );
           })}
+        </div>
+      )}
+      {/* Vendor Dispute Modal */}
+      {disputeBookingModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 space-y-5 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-lg">Report Booking Issue</h3>
+                  <p className="text-xs text-slate-500">Alert EzzyGo Support & hold escrow release</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setDisputeBookingModal(null)}
+                className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-sm text-slate-600">
+                Facing an issue with the host or event logistics? Let support mediate before completion.
+              </p>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Common issues:</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {vendorDisputePresets.map((r) => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setDisputeReasonText(r)}
+                      className={`text-xs px-3.5 py-2 min-h-[38px] rounded-full border transition cursor-pointer active:scale-95 flex items-center justify-center ${
+                        disputeReasonText === r
+                          ? 'bg-rose-50 border-rose-300 text-rose-800 font-semibold'
+                          : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {r}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Describe what happened:
+                </label>
+                <textarea
+                  value={disputeReasonText}
+                  onChange={(e) => setDisputeReasonText(e.target.value)}
+                  placeholder="Explain the problem in detail for EzzyGo mediation..."
+                  rows={3}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setDisputeBookingModal(null)}
+                disabled={submittingDispute}
+                className="w-full sm:w-auto px-5 py-3 min-h-[44px] rounded-xl text-slate-600 hover:bg-slate-100 text-sm font-medium transition cursor-pointer text-center"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDispute}
+                disabled={!disputeReasonText.trim() || submittingDispute}
+                className="w-full sm:w-auto px-6 py-3 min-h-[44px] rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white font-semibold text-sm transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 text-center shadow-md shadow-rose-500/20"
+              >
+                {submittingDispute ? 'Submitting...' : 'Submit Issue'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

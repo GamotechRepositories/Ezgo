@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Phone, X, Star, Eye, FileText, Download, ShieldCheck } from 'lucide-react';
+import { Search, Phone, X, Star, Eye, FileText, Download, ShieldCheck, Clock } from 'lucide-react';
 import type { User } from '../types';
 
 interface ProviderKycManagerProps {
@@ -375,7 +375,54 @@ export const ProviderKycManager: React.FC<ProviderKycManagerProps> = ({
                   </div>
                 )}
               </section>
-            </div>
+
+                {/* Verification Audit Trail Section (Module 04, Task 10) */}
+                <section className="space-y-3 pt-3 border-t border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-base font-semibold text-slate-900 flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-slate-500" />
+                      <span>Verification Audit Trail</span>
+                    </h4>
+                    {selectedProvider.verificationAudit && selectedProvider.verificationAudit.length > 0 && (
+                      <span className="text-xs text-slate-400">
+                        {selectedProvider.verificationAudit.length} event(s) logged
+                      </span>
+                    )}
+                  </div>
+
+                  {!selectedProvider.verificationAudit || selectedProvider.verificationAudit.length === 0 ? (
+                    <p className="text-xs text-slate-400 italic bg-slate-50 p-3 rounded-xl border border-slate-100">
+                      No verification audit history recorded yet. Approving or revoking will log an immutable audit event.
+                    </p>
+                  ) : (
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {selectedProvider.verificationAudit.map((log, idx) => (
+                        <div
+                          key={idx}
+                          className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs flex items-start justify-between gap-3"
+                        >
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${log.status === "APPROVED" ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800"}`}
+                              >
+                                {log.status}
+                              </span>
+                              <span className="font-semibold text-slate-700">
+                                by {log.reviewedByName || "Administrator"}
+                              </span>
+                            </div>
+                            <p className="text-slate-600">{log.notes}</p>
+                          </div>
+                          <span className="text-[11px] text-slate-400 shrink-0">
+                            {new Date(log.reviewedAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </section>
+              </div>
 
             <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3">
               <button

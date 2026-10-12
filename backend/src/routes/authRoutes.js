@@ -9,6 +9,9 @@ import {
   sendOtp,
   verifyOtpAndLogin,
   submitKyc,
+  blockAvailabilityDate,
+  unblockAvailabilityDate,
+  getAvailability,
 } from '../controllers/authController.js';
 import { requireAuth, requireRole } from '../middlewares/auth.js';
 
@@ -24,5 +27,8 @@ router.get('/demo-accounts', demoAccounts);
 router.get('/me', requireAuth, me);
 router.get('/users', requireAuth, requireRole('admin'), getDemoUsers);
 router.put('/profile', requireAuth, updateProfile);
+router.post('/availability/block', requireAuth, blockAvailabilityDate);
+router.delete('/availability/unblock/:date', requireAuth, unblockAvailabilityDate);
+router.get('/availability/:providerId?', requireAuth, getAvailability);
 
 export default router;

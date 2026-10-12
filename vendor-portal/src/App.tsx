@@ -1,3 +1,4 @@
+import { Search, CalendarCheck, Calendar, Wallet, Menu } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { VendorSidebar } from './components/VendorSidebar';
 import { VendorHeader } from './components/VendorHeader';
@@ -6,6 +7,7 @@ import { PlaceBidModal } from './components/PlaceBidModal';
 import { ActiveOrdersDesk } from './components/ActiveOrdersDesk';
 import { EarningsWallet } from './components/EarningsWallet';
 import { EquipmentInventory } from './components/EquipmentInventory';
+import { AvailabilityCalendar } from './components/AvailabilityCalendar';
 import { RuleExplainer } from './components/RuleExplainer';
 import { ToastContainer } from './components/Toast';
 import type { ToastMessage } from './components/Toast';
@@ -14,11 +16,11 @@ import { api, getToken, clearToken } from './services/api';
 import { getSocket } from './services/socket';
 import type { Requirement, Booking, User } from './types';
 
-type VendorTab = 'auctions' | 'orders' | 'wallet' | 'inventory';
+type VendorTab = 'auctions' | 'orders' | 'availability' | 'wallet' | 'inventory';
 
 const tabFromUrl = (): VendorTab => {
   const hash = window.location.hash.replace('#', '');
-  if (['orders', 'wallet', 'inventory', 'auctions'].includes(hash)) {
+  if (['orders', 'availability', 'wallet', 'inventory', 'auctions'].includes(hash)) {
     return hash as VendorTab;
   }
   return 'auctions';
@@ -46,6 +48,7 @@ export default function App() {
   return (
     <VendorApp
       currentVendor={currentVendor}
+      onUpdateVendor={setCurrentVendor}
       onLogout={() => {
         clearToken();
         setCurrentVendor(null);
@@ -54,7 +57,7 @@ export default function App() {
   );
 }
 
-function VendorApp({ currentVendor, onLogout }: { currentVendor: User; onLogout: () => void }) {
+function VendorApp({ currentVendor, onUpdateVendor, onLogout }: { currentVendor: User; onUpdateVendor?: (u: User) => void; onLogout: () => void }) {
   const [loadError, setLoadError] = useState('');
   const [activeTab, setActiveTab] = useState<VendorTab>(tabFromUrl);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -190,6 +193,20 @@ function VendorApp({ currentVendor, onLogout }: { currentVendor: User; onLogout:
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleRaiseDispute = async (bookingId: string, reason: string) => {
+    try {
+      await api.raiseDispute(bookingId, reason);
+      if (currentVendor?._id) {
+        const updated = await api.getMyBookings(currentVendor._id);
+        setBookings(updated);
+      }
+      addToast('success', 'Dispute Submitted', 'EzzyGo support has been alerted and will mediate this booking.');
+    } catch (err: any) {
+      addToast('error', 'Could not submit dispute', err.message);
+      throw err;
+    }
+  };
+
   const handlePlaceBid = async (reqId: string, bidData: any) => {
     try {
       const newBid = await api.placeBid(reqId, bidData);
@@ -246,7 +263,7 @@ function VendorApp({ currentVendor, onLogout }: { currentVendor: User; onLogout:
           onLogout={onLogout}
         />
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto pb-20 lg:pb-8">
           {loadError && (
             <div className="mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <p className="text-sm">{loadError}</p>
@@ -269,7 +286,7 @@ function VendorApp({ currentVendor, onLogout }: { currentVendor: User; onLogout:
           )}
 
           {activeTab === 'orders' && (
-            <ActiveOrdersDesk bookings={bookings} />
+            <ActiveOrdersDesk bookings={bookings} onRaiseDispute={handleRaiseDispute} />
           )}
 
           {activeTab === 'wallet' && (
@@ -279,21 +296,88 @@ function VendorApp({ currentVendor, onLogout }: { currentVendor: User; onLogout:
             />
           )}
 
+          {activeTab === 'availability' && (
+            <AvailabilityCalendar
+              vendor={currentVendor}
+              onUpdateVendor={(updated) => onUpdateVendor?.(updated)}
+              showToast={(type, title, msg) => addToast(type, title, msg)}
+            />
+          )}
+
           {activeTab === 'inventory' && (
             <EquipmentInventory vendorId={currentVendor._id} />
           )}
         </main>
 
-        <footer className="py-4 px-6 border-t border-slate-200/80 text-center text-xs text-slate-400 bg-white/50">
+        <footer className="py-4 px-6 border-t border-slate-200/80 text-center text-xs text-slate-400 bg-white/50 mb-14 lg:mb-0">
           EzzyGo for vendors · You get your full bid after every event
         </footer>
       </div>
+      {/* Mobile Fixed Bottom Navigation Bar for Vendors */}
+      <nav className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 py-1.5 px-3 flex items-center justify-around lg:hidden safe-bottom shadow-lg">
+        <button
+          onClick={() => handleTabChange('auctions')}
+          className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition cursor-pointer ${
+            activeTab === 'auctions' ? 'text-[#f95724] font-bold' : 'text-slate-500 hover:text-slate-900 font-medium'
+          }`}
+        >
+          <Search className="w-5 h-5 mb-0.5" />
+          <span className="text-[10px]">Requests</span>
+        </button>
+
+        <button
+          onClick={() => handleTabChange('orders')}
+          className={`relative flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition cursor-pointer ${
+            activeTab === 'orders' ? 'text-[#f95724] font-bold' : 'text-slate-500 hover:text-slate-900 font-medium'
+          }`}
+        >
+          <CalendarCheck className="w-5 h-5 mb-0.5" />
+          <span className="text-[10px]">Bookings</span>
+          {activeOrdersCount > 0 && (
+            <span className="absolute top-0.5 right-1 w-4 h-4 rounded-full bg-emerald-600 text-white text-[9px] font-black flex items-center justify-center ring-2 ring-white">
+              {activeOrdersCount}
+            </span>
+          )}
+        </button>
+
+        <button
+          onClick={() => handleTabChange('availability')}
+          className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition cursor-pointer ${
+            activeTab === 'availability' ? 'text-[#f95724] font-bold' : 'text-slate-500 hover:text-slate-900 font-medium'
+          }`}
+        >
+          <Calendar className="w-5 h-5 mb-0.5" />
+          <span className="text-[10px]">Calendar</span>
+        </button>
+
+        <button
+          onClick={() => handleTabChange('wallet')}
+          className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition cursor-pointer ${
+            activeTab === 'wallet' ? 'text-[#f95724] font-bold' : 'text-slate-500 hover:text-slate-900 font-medium'
+          }`}
+        >
+          <Wallet className="w-5 h-5 mb-0.5" />
+          <span className="text-[10px]">Earnings</span>
+        </button>
+
+        <button
+          onClick={() => setIsSidebarOpen(true)}
+          className="flex flex-col items-center justify-center py-1 px-2.5 rounded-xl text-slate-500 hover:text-slate-900 font-medium transition cursor-pointer"
+        >
+          <Menu className="w-5 h-5 mb-0.5" />
+          <span className="text-[10px]">More</span>
+        </button>
+      </nav>
+
 
       <PlaceBidModal
         isOpen={!!selectedReqForBid}
         onClose={() => setSelectedReqForBid(null)}
         requirement={selectedReqForBid}
         providerId={currentVendor._id}
+        existingBid={selectedReqForBid?.bids?.find(
+          (b) => (typeof b.providerId === 'object' ? (b.providerId as any)?._id : b.providerId) === currentVendor._id
+        )}
         onSubmit={handlePlaceBid}
       />
 
