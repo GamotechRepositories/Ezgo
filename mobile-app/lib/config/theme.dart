@@ -1,0 +1,212 @@
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+class AppTheme {
+  // Approved EzzyGo Design System Colors
+  static const Color primary = Color(0xFFFF5148); // Coral #FF5148
+  static const Color primaryHover = Color(0xFFE2433B);
+  static const Color primaryLight = Color(0xFFFFECEB);
+  static const Color primaryDark = Color(0xFFD93830);
+
+  static const LinearGradient primaryGradient = LinearGradient(
+    colors: [Color(0xFFFF5148), Color(0xFFFF6D66)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  // Background & Surface
+  static const Color background = Color(0xFFFFF9F4); // #FFF9F4
+  static const Color surface = Color(0xFFFFFFFF); // #FFFFFF
+
+  // Text
+  static const Color textPrimary = Color(0xFF202124); // #202124
+  static const Color textSecondary = Color(0xFF777777); // #777777
+  static const Color textMuted = Color(0xFF9E9E9E);
+
+  // Borders
+  static const Color borderSubtle = Color(0xFFF0E8E2); // #F0E8E2
+
+  // Semantic Status Colors
+  static const Color successBg = Color(0xFFE4F7EA); // #E4F7EA
+  static const Color successText = Color(0xFF18794E); // #18794E
+  static const Color emerald = Color(0xFF18794E);
+  static const Color emerald600 = Color(0xFF18794E);
+  static const Color emeraldLight = Color(0xFFE4F7EA);
+  static const Color emerald50 = Color(0xFFE4F7EA);
+
+  static const Color amber = Color(0xFFF59E0B);
+  static const Color amber500 = Color(0xFFF59E0B);
+  static const Color amberLight = Color(0xFFFFF7ED);
+  static const Color amber50 = Color(0xFFFFF7ED);
+
+  static const Color rose = Color(0xFFFF5148);
+  static const Color red500 = Color(0xFFFF5148);
+  static const Color redLight = Color(0xFFFFECEB);
+  static const Color red50 = Color(0xFFFFECEB);
+
+  // Neutral scale mapped to approved palette
+  static const Color slate900 = Color(0xFF202124);
+  static const Color slate800 = Color(0xFF333333);
+  static const Color slate700 = Color(0xFF555555);
+  static const Color slate600 = Color(0xFF777777);
+  static const Color slate500 = Color(0xFF8E8E93);
+  static const Color slate400 = Color(0xFFB0B0B5);
+  static const Color slate300 = Color(0xFFDDD7D1);
+  static const Color slate200 = Color(0xFFF0E8E2);
+  static const Color slate100 = Color(0xFFF7F2ED);
+  static const Color slate50 = Color(0xFFFCF8F5);
+
+  // Category Pastel Backgrounds
+  static const Color pastelRed = Color(0xFFFFEAE9);
+  static const Color pastelBlue = Color(0xFFE8F4FD);
+  static const Color pastelGreen = Color(0xFFE8F8F0);
+  static const Color pastelPurple = Color(0xFFF0ECFC);
+  static const Color pastelAmber = Color(0xFFFFF4E8);
+  static const Color pastelPink = Color(0xFFFFF0F5);
+
+  // Modern Typography (Inter & Plus Jakarta Sans)
+  static TextStyle displayFont({
+    double fontSize = 26,
+    FontWeight fontWeight = FontWeight.w800,
+    Color color = textPrimary,
+    double? height,
+    double? letterSpacing,
+  }) {
+    return GoogleFonts.plusJakartaSans(
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      color: color,
+      height: height,
+      letterSpacing: letterSpacing ?? -0.3,
+    );
+  }
+
+  static TextStyle headingFont({
+    double fontSize = 18,
+    FontWeight fontWeight = FontWeight.w700,
+    Color color = textPrimary,
+    double? height,
+    double? letterSpacing,
+  }) {
+    return GoogleFonts.plusJakartaSans(
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      color: color,
+      height: height,
+      letterSpacing: letterSpacing ?? -0.2,
+    );
+  }
+
+  static TextStyle bodyFont({
+    double fontSize = 14,
+    FontWeight fontWeight = FontWeight.w500,
+    Color color = textSecondary,
+    double? height,
+  }) {
+    return GoogleFonts.inter(
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      color: color,
+      height: height,
+    );
+  }
+
+  static ThemeData get lightTheme {
+    return ThemeData(
+      useMaterial3: true,
+      fontFamily: GoogleFonts.inter().fontFamily,
+      scaffoldBackgroundColor: background,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: primary,
+        primary: primary,
+        secondary: textPrimary,
+        surface: surface,
+      ),
+      textTheme: const TextTheme(
+        displayLarge: TextStyle(
+          fontSize: 28,
+          fontWeight: FontWeight.w800,
+          color: textPrimary,
+          letterSpacing: -0.6,
+        ),
+        headlineMedium: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          color: textPrimary,
+          letterSpacing: -0.3,
+        ),
+        titleLarge: TextStyle(
+          fontSize: 17,
+          fontWeight: FontWeight.w700,
+          color: textPrimary,
+        ),
+        bodyLarge: TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w400,
+          color: textPrimary,
+        ),
+        bodyMedium: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w400,
+          color: textSecondary,
+        ),
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: false,
+        iconTheme: IconThemeData(color: textPrimary),
+        titleTextStyle: TextStyle(
+          fontSize: 17,
+          fontWeight: FontWeight.w700,
+          color: textPrimary,
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primary,
+          foregroundColor: Colors.white,
+          minimumSize: const Size.fromHeight(48),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          elevation: 0,
+          textStyle: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+      inputDecorationTheme: const InputDecorationTheme(
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(14)),
+          borderSide: BorderSide(color: borderSubtle),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(14)),
+          borderSide: BorderSide(color: borderSubtle),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(14)),
+          borderSide: BorderSide(color: primary, width: 1.5),
+        ),
+        hintStyle: TextStyle(
+          color: textSecondary,
+          fontSize: 13,
+        ),
+      ),
+      cardTheme: const CardThemeData(
+        color: Colors.white,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(16)),
+          side: BorderSide(color: borderSubtle),
+        ),
+      ),
+    );
+  }
+}
