@@ -355,28 +355,44 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                       MaterialPageRoute(builder: (_) => const PostRequirementScreen()),
                     );
                   },
-                  child: Container(
-                    width: 48,
-                    height: 48,
-                    margin: const EdgeInsets.symmetric(horizontal: 2),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primary,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.primary.withValues(alpha: 0.35),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: AppTheme.primary,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppTheme.primary.withValues(alpha: 0.35),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(LucideIcons.plus, color: Colors.white, size: 22),
+                        ),
+                        const SizedBox(height: 3),
+                        const Text(
+                          'Post',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.slate600,
+                          ),
                         ),
                       ],
                     ),
-                    child: const Icon(LucideIcons.plus, color: Colors.white, size: 24),
                   ),
                 ),
 
                 // 4. Bookings
                 _buildNavItem(
-                  icon: LucideIcons.shieldCheck,
+                  icon: LucideIcons.calendarCheck,
                   label: 'Bookings',
                   badgeCount: activeBookingsCount > 0 ? activeBookingsCount : null,
                   isSelected: _currentIndex == 3,

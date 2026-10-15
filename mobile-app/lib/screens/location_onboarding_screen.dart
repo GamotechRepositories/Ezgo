@@ -349,122 +349,154 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen>
 
             const SizedBox(height: 6),
 
-            // City List Section
+            // City Grid Section (2-Column Grid / 2*2 Layout)
             Expanded(
               child: filteredCities.isEmpty
                   ? _buildEmptyState(query)
-                  : ListView.separated(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                  : GridView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      physics: const BouncingScrollPhysics(),
                       itemCount: filteredCities.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 6),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 1.12,
+                      ),
                       itemBuilder: (context, index) {
                         final city = filteredCities[index];
                         final cityName = city['name'] as String;
                         final cityState = city['state'] as String;
+                        final landmark = city['landmark'] as String? ?? cityState;
                         final isSelected =
                             _selectedCity.toLowerCase() == cityName.toLowerCase();
 
-                        return InkWell(
-                          onTap: () => _onCitySelect(cityName),
-                          borderRadius: BorderRadius.circular(16),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 220),
-                            curve: Curves.easeOutCubic,
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                            decoration: BoxDecoration(
-                              // Exact Soft Coral/Peach Background when selected (#FFF0EE)
-                              color: isSelected
-                                  ? const Color(0xFFFFF0EE)
-                                  : Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: isSelected
-                                    ? const Color(0xFFFFDCD7)
-                                    : const Color(0xFFF3F4F6),
-                                width: isSelected ? 1.2 : 0.8,
+                        return Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => _onCitySelect(cityName),
+                            borderRadius: BorderRadius.circular(16),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              curve: Curves.easeOutCubic,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 12,
                               ),
-                            ),
-                            child: Row(
-                              children: [
-                                // High-Definition Architectural Landmark Illustration
-                                SizedBox(
-                                  width: 52,
-                                  height: 44,
-                                  child: Image.asset(
-                                    city['image'] as String,
-                                    fit: BoxFit.contain,
-                                    errorBuilder: (_, _, _) => Container(
-                                      decoration: BoxDecoration(
-                                        color: city['color'] as Color,
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Icon(
-                                        city['fallbackIcon'] as IconData,
-                                        color: isSelected
-                                            ? AppTheme.primary
-                                            : AppTheme.textPrimary,
-                                        size: 22,
-                                      ),
-                                    ),
-                                  ),
+                              decoration: BoxDecoration(
+                                // Soft Coral/Peach Background when selected (#FFF0EE)
+                                color: isSelected
+                                    ? const Color(0xFFFFF0EE)
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? const Color(0xFFFF5148)
+                                      : const Color(0xFFE5E7EB),
+                                  width: isSelected ? 1.6 : 1.0,
                                 ),
-                                const SizedBox(width: 14),
-
-                                // City Name & Region
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        cityName,
-                                        style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 16.5,
-                                          fontWeight: isSelected
-                                              ? FontWeight.w800
-                                              : FontWeight.w600,
-                                          color: isSelected
-                                              ? const Color(0xFF1F2937)
-                                              : const Color(0xFF374151),
+                                boxShadow: [
+                                  if (isSelected)
+                                    BoxShadow(
+                                      color: const Color(0xFFFF5148).withValues(alpha: 0.12),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    )
+                                  else
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.03),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                ],
+                              ),
+                              child: Stack(
+                                children: [
+                                  // Selected checkmark indicator badge at top-right
+                                  if (isSelected)
+                                    Positioned(
+                                      top: 0,
+                                      right: 0,
+                                      child: Container(
+                                        width: 22,
+                                        height: 22,
+                                        decoration: const BoxDecoration(
+                                          color: Color(0xFFFF5148),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.check_rounded,
+                                          color: Colors.white,
+                                          size: 14,
                                         ),
                                       ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        cityState,
-                                        style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
-                                          color: isSelected
-                                              ? AppTheme.primary.withValues(alpha: 0.85)
-                                              : const Color(0xFF9CA3AF),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                                    ),
 
-                                // Selection Indicator (Solid Coral Circle Badge with White Check)
-                                if (isSelected)
-                                  Container(
-                                    width: 26,
-                                    height: 26,
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFFFF5148),
-                                      shape: BoxShape.circle,
+                                  // Main content: Landmark + City Name + Landmark / Region
+                                  Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        // High-Definition Architectural Landmark Illustration
+                                        SizedBox(
+                                          width: 56,
+                                          height: 48,
+                                          child: Image.asset(
+                                            city['image'] as String,
+                                            fit: BoxFit.contain,
+                                            errorBuilder: (_, _, _) => Container(
+                                              decoration: BoxDecoration(
+                                                color: (city['color'] as Color?) ?? const Color(0xFFFFECEB),
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                              child: Icon(
+                                                (city['fallbackIcon'] as IconData?) ?? LucideIcons.mapPin,
+                                                color: isSelected
+                                                    ? AppTheme.primary
+                                                    : AppTheme.textPrimary,
+                                                size: 24,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+
+                                        // City Name
+                                        Text(
+                                          cityName,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 15.5,
+                                            fontWeight: isSelected
+                                                ? FontWeight.w800
+                                                : FontWeight.w700,
+                                            color: isSelected
+                                                ? const Color(0xFF1F2937)
+                                                : const Color(0xFF374151),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+
+                                        // Landmark / State Subtitle
+                                        Text(
+                                          landmark,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          textAlign: TextAlign.center,
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 11.5,
+                                            fontWeight: FontWeight.w500,
+                                            color: isSelected
+                                                ? AppTheme.primary.withValues(alpha: 0.9)
+                                                : const Color(0xFF9CA3AF),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    child: const Icon(
-                                      Icons.check_rounded,
-                                      color: Colors.white,
-                                      size: 16,
-                                    ),
-                                  )
-                                else
-                                  const Icon(
-                                    LucideIcons.chevronRight,
-                                    color: Color(0xFFD1D5DB),
-                                    size: 18,
                                   ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         );

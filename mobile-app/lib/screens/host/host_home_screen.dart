@@ -162,25 +162,41 @@ class HostHomeScreenState extends State<HostHomeScreen> {
           child: _buildOccasionShortcuts(),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 18),
 
-        // 3. Modern Search Bar
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: _buildSearchBar(),
-        ),
-
-        const SizedBox(height: 22),
-
-        // 4. Popular Services Section (Screen 3)
+        // 3. Popular Services Section (Matching Screen 3 Mockup)
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: _buildPopularServicesSection(),
         ),
 
+        const SizedBox(height: 20),
+
+        // 4. Quick Search Bar
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: _buildSearchBar(),
+        ),
+
         const SizedBox(height: 24),
 
-        // 5. Activity / My Event Requests (Screen 3)
+        // 5. Interactive "How Reverse-Bidding Works" Banner
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: _buildHowReverseBiddingWorks(),
+        ),
+
+        const SizedBox(height: 24),
+
+        // 6. Explore All Categories (2-Column Grid)
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: _buildAllCategoriesGrid(),
+        ),
+
+        const SizedBox(height: 24),
+
+        // 7. Activity / My Event Requests (Screen 3)
         if (myRequirements.isNotEmpty) ...[
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -189,13 +205,27 @@ class HostHomeScreenState extends State<HostHomeScreen> {
           const SizedBox(height: 24),
         ],
 
-        // 6. Compact Trust Section (Screen 3)
+        // 8. EzzyGo Trust & Escrow Guarantee
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: _buildCompactTrustSection(),
+          child: _buildTrustAndAssuranceSection(),
         ),
 
-        const SizedBox(height: 32),
+        const SizedBox(height: 24),
+
+        // 9. Real Host Testimonials & Reviews
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: _buildHostTestimonialsCard(),
+        ),
+
+        const SizedBox(height: 28),
+
+        // 10. Clean App Branding Footer
+        _buildFooterBranding(),
+
+        // 11. Proper Bottom Clearance for Floating Navigation Bar
+        const SizedBox(height: 100),
       ],
     );
   }
@@ -580,7 +610,7 @@ class HostHomeScreenState extends State<HostHomeScreen> {
     );
   }
 
-  // 4. Popular Services Horizontally Scrollable Cards (Screen 3)
+  // 3. Popular Services Horizontally Scrollable Cards (Screen 3)
   Widget _buildPopularServicesSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -611,7 +641,7 @@ class HostHomeScreenState extends State<HostHomeScreen> {
         ),
         const SizedBox(height: 12),
         SizedBox(
-          height: 145,
+          height: 148,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: _popularServices.length,
@@ -629,15 +659,15 @@ class HostHomeScreenState extends State<HostHomeScreen> {
                   );
                 },
                 child: Container(
-                  width: 110,
+                  width: 116,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: AppTheme.borderSubtle),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.02),
-                        blurRadius: 6,
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
                     ],
@@ -647,65 +677,40 @@ class HostHomeScreenState extends State<HostHomeScreen> {
                     children: [
                       ClipRRect(
                         borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
-                        child: Stack(
-                          children: [
-                            Image.asset(
-                              service['asset'] as String,
-                              width: 110,
-                              height: 80,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, _, _) => Image.network(
-                                service['image'] as String,
-                                width: 110,
-                                height: 80,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) => Container(
-                                  width: 110,
-                                  height: 80,
-                                  color: (service['color'] as Color).withValues(alpha: 0.12),
-                                  child: Icon(
-                                    service['icon'] as IconData,
-                                    size: 26,
-                                    color: service['color'] as Color,
-                                  ),
-                                ),
+                        child: Image.asset(
+                          service['asset'] as String,
+                          width: 116,
+                          height: 86,
+                          fit: BoxFit.cover,
+                          filterQuality: FilterQuality.high,
+                          errorBuilder: (context, error, stackTrace) => Image.network(
+                            service['image'] as String,
+                            width: 116,
+                            height: 86,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Container(
+                              width: 116,
+                              height: 86,
+                              color: (service['color'] as Color).withValues(alpha: 0.12),
+                              child: Icon(
+                                service['icon'] as IconData,
+                                size: 26,
+                                color: service['color'] as Color,
                               ),
                             ),
-                            Positioned(
-                              top: 6,
-                              right: 6,
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.92),
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.1),
-                                      blurRadius: 3,
-                                    ),
-                                  ],
-                                ),
-                                child: Icon(
-                                  service['icon'] as IconData,
-                                  size: 11,
-                                  color: service['color'] as Color,
-                                ),
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               service['title'] as String,
                               style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
                                 color: AppTheme.textPrimary,
                               ),
                               maxLines: 1,
@@ -715,7 +720,7 @@ class HostHomeScreenState extends State<HostHomeScreen> {
                             Text(
                               service['price'] as String,
                               style: const TextStyle(
-                                fontSize: 10,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w600,
                                 color: AppTheme.textSecondary,
                               ),
@@ -868,28 +873,79 @@ class HostHomeScreenState extends State<HostHomeScreen> {
     );
   }
 
-  // 6. Compact Trust Section
-  Widget _buildCompactTrustSection() {
+  // 5. Interactive "How Reverse-Bidding Works" Banner
+  Widget _buildHowReverseBiddingWorks() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppTheme.borderSubtle),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              _buildTrustItem(LucideIcons.shieldCheck, '100% Escrow', 'Protected payments'),
-              Container(width: 1, height: 36, color: AppTheme.borderSubtle),
-              _buildTrustItem(LucideIcons.badgePercent, 'Reverse Bids', 'Guaranteed savings'),
-              Container(width: 1, height: 36, color: AppTheme.borderSubtle),
-              _buildTrustItem(LucideIcons.checkCircle2, 'Verified', 'Top rated vendors'),
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: AppTheme.redLight,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(LucideIcons.sparkles, size: 16, color: AppTheme.primary),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  'How Reverse-Bidding Works',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8F8F0),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  'Save 15% - 30%',
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF10B981)),
+                ),
+              ),
             ],
           ),
+          const SizedBox(height: 16),
+          _buildStepRow(
+            number: '1',
+            title: 'Post Event Requirement',
+            desc: 'Choose services, date, venue city, and target budget in 60s.',
+            color: const Color(0xFF2563EB),
+          ),
           const SizedBox(height: 12),
-          GestureDetector(
+          _buildStepRow(
+            number: '2',
+            title: 'Verified Vendors Bid Downward',
+            desc: 'Top local vendors compete for your job by offering lower quotes.',
+            color: const Color(0xFFD97706),
+          ),
+          const SizedBox(height: 12),
+          _buildStepRow(
+            number: '3',
+            title: '100% Escrow Protection',
+            desc: 'Advance is held safely with EzzyGo. Released only after event completion.',
+            color: const Color(0xFF10B981),
+            isLast: true,
+          ),
+          const SizedBox(height: 14),
+          InkWell(
             onTap: () {
               showModalBottomSheet(
                 context: context,
@@ -898,20 +954,25 @@ class HostHomeScreenState extends State<HostHomeScreen> {
                 builder: (_) => const RuleExplainerSheet(),
               );
             },
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(LucideIcons.sparkles, size: 13, color: AppTheme.primary),
-                SizedBox(width: 6),
-                Text(
-                  'How EzzyGo Reverse-Bidding Works',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.primary,
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 10),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF5F5),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Learn more about the 15% Discount Rule & Escrow',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.primary),
                   ),
-                ),
-              ],
+                  SizedBox(width: 4),
+                  Icon(LucideIcons.chevronRight, size: 14, color: AppTheme.primary),
+                ],
+              ),
             ),
           ),
         ],
@@ -919,23 +980,420 @@ class HostHomeScreenState extends State<HostHomeScreen> {
     );
   }
 
-  Widget _buildTrustItem(IconData icon, String title, String subtitle) {
-    return Expanded(
-      child: Column(
-        children: [
-          Icon(icon, size: 18, color: AppTheme.primary),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+  Widget _buildStepRow({
+    required String number,
+    required String title,
+    required String desc,
+    required Color color,
+    bool isLast = false,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 26,
+          height: 26,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            shape: BoxShape.circle,
+            border: Border.all(color: color.withValues(alpha: 0.3)),
           ),
-          Text(
-            subtitle,
-            style: const TextStyle(fontSize: 9, color: AppTheme.textSecondary),
-            textAlign: TextAlign.center,
+          alignment: Alignment.center,
+          child: Text(
+            number,
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: color),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                desc,
+                style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary, height: 1.3),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // 6. Explore All Categories (2-Column Grid)
+  Widget _buildAllCategoriesGrid() {
+    final categories = [
+      {
+        'title': 'Catering & Food',
+        'price': 'From ₹300 / plate',
+        'asset': 'assets/images/service_catering.jpg',
+      },
+      {
+        'title': 'Photography & Film',
+        'price': 'From ₹5,000 / day',
+        'asset': 'assets/images/occasion_parties.jpg',
+      },
+      {
+        'title': 'Mandap & Decoration',
+        'price': 'From ₹10,000',
+        'asset': 'assets/images/occasion_weddings.jpg',
+      },
+      {
+        'title': 'Banquet & Lawns',
+        'price': 'From ₹20,000',
+        'asset': 'assets/images/occasion_corporate.jpg',
+      },
+      {
+        'title': 'DJ, Sound & Lights',
+        'price': 'From ₹8,000',
+        'asset': 'assets/images/occasion_festivals.jpg',
+      },
+      {
+        'title': 'Bridal & Makeup',
+        'price': 'From ₹3,000',
+        'asset': 'assets/images/occasion_birthdays.jpg',
+      },
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Explore All Categories',
+              style: AppTheme.headingFont(fontSize: 17, fontWeight: FontWeight.w800),
+            ),
+            GestureDetector(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const ServiceCatalogScreen()),
+                );
+              },
+              child: const Text(
+                'View All',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: categories.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 1.15,
+          ),
+          itemBuilder: (context, index) {
+            final cat = categories[index];
+            return GestureDetector(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ServiceCatalogScreen(
+                      initialCategory: cat['title'] as String,
+                    ),
+                  ),
+                );
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppTheme.borderSubtle),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.02),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Image.asset(
+                              cat['asset'] as String,
+                              fit: BoxFit.cover,
+                              filterQuality: FilterQuality.high,
+                            ),
+                            Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.transparent,
+                                    Colors.black.withValues(alpha: 0.40),
+                                  ],
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            cat['title'] as String,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.textPrimary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            cat['price'] as String,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  // 8. EzzyGo Trust & Escrow Guarantee
+  Widget _buildTrustAndAssuranceSection() {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0FDF4),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFF86EFAC).withValues(alpha: 0.6)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF10B981),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(LucideIcons.shieldCheck, size: 18, color: Colors.white),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  'EzzyGo Trust & Escrow Guarantee',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF065F46)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          _buildTrustPoint(
+            icon: LucideIcons.lock,
+            title: '100% Escrow Protection',
+            desc: 'Your advance is held safely with EzzyGo and released only after event completion.',
+          ),
+          const SizedBox(height: 10),
+          _buildTrustPoint(
+            icon: LucideIcons.badgeCheck,
+            title: 'Verified Partner Vendors',
+            desc: 'KYC verified, portfolio inspected, and rated by real host reviews.',
+          ),
+          const SizedBox(height: 10),
+          _buildTrustPoint(
+            icon: LucideIcons.trendingDown,
+            title: '15% Lowest Price Guarantee',
+            desc: 'Vendors must bid at least 15% below your target budget.',
+          ),
+          const SizedBox(height: 10),
+          _buildTrustPoint(
+            icon: LucideIcons.phoneCall,
+            title: '24/7 Dedicated Concierge Support',
+            desc: 'Personal event manager on call for dispute resolution & coordination.',
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildTrustPoint({required IconData icon, required String title, required String desc}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 16, color: const Color(0xFF059669)),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF064E3B)),
+              ),
+              const SizedBox(height: 1),
+              Text(
+                desc,
+                style: const TextStyle(fontSize: 11, color: Color(0xFF047857), height: 1.3),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // 9. Real Host Testimonials & Reviews
+  Widget _buildHostTestimonialsCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppTheme.borderSubtle),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.star_rounded, size: 18, color: Color(0xFFFF9500)),
+                  Icon(Icons.star_rounded, size: 18, color: Color(0xFFFF9500)),
+                  Icon(Icons.star_rounded, size: 18, color: Color(0xFFFF9500)),
+                  Icon(Icons.star_rounded, size: 18, color: Color(0xFFFF9500)),
+                  Icon(Icons.star_rounded, size: 18, color: Color(0xFFFF9500)),
+                ],
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                '4.9 / 5 Rating',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppTheme.slate100,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Text(
+                  '1,200+ Events',
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppTheme.slate600),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            '“We posted our wedding catering & stage decoration requirement on EzzyGo. Received 4 vendor bids within 3 hours and saved ₹38,000! Escrow made it completely risk-free.”',
+            style: TextStyle(
+              fontSize: 12,
+              color: AppTheme.slate700,
+              fontStyle: FontStyle.italic,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              ClipOval(
+                child: Image.asset(
+                  'assets/images/user_avatar.png',
+                  width: 32,
+                  height: 32,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    width: 32,
+                    height: 32,
+                    color: AppTheme.pastelAmber,
+                    child: const Icon(LucideIcons.user, size: 16, color: Color(0xFFD97706)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Priya & Amit S.',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                  ),
+                  Text(
+                    'Pune Wedding Host · Verified Booking',
+                    style: TextStyle(fontSize: 10, color: AppTheme.textSecondary),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 10. Clean App Branding Footer
+  Widget _buildFooterBranding() {
+    return Column(
+      children: [
+        const EzzyGoLogo(size: 28),
+        const SizedBox(height: 6),
+        const Text(
+          'Celebrate Without Stress',
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+        ),
+        const SizedBox(height: 2),
+        const Text(
+          "India's 1st Event Reverse-Bidding Platform",
+          style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          '100% Escrow Protected · Made with ❤️ for Celebrations',
+          style: TextStyle(fontSize: 10, color: AppTheme.slate400),
+        ),
+      ],
     );
   }
 }

@@ -8,25 +8,46 @@ import '../../providers/requirements_provider.dart';
 import '../../providers/bookings_provider.dart';
 import '../../widgets/ezzygo_logo.dart';
 import '../main_navigation_screen.dart';
+import '../location_onboarding_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final UserRole initialRole;
+  final bool navigateToLocation;
+
+  const LoginScreen({
+    super.key,
+    this.initialRole = UserRole.host,
+    this.navigateToLocation = true,
+  });
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  UserRole _selectedRole = UserRole.host;
+  late UserRole _selectedRole;
   bool _isLogin = true;
   bool _obscurePassword = true;
   String? _errorMessage;
 
-  final _phoneController = TextEditingController(text: '9876543210');
-  final _passwordController = TextEditingController(text: 'host123');
+  late final TextEditingController _phoneController;
+  late final TextEditingController _passwordController;
   final _nameController = TextEditingController();
   final _businessNameController = TextEditingController();
   final _cityController = TextEditingController(text: 'Pune');
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedRole = widget.initialRole;
+    if (_selectedRole == UserRole.host) {
+      _phoneController = TextEditingController(text: '9876543210');
+      _passwordController = TextEditingController(text: 'host123');
+    } else {
+      _phoneController = TextEditingController(text: '9823145678');
+      _passwordController = TextEditingController(text: 'vendor123');
+    }
+  }
 
   @override
   void dispose() {
@@ -94,9 +115,15 @@ class _LoginScreenState extends State<LoginScreen> {
       context.read<RequirementsProvider>().loadData();
       context.read<BookingsProvider>().loadData();
 
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
-      );
+      if (widget.navigateToLocation) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const LocationOnboardingScreen()),
+        );
+      } else {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
+        );
+      }
     } else {
       setState(() {
         _errorMessage = auth.errorMessage ?? 'Authentication failed. Please check your credentials.';
@@ -122,11 +149,62 @@ class _LoginScreenState extends State<LoginScreen> {
       backgroundColor: AppTheme.background,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(height: 12),
+              // Top Bar with Back and Skip Buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  if (Navigator.of(context).canPop())
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(LucideIcons.arrowLeft, size: 20, color: AppTheme.slate700),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: const BorderSide(color: AppTheme.slate200),
+                        ),
+                      ),
+                    )
+                  else
+                    const SizedBox(width: 40),
+
+                  TextButton(
+                    onPressed: () {
+                      if (widget.navigateToLocation) {
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(builder: (_) => const LocationOnboardingScreen()),
+                        );
+                      } else {
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
+                        );
+                      }
+                    },
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Skip for now',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.slate600,
+                          ),
+                        ),
+                        SizedBox(width: 4),
+                        Icon(LucideIcons.chevronRight, size: 16, color: AppTheme.slate600),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 8),
+
               // App Logo
               const EzzyGoLogo(size: 36),
               const SizedBox(height: 8),

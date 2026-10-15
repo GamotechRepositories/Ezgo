@@ -9,7 +9,7 @@ import 'package:audioplayers/audioplayers.dart';
 import '../config/theme.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/ezzygo_logo.dart';
-import 'location_onboarding_screen.dart';
+import 'role_selection_screen.dart';
 import 'main_navigation_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -264,7 +264,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       );
     } else {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const LocationOnboardingScreen()),
+        MaterialPageRoute(builder: (_) => const RoleSelectionScreen()),
       );
     }
   }
