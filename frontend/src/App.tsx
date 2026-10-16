@@ -11,16 +11,22 @@ import { ToastContainer } from './components/Toast';
 import type { ToastMessage } from './components/Toast';
 import { LoginPage } from './components/LoginPage';
 import { MyBookingsPage } from './components/MyBookingsPage';
+import { RoleSelectionPage } from './components/RoleSelectionPage';
+import { LocationSelectionPage } from './components/LocationSelectionPage';
 import { api, getToken, clearToken } from './services/api';
 import { getSocket } from './services/socket';
+import { getVendorPortalUrl } from './utils/portalUrls';
 import type { User, Requirement, Booking, Category, Occasion } from './types';
 
 type Page = 'home' | 'bookings';
+type AppStep = 'role' | 'login' | 'location' | 'app';
 const pageFromUrl = (): Page => (window.location.hash === '#bookings' ? 'bookings' : 'home');
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [ready, setReady] = useState(false);
+  const [step, setStep] = useState<AppStep>('role');
+  const [selectedCity, setSelectedCityOnboard] = useState('Pune, MH');
 
   useEffect(() => {
     if (!getToken()) {
@@ -28,7 +34,10 @@ export default function App() {
       return;
     }
     api.me()
-      .then(setCurrentUser)
+      .then((user) => {
+        setCurrentUser(user);
+        setStep('app');
+      })
       .catch(() => clearToken())
       .finally(() => setReady(true));
   }, []);
@@ -36,21 +45,69 @@ export default function App() {
   if (!ready) {
     return <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center text-slate-600">Loading...</div>;
   }
-  if (!currentUser) return <LoginPage onSuccess={setCurrentUser} />;
+
+  // Step 1: Role Selection
+  if (step === 'role') {
+    return (
+      <RoleSelectionPage
+        onSelect={(role) => {
+          if (role === 'vendor') {
+            // redirect vendor to vendor portal (live: https://vendor.ezzygo.in, dev: localhost:5174)
+            window.location.href = getVendorPortalUrl();
+          } else {
+            setStep('login');
+          }
+        }}
+      />
+    );
+  }
+
+  // Step 2: Login
+  if (step === 'login') {
+    return (
+      <LoginPage
+        onSuccess={(user) => {
+          setCurrentUser(user);
+          setStep('location');
+        }}
+      />
+    );
+  }
+
+  // Step 3: Location Selection
+  if (step === 'location') {
+    return (
+      <LocationSelectionPage
+        onSelect={(city) => {
+          setSelectedCityOnboard(city + ', IN');
+          setStep('app');
+        }}
+      />
+    );
+  }
+
+  // Step 4: Main App
+  if (!currentUser) {
+    // fallback — user somehow skipped login
+    return <LoginPage onSuccess={(user) => { setCurrentUser(user); setStep('location'); }} />;
+  }
+
   return (
     <HostApp
       currentUser={currentUser}
+      initialCity={selectedCity}
       onLogout={() => {
         clearToken();
         setCurrentUser(null);
+        setStep('role');
       }}
     />
   );
 }
 
-function HostApp({ currentUser, onLogout }: { currentUser: User; onLogout: () => void }) {
+function HostApp({ currentUser, onLogout, initialCity }: { currentUser: User; onLogout: () => void; initialCity?: string }) {
   const [loadError, setLoadError] = useState('');
-  const [selectedCity, setSelectedCity] = useState('Pune, MH');
+  const [selectedCity, setSelectedCity] = useState(initialCity || 'Pune, MH');
 
   // Data State
   const [categories, setCategories] = useState<Category[]>([]);

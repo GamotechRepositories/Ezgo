@@ -20,6 +20,7 @@ import {
   Zap
 } from 'lucide-react';
 import { EzzyGoLogo } from './EzzyGoLogo';
+import { getUserPortalUrl, getVendorPortalUrl } from '../utils/portalUrls';
 import type { User } from '../types';
 
 interface AdminNavbarProps {
@@ -259,7 +260,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
                     </div>
                     
                     <a
-                      href="http://localhost:5173"
+                      href={getUserPortalUrl()}
                       target="_blank"
                       rel="noreferrer"
                       className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-700 hover:bg-orange-50 hover:text-[#f95724] transition group"
@@ -272,7 +273,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
                     </a>
 
                     <a
-                      href="http://localhost:5174"
+                      href={getVendorPortalUrl()}
                       target="_blank"
                       rel="noreferrer"
                       className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition group"
@@ -491,7 +492,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
 
               <div className="flex items-center gap-2 text-xs">
                 <a
-                  href="http://localhost:5173"
+                  href={getUserPortalUrl()}
                   target="_blank"
                   rel="noreferrer"
                   className="px-3 py-1.5 rounded-full bg-orange-50 text-[#f95724] font-bold"
@@ -499,7 +500,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
                   Host App ↗
                 </a>
                 <a
-                  href="http://localhost:5174"
+                  href={getVendorPortalUrl()}
                   target="_blank"
                   rel="noreferrer"
                   className="px-3 py-1.5 rounded-full bg-blue-50 text-blue-600 font-bold"

@@ -205,8 +205,27 @@ describe('EzzyGo Google Authentication & Security Rules', () => {
   });
 
   describe('Safe Account Linking Policy', () => {
-    it('should not silently auto-link when an existing account has the same email', async () => {
+    it('should safely link and log in when an existing account has the verified email', async () => {
       const mockToken = 'mock-google-token-conflict:sub_new_google:existing@ezzygo.in:Existing User:verified';
+      const mockModel = createMockUserModel([
+        {
+          _id: 'existing_user_1',
+          email: 'existing@ezzygo.in',
+          phone: '9876543210',
+          passwordHash: 'hashed_password_abc',
+          role: 'requester',
+        },
+      ]);
+
+      const res = await handleGoogleAuth({ idToken: mockToken, role: 'requester' }, mockModel);
+      assert.strictEqual(res.isNewUser, false);
+      assert.ok(res.token);
+      assert.strictEqual(res.user.googleId, 'sub_new_google');
+      assert.strictEqual(res.user.email, 'existing@ezzygo.in');
+    });
+
+    it('should reject unverified Google emails when matching account exists', async () => {
+      const mockToken = 'mock-google-token-unverified:sub_unv:existing@ezzygo.in:Existing User:unverified';
       const mockModel = createMockUserModel([
         {
           _id: 'existing_user_1',
@@ -222,9 +241,7 @@ describe('EzzyGo Google Authentication & Security Rules', () => {
           await handleGoogleAuth({ idToken: mockToken, role: 'requester' }, mockModel);
         },
         (err) => {
-          assert.strictEqual(err.statusCode, 409);
-          assert.strictEqual(err.code, 'ACCOUNT_EXISTS_PASSWORD');
-          assert.match(err.message, /already exists.*Please log in/i);
+          assert.strictEqual(err.statusCode, 400);
           return true;
         }
       );

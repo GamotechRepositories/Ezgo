@@ -60,13 +60,14 @@ class ApiService {
   }
 
   dynamic _processResponse(http.Response response) {
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      if (response.body.isEmpty) return true;
-      try {
-        return jsonDecode(response.body);
-      } catch (_) {
-        return true;
+    try {
+      if (response.body.isNotEmpty) {
+        final decoded = jsonDecode(response.body);
+        return decoded;
       }
+    } catch (_) {}
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return true;
     }
     return null;
   }

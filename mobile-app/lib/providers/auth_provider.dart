@@ -205,6 +205,9 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       final GoogleSignIn googleSignIn = GoogleSignIn(
+        clientId: ApiConfig.googleAndroidClientId.isNotEmpty
+            ? ApiConfig.googleAndroidClientId
+            : null,
         serverClientId: ApiConfig.googleServerClientId.isNotEmpty
             ? ApiConfig.googleServerClientId
             : null,
@@ -221,19 +224,27 @@ class AuthProvider extends ChangeNotifier {
 
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
       final String? idToken = googleAuth.idToken;
+      final String? accessToken = googleAuth.accessToken;
 
-      if (idToken == null || idToken.isEmpty) {
-        _errorMessage = 'Could not obtain Google ID token. Please verify Google Play Services and OAuth client configuration.';
+      if ((idToken == null || idToken.isEmpty) && (accessToken == null || accessToken.isEmpty)) {
+        _errorMessage = 'Could not obtain Google authentication token. Please verify Google Play Services and OAuth client configuration.';
         _isLoading = false;
         notifyListeners();
         return false;
       }
 
       final roleString = role == UserRole.vendor ? 'provider' : 'requester';
-      final res = await ApiService().post(ApiConfig.googleAuth, {
-        'idToken': idToken,
+      final Map<String, dynamic> payload = {
         'role': roleString,
-      });
+      };
+      if (idToken != null && idToken.isNotEmpty) {
+        payload['idToken'] = idToken;
+      }
+      if (accessToken != null && accessToken.isNotEmpty) {
+        payload['accessToken'] = accessToken;
+      }
+
+      final res = await ApiService().post(ApiConfig.googleAuth, payload);
 
       if (res != null && res['success'] == true && res['data'] != null) {
         final data = res['data'] as Map<String, dynamic>;

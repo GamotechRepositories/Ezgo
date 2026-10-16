@@ -253,14 +253,31 @@ export const handleGoogleAuth = async ({ idToken, accessToken, role = 'requester
   if (profile.email) {
     const existingByEmail = await UserModel.findOne({ email: profile.email });
     if (existingByEmail) {
-      // Safe Account-Linking Policy: Never silently auto-link accounts with passwords/phones.
-      const error = new Error(
-        'An account with this email address already exists. Please log in with your phone number and password to link your Google account.'
-      );
-      error.statusCode = 409;
-      error.code = 'ACCOUNT_EXISTS_PASSWORD';
-      error.email = profile.email;
-      throw error;
+      if (profile.emailVerified) {
+        // Cryptographically verified Google email: safely link Google ID and log in
+        existingByEmail.googleId = profile.sub;
+        if (!existingByEmail.avatar && profile.picture) {
+          existingByEmail.avatar = profile.picture;
+        }
+        let synced = await syncUserRoleForPortal(existingByEmail, role);
+        if (typeof synced.save === 'function') {
+          await synced.save();
+        }
+        return {
+          isNewUser: false,
+          message: 'Google account linked and logged in successfully!',
+          token: signToken(synced),
+          user: withoutPassword(synced),
+        };
+      } else {
+        const error = new Error(
+          'An account with this email address already exists. Please verify your Google email address first.'
+        );
+        error.statusCode = 409;
+        error.code = 'ACCOUNT_EXISTS_PASSWORD';
+        error.email = profile.email;
+        throw error;
+      }
     }
   }
 

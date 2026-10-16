@@ -11,6 +11,7 @@ import {
   Star,
 } from 'lucide-react';
 import { EzzyGoLogo } from './EzzyGoLogo';
+import { getUserPortalUrl } from '../utils/portalUrls';
 import type { User } from '../types';
 
 interface VendorSidebarProps {
@@ -113,7 +114,7 @@ export const VendorSidebar: React.FC<VendorSidebarProps> = ({
           <div className="pt-5 mt-4 border-t border-slate-100 space-y-1">
             <div className="px-3 pb-1 text-xs text-slate-400">Other EzzyGo apps</div>
             <a
-              href="http://localhost:5173"
+              href={getUserPortalUrl()}
               target="_blank"
               rel="noreferrer"
               className="flex items-center justify-between px-3.5 py-2 rounded-xl text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"

@@ -11,6 +11,7 @@ import {
 import { EzzyGoLogo } from './EzzyGoLogo';
 import { GoogleSignInButton } from './GoogleSignInButton';
 import { api } from '../services/api';
+import { getVendorPortalUrl } from '../utils/portalUrls';
 import type { User } from '../types';
 
 interface LoginPageProps {
@@ -120,7 +121,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
         <div className="relative z-10 flex items-center justify-between text-xs text-slate-500 pt-4 border-t border-orange-100">
           <span>&copy; {new Date().getFullYear()} EzzyGo Events Marketplace</span>
           <a
-            href="http://localhost:5174"
+            href={getVendorPortalUrl()}
             className="text-[#f95724] font-semibold hover:underline flex items-center gap-1 cursor-pointer"
           >
             Looking to bid as a vendor? Open Vendor Portal <ArrowRight className="w-3.5 h-3.5" />
@@ -236,7 +237,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
             <p className="text-xs sm:text-sm text-slate-600">
               Are you an event vendor or performer?{' '}
               <a
-                href="http://localhost:5174"
+                href={getVendorPortalUrl()}
                 className="text-[#f95724] font-semibold hover:underline inline-flex items-center gap-1 ml-0.5 cursor-pointer"
               >
                 Go to Vendor Portal <ArrowRight className="w-3.5 h-3.5" />

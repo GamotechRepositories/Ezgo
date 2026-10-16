@@ -15,6 +15,7 @@ import {
 import { EzzyGoLogo } from './EzzyGoLogo';
 import { GoogleSignInButton } from './GoogleSignInButton';
 import { api } from '../services/api';
+import { getUserPortalUrl } from '../utils/portalUrls';
 import type { User } from '../types';
 
 interface LoginPageProps {
@@ -305,7 +306,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
         <div className="relative z-10 flex items-center justify-between text-xs text-slate-500 pt-4 border-t border-orange-100">
           <span>&copy; {new Date().getFullYear()} EzzyGo Events Marketplace</span>
           <a
-            href="http://localhost:5173"
+            href={getUserPortalUrl()}
             className="text-[#f95724] font-semibold hover:underline flex items-center gap-1 cursor-pointer"
           >
             Booking an event? Open Host App <ArrowRight className="w-3.5 h-3.5" />
@@ -824,7 +825,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
             <p className="text-xs sm:text-sm text-slate-600">
               Booking an event as a host?{' '}
               <a
-                href="http://localhost:5173"
+                href={getUserPortalUrl()}
                 className="text-[#f95724] font-semibold hover:underline inline-flex items-center gap-1 ml-0.5 cursor-pointer"
               >
                 Go to Host App <ArrowRight className="w-3.5 h-3.5" />

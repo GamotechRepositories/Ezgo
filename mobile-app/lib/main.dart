@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'config/theme.dart';
 import 'providers/auth_provider.dart';
 import 'providers/requirements_provider.dart';
 import 'providers/bookings_provider.dart';
 import 'screens/splash_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    debugPrint("Note: .env file not loaded or not found ($e). Using default ApiConfig.");
+  }
   runApp(const EzzyGoApp());
 }
 

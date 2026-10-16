@@ -96,6 +96,7 @@ export const googleAuth = async (req, res, next) => {
       data: result.token ? { token: result.token, user: result.user } : undefined,
     });
   } catch (error) {
+    console.error('❌ Google Auth Error:', error.message || error);
     if (error.statusCode) {
       res.status(error.statusCode);
     }
