@@ -14,6 +14,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { EzzyGoLogo } from './EzzyGoLogo';
+import { GoogleSignInButton } from './GoogleSignInButton';
 import { api, type DemoAccount } from '../services/api';
 import type { User } from '../types';
 
@@ -42,6 +43,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [googleId, setGoogleId] = useState('');
 
   // Step 2: Bank Account Details
   const [accountHolder, setAccountHolder] = useState('');
@@ -113,7 +115,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
     if (!serviceArea.trim()) return 'Please enter your operating city.';
     const digits = phone.replace(/\D/g, '');
     if (digits.length !== 10) return 'Please enter a valid 10-digit mobile number.';
-    if (password.length < 6) return 'Password must be at least 6 characters.';
+    if (!googleId && password.length < 6) return 'Password must be at least 6 characters.';
     return null;
   };
 
@@ -194,7 +196,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
     api.register({
       name: name.trim(),
       phone: phone.trim(),
-      password,
+      password: googleId ? (password || undefined) : password,
+      googleId: googleId || undefined,
       businessName: businessName.trim(),
       serviceArea: serviceArea.trim(),
       email: email.trim() || undefined,
@@ -372,7 +375,48 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
           )}
 
           {/* Form */}
-          <form onSubmit={mode === 'register' && regStep < 3 ? handleNextStep : handleSubmit} className="mt-6 space-y-4">
+          {mode === 'login' && (
+            <div className="mt-5">
+              <GoogleSignInButton
+                onSuccess={async (token, isAccessToken) => {
+                  setBusy(true);
+                  setError('');
+                  try {
+                    const res = await api.loginWithGoogle(token, isAccessToken);
+                    if (!res.isNewUser && res.user) {
+                      onSuccess(res.user);
+                    } else if (res.isNewUser && res.googleProfile) {
+                      setName(res.googleProfile.name || '');
+                      setEmail(res.googleProfile.email || '');
+                      setGoogleId(res.googleProfile.googleId || '');
+                      setMode('register');
+                      setRegStep(1);
+                    }
+                  } catch (err: any) {
+                    setError(err.message || 'Failed to authenticate with Google.');
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+                onError={(msg) => setError(msg)}
+                disabled={busy}
+                text="continue_with"
+              />
+
+              <div className="relative my-5">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-slate-200" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-3 text-slate-500 font-medium tracking-wider">
+                    Or with mobile number
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <form onSubmit={mode === 'register' && regStep < 3 ? handleNextStep : handleSubmit} className="space-y-4">
             {/* LOGIN MODE */}
             {mode === 'login' && (
               <>
@@ -480,16 +524,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                   </label>
 
                   <label className="block">
-                    <span className="text-sm font-medium text-slate-700">Create Password *</span>
+                    <span className="text-sm font-medium text-slate-700">
+                      {googleId ? 'Create optional password' : 'Create Password *'}
+                    </span>
                     <div className="relative">
                       <input
                         type={showPassword ? 'text' : 'password'}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        required
+                        required={!googleId}
                         minLength={6}
                         autoComplete="new-password"
-                        placeholder="At least 6 characters"
+                        placeholder={googleId ? 'Optional password for phone login' : 'At least 6 characters'}
                         className={`${fieldClass} pr-14`}
                       />
                       <button

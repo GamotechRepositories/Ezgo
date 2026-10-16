@@ -9,7 +9,7 @@ export const placeBid = async (req, res, next) => {
   try {
     const { requirementId, providerId, amount, proposalNotes, equipmentDetails } = req.body;
 
-    if (!req.user || req.user.role !== 'provider') {
+    if (!req.user || (req.user.role !== 'provider' && !req.user.roles?.includes('provider'))) {
       res.status(403);
       throw new Error('Only a logged-in vendor can place a bid.');
     }
@@ -29,6 +29,11 @@ export const placeBid = async (req, res, next) => {
       throw new Error('Requirement not found');
     }
 
+    if (requirement.requesterId.toString() === req.user._id.toString()) {
+      res.status(400);
+      throw new Error('You cannot bid on your own event requirement.');
+    }
+
     if (requirement.status !== 'OPEN') {
       res.status(400);
       throw new Error('This requirement is no longer accepting bids');
@@ -43,7 +48,7 @@ export const placeBid = async (req, res, next) => {
     }
 
     const provider = await User.findById(providerId);
-    if (!provider || provider.role !== 'provider') {
+    if (!provider || (provider.role !== 'provider' && !provider.roles?.includes('provider'))) {
       res.status(403);
       throw new Error('Only vendor accounts can place bids');
     }

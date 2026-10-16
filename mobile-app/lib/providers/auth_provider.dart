@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 import '../models/user_model.dart';
 import '../services/api_service.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthProvider extends ChangeNotifier {
   UserModel? _user;
@@ -197,12 +198,88 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<bool> loginWithGoogle({required UserRole role}) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        serverClientId: ApiConfig.googleServerClientId.isNotEmpty
+            ? ApiConfig.googleServerClientId
+            : null,
+        scopes: ['email', 'profile'],
+      );
+
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      if (googleUser == null) {
+        // User cancelled the Google sign-in dialog
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final String? idToken = googleAuth.idToken;
+
+      if (idToken == null || idToken.isEmpty) {
+        _errorMessage = 'Could not obtain Google ID token. Please verify Google Play Services and OAuth client configuration.';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      final roleString = role == UserRole.vendor ? 'provider' : 'requester';
+      final res = await ApiService().post(ApiConfig.googleAuth, {
+        'idToken': idToken,
+        'role': roleString,
+      });
+
+      if (res != null && res['success'] == true && res['data'] != null) {
+        final data = res['data'] as Map<String, dynamic>;
+        final token = data['token'] as String;
+        final userData = data['user'] as Map<String, dynamic>;
+        userData['token'] = token;
+
+        _user = UserModel.fromJson(userData);
+        _activeRole = _user!.role;
+        ApiService().setToken(token);
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('auth_token', token);
+        await prefs.setString('active_role', _activeRole == UserRole.vendor ? 'vendor' : 'host');
+
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else if (res != null && res['isNewUser'] == true && res['googleProfile'] != null) {
+        _errorMessage = res['message'] ?? 'Please complete your vendor profile on the web portal.';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      } else {
+        _errorMessage = res?['message'] ?? 'Google authentication failed.';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _errorMessage = 'Google Sign-In error: ${e.toString()}';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   void logout() async {
     _user = null;
     ApiService().setToken(null);
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
     await prefs.remove('active_role');
+    try {
+      await GoogleSignIn().signOut();
+    } catch (_) {}
     notifyListeners();
   }
 }

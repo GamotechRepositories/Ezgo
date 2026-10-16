@@ -20,7 +20,7 @@ export const createRequirement = async (req, res, next) => {
       status = 'OPEN',
     } = req.body;
 
-    if (!req.user || (req.user.role !== 'requester' && req.user.role !== 'admin')) {
+    if (!req.user || (req.user.role !== 'requester' && !req.user.roles?.includes('requester') && req.user.role !== 'provider' && req.user.role !== 'admin')) {
       res.status(403);
       throw new Error('Only a logged-in host can post a request.');
     }

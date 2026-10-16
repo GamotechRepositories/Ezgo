@@ -4,6 +4,7 @@ import { signToken } from '../middlewares/auth.js';
 import { DEMO_PASSWORDS } from '../config/demoPasswords.js';
 import { generateAndSendOtp, verifySubmittedOtp } from '../services/otpService.js';
 import { notifyUser } from '../services/notificationService.js';
+import { handleGoogleAuth, linkGoogleToAccount, syncUserRoleForPortal } from '../services/googleAuthService.js';
 
 export const normalizePhone = (phone) => {
   const digits = String(phone || '').replace(/\D/g, '');
@@ -65,18 +66,57 @@ export const verifyOtpAndLogin = async (req, res, next) => {
       });
     }
 
-    if (role && user.role !== role) {
-      res.status(403);
-      throw new Error(wrongPortalMessage(user.role));
+    let authenticatedUser = user;
+    if (role) {
+      authenticatedUser = await syncUserRoleForPortal(user, role);
     }
 
     res.json({
       success: true,
       isNewUser: false,
       message: 'Logged in successfully!',
-      data: { token: signToken(user), user: withoutPassword(user) },
+      data: { token: signToken(authenticatedUser), user: withoutPassword(authenticatedUser) },
     });
   } catch (error) {
+    next(error);
+  }
+};
+
+// Google OAuth Sign-In & Onboarding
+export const googleAuth = async (req, res, next) => {
+  try {
+    const { idToken, accessToken, role } = req.body;
+    const result = await handleGoogleAuth({ idToken, accessToken, role });
+
+    res.json({
+      success: true,
+      isNewUser: result.isNewUser,
+      message: result.message,
+      googleProfile: result.googleProfile,
+      data: result.token ? { token: result.token, user: result.user } : undefined,
+    });
+  } catch (error) {
+    if (error.statusCode) {
+      res.status(error.statusCode);
+    }
+    next(error);
+  }
+};
+
+// Link Google account to authenticated user session
+export const googleLink = async (req, res, next) => {
+  try {
+    const { idToken } = req.body;
+    const result = await linkGoogleToAccount(req.user._id, idToken);
+    res.json({
+      success: true,
+      message: result.message,
+      data: result.user,
+    });
+  } catch (error) {
+    if (error.statusCode) {
+      res.status(error.statusCode);
+    }
     next(error);
   }
 };
@@ -93,6 +133,7 @@ export const register = async (req, res, next) => {
       email,
       bankDetails,
       kycDocuments,
+      googleId,
     } = req.body;
     const digits = normalizePhone(phone);
 
@@ -104,7 +145,7 @@ export const register = async (req, res, next) => {
       res.status(400);
       throw new Error('Enter a 10-digit mobile number.');
     }
-    if (!password || String(password).length < 6) {
+    if (!googleId && (!password || String(password).length < 6)) {
       res.status(400);
       throw new Error('Password must be at least 6 characters.');
     }
@@ -119,8 +160,63 @@ export const register = async (req, res, next) => {
 
     const existing = await findByPhone(digits);
     if (existing) {
+      // If host is onboarding as vendor on vendor portal, allow upgrading existing account
+      if (role === 'provider' && (existing.role === 'requester' || existing.roles?.includes('requester'))) {
+        const matches = existing.passwordHash
+          ? (password && (await bcrypt.compare(String(password), existing.passwordHash)))
+          : (googleId && existing.googleId === googleId);
+
+        if (matches) {
+          existing.role = 'provider';
+          if (!Array.isArray(existing.roles)) existing.roles = ['requester'];
+          if (!existing.roles.includes('provider')) existing.roles.push('provider');
+          if (businessName) existing.businessName = String(businessName).trim();
+          if (serviceArea) existing.serviceArea = serviceArea;
+          if (email && !existing.email) existing.email = String(email).trim().toLowerCase();
+          if (googleId && !existing.googleId) existing.googleId = googleId;
+          if (bankDetails) {
+            existing.bankDetails = {
+              accountHolder: bankDetails.accountHolder ? String(bankDetails.accountHolder).trim() : existing.bankDetails?.accountHolder || '',
+              accountNumber: bankDetails.accountNumber ? String(bankDetails.accountNumber).trim() : existing.bankDetails?.accountNumber || '',
+              ifscCode: bankDetails.ifscCode ? String(bankDetails.ifscCode).trim().toUpperCase() : existing.bankDetails?.ifscCode || '',
+              upiId: bankDetails.upiId ? String(bankDetails.upiId).trim() : existing.bankDetails?.upiId || '',
+              isKycCompleted: existing.bankDetails?.isKycCompleted || false,
+            };
+          }
+          if (kycDocuments) {
+            existing.kycDocuments = {
+              aadhaarNumber: kycDocuments.aadhaarNumber ? String(kycDocuments.aadhaarNumber).trim() : existing.kycDocuments?.aadhaarNumber || '',
+              aadhaarFront: kycDocuments.aadhaarFront ? String(kycDocuments.aadhaarFront).trim() : existing.kycDocuments?.aadhaarFront || '',
+              aadhaarBack: kycDocuments.aadhaarBack ? String(kycDocuments.aadhaarBack).trim() : existing.kycDocuments?.aadhaarBack || '',
+              panNumber: kycDocuments.panNumber ? String(kycDocuments.panNumber).trim().toUpperCase() : existing.kycDocuments?.panNumber || '',
+              panCard: kycDocuments.panCard ? String(kycDocuments.panCard).trim() : existing.kycDocuments?.panCard || '',
+              gstNumber: kycDocuments.gstNumber ? String(kycDocuments.gstNumber).trim().toUpperCase() : existing.kycDocuments?.gstNumber || '',
+              gstDoc: kycDocuments.gstDoc ? String(kycDocuments.gstDoc).trim() : existing.kycDocuments?.gstDoc || '',
+              businessAddress: kycDocuments.businessAddress ? String(kycDocuments.businessAddress).trim() : existing.kycDocuments?.businessAddress || '',
+              submittedAt: new Date(),
+              rejectionReason: '',
+            };
+          }
+          await existing.save();
+
+          return res.status(200).json({
+            success: true,
+            message: 'Your host account has been upgraded to a vendor account! Welcome to the Vendor Desk.',
+            data: { token: signToken(existing), user: withoutPassword(existing) },
+          });
+        }
+      }
+
       res.status(409);
       throw new Error('An account with this mobile number already exists. Log in instead.');
+    }
+
+    if (googleId) {
+      const existingGoogle = await User.findOne({ googleId });
+      if (existingGoogle) {
+        res.status(409);
+        throw new Error('An account with this Google profile already exists.');
+      }
     }
 
     const hasKycOrBank = Boolean(
@@ -134,8 +230,11 @@ export const register = async (req, res, next) => {
       name: String(name).trim(),
       phone: digits,
       email: email ? String(email).trim().toLowerCase() : '',
+      googleId: googleId || undefined,
+      authProvider: googleId ? 'google' : 'local',
       role,
-      passwordHash: await bcrypt.hash(String(password), 10),
+      roles: [role],
+      passwordHash: password ? await bcrypt.hash(String(password), 10) : '',
       usesDemoPassword: false,
       businessName: role === 'provider' ? String(businessName).trim() : '',
       serviceArea: serviceArea || 'Pune',
@@ -191,14 +290,14 @@ export const login = async (req, res, next) => {
       res.status(401);
       throw new Error('Wrong phone number or password.');
     }
-    if (role && user.role !== role) {
-      res.status(403);
-      throw new Error(wrongPortalMessage(user.role));
+    let authenticatedUser = user;
+    if (role) {
+      authenticatedUser = await syncUserRoleForPortal(user, role);
     }
 
     res.json({
       success: true,
-      data: { token: signToken(user), user: withoutPassword(user) },
+      data: { token: signToken(authenticatedUser), user: withoutPassword(authenticatedUser) },
     });
   } catch (error) {
     next(error);
@@ -281,7 +380,7 @@ export const submitKyc = async (req, res, next) => {
       businessAddress,
     } = req.body;
 
-    if (req.user.role !== 'provider' && req.user.role !== 'admin') {
+    if (req.user.role !== 'provider' && !req.user.roles?.includes('provider') && req.user.role !== 'admin') {
       res.status(403);
       throw new Error('Only vendors can submit KYC documents.');
     }

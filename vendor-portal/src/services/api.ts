@@ -72,10 +72,39 @@ export const api = {
     return data.user;
   },
 
+  async loginWithGoogle(token: string, isAccessToken = false): Promise<{
+    isNewUser: boolean;
+    user?: User;
+    googleProfile?: { googleId: string; email: string; name: string; avatar?: string };
+  }> {
+    const payload = isAccessToken
+      ? { accessToken: token, role: 'provider' }
+      : { idToken: token, role: 'provider' };
+    const res = await request<any>(
+      '/auth/google',
+      jsonBody('POST', payload),
+      'Could not sign in with Google'
+    );
+
+    const sessionToken = res?.token || res?.data?.token;
+    const user = res?.user || res?.data?.user;
+
+    if (sessionToken && user) {
+      setToken(sessionToken);
+      return { isNewUser: false, user };
+    }
+
+    return {
+      isNewUser: true,
+      googleProfile: res?.googleProfile || res?.data?.googleProfile,
+    };
+  },
+
   async register(input: {
     name: string;
     phone: string;
-    password: string;
+    password?: string;
+    googleId?: string;
     businessName: string;
     serviceArea?: string;
     email?: string;
@@ -115,18 +144,20 @@ export const api = {
   },
 
   async verifyOtpAndLogin(phone: string, otp: string): Promise<{ isNewUser: boolean; user?: User; phone: string }> {
-    const res = await request<{
-      success: boolean;
-      isNewUser: boolean;
-      phone: string;
-      data?: { token: string; user: User };
-    }>('/auth/verify-otp', jsonBody('POST', { phone, otp, role: 'provider' }), 'Invalid OTP code');
+    const res = await request<any>(
+      '/auth/verify-otp',
+      jsonBody('POST', { phone, otp, role: 'provider' }),
+      'Invalid OTP code'
+    );
 
-    if (res.data?.token) {
-      setToken(res.data.token);
-      return { isNewUser: false, user: res.data.user, phone: res.phone };
+    const token = res?.token || res?.data?.token;
+    const user = res?.user || res?.data?.user;
+
+    if (token && user) {
+      setToken(token);
+      return { isNewUser: false, user, phone: res?.phone || phone };
     }
-    return { isNewUser: true, phone: res.phone };
+    return { isNewUser: true, phone: res?.phone || phone };
   },
 
   me(): Promise<User> {

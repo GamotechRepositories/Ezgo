@@ -538,22 +538,16 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Headline with subtle sparkles
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(LucideIcons.sparkles, size: 14, color: AppTheme.primary),
-            const SizedBox(width: 6),
-            Text(
-              'BOOK ANY EVENT SERVICE IN 1 TAP',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                color: AppTheme.textPrimary.withValues(alpha: 0.78),
-                letterSpacing: 0.8,
-              ),
-            ),
-          ],
+        // Headline
+        Text(
+          'BOOK ANY EVENT SERVICE IN 1 TAP',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            color: AppTheme.textPrimary.withValues(alpha: 0.78),
+            letterSpacing: 0.8,
+          ),
         ),
 
         const SizedBox(height: 10),

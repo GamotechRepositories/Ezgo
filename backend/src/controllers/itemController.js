@@ -12,7 +12,7 @@ const ownsItem = (req, item) =>
 
 export const getItems = async (req, res, next) => {
   try {
-    if (req.user.role !== 'admin' && req.user.role !== 'provider') {
+    if (req.user.role !== 'admin' && req.user.role !== 'provider' && !req.user.roles?.includes('provider')) {
       res.status(403);
       throw new Error('Only a vendor can view equipment.');
     }

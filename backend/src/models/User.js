@@ -9,13 +9,24 @@ const userSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
-      required: true,
-      unique: true,
+      trim: true,
+      default: undefined,
     },
     email: {
       type: String,
       trim: true,
+      lowercase: true,
       default: '',
+    },
+    googleId: {
+      type: String,
+      trim: true,
+      default: undefined,
+    },
+    authProvider: {
+      type: String,
+      enum: ['local', 'google'],
+      default: 'local',
     },
     passwordHash: {
       type: String,
@@ -30,6 +41,13 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ['requester', 'provider', 'admin'],
       default: 'requester',
+    },
+    roles: {
+      type: [String],
+      enum: ['requester', 'provider', 'admin'],
+      default: function () {
+        return [this.role || 'requester'];
+      },
     },
     // Provider specific fields
     businessName: {
@@ -105,6 +123,16 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+userSchema.index(
+  { phone: 1 },
+  { unique: true, sparse: true, partialFilterExpression: { phone: { $type: 'string', $gt: '' } } }
+);
+userSchema.index(
+  { googleId: 1 },
+  { unique: true, sparse: true, partialFilterExpression: { googleId: { $type: 'string', $gt: '' } } }
+);
+userSchema.index({ email: 1 });
 
 userSchema.set('toJSON', {
   transform(_doc, ret) {

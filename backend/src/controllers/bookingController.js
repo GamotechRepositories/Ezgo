@@ -542,7 +542,7 @@ export const getBookings = async (req, res, next) => {
     if (req.user.role === 'admin') {
       if (role === 'requester' && userId) filter.requesterId = userId;
       if (role === 'provider' && userId) filter.providerId = userId;
-    } else if (req.user.role === 'provider') {
+    } else if (role === 'provider' || (req.user.role === 'provider' && role !== 'requester')) {
       filter.providerId = req.user._id;
     } else {
       filter.requesterId = req.user._id;

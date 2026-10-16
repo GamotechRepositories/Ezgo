@@ -6,7 +6,6 @@ import {
   ShieldCheck,
   Menu,
   X,
-  Sparkles,
   LogOut,
   HelpCircle,
   Calendar,
@@ -189,9 +188,9 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                 <button
                   onClick={onOpenExplainer}
-                  className="hover:text-[#f95724] transition cursor-pointer flex items-center gap-1"
+                  className="hover:text-[#f95724] transition cursor-pointer flex items-center gap-1.5"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <HelpCircle className="w-3.5 h-3.5 text-slate-500" />
                   <span>How bidding works</span>
                 </button>
               </nav>

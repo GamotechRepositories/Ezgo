@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Home, Calendar, Plus, ShieldCheck, Sparkles } from 'lucide-react';
+import { Home, Calendar, Plus, ShieldCheck, HelpCircle } from 'lucide-react';
 import { Navbar } from './components/Navbar';
 import { RequesterView } from './components/RequesterView';
 import { RuleExplainer } from './components/RuleExplainer';
@@ -534,7 +534,7 @@ function HostApp({ currentUser, onLogout }: { currentUser: User; onLogout: () =>
             onClick={handleOpenExplainer}
             className="flex flex-col items-center justify-center py-1 text-slate-500 hover:text-slate-800 transition cursor-pointer"
           >
-            <Sparkles className="w-5 h-5 text-amber-500" />
+            <HelpCircle className="w-5 h-5 text-slate-500" />
             <span className="text-[10px] mt-0.5">Explainer</span>
           </button>
         </div>

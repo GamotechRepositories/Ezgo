@@ -10,6 +10,11 @@ class ApiConfig {
   static const String register = '/auth/register';
   static const String sendOtp = '/auth/send-otp';
   static const String verifyOtp = '/auth/verify-otp';
+  static const String googleAuth = '/auth/google';
+  static const String googleServerClientId = String.fromEnvironment(
+    'GOOGLE_SERVER_CLIENT_ID',
+    defaultValue: '1093562728700-c7eg1eet1kvi99f7ljs0u2clsbldds31.apps.googleusercontent.com',
+  );
   static const String me = '/auth/me';
   static const String requirements = '/requirements';
   static const String categories = '/categories';

@@ -80,6 +80,17 @@ export const api = {
     return data.user;
   },
 
+  async loginWithGoogle(token: string, isAccessToken = false): Promise<User> {
+    const payload = isAccessToken
+      ? { accessToken: token, role: 'requester' }
+      : { idToken: token, role: 'requester' };
+    const data = await unwrap<{ token: string; user: User }>(
+      request('/auth/google', jsonBody('POST', payload), 'Could not sign in with Google')
+    );
+    setToken(data.token);
+    return data.user;
+  },
+
   async register(input: { name: string; phone: string; password: string; email?: string }): Promise<User> {
     const data = await unwrap<{ token: string; user: User }>(
       request('/auth/register', jsonBody('POST', { ...input, role: 'requester' }), 'Could not create your account')

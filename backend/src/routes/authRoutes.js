@@ -8,6 +8,8 @@ import {
   updateProfile,
   sendOtp,
   verifyOtpAndLogin,
+  googleAuth,
+  googleLink,
   submitKyc,
   blockAvailabilityDate,
   unblockAvailabilityDate,
@@ -21,6 +23,8 @@ router.post('/register', register);
 router.post('/login', login);
 router.post('/send-otp', sendOtp);
 router.post('/verify-otp', verifyOtpAndLogin);
+router.post('/google', googleAuth);
+router.post('/google/link', requireAuth, googleLink);
 router.post('/submit-kyc', requireAuth, submitKyc);
 
 router.get('/demo-accounts', demoAccounts);

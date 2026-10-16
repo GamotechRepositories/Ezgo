@@ -140,6 +140,46 @@ class _LoginScreenState extends State<LoginScreen> {
     _handleAuth();
   }
 
+  Future<void> _handleGoogleAuth() async {
+    setState(() => _errorMessage = null);
+    final auth = context.read<AuthProvider>();
+
+    final success = await auth.loginWithGoogle(role: _selectedRole);
+
+    if (!mounted) return;
+
+    if (success) {
+      context.read<RequirementsProvider>().loadData();
+      context.read<BookingsProvider>().loadData();
+
+      if (widget.navigateToLocation) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const LocationOnboardingScreen()),
+        );
+      } else {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
+        );
+      }
+    } else {
+      if (auth.errorMessage != null) {
+        setState(() {
+          _errorMessage = auth.errorMessage;
+        });
+      }
+    }
+  }
+
+  Widget _buildGoogleIcon() {
+    return SizedBox(
+      width: 22,
+      height: 22,
+      child: CustomPaint(
+        painter: _GoogleLogoPainter(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
@@ -576,6 +616,56 @@ class _LoginScreenState extends State<LoginScreen> {
                               style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
                             ),
                     ),
+
+                    const SizedBox(height: 16),
+
+                    Row(
+                      children: const [
+                        Expanded(child: Divider(color: AppTheme.slate200, thickness: 1)),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 12),
+                          child: Text(
+                            'OR',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.slate400,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                        ),
+                        Expanded(child: Divider(color: AppTheme.slate200, thickness: 1)),
+                      ],
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    OutlinedButton(
+                      onPressed: auth.isLoading ? null : _handleGoogleAuth,
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: AppTheme.slate800,
+                        side: const BorderSide(color: AppTheme.slate300, width: 1.2),
+                        minimumSize: const Size.fromHeight(50),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        elevation: 0,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _buildGoogleIcon(),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Continue with Google',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                              color: AppTheme.slate800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -707,4 +797,58 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
+}
+
+class _GoogleLogoPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final double w = size.width;
+    final double h = size.height;
+    final center = Offset(w / 2, h / 2);
+    final radius = w / 2;
+    const strokeWidthRatio = 0.22;
+    final strokeWidth = w * strokeWidthRatio;
+
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.butt;
+
+    final rect = Rect.fromCircle(center: center, radius: radius - strokeWidth / 2);
+
+    // Blue arc (bottom right to right middle)
+    paint.color = const Color(0xFF4285F4);
+    canvas.drawArc(rect, -0.4, 1.2, false, paint);
+
+    // Green arc (bottom)
+    paint.color = const Color(0xFF34A853);
+    canvas.drawArc(rect, 0.8, 1.6, false, paint);
+
+    // Yellow arc (left)
+    paint.color = const Color(0xFFFBBC05);
+    canvas.drawArc(rect, 2.4, 1.5, false, paint);
+
+    // Red arc (top)
+    paint.color = const Color(0xFFEA4335);
+    canvas.drawArc(rect, 3.9, 1.8, false, paint);
+
+    // Horizontal bar of the 'G'
+    final barPaint = Paint()
+      ..color = const Color(0xFF4285F4)
+      ..style = PaintingStyle.fill;
+
+    final barRect = Rect.fromLTWH(
+      center.dx - strokeWidth * 0.2,
+      center.dy - strokeWidth / 2,
+      radius + strokeWidth * 0.2,
+      strokeWidth,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(barRect, Radius.circular(strokeWidth * 0.2)),
+      barPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

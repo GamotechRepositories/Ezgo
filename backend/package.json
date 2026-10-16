@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "test": "node --test tests/businessRules.test.js tests/biddingAndAvailability.test.js tests/paymentsAndSecurity.test.js"
+    "test": "node --test tests/businessRules.test.js tests/biddingAndAvailability.test.js tests/paymentsAndSecurity.test.js tests/googleAuth.test.js"
   },
   "keywords": [
     "nodejs",
@@ -24,6 +24,7 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "express-rate-limit": "^8.7.1",
+    "google-auth-library": "^9.15.1",
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^8.9.5",

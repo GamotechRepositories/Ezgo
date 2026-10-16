@@ -900,7 +900,7 @@ class HostHomeScreenState extends State<HostHomeScreen> {
                   color: AppTheme.redLight,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(LucideIcons.sparkles, size: 16, color: AppTheme.primary),
+                child: const Icon(LucideIcons.helpCircle, size: 16, color: AppTheme.primary),
               ),
               const SizedBox(width: 10),
               const Expanded(
