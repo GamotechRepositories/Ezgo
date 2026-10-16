@@ -66,11 +66,10 @@ export const openRazorpayCheckout = async (options: RazorpayCheckoutOptions): Pr
 
   const razorpayKey =
     options.key ||
-    import.meta.env.VITE_RAZORPAY_KEY_ID ||
-    'rzp_test_TkWNcqpLEOsj8a';
+    import.meta.env.VITE_RAZORPAY_KEY_ID;
 
   if (!razorpayKey) {
-    throw new Error('Razorpay Key ID is missing. Please set VITE_RAZORPAY_KEY_ID in .env.');
+    throw new Error('Razorpay Key ID is missing. The server order response must provide key_id.');
   }
 
   const rzpOptions = {
