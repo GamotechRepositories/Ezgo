@@ -102,7 +102,7 @@ export const RoleSelectionPage: React.FC<RoleSelectionPageProps> = ({ onSelect }
               <CalendarCheckIcon />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-[17px] font-extrabold text-slate-900 leading-tight">Event Host</div>
+              <div className="text-[17px] font-extrabold text-slate-900 leading-tight">Customer</div>
               <div className="text-[13px] text-slate-500 font-medium mt-0.5 leading-snug">
                 Plan events, compare bids &amp; book vendors
               </div>
@@ -161,7 +161,7 @@ export const RoleSelectionPage: React.FC<RoleSelectionPageProps> = ({ onSelect }
             }}
             className="w-full h-14 rounded-2xl bg-[#FF3838] text-white font-extrabold text-[16.5px] flex items-center justify-center gap-2 tracking-tight transition-all duration-700 cursor-pointer hover:bg-[#e62e2e] active:scale-[0.98]"
           >
-            {isHost ? "Continue as Event Host" : "Continue as Service Provider"}
+            {isHost ? "Continue as Customer" : "Continue as Service Provider"}
             <ArrowRight
               className={`w-5 h-5 transition-transform duration-700 ${pulse ? "translate-x-1" : ""}`}
             />

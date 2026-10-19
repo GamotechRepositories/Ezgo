@@ -186,10 +186,10 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
 
                         const SizedBox(height: 14),
 
-                        // 3. CARD 1: EVENT HOST
+                        // 3. CARD 1: CUSTOMER
                         _buildRoleCard(
                           isSelected: isHost,
-                          title: 'Event Host',
+                          title: 'Customer',
                           subtitle: 'Plan events, compare bids\n& book vendors',
                           activeBorderColor: const Color(0xFFFF453A),
                           activeBgColor: const Color(0xFFFFF5F4),
@@ -559,7 +559,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
               children: [
                 Text(
                   isHost
-                      ? 'Continue as Event Host'
+                      ? 'Continue as Customer'
                       : 'Continue as Service Provider',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 16.5,

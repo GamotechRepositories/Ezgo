@@ -14,7 +14,7 @@ void main() {
     expect(find.byType(EzzyGoApp), findsOneWidget);
   });
 
-  testWidgets('RoleSelectionScreen renders Event Host and Service Provider roles', (WidgetTester tester) async {
+  testWidgets('RoleSelectionScreen renders Customer and Service Provider roles', (WidgetTester tester) async {
     await tester.pumpWidget(
       const MaterialApp(
         home: RoleSelectionScreen(),
@@ -22,9 +22,9 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text("Event Host"), findsOneWidget);
+    expect(find.text("Customer"), findsOneWidget);
     expect(find.text("Service Provider"), findsOneWidget);
     expect(find.textContaining("Choose one to continue"), findsOneWidget);
-    expect(find.textContaining("Continue as Event Host"), findsOneWidget);
+    expect(find.textContaining("Continue as Customer"), findsOneWidget);
   });
 }
