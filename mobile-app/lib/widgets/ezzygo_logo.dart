@@ -67,7 +67,7 @@ class EzzyGoLogo extends StatelessWidget {
             Text(
               subtitle!,
               textAlign: TextAlign.center,
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.poppins(
                 fontSize: 13.5,
                 fontWeight: FontWeight.w600,
                 color: isLight ? Colors.white70 : AppTheme.textSecondary,
@@ -136,7 +136,7 @@ class EzzyGoLogo extends StatelessWidget {
                 ),
                 child: Text(
                   'LIVE',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.poppins(
                     color: primaryColor,
                     fontSize: 9,
                     fontWeight: FontWeight.w800,
@@ -150,7 +150,7 @@ class EzzyGoLogo extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             subtitle!,
-            style: GoogleFonts.inter(
+            style: GoogleFonts.poppins(
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: isLight ? Colors.white70 : AppTheme.textPrimary,

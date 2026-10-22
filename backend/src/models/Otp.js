@@ -4,21 +4,46 @@ const otpSchema = new mongoose.Schema(
   {
     phone: {
       type: String,
-      required: true,
+      trim: true,
       index: true,
+      sparse: true,
     },
+    email: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      index: true,
+      sparse: true,
+    },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      index: true,
+      sparse: true,
+    },
+    // Plaintext OTP code - only for legacy mobile SMS flow if required
     otpCode: {
       type: String,
-      required: true,
+      select: false,
+    },
+    // Cryptographic hash (SHA-256) of the OTP - used for secure Admin Email OTP
+    otpHash: {
+      type: String,
+      index: true,
+      sparse: true,
     },
     expiresAt: {
       type: Date,
       required: true,
-      index: { expires: '10m' }, // Auto delete after 10 minutes
+      index: { expires: '10m' }, // Auto-delete document after 10 minutes
     },
     attempts: {
       type: Number,
       default: 0,
+    },
+    maxAttempts: {
+      type: Number,
+      default: 5,
     },
     isVerified: {
       type: Boolean,
@@ -26,7 +51,7 @@ const otpSchema = new mongoose.Schema(
     },
     purpose: {
       type: String,
-      enum: ['login', 'register', 'verification'],
+      enum: ['login', 'register', 'verification', 'admin_login'],
       default: 'login',
     },
   },

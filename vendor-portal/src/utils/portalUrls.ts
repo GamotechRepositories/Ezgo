@@ -15,3 +15,16 @@ export const getUserPortalUrl = (): string => {
   }
   return 'https://www.ezzygo.in';
 };
+
+export const getAdminPortalUrl = (): string => {
+  if (import.meta.env.VITE_ADMIN_PORTAL_URL) {
+    return import.meta.env.VITE_ADMIN_PORTAL_URL;
+  }
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:5175';
+    }
+  }
+  return 'https://admin.ezzygo.in';
+};

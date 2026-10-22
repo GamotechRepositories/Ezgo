@@ -64,7 +64,7 @@ class AppTheme {
   static const Color pastelAmber = Color(0xFFFFF4E8);
   static const Color pastelPink = Color(0xFFFFF0F5);
 
-  // Modern Typography (Inter & Plus Jakarta Sans)
+  // Modern Typography (Poppins)
   static TextStyle displayFont({
     double fontSize = 26,
     FontWeight fontWeight = FontWeight.w800,
@@ -72,7 +72,7 @@ class AppTheme {
     double? height,
     double? letterSpacing,
   }) {
-    return GoogleFonts.plusJakartaSans(
+    return GoogleFonts.poppins(
       fontSize: fontSize,
       fontWeight: fontWeight,
       color: color,
@@ -88,7 +88,7 @@ class AppTheme {
     double? height,
     double? letterSpacing,
   }) {
-    return GoogleFonts.plusJakartaSans(
+    return GoogleFonts.poppins(
       fontSize: fontSize,
       fontWeight: fontWeight,
       color: color,
@@ -103,7 +103,7 @@ class AppTheme {
     Color color = textSecondary,
     double? height,
   }) {
-    return GoogleFonts.inter(
+    return GoogleFonts.poppins(
       fontSize: fontSize,
       fontWeight: fontWeight,
       color: color,
@@ -114,7 +114,7 @@ class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
-      fontFamily: GoogleFonts.inter().fontFamily,
+      fontFamily: GoogleFonts.poppins().fontFamily,
       scaffoldBackgroundColor: background,
       colorScheme: ColorScheme.fromSeed(
         seedColor: primary,

@@ -1,7 +1,9 @@
-import { Search, CalendarCheck, Calendar, Wallet, Menu } from 'lucide-react';
+import { Search, CalendarCheck, Calendar, Wallet, User as UserIcon } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { VendorSidebar } from './components/VendorSidebar';
 import { VendorHeader } from './components/VendorHeader';
+import { VendorAccountModal } from './components/VendorAccountModal';
+import { VendorVerificationModal } from './components/VendorVerificationModal';
 import { LiveAuctionDesk } from './components/LiveAuctionDesk';
 import { PlaceBidModal } from './components/PlaceBidModal';
 import { ActiveOrdersDesk } from './components/ActiveOrdersDesk';
@@ -12,7 +14,7 @@ import { RuleExplainer } from './components/RuleExplainer';
 import { ToastContainer } from './components/Toast';
 import type { ToastMessage } from './components/Toast';
 import { LoginPage } from './components/LoginPage';
-import { api, getToken, clearToken } from './services/api';
+import { api, getToken, clearToken, getUser, setUser, clearUser } from './services/api';
 import { getSocket } from './services/socket';
 import type { Requirement, Booking, User } from './types';
 
@@ -27,30 +29,54 @@ const tabFromUrl = (): VendorTab => {
 };
 
 export default function App() {
-  const [currentVendor, setCurrentVendor] = useState<User | null>(null);
-  const [ready, setReady] = useState(false);
+  const [currentVendor, setCurrentVendor] = useState<User | null>(() => getUser());
+  const [ready, setReady] = useState(() => Boolean(getUser() && getToken()));
 
   useEffect(() => {
-    if (!getToken()) {
+    const token = getToken();
+    if (!token) {
       setReady(true);
       return;
     }
     api.me()
-      .then(setCurrentVendor)
-      .catch(() => clearToken())
+      .then((user) => {
+        setCurrentVendor(user);
+        setUser(user);
+      })
+      .catch((err: any) => {
+        // Only clear credentials if backend explicitly rejects with 401 (token expired/invalid)
+        if (err?.status === 401 || err?.message?.toLowerCase().includes('log in again') || err?.message?.toLowerCase().includes('expired')) {
+          clearToken();
+          clearUser();
+          setCurrentVendor(null);
+        }
+      })
       .finally(() => setReady(true));
   }, []);
 
   if (!ready) {
     return <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center text-slate-600">Loading...</div>;
   }
-  if (!currentVendor) return <LoginPage onSuccess={setCurrentVendor} />;
+  if (!currentVendor) {
+    return (
+      <LoginPage
+        onSuccess={(user) => {
+          setCurrentVendor(user);
+          setUser(user);
+        }}
+      />
+    );
+  }
   return (
     <VendorApp
       currentVendor={currentVendor}
-      onUpdateVendor={setCurrentVendor}
+      onUpdateVendor={(user) => {
+        setCurrentVendor(user);
+        setUser(user);
+      }}
       onLogout={() => {
         clearToken();
+        clearUser();
         setCurrentVendor(null);
       }}
     />
@@ -67,11 +93,13 @@ function VendorApp({ currentVendor, onUpdateVendor, onLogout }: { currentVendor:
   
   const [selectedReqForBid, setSelectedReqForBid] = useState<Requirement | null>(null);
   const [isExplainerOpen, setIsExplainerOpen] = useState(false);
+  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
+  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-  const addToast = (type: ToastMessage['type'], title: string, message: string) => {
+  const addToast = (type: ToastMessage['type'], title: string, message?: string) => {
     const id = Math.random().toString(36).substring(2, 9);
-    setToasts((prev) => [...prev, { id, type, title, message }]);
+    setToasts((prev) => [...prev, { id, type, title, message: message || '' }]);
   };
 
   const removeToast = (id: string) => {
@@ -247,6 +275,7 @@ function VendorApp({ currentVendor, onUpdateVendor, onLogout }: { currentVendor:
         activeTab={activeTab}
         onTabChange={handleTabChange}
         onOpenExplainer={() => setIsExplainerOpen(true)}
+        onOpenAccountModal={() => setIsAccountModalOpen(true)}
         activeOrdersCount={activeOrdersCount}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
@@ -261,6 +290,8 @@ function VendorApp({ currentVendor, onUpdateVendor, onLogout }: { currentVendor:
           onTabChange={handleTabChange}
           activeOrdersCount={activeOrdersCount}
           onLogout={onLogout}
+          onOpenAccountModal={() => setIsAccountModalOpen(true)}
+          onOpenVerificationModal={() => setIsVerificationModalOpen(true)}
         />
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto pb-20 lg:pb-8">
@@ -361,11 +392,11 @@ function VendorApp({ currentVendor, onUpdateVendor, onLogout }: { currentVendor:
         </button>
 
         <button
-          onClick={() => setIsSidebarOpen(true)}
+          onClick={() => setIsAccountModalOpen(true)}
           className="flex flex-col items-center justify-center py-1 px-2.5 rounded-xl text-slate-500 hover:text-slate-900 font-medium transition cursor-pointer"
         >
-          <Menu className="w-5 h-5 mb-0.5" />
-          <span className="text-[10px]">More</span>
+          <UserIcon className="w-5 h-5 mb-0.5" />
+          <span className="text-[10px]">Account</span>
         </button>
       </nav>
 
@@ -384,6 +415,28 @@ function VendorApp({ currentVendor, onUpdateVendor, onLogout }: { currentVendor:
       <RuleExplainer
         isOpen={isExplainerOpen}
         onClose={() => setIsExplainerOpen(false)}
+      />
+
+      <VendorAccountModal
+        isOpen={isAccountModalOpen}
+        onClose={() => setIsAccountModalOpen(false)}
+        vendor={currentVendor}
+        onUpdateVendor={(updated) => {
+          if (onUpdateVendor) onUpdateVendor(updated);
+        }}
+        onLogout={onLogout}
+        onShowToast={addToast}
+        onOpenVerificationModal={() => setIsVerificationModalOpen(true)}
+      />
+
+      <VendorVerificationModal
+        isOpen={isVerificationModalOpen}
+        onClose={() => setIsVerificationModalOpen(false)}
+        vendor={currentVendor}
+        onUpdateVendor={(updated) => {
+          if (onUpdateVendor) onUpdateVendor(updated);
+        }}
+        onShowToast={addToast}
       />
     </div>
   );

@@ -1,24 +1,36 @@
 import { useState, useEffect, useCallback } from 'react';
-import { AdminSidebar } from './components/AdminSidebar';
+import { AdminSidebar, type AdminTab } from './components/AdminSidebar';
 import { AdminHeader } from './components/AdminHeader';
 import { PlatformMetricsView } from './components/PlatformMetricsView';
+import { RequirementManager } from './components/RequirementManager';
 import { ProviderKycManager } from './components/ProviderKycManager';
+import { UserManager } from './components/UserManager';
 import { EscrowDisputeManager } from './components/EscrowDisputeManager';
 import { CategoryManager } from './components/CategoryManager';
 import { OccasionManager } from './components/OccasionManager';
 import { AuditLogViewer } from './components/AuditLogViewer';
+import { AdminAccountModal } from './components/AdminAccountModal';
 import { ToastContainer } from './components/Toast';
 import type { ToastMessage } from './components/Toast';
 import { LoginPage } from './components/LoginPage';
 import { api, getToken, clearToken, emptyMetrics } from './services/api';
 import type { AdminMetrics, Booking, Category, Occasion, User, AuditLog } from './types';
 
-type AdminTab = 'metrics' | 'kyc' | 'escrow' | 'categories' | 'occasions' | 'logs';
+const VALID_TABS: AdminTab[] = [
+  'metrics',
+  'requirements',
+  'escrow',
+  'kyc',
+  'users',
+  'categories',
+  'occasions',
+  'logs',
+];
 
 const tabFromUrl = (): AdminTab => {
-  const hash = window.location.hash.replace('#', '');
-  if (['kyc', 'escrow', 'categories', 'occasions', 'logs', 'metrics'].includes(hash)) {
-    return hash as AdminTab;
+  const hash = window.location.hash.replace('#', '') as AdminTab;
+  if (VALID_TABS.includes(hash)) {
+    return hash;
   }
   return 'metrics';
 };
@@ -45,15 +57,24 @@ export default function App() {
   return (
     <AdminApp
       currentAdmin={currentAdmin}
-      onLogout={() => {
-        clearToken();
+      onUpdateAdmin={setCurrentAdmin}
+      onLogout={async () => {
+        await api.logout();
         setCurrentAdmin(null);
       }}
     />
   );
 }
 
-function AdminApp({ currentAdmin, onLogout }: { currentAdmin: User; onLogout: () => void }) {
+function AdminApp({
+  currentAdmin,
+  onUpdateAdmin,
+  onLogout,
+}: {
+  currentAdmin: User;
+  onUpdateAdmin?: (u: User) => void;
+  onLogout: () => void;
+}) {
   const [activeTab, setActiveTab] = useState<AdminTab>(tabFromUrl);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -62,9 +83,12 @@ function AdminApp({ currentAdmin, onLogout }: { currentAdmin: User; onLogout: ()
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [occasions, setOccasions] = useState<Occasion[]>([]);
+  const [requirements, setRequirements] = useState<any[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(false);
   const [loadError, setLoadError] = useState('');
+  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   const addToast = (type: ToastMessage['type'], title: string, message: string) => {
@@ -101,20 +125,56 @@ function AdminApp({ currentAdmin, onLogout }: { currentAdmin: User; onLogout: ()
       api.getCategories(),
       api.getOccasions(),
       api.getAuditLogs(),
+      api.getRequirements(),
+      api.getAllUsers(),
     ]);
-    const [m, p, b, c, o, l] = results;
+    const [m, p, b, c, o, l, reqs, users] = results;
     if (m.status === 'fulfilled') setMetrics(m.value);
     if (p.status === 'fulfilled') setProviders(p.value);
     if (b.status === 'fulfilled') setBookings(b.value);
     if (c.status === 'fulfilled') setCategories(c.value);
     if (o.status === 'fulfilled') setOccasions(o.value);
     if (l && l.status === 'fulfilled') setAuditLogs(l.value);
+    if (reqs && reqs.status === 'fulfilled') setRequirements(reqs.value);
+    if (users && users.status === 'fulfilled') setAllUsers(users.value);
+
     const failed = results.find((r): r is PromiseRejectedResult => r.status === 'rejected');
     setLoadError(failed ? (failed.reason as Error).message : '');
   };
 
   useEffect(() => {
     loadData();
+
+    // Auto-sync every 12s so admin sees live vendor reminders & KYC updates without manual reload
+    const pollInterval = setInterval(() => {
+      Promise.allSettled([
+        api.getProviders(),
+        api.getMetrics(),
+        api.getAuditLogs(),
+      ]).then(([p, m, l]) => {
+        if (p.status === 'fulfilled') setProviders(p.value);
+        if (m.status === 'fulfilled') setMetrics(m.value);
+        if (l && l.status === 'fulfilled') setAuditLogs(l.value);
+      });
+    }, 12000);
+
+    const onWindowFocus = () => {
+      Promise.allSettled([
+        api.getProviders(),
+        api.getMetrics(),
+        api.getAuditLogs(),
+      ]).then(([p, m, l]) => {
+        if (p.status === 'fulfilled') setProviders(p.value);
+        if (m.status === 'fulfilled') setMetrics(m.value);
+        if (l && l.status === 'fulfilled') setAuditLogs(l.value);
+      });
+    };
+
+    window.addEventListener('focus', onWindowFocus);
+    return () => {
+      clearInterval(pollInterval);
+      window.removeEventListener('focus', onWindowFocus);
+    };
   }, []);
 
   const closeModals = useCallback(() => {
@@ -151,9 +211,9 @@ function AdminApp({ currentAdmin, onLogout }: { currentAdmin: User; onLogout: ()
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleToggleVerify = async (providerId: string, isVerified: boolean) => {
+  const handleToggleVerify = async (providerId: string, isVerified: boolean, notes?: string, rejectionReason?: string) => {
     try {
-      await api.verifyProvider(providerId, isVerified);
+      const updated = await api.verifyProvider(providerId, isVerified, notes, rejectionReason);
       setProviders((prev) =>
         prev.map((p) =>
           p._id === providerId
@@ -163,6 +223,10 @@ function AdminApp({ currentAdmin, onLogout }: { currentAdmin: User; onLogout: ()
                 bankDetails: p.bankDetails
                   ? { ...p.bankDetails, isKycCompleted: isVerified }
                   : undefined,
+                kycDocuments: p.kycDocuments
+                  ? { ...p.kycDocuments, rejectionReason: isVerified ? '' : (rejectionReason || notes || '') }
+                  : undefined,
+                verificationAudit: updated.verificationAudit || p.verificationAudit,
               }
             : p
         )
@@ -173,8 +237,8 @@ function AdminApp({ currentAdmin, onLogout }: { currentAdmin: User; onLogout: ()
       }));
       addToast(
         'success',
-        isVerified ? 'Vendor approved' : 'Approval removed',
-        isVerified ? 'This vendor is now marked as verified.' : 'This vendor is no longer marked as verified.'
+        isVerified ? 'Vendor approved' : (rejectionReason ? 'Verification rejected' : 'Approval removed'),
+        isVerified ? 'This vendor is now marked as verified.' : (rejectionReason ? `Reason sent to vendor: "${rejectionReason}"` : 'This vendor is no longer marked as verified.')
       );
     } catch (err: any) {
       addToast('error', 'Update failed', err.message);
@@ -287,8 +351,39 @@ function AdminApp({ currentAdmin, onLogout }: { currentAdmin: User; onLogout: ()
     }
   };
 
+  const handleDeleteRequirement = async (id: string) => {
+    try {
+      await api.deleteRequirement(id);
+      setRequirements((prev) => prev.filter((r) => r._id !== id));
+      addToast('success', 'Requirement removed', 'Event requirement and bids deleted.');
+    } catch (err: any) {
+      addToast('error', 'Could not delete requirement', err.message);
+    }
+  };
+
+  const handleUpdateUserRole = async (userId: string, newRole: string) => {
+    try {
+      const updated = await api.updateUserRole(userId, newRole);
+      setAllUsers((prev) =>
+        prev.map((u) => (u._id === userId ? { ...u, role: updated.role, roles: updated.roles } : u))
+      );
+      addToast('success', 'Role updated', `User permissions changed to ${newRole}.`);
+    } catch (err: any) {
+      addToast('error', 'Could not update role', err.message);
+    }
+  };
+
   const pendingKycCount = (providers || []).filter((p) => !p.isVerified).length;
   const activeEscrowCount = (bookings || []).filter((b) => b.status === 'ACTIVE').length;
+  const openRequirementsCount = (requirements || []).filter((r) => r.status === 'OPEN').length;
+  const reminderCount = (providers || []).filter(
+    (p) =>
+      !p.isVerified &&
+      Boolean(
+        p.kycDocuments?.reviewRequestedAt ||
+        p.verificationAudit?.some((a) => a.reviewedByName === 'Vendor Reminder' || a.action === 'PROVIDER_REVIEW_REMINDER')
+      )
+  ).length;
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans flex">
@@ -301,8 +396,11 @@ function AdminApp({ currentAdmin, onLogout }: { currentAdmin: User; onLogout: ()
         onTabChange={handleTabChange}
         pendingKycCount={pendingKycCount}
         activeEscrowCount={activeEscrowCount}
+        openRequirementsCount={openRequirementsCount}
+        reminderCount={reminderCount}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
+        onOpenAccountModal={() => setIsAccountModalOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -313,8 +411,10 @@ function AdminApp({ currentAdmin, onLogout }: { currentAdmin: User; onLogout: ()
           onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
           pendingKycCount={pendingKycCount}
           activeEscrowCount={activeEscrowCount}
+          reminderCount={reminderCount}
           onTabChange={handleTabChange}
           onLogout={onLogout}
+          onOpenAccountModal={() => setIsAccountModalOpen(true)}
         />
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
@@ -331,13 +431,37 @@ function AdminApp({ currentAdmin, onLogout }: { currentAdmin: User; onLogout: ()
           )}
 
           {activeTab === 'metrics' && (
-            <PlatformMetricsView metrics={metrics} />
+            <PlatformMetricsView
+              metrics={metrics}
+              providers={providers}
+              bookings={bookings}
+              requirements={requirements}
+              currentAdmin={currentAdmin}
+              onNavigateTab={handleTabChange}
+            />
+          )}
+
+          {activeTab === 'requirements' && (
+            <RequirementManager
+              requirements={requirements}
+              onDeleteRequirement={handleDeleteRequirement}
+              onRefresh={loadData}
+            />
           )}
 
           {activeTab === 'kyc' && (
             <ProviderKycManager
               providers={providers}
               onToggleVerify={handleToggleVerify}
+            />
+          )}
+
+          {activeTab === 'users' && (
+            <UserManager
+              users={allUsers}
+              currentAdminId={currentAdmin._id}
+              onUpdateRole={handleUpdateUserRole}
+              onRefresh={loadData}
             />
           )}
 
@@ -378,9 +502,20 @@ function AdminApp({ currentAdmin, onLogout }: { currentAdmin: User; onLogout: ()
         </main>
 
         <footer className="py-4 px-6 border-t border-slate-200/80 text-center text-xs text-slate-400 bg-white/50">
-          EzzyGo admin
+          EzzyGo Event Marketplace &bull; Operations & Administration Panel
         </footer>
       </div>
+
+      <AdminAccountModal
+        isOpen={isAccountModalOpen}
+        onClose={() => setIsAccountModalOpen(false)}
+        admin={currentAdmin}
+        onUpdateAdmin={(updated) => {
+          if (onUpdateAdmin) onUpdateAdmin(updated);
+        }}
+        onLogout={onLogout}
+        onShowToast={addToast}
+      />
     </div>
   );
 }

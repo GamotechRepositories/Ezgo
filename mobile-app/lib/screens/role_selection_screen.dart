@@ -127,7 +127,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                             children: [
                               TextSpan(
                                 text: 'How will you use ',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.poppins(
                                   fontSize: 25,
                                   fontWeight: FontWeight.w900,
                                   color: const Color(0xFF0F172A),
@@ -136,7 +136,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                               ),
                               TextSpan(
                                 text: 'EzzyGo?',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.poppins(
                                   fontSize: 25,
                                   fontWeight: FontWeight.w900,
                                   color: const Color(0xFFFF3838),
@@ -153,7 +153,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                         Text(
                           'Choose one to continue. You can switch later.',
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.poppins(
                             fontSize: 13.5,
                             fontWeight: FontWeight.w500,
                             color: const Color(0xFF64748B),
@@ -167,7 +167,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                           children: [
                             Text(
                               'SELECT ONE ROLE',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.poppins(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
                                 color: const Color(0xFF94A3B8),
@@ -241,7 +241,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
             Text(
               'You can change your role anytime in Profile.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.poppins(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
                 color: const Color(0xFF94A3B8),
@@ -318,7 +318,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                   children: [
                     Text(
                       title,
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.poppins(
                         fontSize: 17.5,
                         fontWeight: FontWeight.w800,
                         color: const Color(0xFF0F172A),
@@ -327,7 +327,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                     const SizedBox(height: 3),
                     Text(
                       subtitle,
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.poppins(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                         color: const Color(0xFF64748B),
@@ -561,7 +561,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                   isHost
                       ? 'Continue as Customer'
                       : 'Continue as Service Provider',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.poppins(
                     fontSize: 16.5,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.2,

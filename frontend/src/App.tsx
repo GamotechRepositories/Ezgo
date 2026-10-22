@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Home, Calendar, Plus, ShieldCheck, HelpCircle } from 'lucide-react';
+import { Home, Calendar, Plus, ShieldCheck, User as UserIcon } from 'lucide-react';
 import { Navbar } from './components/Navbar';
 import { RequesterView } from './components/RequesterView';
 import { RuleExplainer } from './components/RuleExplainer';
 import { PostRequirementModal } from './components/PostRequirementModal';
 import { PaymentModal } from './components/PaymentModal';
 import { ReviewModal } from './components/ReviewModal';
+import { MyAccountModal } from './components/MyAccountModal';
+import { MyProfilePage } from './components/MyProfilePage';
 import { Footer } from './components/Footer';
 import { ToastContainer } from './components/Toast';
 import type { ToastMessage } from './components/Toast';
@@ -13,32 +15,46 @@ import { LoginPage } from './components/LoginPage';
 import { MyBookingsPage } from './components/MyBookingsPage';
 import { RoleSelectionPage } from './components/RoleSelectionPage';
 import { LocationSelectionPage } from './components/LocationSelectionPage';
-import { api, getToken, clearToken } from './services/api';
+import { api, getToken, clearToken, getUser, setUser, clearUser } from './services/api';
 import { getSocket } from './services/socket';
 import { getVendorPortalUrl } from './utils/portalUrls';
 import type { User, Requirement, Booking, Category, Occasion } from './types';
 
-type Page = 'home' | 'bookings';
+type Page = 'home' | 'bookings' | 'profile';
 type AppStep = 'role' | 'login' | 'location' | 'app';
-const pageFromUrl = (): Page => (window.location.hash === '#bookings' ? 'bookings' : 'home');
+const pageFromUrl = (): Page => {
+  if (window.location.hash === '#bookings') return 'bookings';
+  if (window.location.hash === '#profile') return 'profile';
+  return 'home';
+};
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [ready, setReady] = useState(false);
-  const [step, setStep] = useState<AppStep>('role');
+  const [currentUser, setCurrentUser] = useState<User | null>(() => getUser());
+  const [ready, setReady] = useState(() => Boolean(getUser() && getToken()));
+  const [step, setStep] = useState<AppStep>(() => (getUser() && getToken() ? 'app' : 'role'));
   const [selectedCity, setSelectedCityOnboard] = useState('Pune, MH');
 
   useEffect(() => {
-    if (!getToken()) {
+    const token = getToken();
+    if (!token) {
       setReady(true);
       return;
     }
     api.me()
       .then((user) => {
         setCurrentUser(user);
+        setUser(user);
         setStep('app');
       })
-      .catch(() => clearToken())
+      .catch((err: any) => {
+        // Only clear credentials if backend explicitly rejects with 401 (token expired/invalid)
+        if (err?.status === 401 || err?.message?.toLowerCase().includes('log in again') || err?.message?.toLowerCase().includes('expired')) {
+          clearToken();
+          clearUser();
+          setCurrentUser(null);
+          setStep('role');
+        }
+      })
       .finally(() => setReady(true));
   }, []);
 
@@ -68,6 +84,7 @@ export default function App() {
       <LoginPage
         onSuccess={(user) => {
           setCurrentUser(user);
+          setUser(user);
           setStep('location');
         }}
       />
@@ -89,15 +106,28 @@ export default function App() {
   // Step 4: Main App
   if (!currentUser) {
     // fallback — user somehow skipped login
-    return <LoginPage onSuccess={(user) => { setCurrentUser(user); setStep('location'); }} />;
+    return (
+      <LoginPage
+        onSuccess={(user) => {
+          setCurrentUser(user);
+          setUser(user);
+          setStep('location');
+        }}
+      />
+    );
   }
 
   return (
     <HostApp
       currentUser={currentUser}
       initialCity={selectedCity}
+      onUpdateUser={(updated) => {
+        setCurrentUser(updated);
+        setUser(updated);
+      }}
       onLogout={() => {
         clearToken();
+        clearUser();
         setCurrentUser(null);
         setStep('role');
       }}
@@ -105,7 +135,17 @@ export default function App() {
   );
 }
 
-function HostApp({ currentUser, onLogout, initialCity }: { currentUser: User; onLogout: () => void; initialCity?: string }) {
+function HostApp({
+  currentUser,
+  onLogout,
+  onUpdateUser,
+  initialCity,
+}: {
+  currentUser: User;
+  onLogout: () => void;
+  onUpdateUser?: (u: User) => void;
+  initialCity?: string;
+}) {
   const [loadError, setLoadError] = useState('');
   const [selectedCity, setSelectedCity] = useState(initialCity || 'Pune, MH');
 
@@ -118,6 +158,7 @@ function HostApp({ currentUser, onLogout, initialCity }: { currentUser: User; on
   // Modals State
   const [isExplainerOpen, setIsExplainerOpen] = useState(false);
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
   const [postModalData, setPostModalData] = useState<string | import('./types').PostRequirementInitialData | undefined>(undefined);
   const [selectedBookingForPay, setSelectedBookingForPay] = useState<Booking | null>(null);
   const [selectedBookingForReview, setSelectedBookingForReview] = useState<Booking | null>(null);
@@ -255,6 +296,7 @@ function HostApp({ currentUser, onLogout, initialCity }: { currentUser: User; on
   const closeAllModals = useCallback((triggerHistoryBack: boolean = false) => {
     setIsExplainerOpen(false);
     setIsPostModalOpen(false);
+    setIsAccountModalOpen(false);
     setSelectedBookingForPay(null);
     setSelectedBookingForReview(null);
     if (triggerHistoryBack && window.history.state?.modal) {
@@ -262,7 +304,7 @@ function HostApp({ currentUser, onLogout, initialCity }: { currentUser: User; on
     }
   }, []);
 
-  const anyModalOpen = isExplainerOpen || isPostModalOpen || !!selectedBookingForPay || !!selectedBookingForReview;
+  const anyModalOpen = isExplainerOpen || isPostModalOpen || isAccountModalOpen || !!selectedBookingForPay || !!selectedBookingForReview;
 
   // Handle Escape Key to close open modals
   useEffect(() => {
@@ -421,7 +463,8 @@ function HostApp({ currentUser, onLogout, initialCity }: { currentUser: User; on
   const goTo = (next: Page) => {
     closeAllModals();
     if (next !== pageFromUrl()) {
-      window.history.pushState(null, '', next === 'bookings' ? '#bookings' : window.location.pathname);
+      const hash = next === 'bookings' ? '#bookings' : next === 'profile' ? '#profile' : window.location.pathname;
+      window.history.pushState(null, '', hash);
     }
     setPage(next);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -450,8 +493,19 @@ function HostApp({ currentUser, onLogout, initialCity }: { currentUser: User; on
         onOpenPostModal={(cat) => handleOpenPostModal(cat)}
         onOpenBookings={handleOpenBookings}
         onGoHome={() => goTo('home')}
+        onOpenAccountModal={() => setIsAccountModalOpen(true)}
+        onOpenProfilePage={() => goTo('profile')}
+        onOpenMyEvents={() => {
+          goTo('home');
+          setTimeout(() => {
+            const el = document.getElementById('requirements-hub');
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+          }, 100);
+        }}
         isBookingsPage={page === 'bookings'}
+        isProfilePage={page === 'profile'}
         activeBookingsCount={activeBookingsCount}
+        requirementsCount={requirements.length}
         selectedCity={selectedCity}
         onSelectCity={setSelectedCity}
       />
@@ -472,7 +526,31 @@ function HostApp({ currentUser, onLogout, initialCity }: { currentUser: User; on
 
       {/* Main Workspace Body */}
       <main className="w-full flex-1 pb-20 lg:pb-0">
-        {page === 'bookings' ? (
+        {page === 'profile' ? (
+          <MyProfilePage
+            currentUser={currentUser}
+            onUpdateUser={(updated) => {
+              if (onUpdateUser) onUpdateUser(updated);
+            }}
+            onLogout={onLogout}
+            onBack={() => goTo('home')}
+            onOpenBookings={handleOpenBookings}
+            onOpenMyEvents={() => {
+              goTo('home');
+              setTimeout(() => {
+                const el = document.getElementById('requirements-hub');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }, 100);
+            }}
+            onOpenExplainer={handleOpenExplainer}
+            onOpenPostModal={handleOpenPostModal}
+            requirements={requirements}
+            bookings={bookings}
+            selectedCity={selectedCity}
+            onSelectCity={setSelectedCity}
+            onShowToast={addToast}
+          />
+        ) : page === 'bookings' ? (
           <MyBookingsPage
             bookings={bookings}
             categories={categories}
@@ -586,13 +664,16 @@ function HostApp({ currentUser, onLogout, initialCity }: { currentUser: User; on
             <span className="text-[10px] mt-0.5">Bookings</span>
           </button>
 
-          {/* How It Works */}
+          {/* Profile */}
           <button
-            onClick={handleOpenExplainer}
-            className="flex flex-col items-center justify-center py-1 text-slate-500 hover:text-slate-800 transition cursor-pointer"
+            onClick={() => goTo('profile')}
+            aria-label="My Profile"
+            className={`flex flex-col items-center justify-center py-1 transition cursor-pointer ${
+              page === 'profile' ? 'text-[#f95724] font-bold' : 'text-slate-500 hover:text-slate-800'
+            }`}
           >
-            <HelpCircle className="w-5 h-5 text-slate-500" />
-            <span className="text-[10px] mt-0.5">Explainer</span>
+            <UserIcon className="w-5 h-5" />
+            <span className="text-[10px] mt-0.5">Profile</span>
           </button>
         </div>
       </nav>
@@ -603,6 +684,32 @@ function HostApp({ currentUser, onLogout, initialCity }: { currentUser: User; on
         booking={selectedBookingForReview}
         onSubmitReview={handleSubmitReview}
         fromUserId={currentUser._id}
+      />
+
+      <MyAccountModal
+        isOpen={isAccountModalOpen}
+        onClose={() => setIsAccountModalOpen(false)}
+        currentUser={currentUser}
+        onUpdateUser={(updated) => {
+          if (onUpdateUser) onUpdateUser(updated);
+        }}
+        onLogout={onLogout}
+        onOpenBookings={handleOpenBookings}
+        onOpenMyEvents={() => {
+          goTo('home');
+          setTimeout(() => {
+            const el = document.getElementById('requirements-hub');
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+          }, 100);
+        }}
+        onOpenExplainer={handleOpenExplainer}
+        onOpenPostModal={handleOpenPostModal}
+        requirementsCount={requirements.length}
+        activeBookingsCount={activeBookingsCount}
+        completedBookingsCount={bookings.filter((b) => b.status === 'COMPLETED').length}
+        selectedCity={selectedCity}
+        onSelectCity={setSelectedCity}
+        onShowToast={addToast}
       />
 
       {/* Exact Matching Light Aesthetic Premium Footer */}

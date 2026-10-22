@@ -48,7 +48,7 @@ async function request<T>(path: string, options: RequestInit = {}, fallbackError
   } catch {
     throw new Error('Cannot reach the EzzyGo server. Is the backend running?');
   }
-  if (res.status === 401 && token && !path.startsWith('/auth/')) {
+  if (res.status === 401 && token && !path.includes('/auth/')) {
     clearToken();
     window.location.reload();
   }
@@ -60,6 +60,36 @@ async function request<T>(path: string, options: RequestInit = {}, fallbackError
 const json = (method: string, body: unknown): RequestInit => ({ method, body: JSON.stringify(body) });
 
 export const api = {
+  async sendAdminOtp(email: string): Promise<{ success: boolean; message: string }> {
+    return request<{ success: boolean; message: string }>(
+      '/admin/auth/send-otp',
+      json('POST', { email }),
+      'Failed to send verification code'
+    );
+  },
+
+  async verifyAdminOtp(email: string, otp: string): Promise<User> {
+    const data = await request<{ token: string; user: User }>(
+      '/admin/auth/verify-otp',
+      json('POST', { email, otp }),
+      'Verification failed'
+    );
+    if (data.token) {
+      setToken(data.token);
+    }
+    return data.user;
+  },
+
+  async logout(): Promise<void> {
+    try {
+      await request('/admin/auth/logout', json('POST', {}));
+    } catch {
+      // Ignore network errors on logout
+    } finally {
+      clearToken();
+    }
+  },
+
   async login(phone: string, password: string): Promise<User> {
     const data = await request<{ token: string; user: User }>(
       '/auth/login',
@@ -70,7 +100,7 @@ export const api = {
     return data.user;
   },
 
-  me: () => request<User>('/auth/me', {}, 'Could not load admin'),
+  me: () => request<User>('/admin/auth/me', {}, 'Could not load admin').catch(() => request<User>('/auth/me', {}, 'Could not load admin')),
 
   demoAccounts: () => request<DemoAccount[]>('/auth/demo-accounts', {}, 'Could not load demo accounts'),
 
@@ -78,8 +108,8 @@ export const api = {
 
   getProviders: () => request<User[]>('/admin/providers', {}, 'Could not load vendors'),
 
-  verifyProvider: (providerId: string, isVerified: boolean) =>
-    request<User>(`/admin/providers/${providerId}/verify`, json('PATCH', { isVerified }), 'Could not change vendor status'),
+  verifyProvider: (providerId: string, isVerified: boolean, notes?: string, rejectionReason?: string) =>
+    request<User>(`/admin/providers/${providerId}/verify`, json('PATCH', { isVerified, notes, rejectionReason }), 'Could not change vendor status'),
 
   getBookings: () => request<Booking[]>('/bookings', {}, 'Could not load bookings'),
 
@@ -139,4 +169,36 @@ export const api = {
   getProviderKyc: (providerId: string) =>
     request<any>(`/admin/providers/${providerId}/kyc`, {}, 'Could not load provider KYC details'),
 
+  getRequirements: (params?: { category?: string; status?: string; city?: string }) => {
+    const query = new URLSearchParams();
+    if (params?.category) query.set('category', params.category);
+    if (params?.status && params.status !== 'ALL') query.set('status', params.status);
+    if (params?.city) query.set('city', params.city);
+    const qs = query.toString() ? `?${query.toString()}` : '';
+    return request<any[]>(`/requirements${qs}`, {}, 'Could not load event requirements');
+  },
+
+  deleteRequirement: (id: string) =>
+    request<{ success: boolean; message: string }>(`/requirements/${id}`, { method: 'DELETE' }, 'Could not delete requirement'),
+
+  getAllUsers: (params?: { search?: string; role?: string }) => {
+    const query = new URLSearchParams();
+    if (params?.search) query.set('search', params.search);
+    if (params?.role && params.role !== 'ALL') query.set('role', params.role);
+    const qs = query.toString() ? `?${query.toString()}` : '';
+    return request<User[]>(`/admin/users${qs}`, {}, 'Could not load users');
+  },
+
+  updateUserRole: (userId: string, role: string) =>
+    request<User>(`/admin/users/${userId}/role`, json('PATCH', { role }), 'Could not update user role'),
+
+  updateProfile: (data: {
+    userId?: string;
+    name?: string;
+    email?: string;
+    phone?: string;
+    avatar?: string;
+  }) => request<User>('/auth/profile', json('PUT', data), 'Could not update profile'),
 };
+
+

@@ -1,0 +1,385 @@
+import React, { useState } from 'react';
+import {
+  Search,
+  Filter,
+  Calendar,
+  MapPin,
+  TrendingDown,
+  Trash2,
+  ChevronDown,
+  ChevronUp,
+  AlertCircle,
+  Users,
+} from 'lucide-react';
+import type { Requirement, Bid } from '../types';
+
+interface RequirementManagerProps {
+  requirements: (Requirement & { bids?: Bid[] })[];
+  onDeleteRequirement: (id: string) => Promise<void>;
+  onRefresh: () => void;
+}
+
+export const RequirementManager: React.FC<RequirementManagerProps> = ({
+  requirements,
+  onDeleteRequirement,
+  onRefresh,
+}) => {
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [categoryFilter, setCategoryFilter] = useState('ALL');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Extract unique categories
+  const categories = Array.from(new Set(requirements.map((r) => r.category).filter(Boolean)));
+
+  // Filter logic
+  const filtered = requirements.filter((req) => {
+    if (statusFilter !== 'ALL' && req.status !== statusFilter) return false;
+    if (categoryFilter !== 'ALL' && req.category !== categoryFilter) return false;
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      const titleMatch = req.title?.toLowerCase().includes(q);
+      const descMatch = req.description?.toLowerCase().includes(q);
+      const areaMatch = req.location?.area?.toLowerCase().includes(q);
+      const cityMatch = req.location?.city?.toLowerCase().includes(q);
+      const hostMatch =
+        typeof req.requesterId === 'object' && req.requesterId?.name?.toLowerCase().includes(q);
+      if (!titleMatch && !descMatch && !areaMatch && !cityMatch && !hostMatch) return false;
+    }
+    return true;
+  });
+
+  // Aggregate stats
+  const totalOpen = requirements.filter((r) => r.status === 'OPEN').length;
+  const totalAccepted = requirements.filter((r) => r.status === 'ACCEPTED' || r.status === 'ACTIVE').length;
+  const totalBidsCount = requirements.reduce((acc, r) => acc + (r.bids?.length || r.bidsCount || 0), 0);
+
+  const handleDelete = async (id: string) => {
+    setIsDeleting(true);
+    try {
+      await onDeleteRequirement(id);
+      setDeleteConfirmId(null);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-300">
+      {/* Header and Summary Cards */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Live Requests & Bidding</h1>
+          <p className="text-sm sm:text-base text-slate-600 mt-1">
+            Event requirements posted by hosts with real-time reverse bids from verified vendors.
+          </p>
+        </div>
+        <button
+          onClick={onRefresh}
+          className="self-start sm:self-auto px-4 py-2 rounded-xl bg-white border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer shadow-xs"
+        >
+          Refresh Feed
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1">
+          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Requests</div>
+          <div className="text-2xl font-bold text-slate-900">{requirements.length}</div>
+          <div className="text-xs text-slate-400">All posted host requirements</div>
+        </div>
+        <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1">
+          <div className="text-xs font-semibold text-orange-600 uppercase tracking-wider">Open for Bidding</div>
+          <div className="text-2xl font-bold text-[#f95724]">{totalOpen}</div>
+          <div className="text-xs text-slate-400">Actively receiving vendor quotes</div>
+        </div>
+        <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1">
+          <div className="text-xs font-semibold text-blue-600 uppercase tracking-wider">Booked / Active</div>
+          <div className="text-2xl font-bold text-blue-700">{totalAccepted}</div>
+          <div className="text-xs text-slate-400">Bid accepted by host</div>
+        </div>
+        <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1">
+          <div className="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Total Bids Placed</div>
+          <div className="text-2xl font-bold text-emerald-700">{totalBidsCount}</div>
+          <div className="text-xs text-slate-400">Competitive reverse offers</div>
+        </div>
+      </div>
+
+      {/* Search and Filters Bar */}
+      <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col md:flex-row gap-3 items-center justify-between">
+        <div className="relative w-full md:w-96">
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by title, host, venue, or area..."
+            className="w-full h-10 pl-10 pr-4 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#f95724] focus:ring-2 focus:ring-[#f95724]/15"
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+          <div className="flex items-center gap-1.5 text-xs text-slate-500">
+            <Filter className="w-3.5 h-3.5" />
+            <span>Filters:</span>
+          </div>
+
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#f95724]"
+          >
+            <option value="ALL">All Statuses</option>
+            <option value="OPEN">OPEN (Bidding)</option>
+            <option value="ACCEPTED">ACCEPTED</option>
+            <option value="COMPLETED">COMPLETED</option>
+            <option value="EXPIRED">EXPIRED</option>
+            <option value="CANCELLED">CANCELLED</option>
+          </select>
+
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#f95724]"
+          >
+            <option value="ALL">All Categories</option>
+            {categories.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Feed List */}
+      {filtered.length === 0 ? (
+        <div className="p-12 text-center rounded-2xl bg-white border border-slate-200">
+          <AlertCircle className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+          <p className="text-base font-semibold text-slate-700">No event requirements match your filters</p>
+          <p className="text-xs text-slate-400 mt-1">Try clearing the search or changing status/category filters.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filtered.map((req) => {
+            const isExpanded = expandedId === req._id;
+            const host = typeof req.requesterId === 'object' ? req.requesterId : null;
+            const bids = req.bids || [];
+            const budget = req.budget || 0;
+            const maxBid = req.maxAcceptableBid || Math.floor(budget * 0.85);
+
+            return (
+              <div
+                key={req._id}
+                className="rounded-2xl bg-white border border-slate-200 shadow-xs overflow-hidden transition hover:border-slate-300"
+              >
+                {/* Main Card Summary */}
+                <div className="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                  <div className="space-y-2 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-50 text-[#ea580c] border border-orange-200/80">
+                        {req.category}
+                      </span>
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${
+                          req.status === 'OPEN'
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : req.status === 'ACCEPTED' || req.status === 'ACTIVE'
+                            ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                            : req.status === 'EXPIRED'
+                            ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                            : 'bg-slate-100 text-slate-600 border border-slate-200'
+                        }`}
+                      >
+                        {req.status}
+                      </span>
+                      <span className="text-xs text-slate-400">
+                        Posted {new Date(req.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+
+                    <h3 className="text-lg font-bold text-slate-900 leading-snug">{req.title}</h3>
+
+                    <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-slate-600">
+                      <div className="flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span>
+                          {req.location?.area}, {req.location?.city || 'Pune'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span>Date: {req.eventDate}</span>
+                      </div>
+                      {req.guestCount > 0 && (
+                        <div className="flex items-center gap-1.5">
+                          <Users className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span>{req.guestCount} Guests</span>
+                        </div>
+                      )}
+                      {host && (
+                        <div className="flex items-center gap-1 text-slate-500">
+                          <span>Host:</span>
+                          <strong className="text-slate-800">{host.name}</strong>
+                          {host.phone && <span>({host.phone})</span>}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Financial & Bid Count Column */}
+                  <div className="flex items-center justify-between lg:justify-end gap-6 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100">
+                    <div className="text-right">
+                      <div className="text-xs text-slate-400">Host Budget</div>
+                      <div className="text-xl font-bold text-slate-900">₹{budget.toLocaleString()}</div>
+                      <div className="text-[11px] text-[#f95724] font-medium">
+                        Max Bid: ₹{maxBid.toLocaleString()} (15% off)
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setExpandedId(isExpanded ? null : req._id)}
+                        className={`px-3 py-2 rounded-xl text-xs font-semibold border transition flex items-center gap-1.5 cursor-pointer ${
+                          isExpanded
+                            ? 'bg-slate-900 text-white border-slate-900'
+                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        <span>{bids.length} Bids</span>
+                        {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                      </button>
+
+                      <button
+                        onClick={() => setDeleteConfirmId(req._id)}
+                        title="Delete Requirement"
+                        className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition cursor-pointer"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Expandable Bids & Details Drawer */}
+                {isExpanded && (
+                  <div className="px-5 pb-5 pt-3 bg-slate-50/70 border-t border-slate-100 space-y-4">
+                    {req.description && (
+                      <div className="text-xs text-slate-600 bg-white p-3 rounded-xl border border-slate-200/80">
+                        <strong className="text-slate-800 block mb-1">Host Notes / Requirements:</strong>
+                        <p className="whitespace-pre-line leading-relaxed">{req.description}</p>
+                      </div>
+                    )}
+
+                    <div>
+                      <div className="flex items-center justify-between mb-2.5">
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                          Vendor Reverse Bids ({bids.length})
+                        </h4>
+                        <span className="text-[11px] text-slate-500">
+                          Reverse-bidding rule: Must be &le; ₹{maxBid.toLocaleString()}
+                        </span>
+                      </div>
+
+                      {bids.length === 0 ? (
+                        <div className="p-6 text-center rounded-xl bg-white border border-slate-200 text-xs text-slate-400">
+                          No vendors have submitted bids for this event yet.
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {bids.map((bid) => {
+                            const discountAmount = budget - bid.amount;
+                            const discountPct = Math.round((discountAmount / budget) * 100);
+                            const vendor = typeof bid.providerId === 'object' ? bid.providerId : null;
+
+                            return (
+                              <div
+                                key={bid._id}
+                                className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2"
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <div>
+                                    <div className="font-bold text-sm text-slate-900">
+                                      {vendor?.businessName || vendor?.name || 'Verified Vendor'}
+                                    </div>
+                                    <div className="text-xs text-slate-500">
+                                      {vendor?.name} {vendor?.phone ? `• ${vendor.phone}` : ''}
+                                    </div>
+                                  </div>
+                                  <span
+                                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                                      bid.status === 'ACCEPTED'
+                                        ? 'bg-emerald-100 text-emerald-800'
+                                        : 'bg-slate-100 text-slate-600'
+                                    }`}
+                                  >
+                                    {bid.status}
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                                  <div>
+                                    <div className="text-base font-extrabold text-emerald-700">
+                                      ₹{bid.amount.toLocaleString()}
+                                    </div>
+                                  </div>
+                                  <div className="text-right">
+                                    <span className="inline-flex items-center gap-0.5 text-xs font-bold text-[#ea580c]">
+                                      <TrendingDown className="w-3 h-3" />
+                                      {discountPct}% OFF
+                                    </span>
+                                    <div className="text-[10px] text-slate-400">
+                                      Saved ₹{discountAmount.toLocaleString()}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {bid.message && (
+                                  <p className="text-xs text-slate-600 bg-slate-50 p-2 rounded-lg italic">
+                                    "{bid.message}"
+                                  </p>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Delete Confirmation Modal */}
+                {deleteConfirmId === req._id && (
+                  <div className="p-4 bg-rose-50 border-t border-rose-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in">
+                    <div className="flex items-center gap-2 text-rose-900 text-sm font-semibold">
+                      <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+                      <span>Are you sure you want to delete this event requirement and all its bids?</span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={() => setDeleteConfirmId(null)}
+                        disabled={isDeleting}
+                        className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-100 cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => handleDelete(req._id)}
+                        disabled={isDeleting}
+                        className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-xs cursor-pointer disabled:opacity-50"
+                      >
+                        {isDeleting ? 'Deleting...' : 'Confirm Delete'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};

@@ -436,7 +436,7 @@ class HostHomeScreenState extends State<HostHomeScreen> {
                   // Heading: "Plan Your Dream\nWedding" (Dark Charcoal on Light Background)
                   Text(
                     'Plan Your Dream\nWedding',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.poppins(
                       fontSize: 22.5,
                       fontWeight: FontWeight.w900,
                       color: const Color(0xFF111827),
@@ -449,7 +449,7 @@ class HostHomeScreenState extends State<HostHomeScreen> {
                   // Subtitle
                   Text(
                     'Get competitive bids from verified vendors',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.poppins(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: const Color(0xFF4B5563),
@@ -486,7 +486,7 @@ class HostHomeScreenState extends State<HostHomeScreen> {
                             children: [
                               Text(
                                 'Post Your Requirement',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.poppins(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w800,
                                   color: Colors.white,

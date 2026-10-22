@@ -48,20 +48,29 @@ app.use(
   })
 );
 
+// Helper to detect local development requests
+const isLocalOrDev = (req) => {
+  if (process.env.NODE_ENV !== 'production') return true;
+  const ip = req.ip || req.connection?.remoteAddress || '';
+  return ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1' || req.hostname === 'localhost';
+};
+
 // Rate Limiter for Auth & General API
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 300, // Limit each IP to 300 requests per windowMs
+  max: 3000, // Generous limit for real-time marketplace portals
   standardHeaders: true,
   legacyHeaders: false,
+  skip: isLocalOrDev,
   message: { success: false, message: 'Too many requests from this IP, please try again after 15 minutes.' },
 });
 
 const authLimiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
-  max: 30, // Limit each IP to 30 login/register/OTP attempts per window
+  max: 100, // Limit each IP to 100 login/register/OTP attempts per window
   standardHeaders: true,
   legacyHeaders: false,
+  skip: isLocalOrDev,
   message: { success: false, message: 'Too many authentication attempts. Please try again later.' },
 });
 

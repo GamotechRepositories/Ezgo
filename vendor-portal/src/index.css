@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Poppins', sans-serif;
+  --font-heading: 'Poppins', sans-serif;
+}
+
 @layer base {
   * {
     box-sizing: border-box;
@@ -14,7 +20,7 @@
 
   body {
     margin: 0;
-    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     background-color: #f8fafc;
@@ -23,19 +29,19 @@
   }
 
   h1, .font-display {
-    font-family: 'Playfair Display', 'Outfit', Georgia, serif;
+    font-family: 'Poppins', sans-serif;
     letter-spacing: -0.02em;
     font-weight: 800;
   }
 
   h2, h3, h4, h5, h6, .font-heading {
-    font-family: 'Outfit', 'Plus Jakarta Sans', -apple-system, sans-serif;
+    font-family: 'Poppins', sans-serif;
     letter-spacing: -0.02em;
     font-weight: 700;
   }
 
   .font-sans {
-    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 
   /* Custom scrollbar */
@@ -68,11 +74,11 @@
 }
 
 .font-editorial {
-  font-family: 'Playfair Display', 'Outfit', Georgia, serif;
+  font-family: 'Poppins', sans-serif;
 }
 
 .font-display {
-  font-family: 'Playfair Display', 'Outfit', Georgia, serif;
+  font-family: 'Poppins', sans-serif;
 }
 /* Mobile safe area and utility classes */
 .safe-bottom {

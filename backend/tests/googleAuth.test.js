@@ -171,7 +171,7 @@ describe('EzzyGo Google Authentication & Security Rules', () => {
       );
     });
 
-    it('should block admin accounts from logging into host or vendor desks', async () => {
+    it('should allow admin accounts to log into host or vendor desks with superuser privileges', async () => {
       const mockToken = 'mock-google-token-admin:sub_adm1:admin@ezzygo.in:Admin User:verified';
       const mockModel = createMockUserModel([
         {
@@ -185,16 +185,12 @@ describe('EzzyGo Google Authentication & Security Rules', () => {
         },
       ]);
 
-      await assert.rejects(
-        async () => {
-          await handleGoogleAuth({ idToken: mockToken, role: 'provider' }, mockModel);
-        },
-        (err) => {
-          assert.strictEqual(err.statusCode, 403);
-          assert.match(err.message, /admin account.*Open the admin app/i);
-          return true;
-        }
-      );
+      const res = await handleGoogleAuth({ idToken: mockToken, role: 'provider' }, mockModel);
+      assert.strictEqual(res.isNewUser, false);
+      assert.ok(res.token);
+      assert.strictEqual(res.user.role, 'provider');
+      assert.ok(res.user.roles.includes('admin'));
+      assert.ok(res.user.roles.includes('provider'));
     });
 
     it('should provide correct separation messages for wrong portals', () => {

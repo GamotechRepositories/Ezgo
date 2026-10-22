@@ -2,6 +2,7 @@ import type { Requirement, Bid, Booking, User, EquipmentItem } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const TOKEN_KEY = 'ezzygo_token_vendor';
+const USER_KEY = 'ezzygo_user_vendor';
 
 export interface DemoAccount {
   role: 'requester' | 'provider' | 'admin';
@@ -22,8 +23,35 @@ export interface AppNotification {
 }
 
 export const getToken = () => localStorage.getItem(TOKEN_KEY) || localStorage.getItem('ezgo_token_vendor') || '';
-export const setToken = (token: string) => localStorage.setItem(TOKEN_KEY, token);
-export const clearToken = () => localStorage.removeItem(TOKEN_KEY);
+export const setToken = (token: string) => {
+  localStorage.setItem(TOKEN_KEY, token);
+  localStorage.setItem('ezgo_token_vendor', token);
+};
+export const clearToken = () => {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem('ezgo_token_vendor');
+  localStorage.removeItem(USER_KEY);
+  localStorage.removeItem('ezgo_user_vendor');
+};
+
+export const getUser = (): User | null => {
+  try {
+    const raw = localStorage.getItem(USER_KEY) || localStorage.getItem('ezgo_user_vendor');
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+export const setUser = (user: User) => {
+  try {
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    localStorage.setItem('ezgo_user_vendor', JSON.stringify(user));
+  } catch {}
+};
+export const clearUser = () => {
+  localStorage.removeItem(USER_KEY);
+  localStorage.removeItem('ezgo_user_vendor');
+};
 
 export const emptyVendor: User = {
   _id: '',
@@ -44,14 +72,20 @@ async function request<T>(path: string, options: RequestInit = {}, fallbackError
   try {
     res = await fetch(`${API_BASE}${path}`, { ...options, headers });
   } catch (_) {
-    throw new Error('Cannot reach the EzzyGo server. Is the backend running?');
+    const err: any = new Error('Cannot reach the EzzyGo server. Is the backend running?');
+    err.isNetworkError = true;
+    throw err;
   }
   if (res.status === 401 && token && !path.startsWith('/auth/')) {
     clearToken();
     window.location.reload();
   }
   const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(json.message || fallbackError);
+  if (!res.ok) {
+    const err: any = new Error(json.message || fallbackError);
+    err.status = res.status;
+    throw err;
+  }
   return (json.data ?? json) as T;
 }
 
@@ -69,6 +103,7 @@ export const api = {
       'Could not log in'
     );
     setToken(data.token);
+    if (data.user) setUser(data.user);
     return data.user;
   },
 
@@ -86,18 +121,29 @@ export const api = {
       'Could not sign in with Google'
     );
 
+    const isNew = Boolean(
+      res?.isNewUser ||
+      res?.data?.isNewUser ||
+      res?.needsProfileCompletion ||
+      res?.data?.needsProfileCompletion
+    );
+    const googleProfile = res?.googleProfile || res?.data?.googleProfile;
     const sessionToken = res?.token || res?.data?.token;
     const user = res?.user || res?.data?.user;
 
-    if (sessionToken && user) {
-      setToken(sessionToken);
-      return { isNewUser: false, user };
+    if (isNew || !user) {
+      return {
+        isNewUser: true,
+        googleProfile,
+        user,
+      };
     }
 
-    return {
-      isNewUser: true,
-      googleProfile: res?.googleProfile || res?.data?.googleProfile,
-    };
+    if (sessionToken) {
+      setToken(sessionToken);
+      setUser(user);
+    }
+    return { isNewUser: false, user };
   },
 
   async register(input: {
@@ -107,6 +153,7 @@ export const api = {
     googleId?: string;
     businessName: string;
     serviceArea?: string;
+    categories?: string[];
     email?: string;
     bankDetails?: {
       accountHolder?: string;
@@ -131,6 +178,7 @@ export const api = {
       'Could not create your account'
     );
     setToken(data.token);
+    if (data.user) setUser(data.user);
     return data.user;
   },
 
@@ -155,13 +203,18 @@ export const api = {
 
     if (token && user) {
       setToken(token);
+      setUser(user);
       return { isNewUser: false, user, phone: res?.phone || phone };
     }
     return { isNewUser: true, phone: res?.phone || phone };
   },
 
-  me(): Promise<User> {
-    return request<User>('/auth/me', {}, 'Could not load your account');
+  async me(): Promise<User> {
+    const user = await request<User>('/auth/me', {}, 'Could not load your account');
+    if (user && user._id) {
+      setUser(user);
+    }
+    return user;
   },
 
   demoAccounts(): Promise<DemoAccount[]> {
@@ -193,8 +246,37 @@ export const api = {
     gstNumber?: string;
     gstDoc?: string;
     businessAddress?: string;
+    bankDetails?: {
+      accountHolder?: string;
+      accountNumber?: string;
+      ifscCode?: string;
+      upiId?: string;
+    };
   }): Promise<User> {
     return request<User>('/auth/submit-kyc', jsonBody('POST', kycData), 'Failed to submit KYC documents');
+  },
+
+  requestVerificationReview(message?: string): Promise<User> {
+    return request<User>('/auth/request-verification-review', jsonBody('POST', { message }), 'Failed to request verification review');
+  },
+
+  updateProfile(data: {
+    userId?: string;
+    name?: string;
+    businessName?: string;
+    phone?: string;
+    email?: string;
+    avatar?: string;
+    serviceArea?: string;
+    categories?: string[];
+    bankDetails?: {
+      accountHolder?: string;
+      accountNumber?: string;
+      ifscCode?: string;
+      upiId?: string;
+    };
+  }): Promise<User> {
+    return request<User>('/auth/profile', jsonBody('PUT', data), 'Could not update profile');
   },
 
   getNotifications(): Promise<{ notifications: AppNotification[]; unreadCount: number }> {

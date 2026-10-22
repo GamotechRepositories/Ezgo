@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   LayoutDashboard,
   UserCheck,
@@ -8,19 +7,34 @@ import {
   ExternalLink,
   X,
   PartyPopper,
+  Sparkles,
+  Users,
 } from 'lucide-react';
 import { EzzyGoLogo } from './EzzyGoLogo';
 import { getUserPortalUrl, getVendorPortalUrl } from '../utils/portalUrls';
 import type { User } from '../types';
 
+export type AdminTab =
+  | 'metrics'
+  | 'requirements'
+  | 'escrow'
+  | 'kyc'
+  | 'users'
+  | 'categories'
+  | 'occasions'
+  | 'logs';
+
 interface AdminSidebarProps {
   admin: User;
-  activeTab: 'metrics' | 'kyc' | 'escrow' | 'categories' | 'occasions' | 'logs';
-  onTabChange: (tab: 'metrics' | 'kyc' | 'escrow' | 'categories' | 'occasions' | 'logs') => void;
+  activeTab: AdminTab;
+  onTabChange: (tab: AdminTab) => void;
   pendingKycCount: number;
   activeEscrowCount: number;
+  openRequirementsCount?: number;
+  reminderCount?: number;
   isOpen: boolean;
   onClose: () => void;
+  onOpenAccountModal?: () => void;
 }
 
 export const AdminSidebar: React.FC<AdminSidebarProps> = ({
@@ -29,16 +43,33 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   onTabChange,
   pendingKycCount,
   activeEscrowCount,
+  openRequirementsCount = 0,
+  reminderCount = 0,
   isOpen,
   onClose,
+  onOpenAccountModal,
 }) => {
   const navItems = [
-    { id: 'metrics' as const, label: 'Overview', icon: LayoutDashboard, count: null },
-    { id: 'kyc' as const, label: 'Vendor checks', icon: UserCheck, count: pendingKycCount > 0 ? pendingKycCount : null },
-    { id: 'escrow' as const, label: 'Payments', icon: Wallet, count: activeEscrowCount > 0 ? activeEscrowCount : null },
-    { id: 'categories' as const, label: 'Categories', icon: FolderKanban, count: null },
-    { id: 'occasions' as const, label: 'Occasions', icon: PartyPopper, count: null },
-    { id: 'logs' as const, label: 'Money activity', icon: ScrollText, count: null },
+    { id: 'metrics' as const, label: 'Overview', icon: LayoutDashboard, count: null, reminderCount: null },
+    {
+      id: 'requirements' as const,
+      label: 'Live Requests & Bids',
+      icon: Sparkles,
+      count: openRequirementsCount > 0 ? openRequirementsCount : null,
+      reminderCount: null,
+    },
+    { id: 'escrow' as const, label: 'Payments & Escrow', icon: Wallet, count: activeEscrowCount > 0 ? activeEscrowCount : null, reminderCount: null },
+    {
+      id: 'kyc' as const,
+      label: 'Vendor Checks',
+      icon: UserCheck,
+      count: pendingKycCount > 0 ? pendingKycCount : null,
+      reminderCount: reminderCount > 0 ? reminderCount : null,
+    },
+    { id: 'users' as const, label: 'User Directory', icon: Users, count: null, reminderCount: null },
+    { id: 'categories' as const, label: 'Categories', icon: FolderKanban, count: null, reminderCount: null },
+    { id: 'occasions' as const, label: 'Occasions', icon: PartyPopper, count: null, reminderCount: null },
+    { id: 'logs' as const, label: 'Audit & Ledger', icon: ScrollText, count: null, reminderCount: null },
   ];
 
   return (
@@ -91,11 +122,18 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                   <Icon className={`w-4 h-4 ${isActive ? 'text-[#f95724]' : 'text-slate-400'}`} />
                   <span>{item.label}</span>
                 </span>
-                {item.count !== null && (
-                  <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-[#f95724] text-white">
-                    {item.count}
-                  </span>
-                )}
+                <div className="flex items-center gap-1.5">
+                  {item.reminderCount !== null && (
+                    <span className="px-1.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500 text-white animate-pulse" title="Priority review reminder from vendor">
+                      ⚡ {item.reminderCount}
+                    </span>
+                  )}
+                  {item.count !== null && (
+                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-[#f95724] text-white">
+                      {item.count}
+                    </span>
+                  )}
+                </div>
               </button>
             );
           })}
@@ -123,15 +161,28 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           </div>
         </nav>
 
-        <div className="p-3.5 m-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-full bg-slate-200 text-slate-700 font-semibold flex items-center justify-center shrink-0">
-            {(admin.name || 'A').charAt(0)}
+        <button
+          type="button"
+          onClick={() => {
+            if (onOpenAccountModal) onOpenAccountModal();
+            onClose();
+          }}
+          className="p-3 m-3 rounded-2xl bg-slate-50 hover:bg-orange-50/60 border border-slate-200 hover:border-orange-200 flex items-center gap-3 min-w-0 transition cursor-pointer text-left group"
+        >
+          {admin.avatar ? (
+            <img src={admin.avatar} alt={admin.name} className="w-9 h-9 rounded-full object-cover shrink-0" referrerPolicy="no-referrer" />
+          ) : (
+            <div className="w-9 h-9 rounded-full bg-slate-200 group-hover:bg-[#f95724] text-slate-700 group-hover:text-white font-semibold flex items-center justify-center shrink-0 transition">
+              {(admin.name || 'A').charAt(0).toUpperCase()}
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-semibold text-slate-900 group-hover:text-[#f95724] truncate transition">
+              {admin.name || 'Admin'}
+            </div>
+            <div className="text-xs text-slate-500">Super Administrator</div>
           </div>
-          <div className="min-w-0">
-            <div className="text-sm font-semibold text-slate-900 truncate">{admin.name}</div>
-            <div className="text-xs text-slate-500">Admin</div>
-          </div>
-        </div>
+        </button>
       </aside>
     </>
   );

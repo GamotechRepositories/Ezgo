@@ -11,6 +11,7 @@ import {
   googleAuth,
   googleLink,
   submitKyc,
+  requestVerificationReview,
   blockAvailabilityDate,
   unblockAvailabilityDate,
   getAvailability,
@@ -26,6 +27,7 @@ router.post('/verify-otp', verifyOtpAndLogin);
 router.post('/google', googleAuth);
 router.post('/google/link', requireAuth, googleLink);
 router.post('/submit-kyc', requireAuth, submitKyc);
+router.post('/request-verification-review', requireAuth, requestVerificationReview);
 
 router.get('/demo-accounts', demoAccounts);
 router.get('/me', requireAuth, me);

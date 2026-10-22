@@ -6,6 +6,7 @@ export interface User {
   phone: string;
   email?: string;
   role: UserRole;
+  roles?: string[];
   businessName?: string;
   categories?: string[];
   serviceArea?: string;
@@ -18,7 +19,7 @@ export interface User {
     accountNumber: string;
     ifscCode: string;
     upiId: string;
-    isKycCompleted: boolean;
+    isKycCompleted?: boolean;
   };
   kycDocuments?: {
     aadhaarNumber?: string;
@@ -31,6 +32,8 @@ export interface User {
     businessAddress?: string;
     submittedAt?: string;
     rejectionReason?: string;
+    reviewRequestedAt?: string;
+    reviewRequestedMessage?: string;
   };
   avatar?: string;
   unavailableDates?: {
@@ -40,6 +43,7 @@ export interface User {
   }[];
   verificationAudit?: {
     status: string;
+    action?: string;
     reviewedByName?: string;
     reviewedAt: string;
     notes?: string;

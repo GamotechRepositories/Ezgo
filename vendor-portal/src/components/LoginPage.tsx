@@ -11,6 +11,7 @@ import {
   Zap,
   TrendingUp,
   FileBadge,
+  FileText,
 } from 'lucide-react';
 import { EzzyGoLogo } from './EzzyGoLogo';
 import { GoogleSignInButton } from './GoogleSignInButton';
@@ -43,6 +44,19 @@ const trustBadges = [
   },
 ];
 
+const getDocPreviewUrl = (url?: string | null): string => {
+  if (!url) return '';
+  if (url.includes('res.cloudinary.com') && /\.pdf($|\?)/i.test(url)) {
+    return url.replace(/\.pdf($|\?)/i, '.jpg$1');
+  }
+  return url;
+};
+
+const isPdfDocument = (url?: string | null): boolean => {
+  if (!url) return false;
+  return /\.pdf($|\?)/i.test(url);
+};
+
 export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [regStep, setRegStep] = useState<1 | 2 | 3>(1);
@@ -55,6 +69,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
   const [email, setEmail] = useState('');
   const [password] = useState('Vendor@123'); // Default secure fallback for Google-authenticated vendors
   const [googleId, setGoogleId] = useState('');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(['Photography & Cinema']);
+
+  const SERVICE_CATEGORIES = [
+    'Photography & Cinema',
+    'Catering & Food',
+    'Decoration & Florals',
+    'DJ & Sound Systems',
+    'Venue & Banquets',
+    'Makeup & Styling',
+    'Anchors & Emcees',
+    'Event Management',
+  ];
 
   // Step 2: Bank Account Details
   const [accountHolder, setAccountHolder] = useState('');
@@ -79,6 +105,143 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [activeUploadField, setActiveUploadField] = useState<string | null>(null);
+  const isRestoredRef = useRef(false);
+
+  const DRAFT_STORAGE_KEY = 'ezzygo_vendor_registration_draft';
+
+  const saveDraft = (overrides?: Record<string, any>) => {
+    try {
+      const draft = {
+        name,
+        businessName,
+        serviceArea,
+        phone,
+        email,
+        googleId,
+        selectedCategories,
+        accountHolder,
+        accountNumber,
+        confirmAccountNumber,
+        ifscCode,
+        upiId,
+        aadhaarNumber,
+        panNumber,
+        gstNumber,
+        businessAddress,
+        aadhaarFront,
+        aadhaarBack,
+        panCard,
+        gstDoc,
+        regStep,
+        mode,
+        ...overrides,
+        updatedAt: Date.now(),
+      };
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+    } catch (_) {}
+  };
+
+  // Auto-restore incomplete registration draft on load
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
+      if (!saved) {
+        isRestoredRef.current = true;
+        return;
+      }
+      const draft = JSON.parse(saved);
+      if (!draft) {
+        isRestoredRef.current = true;
+        return;
+      }
+
+      if (draft.name) setName(draft.name);
+      if (draft.businessName) setBusinessName(draft.businessName);
+      if (draft.serviceArea) setServiceArea(draft.serviceArea);
+      if (draft.phone) setPhone(draft.phone);
+      if (draft.email) setEmail(draft.email);
+      if (draft.googleId) setGoogleId(draft.googleId);
+      if (draft.selectedCategories?.length) setSelectedCategories(draft.selectedCategories);
+
+      if (draft.accountHolder) setAccountHolder(draft.accountHolder);
+      if (draft.accountNumber) setAccountNumber(draft.accountNumber);
+      if (draft.confirmAccountNumber) setConfirmAccountNumber(draft.confirmAccountNumber);
+      if (draft.ifscCode) setIfscCode(draft.ifscCode);
+      if (draft.upiId) setUpiId(draft.upiId);
+
+      if (draft.aadhaarNumber) setAadhaarNumber(draft.aadhaarNumber);
+      if (draft.panNumber) setPanNumber(draft.panNumber);
+      if (draft.gstNumber) setGstNumber(draft.gstNumber);
+      if (draft.businessAddress) setBusinessAddress(draft.businessAddress);
+      if (draft.aadhaarFront) setAadhaarFront(draft.aadhaarFront);
+      if (draft.aadhaarBack) setAadhaarBack(draft.aadhaarBack);
+      if (draft.panCard) setPanCard(draft.panCard);
+      if (draft.gstDoc) setGstDoc(draft.gstDoc);
+
+      const step1Done = Boolean(
+        draft.name?.trim() &&
+        draft.businessName?.trim() &&
+        draft.phone?.replace(/\D/g, '').length === 10 &&
+        (draft.selectedCategories?.length ?? 0) > 0
+      );
+      const step2Done = Boolean(
+        (draft.accountNumber?.trim() && draft.ifscCode?.trim()?.length === 11) ||
+        draft.upiId?.trim()
+      );
+
+      let targetStep: 1 | 2 | 3 = 1;
+      if (draft.regStep === 3 && step1Done && step2Done) {
+        targetStep = 3;
+      } else if (draft.regStep === 2 && step1Done) {
+        targetStep = 2;
+      } else if (step1Done && step2Done) {
+        targetStep = 3;
+      } else if (step1Done) {
+        targetStep = 2;
+      } else {
+        targetStep = 1;
+      }
+
+      if (draft.mode === 'register' || draft.googleId || step1Done) {
+        setMode('register');
+        setRegStep(targetStep);
+      }
+    } catch (_) {} finally {
+      isRestoredRef.current = true;
+    }
+  }, []);
+
+  // Auto-persist draft as user types/modifies details during registration
+  useEffect(() => {
+    if (!isRestoredRef.current || mode !== 'register') return;
+    const timer = setTimeout(() => {
+      saveDraft();
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [
+    mode,
+    regStep,
+    name,
+    businessName,
+    serviceArea,
+    phone,
+    email,
+    googleId,
+    selectedCategories,
+    accountHolder,
+    accountNumber,
+    confirmAccountNumber,
+    ifscCode,
+    upiId,
+    aadhaarNumber,
+    panNumber,
+    gstNumber,
+    businessAddress,
+    aadhaarFront,
+    aadhaarBack,
+    panCard,
+    gstDoc,
+  ]);
 
   // Sync account holder with vendor name if not manually modified
   useEffect(() => {
@@ -95,10 +258,19 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
     setError('');
     try {
       const url = await api.uploadImage(file, 'ezzygo/kyc');
-      if (activeUploadField === 'aadhaarFront') setAadhaarFront(url);
-      else if (activeUploadField === 'aadhaarBack') setAadhaarBack(url);
-      else if (activeUploadField === 'panCard') setPanCard(url);
-      else if (activeUploadField === 'gstDoc') setGstDoc(url);
+      if (activeUploadField === 'aadhaarFront') {
+        setAadhaarFront(url);
+        saveDraft({ aadhaarFront: url });
+      } else if (activeUploadField === 'aadhaarBack') {
+        setAadhaarBack(url);
+        saveDraft({ aadhaarBack: url });
+      } else if (activeUploadField === 'panCard') {
+        setPanCard(url);
+        saveDraft({ panCard: url });
+      } else if (activeUploadField === 'gstDoc') {
+        setGstDoc(url);
+        saveDraft({ gstDoc: url });
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to upload document.');
     } finally {
@@ -119,6 +291,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
     }
     if (!businessName.trim()) {
       setError('Please enter your business or studio name.');
+      return false;
+    }
+    if (selectedCategories.length === 0) {
+      setError('Please select at least one service category you provide.');
       return false;
     }
     if (!serviceArea.trim()) {
@@ -160,9 +336,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
     if (regStep === 1) {
       if (!validateStep1()) return;
       setRegStep(2);
+      saveDraft({ regStep: 2 });
     } else if (regStep === 2) {
       if (!validateStep2()) return;
       setRegStep(3);
+      saveDraft({ regStep: 3 });
     }
   };
 
@@ -193,6 +371,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
       googleId: googleId || undefined,
       businessName: businessName.trim(),
       serviceArea: serviceArea.trim(),
+      categories: selectedCategories,
       email: email.trim() || undefined,
       bankDetails: {
         accountHolder: accountHolder.trim(),
@@ -211,7 +390,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
         businessAddress: businessAddress.trim(),
       },
     })
-      .then(onSuccess)
+      .then((user) => {
+        try {
+          localStorage.removeItem(DRAFT_STORAGE_KEY);
+        } catch (_) {}
+        onSuccess(user);
+      })
       .catch((err: any) => setError(err.message))
       .finally(() => setBusy(false));
   };
@@ -329,7 +513,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
             /* Main Login Card - EXACT SAME AS FRONTEND LOGIN PAGE */
             <div className="bg-white border border-slate-200/90 rounded-3xl shadow-lg shadow-slate-200/40 p-6 sm:p-9 relative">
               <div className="text-center">
-                <h1 className="font-['Playfair_Display',Georgia,serif] text-3xl sm:text-[36px] font-bold text-slate-900 leading-tight tracking-normal">
+                <h1 className="font-['Poppins',sans-serif] text-3xl sm:text-[36px] font-bold text-slate-900 leading-tight tracking-normal">
                   Log in to EzzyGo
                 </h1>
                 <p className="text-sm sm:text-[14.5px] text-slate-600 leading-relaxed font-normal max-w-[340px] sm:max-w-[380px] mx-auto mt-2.5 mb-6">
@@ -346,13 +530,120 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                     try {
                       const res = await api.loginWithGoogle(token, isAccessToken);
                       if (!res.isNewUser && res.user) {
+                        try {
+                          localStorage.removeItem(DRAFT_STORAGE_KEY);
+                        } catch (_) {}
                         onSuccess(res.user);
                       } else if (res.isNewUser && res.googleProfile) {
-                        setName(res.googleProfile.name || '');
-                        setEmail(res.googleProfile.email || '');
-                        setGoogleId(res.googleProfile.googleId || '');
+                        let draft: any = null;
+                        try {
+                          const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
+                          if (saved) draft = JSON.parse(saved);
+                        } catch (_) {}
+
+                        const nameVal = res.googleProfile.name || draft?.name || res.user?.name || '';
+                        const emailVal = res.googleProfile.email || draft?.email || res.user?.email || '';
+                        const googleIdVal = res.googleProfile.googleId || draft?.googleId || (res.user as any)?.googleId || '';
+                        const phoneVal = (res.googleProfile as any).phone || draft?.phone || res.user?.phone || '';
+                        const rawBiz = (res.googleProfile as any).businessName || draft?.businessName || (res.user?.businessName && res.user.businessName !== 'Vendor Partner' ? res.user.businessName : '');
+                        const businessNameVal = rawBiz && rawBiz !== 'Vendor Partner' ? rawBiz : '';
+                        const serviceAreaVal = (res.googleProfile as any).serviceArea || draft?.serviceArea || res.user?.serviceArea || 'Pune';
+                        const categoriesVal = (res.googleProfile as any).categories?.length
+                          ? (res.googleProfile as any).categories
+                          : (draft?.selectedCategories?.length
+                            ? draft.selectedCategories
+                            : (res.user?.categories?.length ? res.user.categories : ['Photography & Cinema']));
+
+                        const bank = (res.googleProfile as any).bankDetails || res.user?.bankDetails || {};
+                        const holderVal = bank.accountHolder || draft?.accountHolder || nameVal;
+                        const accNumVal = bank.accountNumber || draft?.accountNumber || '';
+                        const confAccVal = bank.accountNumber || draft?.confirmAccountNumber || draft?.accountNumber || '';
+                        const ifscVal = bank.ifscCode || draft?.ifscCode || '';
+                        const upiVal = bank.upiId || draft?.upiId || '';
+
+                        const kyc = (res.googleProfile as any).kycDocuments || res.user?.kycDocuments || {};
+                        const aadhaarVal = kyc.aadhaarNumber || draft?.aadhaarNumber || '';
+                        const panVal = kyc.panNumber || draft?.panNumber || '';
+                        const addrVal = kyc.businessAddress || draft?.businessAddress || '';
+                        const gstVal = kyc.gstNumber || draft?.gstNumber || '';
+                        const aadhaarFrontVal = kyc.aadhaarFront || draft?.aadhaarFront || '';
+                        const aadhaarBackVal = kyc.aadhaarBack || draft?.aadhaarBack || '';
+                        const panCardVal = kyc.panCard || draft?.panCard || '';
+                        const gstDocVal = kyc.gstDoc || draft?.gstDoc || '';
+
+                        setName(nameVal);
+                        setEmail(emailVal);
+                        setGoogleId(googleIdVal);
+                        setPhone(phoneVal);
+                        setBusinessName(businessNameVal);
+                        setServiceArea(serviceAreaVal);
+                        setSelectedCategories(categoriesVal);
+
+                        setAccountHolder(holderVal);
+                        setAccountNumber(accNumVal);
+                        setConfirmAccountNumber(confAccVal);
+                        setIfscCode(ifscVal);
+                        setUpiId(upiVal);
+
+                        setAadhaarNumber(aadhaarVal);
+                        setPanNumber(panVal);
+                        setBusinessAddress(addrVal);
+                        setGstNumber(gstVal);
+                        setAadhaarFront(aadhaarFrontVal);
+                        setAadhaarBack(aadhaarBackVal);
+                        setPanCard(panCardVal);
+                        setGstDoc(gstDocVal);
+
+                        const step1Done = Boolean(
+                          nameVal.trim() &&
+                          businessNameVal.trim() &&
+                          phoneVal.replace(/\D/g, '').length === 10 &&
+                          categoriesVal.length > 0
+                        );
+                        const step2Done = Boolean(
+                          (accNumVal.trim() && ifscVal.trim().length === 11) ||
+                          upiVal.trim()
+                        );
+
+                        // Resume exactly from where the user left off
+                        let targetStep: 1 | 2 | 3 = 1;
+                        if (draft?.regStep && (draft.regStep === 3 ? (step1Done && step2Done) : (draft.regStep === 2 ? step1Done : true))) {
+                          targetStep = draft.regStep;
+                        } else if (step1Done && step2Done) {
+                          targetStep = 3;
+                        } else if (step1Done) {
+                          targetStep = 2;
+                        } else {
+                          targetStep = 1;
+                        }
+
                         setMode('register');
-                        setRegStep(1);
+                        setRegStep(targetStep);
+
+                        saveDraft({
+                          mode: 'register',
+                          regStep: targetStep,
+                          name: nameVal,
+                          email: emailVal,
+                          googleId: googleIdVal,
+                          phone: phoneVal,
+                          businessName: businessNameVal,
+                          serviceArea: serviceAreaVal,
+                          selectedCategories: categoriesVal,
+                          accountHolder: holderVal,
+                          accountNumber: accNumVal,
+                          confirmAccountNumber: confAccVal,
+                          ifscCode: ifscVal,
+                          upiId: upiVal,
+                          aadhaarNumber: aadhaarVal,
+                          panNumber: panVal,
+                          businessAddress: addrVal,
+                          gstNumber: gstVal,
+                          aadhaarFront: aadhaarFrontVal,
+                          aadhaarBack: aadhaarBackVal,
+                          panCard: panCardVal,
+                          gstDoc: gstDocVal,
+                        });
                       }
                     } catch (err: any) {
                       setError(err.message || 'Failed to authenticate with Google.');
@@ -449,7 +740,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
               <div className="mt-5 grid grid-cols-3 gap-2">
                 <button
                   type="button"
-                  onClick={() => setRegStep(1)}
+                  onClick={() => {
+                    setError('');
+                    setRegStep(1);
+                    saveDraft({ regStep: 1 });
+                  }}
                   className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-semibold transition text-left cursor-pointer ${
                     regStep === 1
                       ? 'border-[#f95724] bg-orange-50 text-[#f95724]'
@@ -469,7 +764,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                 <button
                   type="button"
                   onClick={() => {
-                    if (!validateStep1()) setRegStep(2);
+                    setError('');
+                    if (validateStep1()) {
+                      setRegStep(2);
+                      saveDraft({ regStep: 2 });
+                    }
                   }}
                   className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-semibold transition text-left cursor-pointer ${
                     regStep === 2
@@ -490,7 +789,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                 <button
                   type="button"
                   onClick={() => {
-                    if (!validateStep1() && !validateStep2()) setRegStep(3);
+                    setError('');
+                    if (validateStep1() && validateStep2()) {
+                      setRegStep(3);
+                      saveDraft({ regStep: 3 });
+                    }
                   }}
                   className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-semibold transition text-left cursor-pointer ${
                     regStep === 3
@@ -559,6 +862,40 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                           className={fieldClass}
                         />
                       </label>
+                    </div>
+
+                    <div className="pt-1">
+                      <span className="text-sm font-medium text-slate-700 block mb-2">
+                        Event Services You Provide * <span className="text-xs text-slate-400 font-normal">(Select all that apply)</span>
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        {SERVICE_CATEGORIES.map((cat) => {
+                          const isSelected = selectedCategories.includes(cat);
+                          return (
+                            <button
+                              key={cat}
+                              type="button"
+                              onClick={() => {
+                                setSelectedCategories((prev) =>
+                                  isSelected
+                                    ? prev.length > 1
+                                      ? prev.filter((c) => c !== cat)
+                                      : prev
+                                    : [...prev, cat]
+                                );
+                              }}
+                              className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition cursor-pointer ${
+                                isSelected
+                                  ? 'bg-[#f95724] text-white border-[#f95724] shadow-xs'
+                                  : 'bg-white text-slate-700 border-slate-200 hover:border-orange-300 hover:bg-orange-50/30'
+                              }`}
+                            >
+                              {isSelected ? '✓ ' : '+ '}
+                              {cat}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
 
                     <label className="block">
@@ -703,15 +1040,37 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                       <div className="p-3 rounded-xl border border-slate-200 bg-slate-50/50">
                         <span className="text-xs font-semibold text-slate-700">Aadhaar Front Copy</span>
                         {aadhaarFront ? (
-                          <div className="mt-2 flex items-center justify-between text-xs text-emerald-700 font-medium">
-                            <span className="flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Uploaded</span>
-                            <button
-                              type="button"
-                              onClick={() => triggerUpload('aadhaarFront')}
-                              className="text-[#f95724] hover:underline"
-                            >
-                              Replace
-                            </button>
+                          <div className="mt-2 flex items-center gap-2.5">
+                            <div className="w-12 h-10 rounded-lg border border-slate-200 bg-white overflow-hidden shrink-0 relative flex items-center justify-center">
+                              <img
+                                src={getDocPreviewUrl(aadhaarFront)}
+                                alt="Aadhaar Front"
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                  const fb = e.currentTarget.parentElement?.querySelector('.fb-af');
+                                  if (fb) fb.classList.remove('hidden');
+                                }}
+                              />
+                              <div className="fb-af hidden">
+                                <FileText className="w-5 h-5 text-orange-500" />
+                              </div>
+                              {isPdfDocument(aadhaarFront) && (
+                                <span className="absolute bottom-0 right-0 px-1 py-0.2 rounded-tl text-[8px] font-bold bg-rose-600 text-white">
+                                  PDF
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex-1 flex items-center justify-between text-xs text-emerald-700 font-medium">
+                              <span className="flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Uploaded</span>
+                              <button
+                                type="button"
+                                onClick={() => triggerUpload('aadhaarFront')}
+                                className="text-[#f95724] hover:underline cursor-pointer"
+                              >
+                                Replace
+                              </button>
+                            </div>
                           </div>
                         ) : (
                           <button
@@ -729,15 +1088,37 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                       <div className="p-3 rounded-xl border border-slate-200 bg-slate-50/50">
                         <span className="text-xs font-semibold text-slate-700">PAN Card Copy</span>
                         {panCard ? (
-                          <div className="mt-2 flex items-center justify-between text-xs text-emerald-700 font-medium">
-                            <span className="flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Uploaded</span>
-                            <button
-                              type="button"
-                              onClick={() => triggerUpload('panCard')}
-                              className="text-[#f95724] hover:underline"
-                            >
-                              Replace
-                            </button>
+                          <div className="mt-2 flex items-center gap-2.5">
+                            <div className="w-12 h-10 rounded-lg border border-slate-200 bg-white overflow-hidden shrink-0 relative flex items-center justify-center">
+                              <img
+                                src={getDocPreviewUrl(panCard)}
+                                alt="PAN Card"
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                  const fb = e.currentTarget.parentElement?.querySelector('.fb-pan');
+                                  if (fb) fb.classList.remove('hidden');
+                                }}
+                              />
+                              <div className="fb-pan hidden">
+                                <FileText className="w-5 h-5 text-orange-500" />
+                              </div>
+                              {isPdfDocument(panCard) && (
+                                <span className="absolute bottom-0 right-0 px-1 py-0.2 rounded-tl text-[8px] font-bold bg-rose-600 text-white">
+                                  PDF
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex-1 flex items-center justify-between text-xs text-emerald-700 font-medium">
+                              <span className="flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Uploaded</span>
+                              <button
+                                type="button"
+                                onClick={() => triggerUpload('panCard')}
+                                className="text-[#f95724] hover:underline cursor-pointer"
+                              >
+                                Replace
+                              </button>
+                            </div>
                           </div>
                         ) : (
                           <button
@@ -769,7 +1150,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                       type="button"
                       onClick={() => {
                         setError('');
-                        setRegStep((s) => (s === 3 ? 2 : 1));
+                        const prev = (regStep === 3 ? 2 : 1) as 1 | 2 | 3;
+                        setRegStep(prev);
+                        saveDraft({ regStep: prev });
                       }}
                       className="h-12 px-5 rounded-full border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-sm transition cursor-pointer flex items-center gap-1.5"
                     >

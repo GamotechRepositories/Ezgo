@@ -542,7 +542,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
         Text(
           'BOOK ANY EVENT SERVICE IN 1 TAP',
           textAlign: TextAlign.center,
-          style: GoogleFonts.plusJakartaSans(
+          style: GoogleFonts.poppins(
             fontSize: 11,
             fontWeight: FontWeight.w800,
             color: AppTheme.textPrimary.withValues(alpha: 0.78),
@@ -667,7 +667,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                                     children: [
                                       Text(
                                         activeService['title'] as String,
-                                        style: GoogleFonts.plusJakartaSans(
+                                        style: GoogleFonts.poppins(
                                           fontSize: 16,
                                           fontWeight: FontWeight.w800,
                                           color: AppTheme.textPrimary,
@@ -683,7 +683,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                                         ),
                                         child: Text(
                                           activeService['tag'] as String,
-                                          style: GoogleFonts.inter(
+                                          style: GoogleFonts.poppins(
                                             fontSize: 10,
                                             fontWeight: FontWeight.w700,
                                             color: AppTheme.successText,
@@ -695,7 +695,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                                   const SizedBox(height: 3),
                                   Text(
                                     activeService['tagline'] as String,
-                                    style: GoogleFonts.inter(
+                                    style: GoogleFonts.poppins(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w500,
                                       color: AppTheme.textSecondary,
@@ -710,7 +710,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                                       const SizedBox(width: 4),
                                       Text(
                                         activeService['benchmark'] as String,
-                                        style: GoogleFonts.plusJakartaSans(
+                                        style: GoogleFonts.poppins(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w700,
                                           color: srvColor,
@@ -719,7 +719,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                                       const SizedBox(width: 8),
                                       Text(
                                         '• 15% discount limit',
-                                        style: GoogleFonts.inter(
+                                        style: GoogleFonts.poppins(
                                           fontSize: 10,
                                           color: AppTheme.textMuted,
                                         ),
@@ -788,7 +788,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                       const SizedBox(width: 6),
                       Text(
                         srv['title'] as String,
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.poppins(
                           fontSize: 11,
                           fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                           color: isSelected ? Colors.white : AppTheme.textPrimary,
@@ -855,7 +855,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
           Text(
             label,
             textAlign: TextAlign.center,
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.poppins(
               fontSize: 12,
               fontWeight: FontWeight.w700,
               color: const Color(0xFF202124),

@@ -143,7 +143,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
           {/* Main Glass Login Card */}
           <div className="bg-white border border-slate-200/90 rounded-3xl shadow-lg shadow-slate-200/40 p-6 sm:p-9 relative">
             <div className="text-center">
-              <h1 className="font-['Playfair_Display',Georgia,serif] text-3xl sm:text-[36px] font-bold text-slate-900 leading-tight tracking-normal">
+              <h1 className="font-['Poppins',sans-serif] text-3xl sm:text-[36px] font-bold text-slate-900 leading-tight tracking-normal">
                 Log in to EzzyGo
               </h1>
               <p className="text-sm sm:text-[14.5px] text-slate-600 leading-relaxed font-normal max-w-[340px] sm:max-w-[380px] mx-auto mt-2.5 mb-6">

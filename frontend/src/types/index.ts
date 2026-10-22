@@ -21,6 +21,9 @@ export interface User {
     isKycCompleted: boolean;
   };
   avatar?: string;
+  authProvider?: string;
+  roles?: string[];
+  createdAt?: string;
 }
 
 export interface Category {

@@ -148,7 +148,7 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen>
             const SizedBox(width: 10),
             Text(
               'Location set to Pune, Maharashtra (Current)',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.poppins(
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
               ),
@@ -219,7 +219,7 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen>
             ),
             child: Text(
               'Skip',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.poppins(
                 color: const Color(0xFF6B7280),
                 fontSize: 14.5,
                 fontWeight: FontWeight.w600,
@@ -240,7 +240,7 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen>
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Text(
                 'Where are you\nplanning your event?',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.poppins(
                   fontSize: 27,
                   fontWeight: FontWeight.w800,
                   height: 1.18,
@@ -264,14 +264,14 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen>
                 child: TextField(
                   controller: _searchController,
                   onChanged: (_) => setState(() {}),
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.poppins(
                     fontSize: 14.5,
                     color: const Color(0xFF1F2937),
                     fontWeight: FontWeight.w600,
                   ),
                   decoration: InputDecoration(
                     hintText: 'Search city...',
-                    hintStyle: GoogleFonts.plusJakartaSans(
+                    hintStyle: GoogleFonts.poppins(
                       color: const Color(0xFF9CA3AF),
                       fontSize: 14.5,
                       fontWeight: FontWeight.w400,
@@ -335,7 +335,7 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen>
                       const SizedBox(width: 6),
                       Text(
                         _isDetectingLocation ? 'Detecting GPS...' : 'Use Current Location',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.poppins(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                           color: AppTheme.primary,
@@ -466,7 +466,7 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen>
                                           cityName,
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: GoogleFonts.poppins(
                                             fontSize: 15.5,
                                             fontWeight: isSelected
                                                 ? FontWeight.w800
@@ -484,7 +484,7 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen>
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                           textAlign: TextAlign.center,
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: GoogleFonts.poppins(
                                             fontSize: 11.5,
                                             fontWeight: FontWeight.w500,
                                             color: isSelected
@@ -537,7 +537,7 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen>
             Text(
               'No city found for "$query"',
               textAlign: TextAlign.center,
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.poppins(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
                 color: const Color(0xFF374151),
@@ -547,7 +547,7 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen>
             Text(
               'You can still select "$query" as your custom event location.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.poppins(
                 fontSize: 13,
                 fontWeight: FontWeight.w400,
                 color: const Color(0xFF6B7280),
@@ -624,7 +624,7 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen>
                 children: [
                   Text(
                     'Continue',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.poppins(
                       fontSize: 16.5,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 0.2,

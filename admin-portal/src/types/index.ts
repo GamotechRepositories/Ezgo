@@ -4,6 +4,7 @@ export interface User {
   phone: string;
   email?: string;
   role: 'requester' | 'provider' | 'admin';
+  roles?: string[];
   businessName?: string;
   categories?: string[];
   serviceArea?: string;
@@ -29,6 +30,8 @@ export interface User {
     businessAddress?: string;
     submittedAt?: string;
     rejectionReason?: string;
+    reviewRequestedAt?: string;
+    reviewRequestedMessage?: string;
   };
   avatar?: string;
   unavailableDates?: {
@@ -38,6 +41,7 @@ export interface User {
   }[];
   verificationAudit?: {
     status: string;
+    action?: string;
     reviewedByName?: string;
     reviewedAt: string;
     notes?: string;
@@ -81,7 +85,7 @@ export interface Requirement {
   guestCount: number;
   budget: number;
   maxAcceptableBid: number;
-  status: 'OPEN' | 'ACCEPTED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+  status: 'OPEN' | 'ACCEPTED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'EXPIRED' | 'DRAFT';
   bidsCount: number;
   lowestBid?: number;
   createdAt: string;
@@ -157,4 +161,22 @@ export interface AuditLog {
   ipAddress?: string;
   createdAt?: string;
   timestamp?: string;
+}
+
+export interface Bid {
+  _id: string;
+  requirementId: string;
+  providerId: {
+    _id: string;
+    name: string;
+    businessName?: string;
+    phone?: string;
+    rating?: number;
+    avatar?: string;
+    isVerified?: boolean;
+  };
+  amount: number;
+  message?: string;
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'WITHDRAWN';
+  createdAt: string;
 }

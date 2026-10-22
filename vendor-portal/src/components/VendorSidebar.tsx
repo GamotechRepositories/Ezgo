@@ -19,6 +19,7 @@ interface VendorSidebarProps {
   activeTab: 'auctions' | 'orders' | 'availability' | 'wallet' | 'inventory';
   onTabChange: (tab: 'auctions' | 'orders' | 'availability' | 'wallet' | 'inventory') => void;
   onOpenExplainer: () => void;
+  onOpenAccountModal?: () => void;
   activeOrdersCount: number;
   isOpen: boolean;
   onClose: () => void;
@@ -29,6 +30,7 @@ export const VendorSidebar: React.FC<VendorSidebarProps> = ({
   activeTab,
   onTabChange,
   onOpenExplainer,
+  onOpenAccountModal,
   activeOrdersCount,
   isOpen,
   onClose,
@@ -125,16 +127,25 @@ export const VendorSidebar: React.FC<VendorSidebarProps> = ({
           </div>
         </nav>
 
-        <div className="p-3.5 m-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center gap-3 min-w-0">
+        <button
+          type="button"
+          onClick={() => {
+            if (onOpenAccountModal) onOpenAccountModal();
+            onClose();
+          }}
+          className="p-3 m-3 rounded-2xl bg-slate-50 hover:bg-orange-50/60 border border-slate-200 hover:border-orange-200 flex items-center gap-3 min-w-0 transition cursor-pointer text-left group"
+        >
           {vendor.avatar ? (
-            <img src={vendor.avatar} alt={vendor.name} className="w-9 h-9 rounded-full object-cover shrink-0" />
+            <img src={vendor.avatar} alt={vendor.name} className="w-9 h-9 rounded-full object-cover shrink-0" referrerPolicy="no-referrer" />
           ) : (
             <div className="w-9 h-9 rounded-full bg-orange-100 text-[#f95724] font-semibold flex items-center justify-center shrink-0">
               {(vendor.businessName || vendor.name || 'V').charAt(0)}
             </div>
           )}
-          <div className="min-w-0">
-            <div className="text-sm font-semibold text-slate-900 truncate">{vendor.businessName || vendor.name}</div>
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-semibold text-slate-900 group-hover:text-[#f95724] truncate transition">
+              {vendor.businessName || vendor.name}
+            </div>
             <div className="text-xs text-slate-500 flex items-center gap-1">
               {vendor.rating ? (
                 <>
@@ -147,7 +158,7 @@ export const VendorSidebar: React.FC<VendorSidebarProps> = ({
               )}
             </div>
           </div>
-        </div>
+        </button>
       </aside>
     </>
   );

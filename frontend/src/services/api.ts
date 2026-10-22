@@ -2,6 +2,7 @@ import type { User, Requirement, Bid, Booking, Category, Occasion } from '../typ
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const TOKEN_KEY = 'ezzygo_token_host';
+const USER_KEY = 'ezzygo_user_host';
 
 export const emptyUser: User = {
   _id: '',
@@ -29,8 +30,35 @@ export interface AppNotification {
 }
 
 export const getToken = () => localStorage.getItem(TOKEN_KEY) || localStorage.getItem('ezgo_token_host') || '';
-export const setToken = (token: string) => localStorage.setItem(TOKEN_KEY, token);
-export const clearToken = () => localStorage.removeItem(TOKEN_KEY);
+export const setToken = (token: string) => {
+  localStorage.setItem(TOKEN_KEY, token);
+  localStorage.setItem('ezgo_token_host', token);
+};
+export const clearToken = () => {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem('ezgo_token_host');
+  localStorage.removeItem(USER_KEY);
+  localStorage.removeItem('ezgo_user_host');
+};
+
+export const getUser = (): User | null => {
+  try {
+    const raw = localStorage.getItem(USER_KEY) || localStorage.getItem('ezgo_user_host');
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+export const setUser = (user: User) => {
+  try {
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    localStorage.setItem('ezgo_user_host', JSON.stringify(user));
+  } catch {}
+};
+export const clearUser = () => {
+  localStorage.removeItem(USER_KEY);
+  localStorage.removeItem('ezgo_user_host');
+};
 
 async function request<T>(path: string, options: RequestInit = {}, fallbackError = 'Request failed'): Promise<T> {
   const headers = new Headers(options.headers);
@@ -44,14 +72,20 @@ async function request<T>(path: string, options: RequestInit = {}, fallbackError
   try {
     res = await fetch(`${API_BASE}${path}`, { ...options, headers });
   } catch (_) {
-    throw new Error('Cannot reach the EzzyGo server. Is the backend running?');
+    const err: any = new Error('Cannot reach the EzzyGo server. Is the backend running?');
+    err.isNetworkError = true;
+    throw err;
   }
   if (res.status === 401 && token && !path.startsWith('/auth/')) {
     clearToken();
     window.location.reload();
   }
   const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(json.message || fallbackError);
+  if (!res.ok) {
+    const err: any = new Error(json.message || fallbackError);
+    err.status = res.status;
+    throw err;
+  }
   return json as T;
 }
 
@@ -77,6 +111,7 @@ export const api = {
       request('/auth/login', jsonBody('POST', { phone, password, role: 'requester' }), 'Could not log in')
     );
     setToken(data.token);
+    if (data.user) setUser(data.user);
     return data.user;
   },
 
@@ -88,6 +123,7 @@ export const api = {
       request('/auth/google', jsonBody('POST', payload), 'Could not sign in with Google')
     );
     setToken(data.token);
+    if (data.user) setUser(data.user);
     return data.user;
   },
 
@@ -96,6 +132,7 @@ export const api = {
       request('/auth/register', jsonBody('POST', { ...input, role: 'requester' }), 'Could not create your account')
     );
     setToken(data.token);
+    if (data.user) setUser(data.user);
     return data.user;
   },
 
@@ -118,13 +155,32 @@ export const api = {
 
     if (res.data?.token) {
       setToken(res.data.token);
+      if (res.data?.user) setUser(res.data.user);
       return { isNewUser: false, user: res.data.user, phone: res.phone };
     }
     return { isNewUser: true, phone: res.phone };
   },
 
-  me(): Promise<User> {
-    return unwrap(request('/auth/me', {}, 'Could not load your account'));
+  async me(): Promise<User> {
+    const user = await unwrap<User>(request('/auth/me', {}, 'Could not load your account'));
+    if (user && user._id) {
+      setUser(user);
+    }
+    return user;
+  },
+
+  async updateProfile(data: {
+    userId: string;
+    name?: string;
+    email?: string;
+    avatar?: string;
+    serviceArea?: string;
+  }): Promise<User> {
+    const updated = await unwrap<User>(request('/auth/profile', jsonBody('PUT', data), 'Could not update your profile'));
+    if (updated && updated._id) {
+      setUser(updated);
+    }
+    return updated;
   },
 
   demoAccounts(): Promise<DemoAccount[]> {

@@ -28,31 +28,34 @@ export const wrongPortalMessage = (role) => {
 
 /**
  * Synchronizes user roles when accessing a specific portal (requester, provider, or admin).
- * Allows hosts to also log into the vendor portal (enabling provider capabilities) and vice-versa,
- * while maintaining strict isolation for admin privileges.
+ * Allows hosts to log into the vendor portal, vendors to log into host portal,
+ * and enables admin accounts to universally log into any portal (user, vendor, admin) with superuser privileges.
  */
 export const syncUserRoleForPortal = async (user, requestedRole) => {
   if (!requestedRole) return user;
 
+  const isAdmin = user.role === 'admin' || user.roles?.includes('admin');
+
   // Admin portal access is strictly restricted to admin accounts
-  if (requestedRole === 'admin' && user.role !== 'admin' && !user.roles?.includes('admin')) {
+  if (requestedRole === 'admin' && !isAdmin) {
     const error = new Error('This account does not have administrator privileges.');
     error.statusCode = 403;
     throw error;
   }
-  // Admin accounts are kept separate from customer and vendor desks
-  if (user.role === 'admin' && requestedRole !== 'admin') {
-    const error = new Error('This is an admin account. Open the admin app to log in.');
-    error.statusCode = 403;
-    throw error;
-  }
 
-  // Cross-portal interoperability between host (requester) and vendor (provider)
+  // Cross-portal interoperability:
+  // Admin accounts can log into ANY portal (user, vendor, admin).
+  // Non-admin host & vendor accounts can also access each other's portals.
   if (!Array.isArray(user.roles)) {
     user.roles = [user.role || 'requester'];
   }
 
-  if (requestedRole === 'provider' || requestedRole === 'requester') {
+  // Preserve admin role permanently in user.roles
+  if (isAdmin && !user.roles.includes('admin')) {
+    user.roles.push('admin');
+  }
+
+  if (requestedRole === 'provider' || requestedRole === 'requester' || (isAdmin && requestedRole === 'admin')) {
     let changed = false;
 
     if (!user.roles.includes(requestedRole)) {
@@ -206,6 +209,15 @@ export const verifyGoogleAccessToken = async (accessToken) => {
   };
 };
 
+export const isVendorProfileComplete = (user) => {
+  if (!user) return false;
+  const hasBusiness = Boolean(user.businessName && String(user.businessName).trim() && user.businessName !== 'Vendor Partner');
+  const hasPhone = Boolean(user.phone && String(user.phone).replace(/\D/g, '').length >= 10);
+  const hasBank = Boolean(user.bankDetails?.accountNumber || user.bankDetails?.upiId);
+  const hasKyc = Boolean(user.kycDocuments?.aadhaarNumber || user.kycDocuments?.panNumber);
+  return Boolean(hasBusiness && hasPhone && hasBank && hasKyc);
+};
+
 /**
  * Handles unified Google Sign-In and safe account creation/linking.
  */
@@ -243,9 +255,22 @@ export const handleGoogleAuth = async ({ idToken, accessToken, role = 'requester
 
     return {
       isNewUser: false,
+      needsProfileCompletion: role === 'provider' && !isVendorProfileComplete(user),
       message: 'Logged in with Google successfully!',
       token: signToken(user),
       user: withoutPassword(user),
+      googleProfile: {
+        googleId: profile.sub,
+        email: profile.email || user.email,
+        name: profile.name || user.name,
+        avatar: profile.picture || user.avatar,
+        phone: user.phone || '',
+        businessName: user.businessName && user.businessName !== 'Vendor Partner' ? user.businessName : '',
+        serviceArea: user.serviceArea || 'Pune',
+        categories: user.categories || [],
+        bankDetails: user.bankDetails,
+        kycDocuments: user.kycDocuments,
+      },
     };
   }
 
@@ -263,11 +288,25 @@ export const handleGoogleAuth = async ({ idToken, accessToken, role = 'requester
         if (typeof synced.save === 'function') {
           await synced.save();
         }
+
         return {
           isNewUser: false,
+          needsProfileCompletion: role === 'provider' && !isVendorProfileComplete(synced),
           message: 'Google account linked and logged in successfully!',
           token: signToken(synced),
           user: withoutPassword(synced),
+          googleProfile: {
+            googleId: profile.sub,
+            email: profile.email,
+            name: profile.name || synced.name,
+            avatar: profile.picture || synced.avatar,
+            phone: synced.phone || '',
+            businessName: synced.businessName && synced.businessName !== 'Vendor Partner' ? synced.businessName : '',
+            serviceArea: synced.serviceArea || 'Pune',
+            categories: synced.categories || [],
+            bankDetails: synced.bankDetails,
+            kycDocuments: synced.kycDocuments,
+          },
         };
       } else {
         const error = new Error(

@@ -99,6 +99,8 @@ const userSchema = new mongoose.Schema(
       businessAddress: { type: String, default: '' },
       submittedAt: { type: Date, default: null },
       rejectionReason: { type: String, default: '' },
+      reviewRequestedAt: { type: Date, default: null },
+      reviewRequestedMessage: { type: String, default: '' },
     },
     avatar: {
       type: String,

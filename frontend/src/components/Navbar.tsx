@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   ChevronDown,
   MapPin,
@@ -11,9 +11,14 @@ import {
   Calendar,
   Home,
   Check,
+  User as UserIcon,
+  Settings,
+  ExternalLink,
+  MessageCircle,
 } from 'lucide-react';
 import { EzzyGoLogo } from './EzzyGoLogo';
 import type { User } from '../types';
+import { getVendorPortalUrl } from '../utils/portalUrls';
 
 interface NavbarProps {
   currentUser: User;
@@ -22,8 +27,13 @@ interface NavbarProps {
   onOpenPostModal: (categoryName?: string) => void;
   onOpenBookings?: () => void;
   onGoHome?: () => void;
+  onOpenAccountModal?: () => void;
+  onOpenProfilePage?: () => void;
+  onOpenMyEvents?: () => void;
   isBookingsPage?: boolean;
+  isProfilePage?: boolean;
   activeBookingsCount?: number;
+  requirementsCount?: number;
   selectedCity?: string;
   onSelectCity?: (city: string) => void;
 }
@@ -55,15 +65,45 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenPostModal,
   onOpenBookings,
   onGoHome,
+  onOpenAccountModal,
+  onOpenProfilePage,
+  onOpenMyEvents,
   isBookingsPage = false,
+  isProfilePage = false,
   activeBookingsCount = 0,
+  requirementsCount = 0,
   selectedCity = 'Pune, MH',
   onSelectCity,
 }) => {
   const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
   const [isServicesDropdownOpen, setIsServicesDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAccountDropdownOpen, setIsAccountDropdownOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+
+  const accountDropdownRef = useRef<HTMLDivElement>(null);
+
+  const initials = (currentUser.name || 'C')
+    .split(' ')
+    .map((n) => n[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        accountDropdownRef.current &&
+        !accountDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsAccountDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -81,6 +121,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         setIsMobileMenuOpen(false);
         setIsCityDropdownOpen(false);
         setIsServicesDropdownOpen(false);
+        setIsAccountDropdownOpen(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -246,13 +287,170 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <ArrowRight className="w-3.5 h-3.5 hidden sm:inline" />
               </button>
 
-              {/* Desktop Logout Button */}
+              {/* Desktop Profile Icon (Only Icon) */}
+              <div className="relative hidden lg:block" ref={accountDropdownRef}>
+                <button
+                  onClick={() => setIsAccountDropdownOpen(!isAccountDropdownOpen)}
+                  aria-expanded={isAccountDropdownOpen}
+                  aria-label="My Profile"
+                  title={currentUser.name ? `${currentUser.name} - My Profile` : 'My Profile'}
+                  className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs shadow-2xs hover:shadow-md hover:ring-2 hover:ring-slate-900/20 overflow-hidden shrink-0 border-2 transition-all transform active:scale-95 cursor-pointer select-none ${
+                    isProfilePage ? 'border-slate-900 ring-2 ring-slate-900/25' : 'border-slate-200'
+                  }`}
+                >
+                  {currentUser.avatar ? (
+                    <img src={currentUser.avatar} alt={currentUser.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{initials}</span>
+                  )}
+                </button>
+
+                {isAccountDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl border border-slate-100 shadow-xl p-2 z-50 animate-in fade-in zoom-in-95">
+                    {/* Dropdown Header */}
+                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 mb-2">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-9 h-9 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs shadow-xs shrink-0 overflow-hidden">
+                          {currentUser.avatar ? (
+                            <img src={currentUser.avatar} alt={currentUser.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <span>{initials}</span>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="font-bold text-xs text-slate-900 truncate flex items-center gap-1">
+                            <span>{currentUser.name || 'Event Host'}</span>
+                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          </div>
+                          <div className="text-[11px] text-slate-500 font-medium truncate">
+                            {currentUser.phone ? `+91 ${currentUser.phone}` : currentUser.email || 'Host Account'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Dropdown Actions */}
+                    <div className="space-y-0.5 text-xs">
+                      <button
+                        onClick={() => {
+                          setIsAccountDropdownOpen(false);
+                          if (onOpenProfilePage) onOpenProfilePage();
+                          else if (onOpenAccountModal) onOpenAccountModal();
+                        }}
+                        className="w-full text-left px-3 py-2 rounded-xl font-bold text-slate-800 hover:bg-slate-100 hover:text-slate-900 transition flex items-center gap-2.5 cursor-pointer"
+                      >
+                        <UserIcon className="w-4 h-4 text-slate-600" />
+                        <span>View Profile & Settings</span>
+                      </button>
+
+                      {onOpenBookings && (
+                        <button
+                          onClick={() => {
+                            setIsAccountDropdownOpen(false);
+                            onOpenBookings();
+                          }}
+                          className="w-full text-left px-3 py-2 rounded-xl font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-900 transition flex items-center justify-between cursor-pointer"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                            <span>My Bookings & Escrow</span>
+                          </div>
+                          {activeBookingsCount > 0 && (
+                            <span className="px-1.5 py-0.2 rounded-full bg-emerald-600 text-white text-[10px] font-mono font-bold">
+                              {activeBookingsCount}
+                            </span>
+                          )}
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => {
+                          setIsAccountDropdownOpen(false);
+                          if (onOpenMyEvents) onOpenMyEvents();
+                          else if (onGoHome) {
+                            onGoHome();
+                            setTimeout(() => {
+                              const el = document.getElementById('requirements-hub');
+                              if (el) el.scrollIntoView({ behavior: 'smooth' });
+                            }, 100);
+                          }
+                        }}
+                        className="w-full text-left px-3 py-2 rounded-xl font-semibold text-slate-700 hover:bg-slate-50 transition flex items-center justify-between cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Calendar className="w-4 h-4 text-slate-500" />
+                          <span>My Events & Auctions</span>
+                        </div>
+                        {requirementsCount > 0 && (
+                          <span className="px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-700 text-[10px] font-mono font-bold">
+                            {requirementsCount}
+                          </span>
+                        )}
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setIsAccountDropdownOpen(false);
+                          onOpenExplainer();
+                        }}
+                        className="w-full text-left px-3 py-2 rounded-xl font-semibold text-slate-700 hover:bg-slate-50 transition flex items-center gap-2.5 cursor-pointer"
+                      >
+                        <HelpCircle className="w-4 h-4 text-amber-500" />
+                        <span>How Bidding Works</span>
+                      </button>
+
+                      <a
+                        href="https://wa.me/919322054199?text=Hello%20EzzyGo%20Support"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full text-left px-3 py-2 rounded-xl font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-900 transition flex items-center gap-2.5 cursor-pointer"
+                      >
+                        <MessageCircle className="w-4 h-4 text-emerald-600" />
+                        <span>Help & WhatsApp Support</span>
+                      </a>
+
+                      <div className="my-1 border-t border-slate-100" />
+
+                      <a
+                        href={getVendorPortalUrl()}
+                        className="w-full text-left px-3 py-2 rounded-xl font-semibold text-slate-600 hover:bg-orange-50 hover:text-orange-900 transition flex items-center justify-between cursor-pointer"
+                      >
+                        <span className="text-[11px]">Switch to Vendor Portal</span>
+                        <ExternalLink className="w-3.5 h-3.5 opacity-60" />
+                      </a>
+
+                      <button
+                        onClick={() => {
+                          setIsAccountDropdownOpen(false);
+                          onLogout();
+                        }}
+                        className="w-full text-left px-3 py-2 rounded-xl font-semibold text-rose-600 hover:bg-rose-50 transition flex items-center gap-2.5 cursor-pointer"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>Log out</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Mobile My Profile Quick Avatar Button (Only Icon) */}
               <button
-                onClick={onLogout}
-                title={currentUser.name}
-                className="hidden lg:inline-flex px-3 py-2 rounded-full text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 cursor-pointer whitespace-nowrap"
+                onClick={() => {
+                  if (onOpenProfilePage) onOpenProfilePage();
+                  else if (onOpenAccountModal) onOpenAccountModal();
+                }}
+                aria-label="My Profile"
+                className={`lg:hidden w-9 h-9 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs shadow-xs overflow-hidden shrink-0 border-2 active:scale-95 transition cursor-pointer ${
+                  isProfilePage ? 'border-slate-900 ring-2 ring-slate-900/20' : 'border-slate-200'
+                }`}
+                title="My Profile"
               >
-                Log out
+                {currentUser.avatar ? (
+                  <img src={currentUser.avatar} alt={currentUser.name} className="w-full h-full object-cover" />
+                ) : (
+                  <span>{initials}</span>
+                )}
               </button>
 
               {/* Mobile Hamburger Menu Toggle */}
@@ -296,19 +494,47 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </button>
               </div>
 
-              {/* User Profile Info Card */}
-              <div className="p-4 bg-orange-50/60 border-b border-orange-100/60 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#f95724] to-[#ea4a17] text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
-                  {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'C'}
+              {/* User Profile Info Card (Opens Profile Page) */}
+              <div
+                onClick={() => handleMobileNav(() => (onOpenProfilePage ? onOpenProfilePage() : onOpenAccountModal?.()))}
+                className="p-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between cursor-pointer hover:bg-slate-100/80 transition group"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-11 h-11 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0 overflow-hidden">
+                    {currentUser.avatar ? (
+                      <img src={currentUser.avatar} alt={currentUser.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <span>{initials}</span>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-bold text-sm text-slate-900 truncate flex items-center gap-1">
+                      <span>{currentUser.name || 'Customer'}</span>
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    </div>
+                    <div className="text-xs text-slate-500 font-medium truncate">
+                      {currentUser.phone ? `+91 ${currentUser.phone}` : currentUser.email || 'Host Account'}
+                    </div>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <div className="font-bold text-sm text-slate-900 truncate">{currentUser.name || 'Customer'}</div>
-                  <div className="text-xs text-slate-500 font-medium truncate">{currentUser.phone}</div>
+                <div className="p-2 rounded-xl bg-white text-slate-700 border border-slate-200 shadow-2xs group-hover:bg-slate-50 transition shrink-0">
+                  <Settings className="w-4 h-4" />
                 </div>
               </div>
 
               {/* Navigation Items */}
               <nav className="p-3 space-y-1">
+                <button
+                  onClick={() => handleMobileNav(() => (onOpenProfilePage ? onOpenProfilePage() : onOpenAccountModal?.()))}
+                  className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-semibold transition cursor-pointer ${
+                    isProfilePage
+                      ? 'bg-slate-900 text-white font-bold'
+                      : 'text-slate-800 hover:bg-slate-50 hover:text-slate-900'
+                  }`}
+                >
+                  <UserIcon className="w-4 h-4 shrink-0 text-slate-500" />
+                  <span>My Profile & Settings</span>
+                </button>
                 <button
                   onClick={() => handleMobileNav(() => onGoHome?.())}
                   className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-semibold transition cursor-pointer ${
