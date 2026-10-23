@@ -17,6 +17,7 @@ export const createRequirement = async (req, res, next) => {
       budget,
       guestCount,
       imageUrl,
+      images,
       status = 'OPEN',
     } = req.body;
 
@@ -46,12 +47,18 @@ export const createRequirement = async (req, res, next) => {
 
     const targetStatus = status === 'DRAFT' ? 'DRAFT' : 'OPEN';
 
+    const imageList = Array.isArray(images)
+      ? images.filter(Boolean)
+      : (imageUrl ? [imageUrl] : []);
+    const primaryImage = imageUrl || (imageList.length > 0 ? imageList[0] : '');
+
     const requirement = await Requirement.create({
       requesterId: ownerId,
       category,
       title,
       description,
-      imageUrl: imageUrl || '',
+      imageUrl: primaryImage,
+      images: imageList,
       location: {
         city: location.city || 'Pune',
         area: location.area,
@@ -112,11 +119,18 @@ export const updateRequirement = async (req, res, next) => {
       budget,
       guestCount,
       imageUrl,
+      images,
     } = req.body;
 
     if (title) requirement.title = title;
     if (description !== undefined) requirement.description = description;
     if (category) requirement.category = category;
+    if (images !== undefined) {
+      requirement.images = Array.isArray(images) ? images.filter(Boolean) : [];
+      if (!imageUrl && requirement.images.length > 0) {
+        requirement.imageUrl = requirement.images[0];
+      }
+    }
     if (imageUrl !== undefined) requirement.imageUrl = imageUrl;
     if (location) {
       if (location.city) requirement.location.city = location.city;

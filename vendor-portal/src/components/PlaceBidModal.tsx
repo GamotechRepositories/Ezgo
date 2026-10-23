@@ -98,19 +98,21 @@ const PlaceBidForm: React.FC<PlaceBidFormProps> = ({
 
         <div className="grid grid-cols-3 gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-sm">
           <div>
-            <div className="text-xs text-slate-500">Host budget</div>
-            <div className="text-base font-semibold text-slate-800 mt-0.5">₹{requirement.budget.toLocaleString()}</div>
+            <div className="text-xs text-slate-500 font-medium">Host Budget</div>
+            <div className="text-base font-bold text-slate-800 mt-0.5">₹{requirement.budget.toLocaleString()}</div>
+            <div className="text-[11px] text-slate-400">Target posted</div>
+          </div>
+          <div className="bg-orange-50/60 p-2 -my-2 rounded-xl border border-orange-200/60">
+            <div className="text-xs text-orange-700 font-bold">Max Eligible Bid</div>
+            <div className="text-base font-extrabold text-orange-600 mt-0.5">₹{ceiling.toLocaleString()}</div>
+            <div className="text-[11px] text-orange-700">Min 15% discount</div>
           </div>
           <div>
-            <div className="text-xs text-[#f95724]">Bid up to</div>
-            <div className="text-base font-semibold text-[#f95724] mt-0.5">₹{ceiling.toLocaleString()}</div>
-            <div className="text-xs text-slate-500">15% below budget</div>
-          </div>
-          <div>
-            <div className="text-xs text-emerald-700">Lowest bid now</div>
-            <div className="text-base font-semibold text-emerald-700 mt-0.5">
+            <div className="text-xs text-emerald-700 font-bold">Current Best Bid</div>
+            <div className="text-base font-extrabold text-emerald-700 mt-0.5">
               {requirement.lowestBid ? `₹${requirement.lowestBid.toLocaleString()}` : 'No bids yet'}
             </div>
+            <div className="text-[11px] text-slate-500">{requirement.lowestBid ? 'Quote to beat' : 'Be 1st bidder!'}</div>
           </div>
         </div>
 

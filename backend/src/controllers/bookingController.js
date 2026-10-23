@@ -7,6 +7,13 @@ import Transaction from '../models/Transaction.js';
 import Review from '../models/Review.js';
 import razorpayInstance from '../config/razorpay.js';
 import { notifyUser } from '../services/notificationService.js';
+import {
+  broadcastBookingCreated,
+  broadcastBookingUpdated,
+  broadcastRequirementUpdated,
+  broadcastDisputeRaised,
+  broadcastDisputeResolved,
+} from '../services/socketService.js';
 
 const requesterOf = (booking) => (booking.requesterId?._id || booking.requesterId).toString();
 
@@ -107,6 +114,14 @@ export const acceptBid = async (req, res, next) => {
       metadata: { bookingId: booking._id, requirementId },
     });
 
+    // Real-time broadcast: notify vendor, host, and admin instantly
+    try {
+      broadcastBookingCreated(populated);
+      broadcastRequirementUpdated(requirement);
+    } catch (e) {
+      // Non-blocking socket broadcast
+    }
+
     res.status(201).json({
       success: true,
       message: 'Bid accepted! Please proceed to payment to confirm the booking.',
@@ -205,6 +220,16 @@ export const processPayment = async (req, res, next) => {
       metadata: { bookingId: booking._id },
     });
 
+    // Real-time broadcast payment and active escrow status
+    try {
+      broadcastBookingUpdated(booking);
+      if (booking.requirementId) {
+        broadcastRequirementUpdated(booking.requirementId);
+      }
+    } catch (e) {
+      // Non-blocking socket broadcast
+    }
+
     res.json({
       success: true,
       message: 'Payment confirmed! Funds are safely held in EzzyGo Escrow. Provider contact has been unlocked.',
@@ -300,6 +325,16 @@ export const completeBooking = async (req, res, next) => {
       type: 'PAYOUT_RELEASED',
       metadata: { bookingId: booking._id, payoutRef },
     });
+
+    // Real-time broadcast completion & payout release
+    try {
+      broadcastBookingUpdated(booking);
+      if (booking.requirementId) {
+        broadcastRequirementUpdated(booking.requirementId);
+      }
+    } catch (e) {
+      // Non-blocking socket broadcast
+    }
 
     res.json({
       success: true,
@@ -410,6 +445,16 @@ export const cancelBooking = async (req, res, next) => {
       });
     }
 
+    // Real-time broadcast cancellation and reopened requirement
+    try {
+      broadcastBookingUpdated(booking);
+      if (booking.requirementId) {
+        broadcastRequirementUpdated(booking.requirementId);
+      }
+    } catch (e) {
+      // Non-blocking socket broadcast
+    }
+
     res.json({
       success: true,
       message: wasPaid
@@ -475,6 +520,13 @@ export const raiseDispute = async (req, res, next) => {
       metadata: { bookingId: booking._id },
     });
 
+    // Real-time broadcast dispute event to admin and active parties
+    try {
+      broadcastDisputeRaised({ booking, disputeReason: booking.disputeReason, raisedBy: req.user._id });
+    } catch (e) {
+      // Non-blocking socket broadcast
+    }
+
     res.json({
       success: true,
       message: 'Dispute submitted. EzzyGo support team will review and mediate the payment.',
@@ -525,6 +577,13 @@ export const resolveDispute = async (req, res, next) => {
       metadata: { action, note: note || '' },
       status: 'INFO',
     });
+
+    try {
+      broadcastDisputeResolved({ booking, action: 'DISMISSED' });
+    } catch (e) {
+      // Non-blocking socket broadcast
+    }
+
     return res.json({ success: true, message: 'Dispute dismissed. Booking remains active.', data: booking });
     }
   } catch (error) {
@@ -532,12 +591,20 @@ export const resolveDispute = async (req, res, next) => {
   }
 };
 
-// Get bookings (filtered by user or role)
+// Get bookings (filtered by user, role, status, or city)
 export const getBookings = async (req, res, next) => {
   try {
-    const { userId, role, status } = req.query;
+    const { userId, role, status, city } = req.query;
     const filter = {};
     if (status) filter.status = status;
+
+    if (city && city !== 'ALL') {
+      const cityRegex = new RegExp(city.trim().split(' ')[0], 'i');
+      const matchingReqs = await Requirement.find({
+        'location.city': cityRegex,
+      }).select('_id');
+      filter.requirementId = { $in: matchingReqs.map((r) => r._id) };
+    }
 
     if (req.user.role === 'admin') {
       if (role === 'requester' && userId) filter.requesterId = userId;

@@ -67,6 +67,7 @@ export interface Requirement {
   title: string;
   description: string;
   imageUrl?: string;
+  images?: string[];
   eventType?: string;
   equipmentNeeded?: string[];
   location: {

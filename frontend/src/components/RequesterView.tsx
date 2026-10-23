@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { 
   Plus, 
   MapPin, 
@@ -7,6 +7,7 @@ import {
   ShieldCheck, 
   Palette,
   Tag,
+  Sparkles,
   PartyPopper,
   Phone, 
   Star, 
@@ -42,9 +43,11 @@ import {
   Trash2,
   FileText
 } from 'lucide-react';
-import type { Requirement, Booking, User, Category, Occasion, PostRequirementInitialData } from '../types';
+import type { Requirement, Booking, User, Category, Occasion, PostRequirementInitialData, Banner } from '../types';
 import { EVENT_CATEGORIES, FAQS, OCCASION_CARDS } from '../data/eventData';
 import { api } from '../services/api';
+import { CardImageGallery } from './CardImageGallery';
+import { PromoAdBanner } from './PromoAdBanner';
 
 const EVENT_TYPE_OPTIONS = [
   { 
@@ -150,7 +153,10 @@ interface RequesterViewProps {
   bookings: Booking[];
   categories: Category[];
   occasions?: Occasion[];
+  banners?: Banner[];
   currentUser: User;
+  selectedCity?: string;
+  onSelectCity?: (city: string) => void;
   onOpenPostModal: (initial?: string | PostRequirementInitialData) => void;
   onAcceptBid: (requirementId: string, bidId: string) => Promise<void>;
   onOpenBookings: () => void;
@@ -163,7 +169,10 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
   bookings,
   categories = [],
   occasions = [],
+  banners = [],
   currentUser: _currentUser,
+  selectedCity,
+  onSelectCity,
   onOpenPostModal,
   onAcceptBid,
   onOpenBookings,
@@ -172,6 +181,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('All');
+  const [selectedCityFilter, setSelectedCityFilter] = useState<string>('All Cities');
   const [requirementsTab, setRequirementsTab] = useState<'open' | 'drafts'>('open');
   const [expandedReqId, setExpandedReqId] = useState<string | null>(null);
   const [expandedFaqIndex, setExpandedFaqIndex] = useState<number | null>(0);
@@ -237,7 +247,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
 
   // Search Bar States in Hero
   const [heroService, setHeroService] = useState('Decoration');
-  const [heroLocation, setHeroLocation] = useState('Pune, Maharashtra');
+  const [heroLocation, setHeroLocation] = useState(selectedCity || 'Pune, Maharashtra');
   const [heroDate, setHeroDate] = useState('');
 
   // Interactive Event Package Builder State
@@ -282,13 +292,25 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
   const draftReqs = requirements.filter((r) => r.status === 'DRAFT');
   const activeBookings = bookings.filter((b) => b.status === 'ACTIVE' || b.status === 'AWAITING_PAYMENT');
 
+  const availableCities = useMemo(() => {
+    const fromReqs = openReqs.map((r) => r.location?.city).filter(Boolean);
+    const defaults = ['Pune', 'Mumbai', 'Hyderabad', 'Bengaluru', 'Delhi NCR'];
+    const merged = Array.from(new Set([...defaults, ...fromReqs]));
+    return ['All Cities', ...merged];
+  }, [openReqs]);
+
   // Filtered requirements
   const filteredOpenReqs = openReqs.filter((r) => {
     const matchesSearch = r.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           r.location.area.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           r.category.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategoryFilter === 'All' || r.category === selectedCategoryFilter;
-    return matchesSearch && matchesCategory;
+    const matchesCity =
+      selectedCityFilter === 'All Cities' ||
+      (r.location?.city &&
+        r.location.city.toLowerCase().includes(selectedCityFilter.toLowerCase().split(' ')[0]));
+    const matchesCitySearch = r.location?.city ? r.location.city.toLowerCase().includes(searchQuery.toLowerCase()) : false;
+    return (matchesSearch || matchesCitySearch) && matchesCategory && matchesCity;
   });
 
   const getCategoryIcon = (categoryName: string) => {
@@ -316,7 +338,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
       {/* ========================================================================= */}
       {/* 1. EXACT FULL-SCREEN HERO SECTION (Full Wide Screen 4K Canvas)            */}
       {/* ========================================================================= */}
-      <section className="relative w-full overflow-hidden bg-[#fdfbf7] pt-20 sm:pt-32 lg:pt-36 pb-12 sm:pb-20 lg:pb-28">
+      <section className="relative w-full overflow-hidden bg-[#fdfbf7] pt-20 sm:pt-32 lg:pt-36 pb-10 sm:pb-14 lg:pb-16">
         
         {/* Full-bleed Ultra 4K Luxury Floral Wedding Pavilion Background Image */}
         <div 
@@ -341,7 +363,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
               <span className="text-[#f95724] font-extrabold">You pick the best one.</span>
             </h1>
 
-            <p className="text-slate-700 text-base sm:text-lg leading-relaxed max-w-xl">
+            <p className="text-slate-700 text-base sm:text-lg leading-relaxed max-w-xl font-medium">
               You set the most you will pay. A vendor can win only by bidding at least 15% below that. You pay the bid plus a 10% fee, and EzzyGo holds the money until the event is done.
             </p>
 
@@ -456,9 +478,29 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
       </section>
 
       {/* ========================================================================= */}
+      {/* 1.5 PROMOTIONAL AD BANNER BILLBOARD (Admin Managed Sponsored Ad Zone)     */}
+      {/* ========================================================================= */}
+      <section className="relative w-full bg-gradient-to-b from-[#fffbf7] via-[#fdf5eb] to-[#fbf0e2] pt-1 sm:pt-2 pb-2 sm:pb-3 z-10">
+        <PromoAdBanner
+          banners={banners}
+          currentCity={selectedCity}
+          onActionClick={(ad) => {
+            if (ad.targetUrl && ad.targetUrl.startsWith('http')) {
+              window.open(ad.targetUrl, '_blank', 'noopener,noreferrer');
+            } else if (ad.targetUrl && ad.targetUrl.startsWith('#')) {
+              const el = document.querySelector(ad.targetUrl);
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            } else {
+              onOpenPostModal(ad.title);
+            }
+          }}
+        />
+      </section>
+
+      {/* ========================================================================= */}
       {/* 2. FOR EVERY OCCASION - FIND THE RIGHT PROFESSIONALS (Seamless Arc Flow)   */}
       {/* ========================================================================= */}
-      <section className="relative w-full overflow-hidden bg-gradient-to-b from-[#fffbf7] via-[#fdf5eb] to-[#fbf0e2] pt-6 sm:pt-10 pb-16 sm:pb-22">
+      <section className="relative w-full overflow-hidden bg-gradient-to-b from-[#fbf0e2] via-[#fdf5eb] to-[#fbf0e2] pt-2 sm:pt-4 pb-16 sm:pb-22">
         
         {/* Curvy Flowing 3D Golden Silk Ribbon Background Waves */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -634,38 +676,158 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
       <section id="services-grid" className="relative w-full overflow-hidden bg-gradient-to-b from-[#fbf0e2] to-[#fffbf7] py-10 sm:py-14">
         <div className="relative z-10 w-full max-w-[1600px] mx-auto px-5 sm:px-8 lg:px-14">
           
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+          {/* Section Header */}
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-6">
             <div>
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-xs font-black uppercase tracking-[0.2em] text-[#f95724]">
-                  SERVICE CATALOG
+              <div className="flex flex-wrap items-center gap-2.5 mb-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-100 text-[#f95724] text-[11px] font-black uppercase tracking-wider">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>SERVICES & PRICE GUIDE</span>
                 </span>
-                <div className="w-12 h-[2.5px] bg-[#f95724] rounded-full" />
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold">
+                  ✓ 100% Free Reverse Quotes
+                </span>
               </div>
-              <h2 className="font-editorial text-3xl sm:text-4xl font-black text-[#0f172a] tracking-tight">
-                Explore Event Services & <span className="text-[#f95724]">Benchmark Rates</span>
+              <h2 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-black text-[#0f172a] tracking-tight">
+                Explore Event Services & <span className="text-[#f95724]">Estimated Rates</span>
               </h2>
-              <p className="text-slate-600 text-xs sm:text-sm mt-1 max-w-xl">
-                Browse verified category catalogs. Select any category to post your requirement and watch verified vendors bid with lower prices.
+              <p className="text-slate-600 text-xs sm:text-sm lg:text-base mt-2 max-w-2xl leading-relaxed font-medium">
+                Know typical market costs for your event. Select any service to post your need in 30 seconds — verified local vendors will compete with <strong>lower reverse-bids</strong> to give you the best deal!
               </p>
             </div>
 
             <button
               onClick={() => onOpenPostModal()}
-              className="w-full sm:w-auto px-6 py-3.5 sm:py-3 rounded-full bg-[#f95724] hover:bg-[#e04818] text-white text-xs sm:text-sm font-bold shadow-md shadow-orange-500/20 flex items-center justify-center gap-2 self-stretch sm:self-auto cursor-pointer transition whitespace-nowrap min-h-[44px]"
+              className="w-full sm:w-auto px-7 py-3.5 rounded-full bg-gradient-to-r from-[#f95724] to-orange-500 hover:from-[#e04818] hover:to-[#f95724] text-white text-xs sm:text-sm font-black shadow-lg shadow-orange-500/30 flex items-center justify-center gap-2 self-stretch lg:self-auto cursor-pointer transition active:scale-95 whitespace-nowrap min-h-[46px]"
             >
-              <span>+ Post Custom Need</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <Plus className="w-4 h-4 stroke-[3]" />
+              <span>Post Custom Requirement</span>
+              <ArrowRight className="w-4 h-4" />
             </button>
           </div>
 
+          {/* 3-Step "How It Works" Guide Bar for New Users */}
+          <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-3.5 bg-gradient-to-r from-orange-50/90 via-amber-50/70 to-orange-50/90 p-3.5 sm:p-4 rounded-3xl border border-orange-200/80 shadow-xs">
+            
+            <div className="flex items-start gap-3 bg-white/90 backdrop-blur-xs p-3.5 rounded-2xl border border-orange-100/90 shadow-2xs">
+              <div className="w-8 h-8 rounded-xl bg-orange-500 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs">
+                1
+              </div>
+              <div>
+                <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">
+                  Choose Service & Rates
+                </h4>
+                <p className="text-[11px] sm:text-xs text-slate-600 mt-0.5 leading-relaxed">
+                  Browse typical market rates for Mandap, DJ, Photography, Food & more.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 bg-white/90 backdrop-blur-xs p-3.5 rounded-2xl border border-orange-100/90 shadow-2xs">
+              <div className="w-8 h-8 rounded-xl bg-orange-500 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs">
+                2
+              </div>
+              <div>
+                <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">
+                  Post Need in 30 Seconds
+                </h4>
+                <p className="text-[11px] sm:text-xs text-slate-600 mt-0.5 leading-relaxed">
+                  Enter event date, city, and expected budget. Completely free with zero advance!
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 bg-white/90 backdrop-blur-xs p-3.5 rounded-2xl border border-orange-100/90 shadow-2xs">
+              <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs">
+                3
+              </div>
+              <div>
+                <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug flex items-center gap-1.5">
+                  <span>Vendors Bid Lower</span>
+                  <span className="text-[10px] font-black text-emerald-700 bg-emerald-100 px-1.5 py-0.2 rounded-full">Save 15-25%</span>
+                </h4>
+                <p className="text-[11px] sm:text-xs text-slate-600 mt-0.5 leading-relaxed">
+                  Verified pros compete to give you lowest quotes. 100% Escrow protected.
+                </p>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Search & Category Filter Bar */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-6">
+            
+            {/* Quick Filter Search */}
+            <div className="relative flex-1 max-w-md">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search services (e.g. DJ, Mandap, Photography, Catering)..."
+                className="w-full pl-9 pr-8 py-2.5 bg-white rounded-full border border-slate-200/90 text-xs sm:text-sm focus:outline-none focus:border-[#f95724] shadow-xs placeholder:text-slate-400"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Quick Filter Pills */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+              {['All', 'Sound & DJ', 'Decor', 'Photography', 'Catering', 'Lighting'].map((pill) => (
+                <button
+                  key={pill}
+                  type="button"
+                  onClick={() => setSelectedCategoryFilter(pill)}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition cursor-pointer ${
+                    selectedCategoryFilter === pill
+                      ? 'bg-[#f95724] text-white shadow-sm'
+                      : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200/80'
+                  }`}
+                >
+                  {pill}
+                </button>
+              ))}
+            </div>
+
+          </div>
+
+          {/* Dynamic Services Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 sm:gap-6">
             {(categories && categories.length > 0 ? categories : [
-              { _id: 'cat-1', name: 'DJ & Sound Systems', slug: 'dj-sound', image: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&auto=format&fit=crop&q=80', description: 'Line arrays, active tops, Pioneer consoles', avgPriceRange: '₹8,000 - ₹45,000' },
-              { _id: 'cat-2', name: 'Stage & Mandap Decoration', slug: 'decor', image: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&auto=format&fit=crop&q=80', description: 'Flower arches, fairy light canopies, mandap setups', avgPriceRange: '₹5,000 - ₹1,20,000' },
-              { _id: 'cat-3', name: '4K Photography & Drone', slug: 'photography', image: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&auto=format&fit=crop&q=80', description: 'Cinematic 4K coverage, drone flybys, live stream', avgPriceRange: '₹2,000 - ₹65,000' },
-              { _id: 'cat-4', name: 'Catering Buffets', slug: 'catering', image: 'https://images.unsplash.com/photo-1555244162-803834f70033?w=600&auto=format&fit=crop&q=80', description: 'Live counters, traditional thalis, chaat stalls', avgPriceRange: '₹350 - ₹1,200 / plate' },
-            ]).map((cat) => {
+              { _id: 'cat-1', name: 'DJ & Sound Systems', slug: 'dj-sound', image: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&auto=format&fit=crop&q=80', description: 'Line arrays, active tops, dual subwoofers, Pioneer DDJ consoles, wireless mics', avgPriceRange: '₹8,000 - ₹45,000' },
+              { _id: 'cat-2', name: 'Stage & Mandap Decoration', slug: 'decor', image: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&auto=format&fit=crop&q=80', description: 'Flower arches, fairy light canopies, royal wedding mandap backdrops', avgPriceRange: '₹15,000 - ₹1,20,000' },
+              { _id: 'cat-3', name: '4K Photography & Drone', slug: 'photography', image: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&auto=format&fit=crop&q=80', description: 'Cinematic 4K coverage, drone flybys, live stream mix, gimbal video rigs', avgPriceRange: '₹12,000 - ₹65,000' },
+              { _id: 'cat-4', name: 'Catering Buffets', slug: 'catering', image: 'https://images.unsplash.com/photo-1555244162-803834f70033?w=600&auto=format&fit=crop&q=80', description: 'Multi-cuisine live counters, traditional thalis, premium chaat stalls', avgPriceRange: '₹350 - ₹1,200 / plate' },
+              { _id: 'cat-5', name: 'Lighting & Trussing', slug: 'lighting', image: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=600&auto=format&fit=crop&q=80', description: 'Sharpy moving heads, LED par cans, aluminum box truss grids, fog machines', avgPriceRange: '₹10,000 - ₹50,000' },
+              { _id: 'cat-6', name: 'Purohit & Priest Services', slug: 'purohit', image: 'https://images.unsplash.com/photo-1609137144822-26f6eb8b973c?w=600&auto=format&fit=crop&q=80', description: 'Vedic rituals, Griha Pravesh, Satyanarayana Puja & traditional Weddings', avgPriceRange: '₹3,500 - ₹15,000' },
+              { _id: 'cat-7', name: 'Bridal Mehendi & Makeup', slug: 'mehendi-makeup', image: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=600&auto=format&fit=crop&q=80', description: 'Organic bridal Rajasthani Mehendi artists & HD airbrush makeup', avgPriceRange: '₹5,000 - ₹25,000' },
+              { _id: 'cat-8', name: 'Tent & Stage Setup', slug: 'tent-stage', image: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&auto=format&fit=crop&q=80', description: 'German shamiana tents, VIP lounge chairs, stage risers & masking', avgPriceRange: '₹15,000 - ₹60,000' },
+            ])
+            .filter((cat) => {
+              if (searchQuery.trim()) {
+                const q = searchQuery.toLowerCase();
+                const matchName = cat.name.toLowerCase().includes(q);
+                const matchDesc = (cat.description || '').toLowerCase().includes(q);
+                if (!matchName && !matchDesc) return false;
+              }
+              if (selectedCategoryFilter !== 'All') {
+                const n = cat.name.toLowerCase();
+                if (selectedCategoryFilter === 'Sound & DJ' && !n.includes('dj') && !n.includes('sound')) return false;
+                if (selectedCategoryFilter === 'Decor' && !n.includes('decor') && !n.includes('mandap')) return false;
+                if (selectedCategoryFilter === 'Photography' && !n.includes('photo') && !n.includes('drone') && !n.includes('camera')) return false;
+                if (selectedCategoryFilter === 'Catering' && !n.includes('cater') && !n.includes('food')) return false;
+                if (selectedCategoryFilter === 'Lighting' && !n.includes('light') && !n.includes('tent')) return false;
+              }
+              return true;
+            })
+            .map((cat) => {
               const bannerImg = cat.image && cat.image.trim().length > 0
                 ? cat.image
                 : getCategoryImage(cat.name);
@@ -674,10 +836,10 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                 <div
                   key={cat._id || cat.slug || cat.name}
                   onClick={() => onOpenPostModal(cat.name)}
-                  className="group rounded-3xl bg-white border border-slate-200/90 overflow-hidden flex flex-col justify-between shadow-sm hover:shadow-xl hover:shadow-orange-500/10 hover:border-orange-300 transition-all duration-300 cursor-pointer"
+                  className="group rounded-3xl bg-white border border-slate-200/90 overflow-hidden flex flex-col justify-between shadow-xs hover:shadow-xl hover:shadow-orange-500/15 hover:border-orange-400 transition-all duration-300 cursor-pointer"
                 >
-                  {/* Category Image Banner */}
-                  <div className="relative h-44 w-full overflow-hidden bg-slate-100">
+                  {/* Category Image Banner with Market Pricing Overlay */}
+                  <div className="relative h-48 w-full overflow-hidden bg-slate-100">
                     <img
                       src={bannerImg}
                       alt={cat.name}
@@ -686,22 +848,35 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                         (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&auto=format&fit=crop&q=80';
                       }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent" />
                     
-                    <div className="absolute top-3 left-3">
-                      <span className="px-2.5 py-0.5 rounded-full bg-white/95 backdrop-blur-md text-[10px] font-bold text-[#f95724] shadow-sm flex items-center gap-1.5">
+                    {/* Top Badges */}
+                    <div className="absolute top-3 inset-x-3 flex items-center justify-between">
+                      <span className="px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-md text-[10px] font-black text-[#f95724] shadow-md flex items-center gap-1.5">
                         {getCategoryIcon(cat.name)}
                         <span>{cat.name}</span>
                       </span>
+
+                      <span className="px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-[10px] font-bold text-amber-300 border border-white/20">
+                        ⚡ Reverse Bids
+                      </span>
                     </div>
 
-                    <div className="absolute bottom-3 inset-x-3 flex items-center justify-between text-white">
-                      <span className="text-xs font-bold uppercase tracking-wider text-amber-200">
-                        Benchmark Rate
-                      </span>
-                      <span className="text-xs font-black bg-black/40 backdrop-blur-md px-2 py-0.5 rounded-lg border border-white/20">
-                        {cat.avgPriceRange || '₹0,000 - ₹50,000'}
-                      </span>
+                    {/* Bottom Pricing Tag: Clearly states "Estimated Market Rate" and "Save with Bids" */}
+                    <div className="absolute bottom-3 inset-x-3 text-white space-y-1">
+                      <div className="flex items-center justify-between text-[11px] font-medium text-slate-300">
+                        <span>Est. Market Rate</span>
+                        <span className="text-emerald-400 font-bold">Save 15-25%</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-black text-white bg-black/50 backdrop-blur-md px-2.5 py-0.5 rounded-lg border border-white/20">
+                          {cat.avgPriceRange || '₹8,000 - ₹50,000'}
+                        </span>
+                        <span className="text-[10px] font-bold text-amber-300 flex items-center gap-0.5">
+                          <span>Vendors Bid Lower</span>
+                          <ArrowRight className="w-3 h-3" />
+                        </span>
+                      </div>
                     </div>
                   </div>
 
@@ -716,14 +891,32 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                       </p>
                     </div>
 
-                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                      <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                        Min. 15% Savings Rule
-                      </span>
-                      <span className="inline-flex items-center gap-1 text-[#f95724] font-bold group-hover:translate-x-0.5 transition-transform">
-                        <span>Get Bids</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </span>
+                    {/* Trust Highlights */}
+                    <div className="pt-2.5 border-t border-slate-100 space-y-2">
+                      <div className="flex items-center justify-between text-[11px] text-slate-600 font-medium">
+                        <span className="flex items-center gap-1 text-emerald-700">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Verified Local Pros</span>
+                        </span>
+                        <span className="text-slate-400">•</span>
+                        <span className="flex items-center gap-1 text-slate-700">
+                          <ShieldCheck className="w-3.5 h-3.5 text-orange-500" />
+                          <span>Escrow Safe</span>
+                        </span>
+                      </div>
+
+                      {/* Prominent High-Impact Action Button */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onOpenPostModal(cat.name);
+                        }}
+                        className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#f95724] to-orange-500 hover:from-[#e04818] hover:to-[#f95724] text-white text-xs font-bold shadow-md shadow-orange-500/20 flex items-center justify-center gap-2 group-hover:shadow-lg group-hover:shadow-orange-500/30 transition-all cursor-pointer"
+                      >
+                        <span>Get Free Bids for {cat.name}</span>
+                        <ArrowRight className="w-3.5 h-3.5 stroke-[2.5] group-hover:translate-x-1 transition-transform" />
+                      </button>
                     </div>
                   </div>
 
@@ -1365,6 +1558,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
 
           {/* Search and Category Filter Bar matching screenshot */}
           {openReqs.length > 0 && (
+            <>
             <div className="flex flex-col md:flex-row items-center justify-between gap-3 bg-white/95 backdrop-blur-md p-3 sm:p-3.5 rounded-2xl border border-slate-200/90 shadow-sm">
               <div className="relative w-full md:w-80">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -1398,6 +1592,39 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
 
               </div>
             </div>
+            {/* City Filter Pills Bar */}
+            <div className="flex items-center justify-between gap-3 bg-white/80 backdrop-blur-md px-3.5 py-2.5 rounded-2xl border border-slate-200/80 shadow-2xs">
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none text-xs w-full">
+                <span className="text-slate-500 font-bold flex items-center gap-1 shrink-0 mr-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-[#f95724]" />
+                  <span>City:</span>
+                </span>
+                {availableCities.map((cityName) => {
+                  const isCityActive = selectedCityFilter === cityName;
+                  return (
+                    <button
+                      key={cityName}
+                      type="button"
+                      onClick={() => {
+                        setSelectedCityFilter(cityName);
+                        if (cityName !== 'All Cities' && onSelectCity) {
+                          onSelectCity(cityName);
+                        }
+                      }}
+                      className={`px-3 py-1 rounded-full text-xs font-bold transition whitespace-nowrap cursor-pointer flex items-center gap-1 active:scale-95 ${
+                        isCityActive
+                          ? 'bg-[#f95724] text-white shadow-xs'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80'
+                      }`}
+                    >
+                      {cityName !== 'All Cities' && <MapPin className="w-3 h-3 opacity-70" />}
+                      <span>{cityName}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            </>
           )}
 
           {requirementsTab === 'drafts' ? (
@@ -1525,6 +1752,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                   const isExpanded = expandedReqId === req._id;
                   const eligibleBids = (req.bids || []).filter((b) => b.isEligibleForAccept);
                   const reqImage = req.imageUrl || getCategoryImage(req.category);
+                  const reqImages = req.images && req.images.length > 0 ? req.images : [reqImage];
 
                   // Calculate discount percentage if lowest bid exists
                   const discountPct = req.lowestBid 
@@ -1541,9 +1769,12 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                         <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-5">
                           
                           {/* Left Column: Landscape Image with Live Bidding Badge */}
-                          <div className="w-full sm:w-72 lg:w-60 aspect-[16/10] sm:aspect-auto sm:h-40 rounded-2xl overflow-hidden relative shrink-0 bg-slate-100 shadow-xs border border-slate-100">
-                            {/* Floating Green Live Bidding Badge */}
-                            <div className="absolute top-2.5 left-2.5 z-10">
+                          <CardImageGallery
+                            images={reqImages}
+                            fallbackImage={reqImage}
+                            alt={req.title}
+                            className="w-full sm:w-72 lg:w-64 h-48 sm:h-44 rounded-2xl shrink-0 shadow-xs border border-slate-200/80"
+                            badge={
                               <span className={`px-2.5 py-1 rounded-full text-xs font-semibold shadow-xs ${
                                 req.status === 'EXPIRED'
                                   ? 'bg-slate-900/90 text-white'
@@ -1551,17 +1782,8 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                               }`}>
                                 {req.status === 'EXPIRED' ? 'Auction Closed' : 'Open for bids'}
                               </span>
-                            </div>
-
-                            <img
-                              src={reqImage}
-                              alt={req.title}
-                              className="w-full h-full object-cover object-center"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&auto=format&fit=crop&q=80';
-                              }}
-                            />
-                          </div>
+                            }
+                          />
 
                           {/* Middle Column: Category Tags, Title, Description, Location */}
                           <div className="flex-1 space-y-2 min-w-0">

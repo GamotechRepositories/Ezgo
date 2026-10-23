@@ -233,6 +233,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
       : []
   );
   const [customImageUrl, setCustomImageUrl] = useState<string>('');
+  const [customImages, setCustomImages] = useState<string[]>([]);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -240,13 +241,17 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
       try {
         setIsUploadingImage(true);
         setUploadError('');
-        const cloudUrl = await api.uploadImage(file, 'ezzygo/requirements');
-        setCustomImageUrl(cloudUrl);
+        const uploadPromises = files.map((file) => api.uploadImage(file, 'ezzygo/requirements'));
+        const urls = await Promise.all(uploadPromises);
+        setCustomImages((prev) => [...prev, ...urls].slice(0, 8));
+        if (urls.length > 0) {
+          setCustomImageUrl((prev) => prev || urls[0]);
+        }
       } catch (err: any) {
         setUploadError(err.message || 'Failed to upload photo to Cloudinary');
       } finally {
@@ -471,7 +476,8 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
         category: selectedCategories.join(' + '),
         title,
         description,
-        imageUrl: customImageUrl || activeCategoryData.image,
+        imageUrl: customImages[0] || customImageUrl || activeCategoryData.image,
+        images: customImages.length > 0 ? customImages : (customImageUrl ? [customImageUrl] : []),
         equipmentNeeded: selectedEquipments,
         location: { city, area, venueAddress },
         eventDate,
@@ -1064,11 +1070,12 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                   <span className="text-[10px] text-slate-400 font-normal">Cloudinary CDN</span>
                 </label>
 
-                <div className="border-2 border-dashed border-slate-200 hover:border-orange-400 rounded-2xl p-5 bg-slate-50/60 transition text-center min-h-[160px] flex flex-col items-center justify-center">
+                <div className="border-2 border-dashed border-slate-200 hover:border-orange-400 rounded-2xl p-4 sm:p-5 bg-slate-50/60 transition text-center min-h-[160px] flex flex-col items-center justify-center">
                   <input
                     type="file"
                     id="req-custom-image-upload"
                     accept="image/*"
+                    multiple
                     disabled={isUploadingImage}
                     onChange={handleImageUpload}
                     className="hidden"
@@ -1080,7 +1087,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                     {isUploadingImage ? (
                       <div className="flex flex-col items-center gap-2 py-3">
                         <Loader2 className="w-7 h-7 text-orange-500 animate-spin" />
-                        <span className="font-bold text-xs text-orange-600">Uploading photo to Cloudinary CDN...</span>
+                        <span className="font-bold text-xs text-orange-600">Uploading photo(s) to Cloudinary CDN...</span>
                       </div>
                     ) : (
                       <>
@@ -1088,9 +1095,9 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                           <Upload className="w-5 h-5" />
                         </div>
                         <span className="font-bold text-xs sm:text-sm text-slate-800">
-                          {customImageUrl ? 'Change Uploaded Photo' : 'Choose Photo from Phone / PC'}
+                          {customImages.length > 0 ? '+ Add More Reference Photos' : 'Choose Photo(s) from Phone / PC'}
                         </span>
-                        <span className="text-[11px] text-slate-400">JPG, PNG, WebP up to 10MB</span>
+                        <span className="text-[11px] text-slate-400">Upload multiple photos (JPG, PNG, WebP up to 8 photos)</span>
                       </>
                     )}
                   </label>
@@ -1099,20 +1106,45 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                     <p className="text-xs text-red-500 font-medium mt-2">{uploadError}</p>
                   )}
 
-                  {customImageUrl && (
-                    <div className="mt-3 relative rounded-xl overflow-hidden h-36 w-full border border-slate-200 bg-slate-900 group">
-                      <img src={customImageUrl} alt="Uploaded venue reference" className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                        <span className="text-white text-xs font-bold bg-emerald-600 px-3 py-1 rounded-lg">
-                          ✓ Uploaded
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setCustomImageUrl('')}
-                          className="bg-red-600 text-white text-xs px-2.5 py-1 rounded-lg hover:bg-red-700 cursor-pointer"
-                        >
-                          Remove
-                        </button>
+                  {/* Multi-Photo Thumbnail Grid with Perfect Fit */}
+                  {customImages.length > 0 && (
+                    <div className="mt-4 w-full text-left space-y-2">
+                      <div className="flex items-center justify-between text-xs font-semibold text-slate-600">
+                        <span>Attached Photos ({customImages.length})</span>
+                        <span className="text-[11px] text-slate-400">First photo is card cover</span>
+                      </div>
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
+                        {customImages.map((imgUrl, idx) => (
+                          <div
+                            key={idx}
+                            className="relative aspect-square rounded-xl overflow-hidden border-2 border-slate-200 bg-slate-900 group shadow-xs"
+                          >
+                            <img
+                              src={imgUrl}
+                              alt={`Photo ${idx + 1}`}
+                              className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform"
+                            />
+                            {idx === 0 && (
+                              <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#f95724] text-white shadow-xs">
+                                Cover
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setCustomImages((prev) => prev.filter((_, i) => i !== idx));
+                                if (idx === 0) {
+                                  setCustomImageUrl(customImages[1] || '');
+                                }
+                              }}
+                              title="Delete photo"
+                              className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center text-[10px] font-bold shadow-xs cursor-pointer opacity-80 hover:opacity-100 transition"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}

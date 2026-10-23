@@ -18,7 +18,7 @@ import { LocationSelectionPage } from './components/LocationSelectionPage';
 import { api, getToken, clearToken, getUser, setUser, clearUser } from './services/api';
 import { getSocket } from './services/socket';
 import { getVendorPortalUrl } from './utils/portalUrls';
-import type { User, Requirement, Booking, Category, Occasion } from './types';
+import type { User, Requirement, Booking, Category, Occasion, Banner } from './types';
 
 type Page = 'home' | 'bookings' | 'profile';
 type AppStep = 'role' | 'login' | 'location' | 'app';
@@ -152,6 +152,7 @@ function HostApp({
   // Data State
   const [categories, setCategories] = useState<Category[]>([]);
   const [occasions, setOccasions] = useState<Occasion[]>([]);
+  const [banners, setBanners] = useState<Banner[]>([]);
   const [requirements, setRequirements] = useState<Requirement[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
 
@@ -192,9 +193,10 @@ function HostApp({
   // Initial Load
   const loadData = useCallback(async () => {
     setLoadError('');
-    const [catsRes, occsRes, activityRes] = await Promise.allSettled([
+    const [catsRes, occsRes, bannersRes, activityRes] = await Promise.allSettled([
       api.getCategories(),
       api.getOccasions(),
+      api.getBanners({ city: selectedCity }),
       loadMyActivity(currentUser._id),
     ]);
 
@@ -203,10 +205,11 @@ function HostApp({
     else errors.push(catsRes.reason?.message);
     if (occsRes.status === 'fulfilled') setOccasions(occsRes.value);
     else errors.push(occsRes.reason?.message);
+    if (bannersRes.status === 'fulfilled') setBanners(bannersRes.value);
     if (activityRes.status === 'rejected') errors.push(activityRes.reason?.message);
 
     if (errors.length) setLoadError(errors[0] || 'Something went wrong while loading.');
-  }, [currentUser._id, loadMyActivity]);
+  }, [currentUser._id, selectedCity, loadMyActivity]);
 
   const refreshMine = async () => {
     if (!currentUser._id) return;
@@ -282,14 +285,50 @@ function HostApp({
       );
     };
 
+    const handleBookingCreated = (newBooking: any) => {
+      const ownerId = String(typeof newBooking.requesterId === 'object' ? newBooking.requesterId?._id : newBooking.requesterId);
+      if (ownerId === String(currentUser._id)) {
+        setBookings((prev) => {
+          if (prev.some((b) => String(b._id) === String(newBooking._id))) return prev;
+          return [newBooking, ...prev];
+        });
+        addToast('success', 'Booking Confirmed!', 'Awaiting payment to lock in your vendor.');
+        loadMyActivity(currentUser._id);
+      }
+    };
+
+    const handleBookingUpdated = (updatedBooking: any) => {
+      const ownerId = String(typeof updatedBooking.requesterId === 'object' ? updatedBooking.requesterId?._id : updatedBooking.requesterId);
+      if (ownerId === String(currentUser._id)) {
+        setBookings((prev) =>
+          prev.map((b) => (String(b._id) === String(updatedBooking._id) ? { ...b, ...updatedBooking } : b))
+        );
+        loadMyActivity(currentUser._id);
+      }
+    };
+
+    const handleNewNotification = (notification: any) => {
+      if (notification?.title) {
+        addToast('info', notification.title, notification.message);
+      }
+    };
+
     socket.on('bid:placed', handleBidPlaced);
     socket.on('requirement:created', handleRequirementCreated);
     socket.on('requirement:updated', handleRequirementUpdated);
+    socket.on('booking:created', handleBookingCreated);
+    socket.on('booking:updated', handleBookingUpdated);
+    socket.on('booking:update', handleBookingUpdated);
+    socket.on('notification:new', handleNewNotification);
 
     return () => {
       socket.off('bid:placed', handleBidPlaced);
       socket.off('requirement:created', handleRequirementCreated);
       socket.off('requirement:updated', handleRequirementUpdated);
+      socket.off('booking:created', handleBookingCreated);
+      socket.off('booking:updated', handleBookingUpdated);
+      socket.off('booking:update', handleBookingUpdated);
+      socket.off('notification:new', handleNewNotification);
     };
   }, [currentUser._id, loadMyActivity]);
 
@@ -554,6 +593,7 @@ function HostApp({
           <MyBookingsPage
             bookings={bookings}
             categories={categories}
+            selectedCity={selectedCity}
             onBack={() => goTo('home')}
             onOpenPostModal={handleOpenPostModal}
             onOpenPaymentModal={(b) => setSelectedBookingForPay(b)}
@@ -568,7 +608,10 @@ function HostApp({
             bookings={bookings}
             categories={categories}
             occasions={occasions}
+            banners={banners}
             currentUser={currentUser}
+            selectedCity={selectedCity}
+            onSelectCity={setSelectedCity}
             onOpenPostModal={handleOpenPostModal}
             onAcceptBid={handleAcceptBid}
             onOpenBookings={handleOpenBookings}

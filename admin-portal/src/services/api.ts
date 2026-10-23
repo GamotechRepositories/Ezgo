@@ -1,4 +1,4 @@
-import type { AdminMetrics, Booking, Category, Occasion, User, AuditLog } from '../types';
+import type { AdminMetrics, Booking, Category, Occasion, User, AuditLog, Banner } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const TOKEN_KEY = 'ezzygo_token_admin';
@@ -32,6 +32,7 @@ export const emptyMetrics: AdminMetrics = {
   totalGMV: 0,
   totalCommissionEarned: 0,
   totalEscrowHeld: 0,
+  cityBreakdown: [],
   recentTransactions: [],
 };
 
@@ -106,12 +107,22 @@ export const api = {
 
   getMetrics: () => request<AdminMetrics>('/admin/metrics', {}, 'Could not load metrics'),
 
-  getProviders: () => request<User[]>('/admin/providers', {}, 'Could not load vendors'),
+  getProviders: (params?: { city?: string }) => {
+    const query = new URLSearchParams();
+    if (params?.city && params.city !== 'ALL') query.set('city', params.city);
+    const qs = query.toString() ? `?${query.toString()}` : '';
+    return request<User[]>(`/admin/providers${qs}`, {}, 'Could not load vendors');
+  },
 
   verifyProvider: (providerId: string, isVerified: boolean, notes?: string, rejectionReason?: string) =>
     request<User>(`/admin/providers/${providerId}/verify`, json('PATCH', { isVerified, notes, rejectionReason }), 'Could not change vendor status'),
 
-  getBookings: () => request<Booking[]>('/bookings', {}, 'Could not load bookings'),
+  getBookings: (params?: { city?: string }) => {
+    const query = new URLSearchParams();
+    if (params?.city && params.city !== 'ALL') query.set('city', params.city);
+    const qs = query.toString() ? `?${query.toString()}` : '';
+    return request<Booking[]>(`/bookings${qs}`, {}, 'Could not load bookings');
+  },
 
   completeBooking: (bookingId: string) =>
     request<Booking>('/bookings/complete', json('POST', { bookingId }), 'Could not pay the vendor'),
@@ -157,6 +168,23 @@ export const api = {
     request<Occasion>(`/occasions/${id}`, json('PUT', occasionData), 'Could not update occasion'),
 
   deleteOccasion: (id: string) => request<unknown>(`/occasions/${id}`, { method: 'DELETE' }, 'Could not remove occasion'),
+  
+  getBanners: (params?: { city?: string; all?: boolean; placement?: string }) => {
+    const query = new URLSearchParams();
+    if (params?.city && params.city !== 'ALL') query.set('city', params.city);
+    if (params?.all !== undefined) query.set('all', String(params.all));
+    if (params?.placement && params.placement !== 'all') query.set('placement', params.placement);
+    const qs = query.toString() ? `?${query.toString()}` : '';
+    return request<Banner[]>(`/banners${qs}`, {}, 'Could not load ad banners');
+  },
+
+  addBanner: (bannerData: Partial<Banner>) =>
+    request<Banner>('/banners', json('POST', bannerData), 'Could not add ad banner'),
+
+  updateBanner: (id: string, bannerData: Partial<Banner>) =>
+    request<Banner>(`/banners/${id}`, json('PUT', bannerData), 'Could not update ad banner'),
+
+  deleteBanner: (id: string) => request<unknown>(`/banners/${id}`, { method: 'DELETE' }, 'Could not remove ad banner'),
 
   getAuditLogs: (params?: { action?: string; targetType?: string }) => {
     const query = new URLSearchParams();
@@ -181,10 +209,11 @@ export const api = {
   deleteRequirement: (id: string) =>
     request<{ success: boolean; message: string }>(`/requirements/${id}`, { method: 'DELETE' }, 'Could not delete requirement'),
 
-  getAllUsers: (params?: { search?: string; role?: string }) => {
+  getAllUsers: (params?: { search?: string; role?: string; city?: string }) => {
     const query = new URLSearchParams();
     if (params?.search) query.set('search', params.search);
     if (params?.role && params.role !== 'ALL') query.set('role', params.role);
+    if (params?.city && params.city !== 'ALL') query.set('city', params.city);
     const qs = query.toString() ? `?${query.toString()}` : '';
     return request<User[]>(`/admin/users${qs}`, {}, 'Could not load users');
   },

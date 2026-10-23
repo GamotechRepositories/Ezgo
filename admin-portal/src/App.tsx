@@ -8,13 +8,15 @@ import { UserManager } from './components/UserManager';
 import { EscrowDisputeManager } from './components/EscrowDisputeManager';
 import { CategoryManager } from './components/CategoryManager';
 import { OccasionManager } from './components/OccasionManager';
+import { BannerManager } from './components/BannerManager';
 import { AuditLogViewer } from './components/AuditLogViewer';
 import { AdminAccountModal } from './components/AdminAccountModal';
 import { ToastContainer } from './components/Toast';
 import type { ToastMessage } from './components/Toast';
 import { LoginPage } from './components/LoginPage';
 import { api, getToken, clearToken, emptyMetrics } from './services/api';
-import type { AdminMetrics, Booking, Category, Occasion, User, AuditLog } from './types';
+import { getSocket } from './services/socket';
+import type { AdminMetrics, Booking, Category, Occasion, User, AuditLog, Banner } from './types';
 
 const VALID_TABS: AdminTab[] = [
   'metrics',
@@ -24,6 +26,7 @@ const VALID_TABS: AdminTab[] = [
   'users',
   'categories',
   'occasions',
+  'banners',
   'logs',
 ];
 
@@ -83,6 +86,7 @@ function AdminApp({
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [occasions, setOccasions] = useState<Occasion[]>([]);
+  const [banners, setBanners] = useState<Banner[]>([]);
   const [requirements, setRequirements] = useState<any[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
@@ -124,16 +128,18 @@ function AdminApp({
       api.getBookings(),
       api.getCategories(),
       api.getOccasions(),
+      api.getBanners({ all: true }),
       api.getAuditLogs(),
       api.getRequirements(),
       api.getAllUsers(),
     ]);
-    const [m, p, b, c, o, l, reqs, users] = results;
+    const [m, p, b, c, o, bn, l, reqs, users] = results;
     if (m.status === 'fulfilled') setMetrics(m.value);
     if (p.status === 'fulfilled') setProviders(p.value);
     if (b.status === 'fulfilled') setBookings(b.value);
     if (c.status === 'fulfilled') setCategories(c.value);
     if (o.status === 'fulfilled') setOccasions(o.value);
+    if (bn.status === 'fulfilled') setBanners(bn.value);
     if (l && l.status === 'fulfilled') setAuditLogs(l.value);
     if (reqs && reqs.status === 'fulfilled') setRequirements(reqs.value);
     if (users && users.status === 'fulfilled') setAllUsers(users.value);
@@ -176,6 +182,119 @@ function AdminApp({
       window.removeEventListener('focus', onWindowFocus);
     };
   }, []);
+
+  // Real-time WebSocket connection for live Admin alerts & instant desk updates
+  useEffect(() => {
+    if (!currentAdmin?._id) return;
+    const socket = getSocket();
+
+    socket.emit('join:admin');
+    socket.emit('join:user', currentAdmin._id);
+
+    const handleReqCreated = (newReq: any) => {
+      setRequirements((prev) => {
+        if (prev.some((r) => String(r._id) === String(newReq._id))) return prev;
+        return [newReq, ...prev];
+      });
+      addToast('info', 'New Request Posted', `${newReq.title} (${newReq.location?.city || 'India'})`);
+      api.getMetrics().then(setMetrics).catch(() => {});
+    };
+
+    const handleReqUpdated = (updatedReq: any) => {
+      setRequirements((prev) =>
+        prev.map((r) => (String(r._id) === String(updatedReq._id) ? { ...r, ...updatedReq } : r))
+      );
+    };
+
+    const handleBidPlaced = (data: { requirementId: string; bid: any; lowestBid: number; bidsCount: number }) => {
+      setRequirements((prev) =>
+        prev.map((req) => {
+          if (String(req._id) === String(data.requirementId)) {
+            const existingBids = req.bids || [];
+            const filteredBids = existingBids.filter((b: any) => String(b._id) !== String(data.bid?._id));
+            return {
+              ...req,
+              lowestBid: data.lowestBid,
+              bidsCount: data.bidsCount,
+              bids: data.bid ? [data.bid, ...filteredBids] : existingBids,
+            };
+          }
+          return req;
+        })
+      );
+      api.getMetrics().then(setMetrics).catch(() => {});
+    };
+
+    const handleBookingCreated = (newBooking: Booking) => {
+      setBookings((prev) => {
+        if (prev.some((b) => String(b._id) === String(newBooking._id))) return prev;
+        return [newBooking, ...prev];
+      });
+      addToast('success', 'New Booking Created', `₹${newBooking.totalPaid?.toLocaleString()} — ${newBooking.requirementId?.title || 'Event'}`);
+      api.getMetrics().then(setMetrics).catch(() => {});
+    };
+
+    const handleBookingUpdated = (updatedBooking: Booking) => {
+      setBookings((prev) =>
+        prev.map((b) => (String(b._id) === String(updatedBooking._id) ? { ...b, ...updatedBooking } : b))
+      );
+      api.getMetrics().then(setMetrics).catch(() => {});
+    };
+
+    const handleDisputeRaised = (data: { booking: Booking; disputeReason: string }) => {
+      if (data.booking) {
+        setBookings((prev) =>
+          prev.map((b) => (String(b._id) === String(data.booking._id) ? { ...b, ...data.booking } : b))
+        );
+      }
+      addToast('warning', '⚠️ Dispute Raised!', `Booking #${String(data.booking?._id || '').slice(-6)}: ${data.disputeReason || 'Action required'}`);
+      api.getMetrics().then(setMetrics).catch(() => {});
+    };
+
+    const handleDisputeResolved = (data: { booking: Booking; action: string }) => {
+      if (data.booking) {
+        setBookings((prev) =>
+          prev.map((b) => (String(b._id) === String(data.booking._id) ? { ...b, ...data.booking } : b))
+        );
+      }
+      addToast('info', 'Dispute Resolved', `Action: ${data.action}`);
+      api.getMetrics().then(setMetrics).catch(() => {});
+    };
+
+    const handleKycUpdated = (data: { providerId: string; isVerified: boolean; provider?: User }) => {
+      if (data.provider) {
+        setProviders((prev) =>
+          prev.map((p) => (String(p._id) === String(data.providerId) ? { ...p, ...data.provider! } : p))
+        );
+        setAllUsers((prev) =>
+          prev.map((u) => (String(u._id) === String(data.providerId) ? { ...u, ...data.provider! } : u))
+        );
+      } else {
+        api.getProviders().then(setProviders).catch(() => {});
+      }
+      api.getMetrics().then(setMetrics).catch(() => {});
+    };
+
+    socket.on('requirement:created', handleReqCreated);
+    socket.on('requirement:updated', handleReqUpdated);
+    socket.on('bid:placed', handleBidPlaced);
+    socket.on('booking:created', handleBookingCreated);
+    socket.on('booking:updated', handleBookingUpdated);
+    socket.on('dispute:raised', handleDisputeRaised);
+    socket.on('dispute:resolved', handleDisputeResolved);
+    socket.on('kyc:updated', handleKycUpdated);
+
+    return () => {
+      socket.off('requirement:created', handleReqCreated);
+      socket.off('requirement:updated', handleReqUpdated);
+      socket.off('bid:placed', handleBidPlaced);
+      socket.off('booking:created', handleBookingCreated);
+      socket.off('booking:updated', handleBookingUpdated);
+      socket.off('dispute:raised', handleDisputeRaised);
+      socket.off('dispute:resolved', handleDisputeResolved);
+      socket.off('kyc:updated', handleKycUpdated);
+    };
+  }, [currentAdmin?._id]);
 
   const closeModals = useCallback(() => {
     setIsSidebarOpen(false);
@@ -351,6 +470,36 @@ function AdminApp({
     }
   };
 
+  const handleAddBanner = async (data: Partial<Banner>) => {
+    try {
+      const created = await api.addBanner(data);
+      setBanners((prev) => [created, ...prev]);
+      addToast('success', 'Ad Banner Published', 'Your promotional ad is now live on the user portal.');
+    } catch (err: any) {
+      addToast('error', 'Failed to publish ad', err.message);
+    }
+  };
+
+  const handleUpdateBanner = async (id: string, data: Partial<Banner>) => {
+    try {
+      const updated = await api.updateBanner(id, data);
+      setBanners((prev) => prev.map((b) => (b._id === id ? updated : b)));
+      addToast('success', 'Ad Banner Updated', 'Changes applied to promotional ad.');
+    } catch (err: any) {
+      addToast('error', 'Failed to update ad', err.message);
+    }
+  };
+
+  const handleDeleteBanner = async (id: string) => {
+    try {
+      await api.deleteBanner(id);
+      setBanners((prev) => prev.filter((b) => b._id !== id));
+      addToast('info', 'Ad Banner Removed', 'Advertisement banner deleted.');
+    } catch (err: any) {
+      addToast('error', 'Failed to delete ad', err.message);
+    }
+  };
+
   const handleDeleteRequirement = async (id: string) => {
     try {
       await api.deleteRequirement(id);
@@ -488,6 +637,16 @@ function AdminApp({
               onAddOccasion={handleAddOccasion}
               onUpdateOccasion={handleUpdateOccasion}
               onDeleteOccasion={handleDeleteOccasion}
+            />
+          )}
+
+          {activeTab === 'banners' && (
+            <BannerManager
+              banners={banners}
+              onAddBanner={handleAddBanner}
+              onUpdateBanner={handleUpdateBanner}
+              onDeleteBanner={handleDeleteBanner}
+              onRefresh={loadData}
             />
           )}
 

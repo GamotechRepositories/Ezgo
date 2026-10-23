@@ -171,16 +171,81 @@ function VendorApp({ currentVendor, onUpdateVendor, onLogout }: { currentVendor:
       );
     };
 
+    const handleBookingCreated = (newBooking: any) => {
+      const provId = String(typeof newBooking.providerId === 'object' ? newBooking.providerId?._id : newBooking.providerId);
+      if (provId === String(currentVendor._id)) {
+        setBookings((prev) => [newBooking, ...prev.filter((b) => String(b._id) !== String(newBooking._id))]);
+        addToast('success', 'Bid Accepted! 🎉', `Host accepted your bid for "${newBooking.requirementId?.title || 'an event'}"!`);
+      }
+    };
+
+    const handleBookingUpdated = (updatedBooking: any) => {
+      const provId = String(typeof updatedBooking.providerId === 'object' ? updatedBooking.providerId?._id : updatedBooking.providerId);
+      if (provId === String(currentVendor._id)) {
+        setBookings((prev) =>
+          prev.map((b) => (String(b._id) === String(updatedBooking._id) ? { ...b, ...updatedBooking } : b))
+        );
+        if (updatedBooking.status === 'ACTIVE') {
+          addToast('success', 'Escrow Payment Confirmed 🛡️', 'Host completed payment into EzzyGo Escrow. Contact details unlocked!');
+        } else if (updatedBooking.status === 'COMPLETED') {
+          addToast('success', 'Payout Released! 💰', 'Job marked completed and payout dispatched to your bank!');
+        }
+      }
+    };
+
+    const handleKycStatus = (data: { providerId: string; isVerified: boolean; notes?: string; rejectionReason?: string }) => {
+      if (String(data.providerId) === String(currentVendor._id)) {
+        if (data.isVerified) {
+          onUpdateVendor?.({
+            ...currentVendor,
+            isVerified: true,
+            kycDocuments: {
+              ...(currentVendor.kycDocuments || {}),
+              status: 'APPROVED',
+            } as any,
+          });
+          addToast('success', 'KYC Verified! 🎉', 'Your vendor profile has been approved by admin. You can now place bids!');
+        } else {
+          onUpdateVendor?.({
+            ...currentVendor,
+            isVerified: false,
+            kycDocuments: {
+              ...(currentVendor.kycDocuments || {}),
+              status: 'REJECTED',
+              rejectionReason: data.rejectionReason || '',
+            } as any,
+          });
+          addToast('error', 'KYC Verification Update ⚠️', data.rejectionReason || 'Please review your uploaded documents.');
+        }
+      }
+    };
+
+    const handleNewNotification = (notification: any) => {
+      if (notification?.title) {
+        addToast('info', notification.title, notification.message);
+      }
+    };
+
     socket.on('bid:placed', handleBidPlaced);
     socket.on('requirement:created', handleRequirementCreated);
     socket.on('requirement:updated', handleRequirementUpdated);
+    socket.on('booking:created', handleBookingCreated);
+    socket.on('booking:updated', handleBookingUpdated);
+    socket.on('booking:update', handleBookingUpdated);
+    socket.on('kyc:status', handleKycStatus);
+    socket.on('notification:new', handleNewNotification);
 
     return () => {
       socket.off('bid:placed', handleBidPlaced);
       socket.off('requirement:created', handleRequirementCreated);
       socket.off('requirement:updated', handleRequirementUpdated);
+      socket.off('booking:created', handleBookingCreated);
+      socket.off('booking:updated', handleBookingUpdated);
+      socket.off('booking:update', handleBookingUpdated);
+      socket.off('kyc:status', handleKycStatus);
+      socket.off('notification:new', handleNewNotification);
     };
-  }, [currentVendor?._id]);
+  }, [currentVendor?._id, onUpdateVendor]);
 
   const closeAllModals = useCallback(() => {
     setSelectedReqForBid(null);

@@ -6,6 +6,7 @@ import Requirement from '../models/Requirement.js';
 import User from '../models/User.js';
 import Transaction from '../models/Transaction.js';
 import { notifyUser } from '../services/notificationService.js';
+import { broadcastKycUpdated } from '../services/socketService.js';
 
 export const getAdminMetrics = async (req, res, next) => {
   try {
@@ -36,6 +37,45 @@ export const getAdminMetrics = async (req, res, next) => {
     const totalEscrowHeld = activeBookingsList.reduce((acc, b) => acc + (b.totalPaid || 0), 0);
     const totalPayoutsReleased = completedList.reduce((acc, b) => acc + (b.bidAmount || 0), 0);
 
+    // City-Wise breakdown analytics
+    const CITIES_LIST = ['Pune', 'Mumbai', 'Hyderabad', 'Bengaluru', 'Delhi NCR', 'Nagpur', 'Goa', 'Jaipur', 'Chennai', 'Kolkata', 'Ahmedabad'];
+    const allRequirements = await Requirement.find({}).lean();
+    const reqCityMap = new Map(allRequirements.map((r) => [r._id.toString(), r.location?.city || 'Pune']));
+
+    const cityBreakdown = CITIES_LIST.map((cityName) => {
+      const keyword = cityName.split(' ')[0];
+      const regex = new RegExp(keyword, 'i');
+      const cityReqs = allRequirements.filter((r) => regex.test(r.location?.city || ''));
+      const cityProviders = providers.filter(
+        (p) => regex.test(p.serviceArea || '') || regex.test(p.kycDocuments?.businessAddress || '')
+      );
+      const cityBookings = allBookings.filter((b) => {
+        const c = reqCityMap.get(b.requirementId?.toString() || '');
+        return c && regex.test(c);
+      });
+      const cityActiveBookings = cityBookings.filter((b) => b.status === 'ACTIVE');
+      const cityCompletedBookings = cityBookings.filter(
+        (b) => b.status === 'COMPLETED' || b.status === 'PAYOUT_RELEASED'
+      );
+      const cityGMV = cityBookings
+        .filter((b) => ['ACTIVE', 'COMPLETED', 'PAYOUT_RELEASED', 'DISPUTED'].includes(b.status))
+        .reduce((sum, b) => sum + (b.totalPaid || 0), 0);
+      const cityCommission = cityCompletedBookings.reduce((sum, b) => sum + (b.platformFee || 0), 0);
+
+      return {
+        city: cityName,
+        totalRequirements: cityReqs.length,
+        openRequirements: cityReqs.filter((r) => r.status === 'OPEN').length,
+        totalBookings: cityBookings.length,
+        activeBookings: cityActiveBookings.length,
+        completedBookings: cityCompletedBookings.length,
+        totalProviders: cityProviders.length,
+        verifiedProviders: cityProviders.filter((p) => p.isVerified).length,
+        totalGMV: cityGMV,
+        totalCommissionEarned: cityCommission,
+      };
+    });
+
     const recentTransactions = await Transaction.find({})
       .sort({ createdAt: -1 })
       .limit(10)
@@ -55,6 +95,7 @@ export const getAdminMetrics = async (req, res, next) => {
         totalCommissionEarned,
         totalEscrowHeld,
         totalPayoutsReleased,
+        cityBreakdown,
         recentTransactions,
       },
     });
@@ -65,6 +106,7 @@ export const getAdminMetrics = async (req, res, next) => {
 
 export const getProviders = async (req, res, next) => {
   try {
+    const { city } = req.query;
     const providerQuery = {
       $or: [
         { role: 'provider' },
@@ -72,6 +114,17 @@ export const getProviders = async (req, res, next) => {
         { businessName: { $exists: true, $ne: '' } },
       ],
     };
+    if (city && city !== 'ALL') {
+      const cityRegex = new RegExp(city.trim().split(' ')[0], 'i');
+      providerQuery.$and = [
+        {
+          $or: [
+            { serviceArea: cityRegex },
+            { 'kycDocuments.businessAddress': cityRegex },
+          ],
+        },
+      ];
+    }
     const providers = await User.find(providerQuery).sort({
       'kycDocuments.reviewRequestedAt': -1,
       createdAt: -1,
@@ -167,6 +220,19 @@ export const verifyProvider = async (req, res, next) => {
       type: 'KYC_UPDATE',
     });
 
+    // Real-time broadcast KYC update to vendor and admin room
+    try {
+      broadcastKycUpdated({
+        providerId: provider._id,
+        isVerified,
+        notes: auditNote,
+        rejectionReason: rejectionReason || '',
+        provider,
+      });
+    } catch (e) {
+      // Non-blocking socket broadcast
+    }
+
     res.json({
       success: true,
       message: isVerified ? 'Provider verified and approved' : (rejectionReason ? 'Provider verification rejected with reason' : 'Provider verification revoked'),
@@ -242,22 +308,36 @@ export const getProviderKyc = async (req, res, next) => {
 // @route   GET /api/admin/users
 export const getAllUsers = async (req, res, next) => {
   try {
-    const { search, role } = req.query;
+    const { search, role, city } = req.query;
     const filter = {};
     if (role && role !== 'ALL') {
       filter.$or = [{ role }, { roles: role }];
     }
+    if (city && city !== 'ALL') {
+      const cityRegex = new RegExp(city.trim().split(' ')[0], 'i');
+      filter.$and = filter.$and || [];
+      filter.$and.push({
+        $or: [
+          { serviceArea: cityRegex },
+          { 'kycDocuments.businessAddress': cityRegex },
+        ],
+      });
+    }
     if (search) {
       const regex = new RegExp(search, 'i');
-      filter.$or = [
-        { name: regex },
-        { email: regex },
-        { phone: regex },
-        { businessName: regex },
-      ];
+      filter.$and = filter.$and || [];
+      filter.$and.push({
+        $or: [
+          { name: regex },
+          { email: regex },
+          { phone: regex },
+          { businessName: regex },
+          { serviceArea: regex },
+        ],
+      });
     }
     const users = await User.find(filter)
-      .select('name email phone role roles isVerified businessName createdAt avatar rating completedJobs')
+      .select('name email phone role roles isVerified businessName serviceArea kycDocuments createdAt avatar rating completedJobs')
       .sort({ createdAt: -1 });
 
     res.json({

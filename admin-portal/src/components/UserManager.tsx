@@ -9,6 +9,7 @@ import {
   Phone,
   Mail,
   AlertCircle,
+  MapPin,
 } from 'lucide-react';
 import type { User } from '../types';
 
@@ -27,6 +28,7 @@ export const UserManager: React.FC<UserManagerProps> = ({
 }) => {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
+  const [cityFilter, setCityFilter] = useState('ALL');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [confirmRoleChange, setConfirmRoleChange] = useState<{
     userId: string;
@@ -40,11 +42,25 @@ export const UserManager: React.FC<UserManagerProps> = ({
   const totalVendors = users.filter((u) => u.role === 'provider' || (u as any).roles?.includes('provider')).length;
   const totalHosts = users.filter((u) => u.role === 'requester' || (u as any).roles?.includes('requester')).length;
 
+  // Extract cities
+  const userCities = Array.from(
+    new Set(
+      users
+        .map((u) => u.serviceArea || (u.kycDocuments as any)?.businessAddress)
+        .filter((c): c is string => Boolean(c && typeof c === 'string'))
+    )
+  );
+
   // Filter logic
   const filtered = users.filter((u) => {
     if (roleFilter !== 'ALL') {
       const matchRole = u.role === roleFilter || (u as any).roles?.includes(roleFilter);
       if (!matchRole) return false;
+    }
+    if (cityFilter !== 'ALL') {
+      const userLoc = (u.serviceArea || (u.kycDocuments as any)?.businessAddress || '').toLowerCase();
+      const filterKey = cityFilter.toLowerCase().split(' ')[0];
+      if (!userLoc.includes(filterKey)) return false;
     }
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -131,21 +147,36 @@ export const UserManager: React.FC<UserManagerProps> = ({
           />
         </div>
 
-        <div className="flex items-center gap-2 w-full md:w-auto">
-          <span className="text-xs text-slate-500 font-medium">Role:</span>
-          {(['ALL', 'admin', 'provider', 'requester'] as const).map((r) => (
-            <button
-              key={r}
-              onClick={() => setRoleFilter(r)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
-                roleFilter === r
-                  ? 'bg-slate-900 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              {r === 'ALL' ? 'All' : r === 'admin' ? 'Admins' : r === 'provider' ? 'Vendors' : 'Hosts'}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-500 font-medium">Role:</span>
+            {(['ALL', 'admin', 'provider', 'requester'] as const).map((r) => (
+              <button
+                key={r}
+                onClick={() => setRoleFilter(r)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
+                  roleFilter === r
+                    ? 'bg-slate-900 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {r === 'ALL' ? 'All' : r === 'admin' ? 'Admins' : r === 'provider' ? 'Vendors' : 'Hosts'}
+              </button>
+            ))}
+          </div>
+
+          <select
+            value={cityFilter}
+            onChange={(e) => setCityFilter(e.target.value)}
+            className="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#f95724]"
+          >
+            <option value="ALL">All Cities ({users.length})</option>
+            {userCities.map((city) => (
+              <option key={city} value={city}>
+                {city}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -157,6 +188,7 @@ export const UserManager: React.FC<UserManagerProps> = ({
               <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 <th className="py-3.5 px-4 sm:px-6">User / Account</th>
                 <th className="py-3.5 px-4">Contact</th>
+                <th className="py-3.5 px-4">City / Region</th>
                 <th className="py-3.5 px-4">Current Role</th>
                 <th className="py-3.5 px-4">Status & Trust</th>
                 <th className="py-3.5 px-4 text-right">Actions</th>
@@ -221,6 +253,16 @@ export const UserManager: React.FC<UserManagerProps> = ({
                         ) : (
                           <span className="text-slate-400 italic">No phone</span>
                         )}
+                      </div>
+                    </td>
+
+                    {/* City / Region */}
+                    <td className="py-4 px-4">
+                      <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200">
+                        <MapPin className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                        <span className="truncate max-w-[140px]">
+                          {user.serviceArea || (user.kycDocuments as any)?.businessAddress || 'All Regions'}
+                        </span>
                       </div>
                     </td>
 

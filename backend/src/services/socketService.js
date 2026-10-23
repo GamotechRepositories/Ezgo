@@ -24,6 +24,12 @@ export const initSocket = (httpServer) => {
       }
     });
 
+    // Join admin room for administrative push notifications & live monitoring
+    socket.on('join:admin', () => {
+      socket.join('admin:room');
+      console.log(`🛡️ Socket ${socket.id} joined room admin:room`);
+    });
+
     // Join specific requirement room for live bids
     socket.on('join:requirement', (requirementId) => {
       if (requirementId) {
@@ -53,6 +59,7 @@ export const broadcastBidPlaced = (payload) => {
   if (!io) return;
   // Global event for live bidding counters, latest lowest bids, and active cards
   io.emit('bid:placed', payload);
+  io.to('admin:room').emit('bid:placed', payload);
   if (payload.requirementId) {
     io.to(`req:${payload.requirementId}`).emit(`bid:placed:${payload.requirementId}`, payload);
   }
@@ -61,37 +68,78 @@ export const broadcastBidPlaced = (payload) => {
 export const broadcastRequirementCreated = (requirement) => {
   if (!io) return;
   io.emit('requirement:created', requirement);
+  io.to('admin:room').emit('requirement:created', requirement);
 };
 
 export const broadcastRequirementUpdated = (requirement) => {
   if (!io) return;
   io.emit('requirement:updated', requirement);
-  if (requirement._id) {
-    io.to(`req:${requirement._id}`).emit(`requirement:updated:${requirement._id}`, requirement);
+  io.to('admin:room').emit('requirement:updated', requirement);
+  const reqId = requirement._id ? String(requirement._id) : String(requirement);
+  if (reqId) {
+    io.to(`req:${reqId}`).emit(`requirement:updated:${reqId}`, requirement);
   }
 };
 
 export const broadcastBookingCreated = (booking) => {
   if (!io) return;
   io.emit('booking:created', booking);
-  if (booking.requesterId) {
-    io.to(`user:${booking.requesterId}`).emit('booking:update', booking);
+  io.to('admin:room').emit('booking:created', booking);
+
+  const reqId = booking.requesterId?._id ? String(booking.requesterId._id) : (booking.requesterId ? String(booking.requesterId) : null);
+  const provId = booking.providerId?._id ? String(booking.providerId._id) : (booking.providerId ? String(booking.providerId) : null);
+
+  if (reqId) {
+    io.to(`user:${reqId}`).emit('booking:update', booking);
+    io.to(`user:${reqId}`).emit('booking:created', booking);
   }
-  if (booking.providerId) {
-    const provId = typeof booking.providerId === 'object' ? booking.providerId._id : booking.providerId;
+  if (provId) {
     io.to(`user:${provId}`).emit('booking:update', booking);
+    io.to(`user:${provId}`).emit('booking:created', booking);
   }
 };
 
 export const broadcastBookingUpdated = (booking) => {
   if (!io) return;
   io.emit('booking:updated', booking);
-  if (booking.requesterId) {
-    const reqId = typeof booking.requesterId === 'object' ? booking.requesterId._id : booking.requesterId;
+  io.to('admin:room').emit('booking:updated', booking);
+
+  const reqId = booking.requesterId?._id ? String(booking.requesterId._id) : (booking.requesterId ? String(booking.requesterId) : null);
+  const provId = booking.providerId?._id ? String(booking.providerId._id) : (booking.providerId ? String(booking.providerId) : null);
+
+  if (reqId) {
     io.to(`user:${reqId}`).emit('booking:update', booking);
+    io.to(`user:${reqId}`).emit('booking:updated', booking);
   }
-  if (booking.providerId) {
-    const provId = typeof booking.providerId === 'object' ? booking.providerId._id : booking.providerId;
+  if (provId) {
     io.to(`user:${provId}`).emit('booking:update', booking);
+    io.to(`user:${provId}`).emit('booking:updated', booking);
   }
+};
+
+export const broadcastDisputeRaised = ({ booking, disputeReason, raisedBy }) => {
+  if (!io) return;
+  const payload = { booking, disputeReason, raisedBy, timestamp: new Date() };
+  io.to('admin:room').emit('dispute:raised', payload);
+  broadcastBookingUpdated(booking);
+};
+
+export const broadcastDisputeResolved = ({ booking, action }) => {
+  if (!io) return;
+  const payload = { booking, action, timestamp: new Date() };
+  io.to('admin:room').emit('dispute:resolved', payload);
+  broadcastBookingUpdated(booking);
+};
+
+export const broadcastKycUpdated = (payload) => {
+  if (!io) return;
+  io.to('admin:room').emit('kyc:updated', payload);
+  if (payload.providerId) {
+    io.to(`user:${String(payload.providerId)}`).emit('kyc:status', payload);
+  }
+};
+
+export const broadcastNotification = (userId, notification) => {
+  if (!io || !userId) return;
+  io.to(`user:${String(userId)}`).emit('notification:new', notification);
 };

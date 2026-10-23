@@ -12,6 +12,7 @@ import {
   Users,
 } from 'lucide-react';
 import type { Requirement, Bid } from '../types';
+import { CardImageGallery } from './CardImageGallery';
 
 interface RequirementManagerProps {
   requirements: (Requirement & { bids?: Bid[] })[];
@@ -27,17 +28,30 @@ export const RequirementManager: React.FC<RequirementManagerProps> = ({
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
+  const [cityFilter, setCityFilter] = useState('ALL');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Extract unique categories
+  // Extract unique categories and cities
   const categories = Array.from(new Set(requirements.map((r) => r.category).filter(Boolean)));
+  const cities = Array.from(
+    new Set(
+      requirements
+        .map((r) => r.location?.city)
+        .filter((c): c is string => Boolean(c && typeof c === 'string'))
+    )
+  );
 
   // Filter logic
   const filtered = requirements.filter((req) => {
     if (statusFilter !== 'ALL' && req.status !== statusFilter) return false;
     if (categoryFilter !== 'ALL' && req.category !== categoryFilter) return false;
+    if (cityFilter !== 'ALL') {
+      const reqCity = req.location?.city?.toLowerCase() || '';
+      const filterKey = cityFilter.toLowerCase().split(' ')[0];
+      if (!reqCity.includes(filterKey)) return false;
+    }
     if (search.trim()) {
       const q = search.toLowerCase();
       const titleMatch = req.title?.toLowerCase().includes(q);
@@ -151,6 +165,24 @@ export const RequirementManager: React.FC<RequirementManagerProps> = ({
               </option>
             ))}
           </select>
+
+          <select
+            value={cityFilter}
+            onChange={(e) => setCityFilter(e.target.value)}
+            className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#f95724]"
+          >
+            <option value="ALL">All Cities ({requirements.length})</option>
+            {cities.map((city) => {
+              const count = requirements.filter(
+                (r) => r.location?.city?.toLowerCase().includes(city.toLowerCase().split(' ')[0])
+              ).length;
+              return (
+                <option key={city} value={city}>
+                  {city} ({count})
+                </option>
+              );
+            })}
+          </select>
         </div>
       </div>
 
@@ -176,9 +208,22 @@ export const RequirementManager: React.FC<RequirementManagerProps> = ({
                 className="rounded-2xl bg-white border border-slate-200 shadow-xs overflow-hidden transition hover:border-slate-300"
               >
                 {/* Main Card Summary */}
-                <div className="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div className="p-5 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-5">
+                  {/* Left: Card Thumbnail with Multi-Image Support */}
+                  <div className="w-full sm:w-48 lg:w-44 h-36 rounded-xl overflow-hidden shrink-0 border border-slate-200">
+                    <CardImageGallery
+                      images={req.images && req.images.length > 0 ? req.images : [req.imageUrl || 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&auto=format&fit=crop&q=80']}
+                      fallbackImage="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&auto=format&fit=crop&q=80"
+                      alt={req.title}
+                      className="w-full h-full"
+                    />
+                  </div>
                   <div className="space-y-2 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/80 flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />
+                        {req.location?.city || 'Pune'}
+                      </span>
                       <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-50 text-[#ea580c] border border-orange-200/80">
                         {req.category}
                       </span>

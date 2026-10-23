@@ -24,6 +24,10 @@ const requirementSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    images: {
+      type: [String],
+      default: [],
+    },
     location: {
       city: { type: String, required: true, default: 'Hyderabad' },
       area: { type: String, required: true },

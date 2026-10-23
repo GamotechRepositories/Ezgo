@@ -33,6 +33,7 @@ const tabTitles: Record<AdminTab, { title: string; subtitle: string }> = {
   users: { title: 'User Management', subtitle: 'Full directory of hosts, vendors, and administrators' },
   categories: { title: 'Service Categories', subtitle: 'Service catalog shown in host & vendor portals' },
   occasions: { title: 'Event Occasions', subtitle: 'Event types shown in the host portal and mobile app' },
+  banners: { title: 'Promotions & Ad Banners', subtitle: 'Manage advertisement banners, offers, and city targeting on the user portal' },
   logs: { title: 'Audit & Financial Ledger', subtitle: 'System event history, administrative audits, and transactions' },
 };
 

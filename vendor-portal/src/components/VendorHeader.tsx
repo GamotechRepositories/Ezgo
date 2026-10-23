@@ -11,6 +11,7 @@ import {
   ChevronDown,
   Clock,
   AlertCircle,
+  MapPin,
 } from 'lucide-react';
 import type { User } from '../types';
 import { getUserPortalUrl, getAdminPortalUrl } from '../utils/portalUrls';
@@ -88,6 +89,15 @@ export const VendorHeader: React.FC<VendorHeaderProps> = ({
 
         {/* Right Section: My Account Dropdown & Verification */}
         <div className="flex items-center gap-3 shrink-0">
+          {/* Operating City Badge */}
+          <div
+            title={`Primary Service Area / City: ${vendor.serviceArea || 'Pune'}`}
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200/90 shadow-2xs"
+          >
+            <MapPin className="w-3.5 h-3.5 text-[#f95724]" />
+            <span className="font-bold text-slate-800">{vendor.serviceArea || 'Pune, MH'}</span>
+          </div>
+
           {/* Interactive Verification Badge */}
           <button
             onClick={() => onOpenVerificationModal?.()}

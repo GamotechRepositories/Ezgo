@@ -70,12 +70,31 @@ export interface Occasion {
   isActive?: boolean;
 }
 
+export interface Banner {
+  _id: string;
+  title: string;
+  subtitle?: string;
+  badge?: string;
+  imageUrl: string;
+  targetUrl?: string;
+  ctaText?: string;
+  city?: string;
+  placement: 'hero_banner' | 'featured_banner' | 'all';
+  discountPercent?: number;
+  order?: number;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface Requirement {
   _id: string;
   requesterId: User | string;
   category: string;
   title: string;
   description: string;
+  imageUrl?: string;
+  images?: string[];
   location: {
     city: string;
     area: string;
@@ -128,6 +147,19 @@ export interface Booking {
   createdAt: string;
 }
 
+export interface CityMetric {
+  city: string;
+  totalRequirements: number;
+  openRequirements: number;
+  totalBookings: number;
+  activeBookings: number;
+  completedBookings: number;
+  totalProviders: number;
+  verifiedProviders: number;
+  totalGMV: number;
+  totalCommissionEarned: number;
+}
+
 export interface AdminMetrics {
   totalRequirements: number;
   totalBookings: number;
@@ -138,6 +170,8 @@ export interface AdminMetrics {
   totalGMV: number;
   totalCommissionEarned: number;
   totalEscrowHeld: number;
+  totalPayoutsReleased?: number;
+  cityBreakdown?: CityMetric[];
   recentTransactions: any[];
 }
 

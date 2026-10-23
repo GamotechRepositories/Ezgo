@@ -14,6 +14,7 @@ import {
   BadgePercent,
   Banknote,
   ArrowRight,
+  MapPin,
 } from 'lucide-react';
 import type { AdminMetrics, User, Booking, Requirement } from '../types';
 import type { AdminTab } from './AdminSidebar';
@@ -326,6 +327,81 @@ export const PlatformMetricsView: React.FC<PlatformMetricsViewProps> = ({
               <CheckCircle2 className="w-3.5 h-3.5" />
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* 4b. City-Wise Operations & Geographic Analytics */}
+      <div className="rounded-3xl bg-white border border-slate-200/90 p-6 sm:p-8 shadow-xs space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="w-8 h-8 rounded-xl bg-orange-100 text-[#ea580c] flex items-center justify-center">
+                <MapPin className="w-4 h-4" />
+              </span>
+              <h2 className="text-lg sm:text-xl font-bold text-slate-900">City-Wise Platform Operations & Analytics</h2>
+            </div>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1">
+              Live geographic performance across operating cities — host requests, active escrows, vendor network, and volume.
+            </p>
+          </div>
+          <span className="self-start sm:self-auto px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>{(metrics.cityBreakdown || []).length || 5} Major Cities Tracked</span>
+          </span>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50/70">
+                <th className="py-3.5 px-4 rounded-l-xl">Operating City</th>
+                <th className="py-3.5 px-4">Live Requests</th>
+                <th className="py-3.5 px-4">Bookings in Escrow</th>
+                <th className="py-3.5 px-4">Total GMV Volume</th>
+                <th className="py-3.5 px-4">Platform Fee (10%)</th>
+                <th className="py-3.5 px-4">Vendor Supply</th>
+                <th className="py-3.5 px-4 rounded-r-xl text-right">Quick Drilldown</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {(metrics.cityBreakdown || []).map((c) => (
+                <tr key={c.city} className="hover:bg-slate-50/80 transition-colors">
+                  <td className="py-4 px-4 font-bold text-slate-900 flex items-center gap-2">
+                    <span className="w-7 h-7 rounded-lg bg-orange-50 text-[#ea580c] flex items-center justify-center">
+                      <MapPin className="w-3.5 h-3.5" />
+                    </span>
+                    <span>{c.city}</span>
+                  </td>
+                  <td className="py-4 px-4">
+                    <div className="font-semibold text-slate-900">{c.totalRequirements} total</div>
+                    <div className="text-xs text-orange-600 font-medium">{c.openRequirements} open for bids</div>
+                  </td>
+                  <td className="py-4 px-4">
+                    <div className="font-semibold text-slate-900">{c.totalBookings} booked</div>
+                    <div className="text-xs text-blue-600 font-medium">{c.activeBookings} active escrow</div>
+                  </td>
+                  <td className="py-4 px-4 font-bold text-slate-900">
+                    ₹{c.totalGMV.toLocaleString()}
+                  </td>
+                  <td className="py-4 px-4 font-bold text-emerald-700">
+                    ₹{c.totalCommissionEarned.toLocaleString()}
+                  </td>
+                  <td className="py-4 px-4">
+                    <div className="font-semibold text-slate-900">{c.totalProviders} vendors</div>
+                    <div className="text-xs text-emerald-600 font-medium">{c.verifiedProviders} KYC verified</div>
+                  </td>
+                  <td className="py-4 px-4 text-right">
+                    <button
+                      onClick={() => navigate('requirements')}
+                      className="px-3 py-1.5 rounded-lg bg-white hover:bg-orange-50 text-slate-700 hover:text-[#ea580c] border border-slate-200 hover:border-orange-200 text-xs font-semibold transition cursor-pointer active:scale-95 shadow-2xs"
+                    >
+                      View City
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 

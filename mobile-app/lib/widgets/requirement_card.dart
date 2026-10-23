@@ -94,6 +94,30 @@ class RequirementCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                  if (requirement.images.length > 1)
+                    Positioned(
+                      top: 12,
+                      right: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.65),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white24),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(LucideIcons.camera, color: AppTheme.primary, size: 11),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${requirement.images.length} Photos',
+                              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   Positioned(
                     bottom: 10,
                     right: 12,

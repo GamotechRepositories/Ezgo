@@ -17,6 +17,7 @@ class RequirementModel {
   final String? venueAddress;
   final String status;
   final String? imageUrl;
+  final List<String> images;
   final List<String> equipmentNeeded;
   final List<BidModel> bids;
 
@@ -37,6 +38,7 @@ class RequirementModel {
     this.venueAddress,
     required this.status,
     this.imageUrl,
+    this.images = const [],
     this.equipmentNeeded = const [],
     this.bids = const [],
   });
@@ -77,6 +79,10 @@ class RequirementModel {
       venueAddress: loc['venueAddress'],
       status: json['status'] ?? 'OPEN',
       imageUrl: json['imageUrl'],
+      images: (json['images'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          (json['imageUrl'] != null ? [json['imageUrl'].toString()] : []),
       equipmentNeeded: (json['equipmentNeeded'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??

@@ -1,4 +1,4 @@
-import type { User, Requirement, Bid, Booking, Category, Occasion } from '../types';
+import type { User, Requirement, Bid, Booking, Category, Occasion, Banner } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const TOKEN_KEY = 'ezzygo_token_host';
@@ -193,6 +193,10 @@ export const api = {
 
   getOccasions(): Promise<Occasion[]> {
     return unwrap(request('/occasions', {}, 'Could not load occasions'));
+  },
+
+  getBanners(params?: { city?: string; placement?: string }): Promise<Banner[]> {
+    return unwrap(request(`/banners${toQuery(params)}`, {}, 'Could not load ad banners'));
   },
 
   getRequirements(params?: { category?: string; status?: string; requesterId?: string; includeDrafts?: string }): Promise<Requirement[]> {

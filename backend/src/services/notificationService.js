@@ -1,6 +1,7 @@
 import Notification from '../models/Notification.js';
 import User from '../models/User.js';
 import { sendEmail } from './emailService.js';
+import { broadcastNotification } from './socketService.js';
 
 /**
  * Dispatch an in-app notification and email to a user
@@ -26,6 +27,13 @@ export const notifyUser = async ({
       link,
       metadata,
     });
+
+    // Broadcast in real-time to user's active WebSocket room
+    try {
+      broadcastNotification(userId, notification);
+    } catch (e) {
+      // Non-blocking socket broadcast
+    }
 
     // Send email if user has email address
     if (sendMail) {

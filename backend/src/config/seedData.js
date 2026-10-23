@@ -197,6 +197,94 @@ export const seedDatabase = async (forceReset = false) => {
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
     });
 
+    const vendorMumbai = await User.create({
+      name: 'Mayank Shah',
+      businessName: 'Royal Mumbai Sound & Truss',
+      phone: '+91 98111 22334',
+      email: 'mayank@royalsoundmumbai.in',
+      role: 'provider',
+      categories: ['DJ & Sound Systems', 'Lighting & Trussing'],
+      serviceArea: 'Mumbai, MH',
+      rating: 4.9,
+      reviewCount: 38,
+      completedJobs: 45,
+      isVerified: true,
+      bankDetails: {
+        accountHolder: 'Royal Sound Works LLP',
+        accountNumber: '••••••••5512',
+        ifscCode: 'HDFC0004567',
+        upiId: 'royalsound@okhdfc',
+        isKycCompleted: true,
+      },
+      avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80',
+    });
+
+    const vendorHyderabad = await User.create({
+      name: 'Suresh Reddy',
+      businessName: 'Deccan Stage Crafts & Decor',
+      phone: '+91 98222 33445',
+      email: 'suresh@deccanstage.in',
+      role: 'provider',
+      categories: ['Stage & Mandap Decoration', 'Catering Buffets'],
+      serviceArea: 'Hyderabad, TS',
+      rating: 4.8,
+      reviewCount: 29,
+      completedJobs: 34,
+      isVerified: true,
+      bankDetails: {
+        accountHolder: 'Deccan Stage Crafts',
+        accountNumber: '••••••••8819',
+        ifscCode: 'SBIN0008910',
+        upiId: 'deccanstage@oksbi',
+        isKycCompleted: true,
+      },
+      avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80',
+    });
+
+    const vendorBengaluru = await User.create({
+      name: 'Karthik Rao',
+      businessName: 'Silicon Beat Sound & Visuals',
+      phone: '+91 98333 44556',
+      email: 'karthik@siliconbeat.in',
+      role: 'provider',
+      categories: ['DJ & Sound Systems', '4K Photography & Drone'],
+      serviceArea: 'Bengaluru, KA',
+      rating: 4.9,
+      reviewCount: 52,
+      completedJobs: 61,
+      isVerified: true,
+      bankDetails: {
+        accountHolder: 'Silicon Beat Audio Works',
+        accountNumber: '••••••••7721',
+        ifscCode: 'ICIC0009988',
+        upiId: 'siliconbeat@okaxis',
+        isKycCompleted: true,
+      },
+      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+    });
+
+    const vendorDelhi = await User.create({
+      name: 'Vikram Malhotra',
+      businessName: 'Capital AV & Decor Experts',
+      phone: '+91 98444 55667',
+      email: 'vikram@capitalavdelhi.com',
+      role: 'provider',
+      categories: ['Lighting & Trussing', 'Stage & Mandap Decoration'],
+      serviceArea: 'Delhi NCR',
+      rating: 4.7,
+      reviewCount: 24,
+      completedJobs: 28,
+      isVerified: true,
+      bankDetails: {
+        accountHolder: 'Capital AV LLP',
+        accountNumber: '••••••••3341',
+        ifscCode: 'KKBK0001234',
+        upiId: 'capitalav@okkotak',
+        isKycCompleted: true,
+      },
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+    });
+
     const admin = await User.create({
       name: 'EzzyGo Operations Desk',
       phone: '+91 90000 00001',
@@ -211,6 +299,12 @@ export const seedDatabase = async (forceReset = false) => {
       category: 'DJ & Sound Systems',
       title: 'Sangeet Night Pro Sound & Intelligent Moving Lights',
       description: 'Need a punchy sound setup for 350 guests with 4 dual subwoofers, 2 wireless shure mics, and moving sharpies.',
+      imageUrl: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop&q=80',
+      images: [
+        'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=800&auto=format&fit=crop&q=80',
+      ],
       location: {
         city: 'Pune',
         area: 'Baner',
@@ -231,6 +325,12 @@ export const seedDatabase = async (forceReset = false) => {
       category: 'Stage & Mandap Decoration',
       title: 'Modern Floral Backdrop with Fairy Light Canopy for Reception',
       description: 'Pastel artificial + real hydrangeas decoration with brass lamps and royal couple sofa seating.',
+      imageUrl: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&auto=format&fit=crop&q=80',
+      images: [
+        'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=800&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&auto=format&fit=crop&q=80',
+      ],
       location: {
         city: 'Pune',
         area: 'Koregaon Park',
@@ -251,6 +351,12 @@ export const seedDatabase = async (forceReset = false) => {
       category: '4K Photography & Drone',
       title: 'Full Day Traditional Wedding & Reception 4K Drone Coverage',
       description: 'Need 2 Candid Photographers, 1 Traditional Videographer, and 1 4K Drone Operator with live feed.',
+      imageUrl: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&auto=format&fit=crop&q=80',
+      images: [
+        'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=800&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1520854221256-17451cc331bf?w=800&auto=format&fit=crop&q=80',
+      ],
       location: {
         city: 'Pune',
         area: 'Kothrud',
@@ -263,6 +369,110 @@ export const seedDatabase = async (forceReset = false) => {
       maxAcceptableBid: 51000,
       status: 'OPEN',
       bidsCount: 0,
+    });
+
+    const reqMumbai = await Requirement.create({
+      requesterId: host1._id,
+      category: 'DJ & Sound Systems',
+      title: 'Bollywood Glam Sangeet & Cocktail Sound Setup',
+      description: 'High-end concert sound with dual 18-inch subwoofers, haze machine, and wireless handheld mics.',
+      imageUrl: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&auto=format&fit=crop&q=80',
+      images: [
+        'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&auto=format&fit=crop&q=80',
+      ],
+      location: {
+        city: 'Mumbai',
+        area: 'Bandra West',
+        venueAddress: 'Taj Lands End, Bandstand',
+      },
+      eventDate: '2026-11-12',
+      timeWindow: { start: '19:00', end: '01:00' },
+      guestCount: 250,
+      budget: 50000,
+      maxAcceptableBid: 42500,
+      status: 'OPEN',
+      bidsCount: 1,
+      lowestBid: 38000,
+    });
+
+    const reqHyd = await Requirement.create({
+      requesterId: host2._id,
+      category: 'Stage & Mandap Decoration',
+      title: 'Royal Nizami Gold & Floral Mandap Backdrop',
+      description: 'Authentic jasmine garlands, brass deepams, floral canopy, and grand bridal entry pathway.',
+      imageUrl: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=800&auto=format&fit=crop&q=80',
+      images: [
+        'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=800&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1532712938310-34cb3982ef74?w=800&auto=format&fit=crop&q=80',
+      ],
+      location: {
+        city: 'Hyderabad',
+        area: 'Banjara Hills',
+        venueAddress: 'Taj Krishna Grand Ballroom, Road No 1',
+      },
+      eventDate: '2026-11-18',
+      timeWindow: { start: '10:00', end: '18:00' },
+      guestCount: 400,
+      budget: 95000,
+      maxAcceptableBid: 80750,
+      status: 'OPEN',
+      bidsCount: 1,
+      lowestBid: 74000,
+    });
+
+    const reqBlr = await Requirement.create({
+      requesterId: host3._id,
+      category: '4K Photography & Drone',
+      title: 'Tech Summit & Evening Networking Reception Coverage',
+      description: '2 photographers for candid networking + 1 highlight recap reel videographer with fast turnaround.',
+      imageUrl: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&auto=format&fit=crop&q=80',
+      images: [
+        'https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=800&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&auto=format&fit=crop&q=80',
+      ],
+      location: {
+        city: 'Bengaluru',
+        area: 'Indiranagar',
+        venueAddress: 'The Leela Palace, Old Airport Road',
+      },
+      eventDate: '2026-11-20',
+      timeWindow: { start: '14:00', end: '22:00' },
+      guestCount: 300,
+      budget: 45000,
+      maxAcceptableBid: 38250,
+      status: 'OPEN',
+      bidsCount: 1,
+      lowestBid: 34000,
+    });
+
+    const reqDelhi = await Requirement.create({
+      requesterId: host1._id,
+      category: 'Lighting & Trussing',
+      title: 'Big Fat Delhi Wedding Heavy Truss & Moving Heads',
+      description: 'Full 40x20ft aluminum box truss, 12 Sharpy moving heads, CO2 blast guns, and digital DMX console.',
+      imageUrl: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=800&auto=format&fit=crop&q=80',
+      images: [
+        'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=800&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=800&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&auto=format&fit=crop&q=80',
+      ],
+      location: {
+        city: 'Delhi NCR',
+        area: 'Cyber City Gurgaon',
+        venueAddress: 'The Oberoi Gurgaon Lawn',
+      },
+      eventDate: '2026-11-25',
+      timeWindow: { start: '18:00', end: '02:00' },
+      guestCount: 700,
+      budget: 120000,
+      maxAcceptableBid: 102000,
+      status: 'OPEN',
+      bidsCount: 1,
+      lowestBid: 92000,
     });
 
     // 4. Bids on Requirements
@@ -295,6 +505,50 @@ export const seedDatabase = async (forceReset = false) => {
       proposalNotes: 'Includes 30ft Stage Truss Backdrop, real flower arch with carnations/orchids, royal sofa, and warm fairy canopy.',
       equipmentDetails: 'Aluminum Box Truss 30x12ft + 500m Fairy Lights + Brass Diya Stands',
       discountPercent: 20,
+      isEligibleForAccept: true,
+      status: 'PENDING',
+    });
+
+    const bidMumbai = await Bid.create({
+      requirementId: reqMumbai._id,
+      providerId: vendorMumbai._id,
+      amount: 38000, // 24% discount -> ELIGIBLE
+      proposalNotes: 'Dual 18" Subs with JBL PRX line arrays and Pioneer DDJ console. Best rates in Mumbai.',
+      equipmentDetails: 'JBL PRX Series + 2x 18" Subs + Wireless Mics',
+      discountPercent: 24,
+      isEligibleForAccept: true,
+      status: 'PENDING',
+    });
+
+    const bidHyd = await Bid.create({
+      requirementId: reqHyd._id,
+      providerId: vendorHyderabad._id,
+      amount: 74000, // 22.1% discount -> ELIGIBLE
+      proposalNotes: 'Authentic royal Nizami decor with fresh flowers and brass pillars. 10 years experience in Hyderabad weddings.',
+      equipmentDetails: 'Gold Mandap Setup + 400m Jasmine Garlands + Brass Lamps',
+      discountPercent: 22.1,
+      isEligibleForAccept: true,
+      status: 'PENDING',
+    });
+
+    const bidBlr = await Bid.create({
+      requirementId: reqBlr._id,
+      providerId: vendorBengaluru._id,
+      amount: 34000, // 24.4% discount -> ELIGIBLE
+      proposalNotes: 'Corporate cinematography and high-resolution candid event photography with same-day preview reels.',
+      equipmentDetails: 'Sony FX3 + Sony A7IV + DJI Ronin RS3 Gimbal',
+      discountPercent: 24.4,
+      isEligibleForAccept: true,
+      status: 'PENDING',
+    });
+
+    const bidDelhi = await Bid.create({
+      requirementId: reqDelhi._id,
+      providerId: vendorDelhi._id,
+      amount: 92000, // 23.3% discount -> ELIGIBLE
+      proposalNotes: 'Heavy 40ft trussing with 12 Sharpy 7R beams, haze machine, and technician team throughout the night.',
+      equipmentDetails: '40ft Box Truss + 12x Sharpy Moving Heads + DMX Console',
+      discountPercent: 23.3,
       isEligibleForAccept: true,
       status: 'PENDING',
     });

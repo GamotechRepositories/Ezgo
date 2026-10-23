@@ -9,6 +9,7 @@ import {
   PartyPopper,
   Sparkles,
   Users,
+  Megaphone,
 } from 'lucide-react';
 import { EzzyGoLogo } from './EzzyGoLogo';
 import { getUserPortalUrl, getVendorPortalUrl } from '../utils/portalUrls';
@@ -22,6 +23,7 @@ export type AdminTab =
   | 'users'
   | 'categories'
   | 'occasions'
+  | 'banners'
   | 'logs';
 
 interface AdminSidebarProps {
@@ -69,6 +71,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     { id: 'users' as const, label: 'User Directory', icon: Users, count: null, reminderCount: null },
     { id: 'categories' as const, label: 'Categories', icon: FolderKanban, count: null, reminderCount: null },
     { id: 'occasions' as const, label: 'Occasions', icon: PartyPopper, count: null, reminderCount: null },
+    { id: 'banners' as const, label: 'Promotions & Ads', icon: Megaphone, count: null, reminderCount: null },
     { id: 'logs' as const, label: 'Audit & Ledger', icon: ScrollText, count: null, reminderCount: null },
   ];
 

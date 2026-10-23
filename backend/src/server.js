@@ -22,6 +22,7 @@ import occasionRoutes from './routes/occasionRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import itemRoutes from './routes/itemRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
+import bannerRoutes from './routes/bannerRoutes.js';
 import { createOrder, verifyPayment } from './controllers/paymentController.js';
 import { notFound, errorHandler } from './middlewares/errorHandler.js';
 
@@ -118,6 +119,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/occasions', occasionRoutes);
 app.use('/api/items', itemRoutes);
+app.use('/api/banners', bannerRoutes);
 
 // Error Handling Middlewares
 app.use(notFound);

@@ -49,6 +49,23 @@ export interface Occasion {
   isActive?: boolean;
 }
 
+export interface Banner {
+  _id: string;
+  title: string;
+  subtitle?: string;
+  badge?: string;
+  imageUrl: string;
+  targetUrl?: string;
+  ctaText?: string;
+  city?: string;
+  placement: 'hero_banner' | 'featured_banner' | 'all';
+  discountPercent?: number;
+  order?: number;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface Requirement {
   _id: string;
   requesterId: User | string;
@@ -56,6 +73,7 @@ export interface Requirement {
   title: string;
   description: string;
   imageUrl?: string;
+  images?: string[];
   eventType?: string;
   equipmentNeeded?: string[];
   location: {

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { MapPin, Phone, MessageCircle, AlertTriangle, X } from 'lucide-react';
 import type { Booking } from '../types';
+import { CardImageGallery } from './CardImageGallery';
 
 interface ActiveOrdersDeskProps {
   bookings: Booking[];
@@ -19,9 +20,18 @@ const statusInfo: Record<string, { label: string; className: string; step: numbe
 const steps = ['Host picked you', 'Host paid EzzyGo', 'Event day', 'You get paid'];
 
 export const ActiveOrdersDesk: React.FC<ActiveOrdersDeskProps> = ({ bookings, onRaiseDispute }) => {
+  const [cityFilter, setCityFilter] = useState('ALL');
   const [disputeBookingModal, setDisputeBookingModal] = useState<Booking | null>(null);
   const [disputeReasonText, setDisputeReasonText] = useState('');
   const [submittingDispute, setSubmittingDispute] = useState(false);
+
+  const availableCities = Array.from(new Set(bookings.map((b) => b.requirementId?.location?.city).filter(Boolean)));
+
+  const filteredBookings = bookings.filter((b) => {
+    if (cityFilter === 'ALL') return true;
+    const reqCity = b.requirementId?.location?.city || '';
+    return reqCity.toLowerCase().includes(cityFilter.toLowerCase().split(' ')[0]);
+  });
 
   const vendorDisputePresets = [
     'Host unreachable / venue closed on event day',
@@ -57,16 +67,41 @@ export const ActiveOrdersDesk: React.FC<ActiveOrdersDeskProps> = ({ bookings, on
         </p>
       </div>
 
-      {bookings.length === 0 ? (
+      {/* City Filter Pills */}
+      {availableCities.length > 1 && (
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
+          <span className="text-slate-500 font-bold flex items-center gap-1 shrink-0 mr-1">
+            <MapPin className="w-3.5 h-3.5 text-[#f95724]" />
+            <span>Operating City:</span>
+          </span>
+          {['ALL', ...availableCities].map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setCityFilter(c)}
+              className={`px-3 py-1 rounded-full text-xs font-bold transition whitespace-nowrap cursor-pointer flex items-center gap-1 active:scale-95 ${
+                cityFilter === c
+                  ? 'bg-[#f95724] text-white shadow-xs'
+                  : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200'
+              }`}
+            >
+              {c !== 'ALL' && <MapPin className="w-3 h-3 opacity-70" />}
+              <span>{c === 'ALL' ? 'All Cities' : c}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {filteredBookings.length === 0 ? (
         <div className="text-center py-16 px-4 rounded-3xl bg-white border border-slate-200 space-y-2">
-          <h3 className="text-base font-semibold text-slate-800">No bookings yet</h3>
+          <h3 className="text-base font-semibold text-slate-800">No bookings in selected city</h3>
           <p className="text-sm text-slate-500 max-w-sm mx-auto">
-            Bid on open requests. When a host picks your bid, the booking shows up here.
+            {cityFilter !== 'ALL' ? `No bookings found for ${cityFilter}. Switch to All Cities.` : 'Bid on open requests. When a host picks your bid, the booking shows up here.'}
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {bookings.map((booking) => {
+          {filteredBookings.map((booking) => {
             const req = booking.requirementId;
             const info = statusInfo[booking.status] || statusInfo.ACTIVE;
             const isPaid = info.step >= 2;
@@ -79,31 +114,27 @@ export const ActiveOrdersDesk: React.FC<ActiveOrdersDeskProps> = ({ bookings, on
                 className="rounded-3xl bg-white border border-slate-200 p-6 sm:p-7 space-y-5 shadow-sm flex flex-col justify-between"
               >
                 <div className="space-y-4">
-                  <div className="w-full h-36 rounded-2xl overflow-hidden bg-slate-100 relative border border-slate-200/80">
-                    <img
-                      src={
-                        req?.imageUrl ||
-                        (req?.category?.toLowerCase().includes('sound') || req?.category?.toLowerCase().includes('dj')
-                          ? 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop&q=80'
-                          : req?.category?.toLowerCase().includes('decor') || req?.category?.toLowerCase().includes('mandap') || req?.category?.toLowerCase().includes('stage')
-                          ? 'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&auto=format&fit=crop&q=80'
-                          : req?.category?.toLowerCase().includes('photo') || req?.category?.toLowerCase().includes('drone') || req?.category?.toLowerCase().includes('camera')
-                          ? 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&auto=format&fit=crop&q=80'
-                          : req?.category?.toLowerCase().includes('cater') || req?.category?.toLowerCase().includes('food')
-                          ? 'https://images.unsplash.com/photo-1555244162-803834f70033?w=800&auto=format&fit=crop&q=80'
-                          : 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&auto=format&fit=crop&q=80')
-                      }
-                      alt={req?.title || 'Event'}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&auto=format&fit=crop&q=80';
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
-                    <span className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-white/90 text-xs font-semibold text-slate-800 shadow-xs">
-                      {req?.category}
-                    </span>
-                  </div>
+                  <CardImageGallery
+                    images={req?.images && req.images.length > 0 ? req.images : [req?.imageUrl || (
+                      req?.category?.toLowerCase().includes('sound') || req?.category?.toLowerCase().includes('dj')
+                        ? 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop&q=80'
+                        : req?.category?.toLowerCase().includes('decor') || req?.category?.toLowerCase().includes('mandap') || req?.category?.toLowerCase().includes('stage')
+                        ? 'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&auto=format&fit=crop&q=80'
+                        : req?.category?.toLowerCase().includes('photo') || req?.category?.toLowerCase().includes('drone') || req?.category?.toLowerCase().includes('camera')
+                        ? 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&auto=format&fit=crop&q=80'
+                        : req?.category?.toLowerCase().includes('cater') || req?.category?.toLowerCase().includes('food')
+                        ? 'https://images.unsplash.com/photo-1555244162-803834f70033?w=800&auto=format&fit=crop&q=80'
+                        : 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&auto=format&fit=crop&q=80'
+                    )]}
+                    fallbackImage="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&auto=format&fit=crop&q=80"
+                    alt={req?.title || 'Event'}
+                    className="w-full h-40 rounded-2xl overflow-hidden border border-slate-200/80 shadow-2xs"
+                    badge={
+                      <span className="px-2.5 py-0.5 rounded-full bg-white/90 text-xs font-semibold text-slate-800 shadow-xs">
+                        {req?.category}
+                      </span>
+                    }
+                  />
 
                   <div>
                     <h3 className="text-lg font-bold text-slate-900">{req?.title}</h3>
