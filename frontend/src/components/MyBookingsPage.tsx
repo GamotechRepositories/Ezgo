@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   ArrowLeft,
   Calendar,
@@ -17,11 +17,14 @@ import {
   X,
   Search,
   Lock,
-  Info
+  Info,
+  Wallet
 } from 'lucide-react';
 import type { Booking, Category } from '../types';
+import { api, type PaymentHistoryItem } from '../services/api';
+import { VendorProfileModal } from './VendorProfileModal';
 
-type Tab = 'all' | 'current' | 'to_pay' | 'finished' | 'cancelled';
+type Tab = 'all' | 'current' | 'to_pay' | 'finished' | 'cancelled' | 'payments';
 
 interface MyBookingsPageProps {
   bookings: Booking[];
@@ -82,6 +85,27 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
   const [disputeBookingModal, setDisputeBookingModal] = useState<Booking | null>(null);
   const [disputeReasonText, setDisputeReasonText] = useState('');
   const [submittingDispute, setSubmittingDispute] = useState(false);
+  const [profileBooking, setProfileBooking] = useState<Booking | null>(null);
+  const [paymentHistory, setPaymentHistory] = useState<PaymentHistoryItem[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  useEffect(() => {
+    let live = true;
+    (async () => {
+      setHistoryLoading(true);
+      try {
+        const rows = await api.getPaymentHistory();
+        if (live) setPaymentHistory(Array.isArray(rows) ? rows : []);
+      } catch {
+        if (live) setPaymentHistory([]);
+      } finally {
+        if (live) setHistoryLoading(false);
+      }
+    })();
+    return () => {
+      live = false;
+    };
+  }, [bookings]);
 
   const disputeReasonsPreset = [
     'Vendor did not arrive at venue',
@@ -167,6 +191,7 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
     { id: 'to_pay', label: 'Awaiting Payment', count: toPay.length, color: 'text-amber-700' },
     { id: 'finished', label: 'Completed', count: finished.length },
     { id: 'cancelled', label: 'Cancelled', count: cancelled.length },
+    { id: 'payments', label: 'Payment history', count: paymentHistory.length, color: 'text-orange-700' },
   ];
 
   return (
@@ -342,7 +367,59 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
         {/* ========================================================================= */}
         {/* 4. BOOKINGS LIST OR EMPTY STATE                                           */}
         {/* ========================================================================= */}
-        {filteredBookings.length === 0 ? (
+        {tab === 'payments' ? (
+          <div className="space-y-4">
+            <div className="rounded-3xl bg-white border border-slate-200/90 p-5 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-orange-50 text-[#f95724] flex items-center justify-center">
+                  <Wallet className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="font-black text-slate-900">Saved payments</div>
+                  <div className="text-xs font-semibold text-slate-500">Every escrow payment stays in your history.</div>
+                </div>
+              </div>
+              <div className="text-lg font-black text-slate-900">
+                {rupees(paymentHistory.filter((p) => p.type === 'PAYMENT_HELD_ESCROW' && p.status === 'SUCCESS').reduce((sum, p) => sum + (p.amount || 0), 0))}
+              </div>
+            </div>
+            {historyLoading && paymentHistory.length === 0 ? (
+              <div className="bg-white rounded-[32px] border border-slate-200/90 p-12 text-center text-sm font-semibold text-slate-500">
+                Loading payment history...
+              </div>
+            ) : paymentHistory.length === 0 ? (
+              <div className="bg-white rounded-[32px] border border-slate-200/90 p-12 text-center space-y-2">
+                <h3 className="font-editorial text-2xl font-black text-slate-900">No payments yet</h3>
+                <p className="text-sm text-slate-600">Pay an accepted bid to save the first escrow receipt here.</p>
+              </div>
+            ) : (
+              paymentHistory.map((item) => (
+                <div key={item._id} className="bg-white rounded-3xl border border-slate-200/90 p-5 space-y-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-black text-slate-900">{item.label}</div>
+                      <div className="text-xs font-semibold text-slate-600">{item.eventTitle}</div>
+                    </div>
+                    <div className="text-base font-black text-slate-900">{rupees(item.amount)}</div>
+                  </div>
+                  <div className="text-[11px] font-semibold text-slate-500">
+                    {item.createdAt ? new Date(item.createdAt).toLocaleString('en-IN') : ''}
+                    {item.vendorName && item.vendorName !== 'Vendor locked' ? ` · ${item.vendorName}` : ''}
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[item.status, item.method, (item.escrowStatus || '').replaceAll('_', ' '), item.referenceId]
+                      .filter(Boolean)
+                      .map((chip, idx) => (
+                        <span key={`${chip}-${idx}`} className="px-2 py-0.5 rounded-full bg-slate-50 border border-slate-200 text-[10px] font-black text-slate-600">
+                          {chip}
+                        </span>
+                      ))}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        ) : filteredBookings.length === 0 ? (
           <div className="bg-white rounded-[32px] border border-slate-200/90 p-12 sm:p-16 text-center space-y-4 max-w-2xl mx-auto shadow-xs">
             <div className="w-16 h-16 rounded-3xl bg-orange-100/70 text-[#f95724] flex items-center justify-center mx-auto shadow-inner">
               <ShieldCheck className="w-8 h-8" />
@@ -521,34 +598,56 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
                         </div>
 
                         <div className="flex items-center gap-3">
-                          {b.providerId?.avatar ? (
-                            <img
-                              src={b.providerId.avatar}
-                              alt=""
-                              className="w-12 h-12 rounded-xl object-cover border border-slate-200"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80';
-                              }}
-                            />
+                          {isPaid || isDone ? (
+                            b.providerId?.avatar ? (
+                              <img
+                                src={b.providerId.avatar}
+                                alt=""
+                                className="w-12 h-12 rounded-xl object-cover border border-slate-200"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80';
+                                }}
+                              />
+                            ) : (
+                              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-400 to-[#f95724] text-white font-black text-lg flex items-center justify-center shadow-xs">
+                                {vendorName(b).charAt(0)}
+                              </div>
+                            )
                           ) : (
-                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-400 to-[#f95724] text-white font-black text-lg flex items-center justify-center shadow-xs">
-                              {vendorName(b).charAt(0)}
+                            <div className="w-12 h-12 rounded-xl bg-slate-200 text-slate-500 flex items-center justify-center">
+                              <Lock className="w-5 h-5" />
                             </div>
                           )}
 
                           <div className="min-w-0 flex-1">
-                            <h4 className="font-bold text-slate-900 text-sm sm:text-base truncate">
-                              {vendorName(b)}
-                            </h4>
+                            {isPaid || isDone ? (
+                              <button
+                                type="button"
+                                onClick={() => setProfileBooking(b)}
+                                className="font-bold text-slate-900 text-sm sm:text-base truncate text-left cursor-pointer hover:text-orange-600"
+                              >
+                                {vendorName(b)}
+                              </button>
+                            ) : (
+                              <p className="font-bold text-slate-900 text-sm sm:text-base truncate">
+                                Vendor locked until payment
+                              </p>
+                            )}
                             <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
-                              {b.providerId?.rating ? (
-                                <span className="flex items-center gap-0.5 font-bold text-amber-600">
-                                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                                  <span>{b.providerId.rating}</span>
-                                </span>
-                              ) : null}
-                              <span>•</span>
-                              <span>{b.providerId?.completedJobs || 0} jobs completed</span>
+                              {isPaid || isDone ? (
+                                <>
+                                  {b.providerId?.rating ? (
+                                    <span className="flex items-center gap-0.5 font-bold text-amber-600">
+                                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                                      <span>{b.providerId.rating}</span>
+                                    </span>
+                                  ) : null}
+                                  <span>•</span>
+                                  <span>{b.providerId?.completedJobs || 0} jobs completed</span>
+                                </>
+                              ) : (
+                                <span>Pay escrow to unlock vendor profile and contact</span>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -668,6 +767,12 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
                         {isPaid && (
                           <>
                             <button
+                              onClick={() => setProfileBooking(b)}
+                              className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-slate-50 text-slate-900 font-black text-xs sm:text-sm border border-slate-200 flex items-center justify-center gap-2 cursor-pointer transition active:scale-95"
+                            >
+                              <span>View vendor profile</span>
+                            </button>
+                            <button
                               disabled={busy}
                               onClick={() =>
                                 run(b._id, async () => {
@@ -724,6 +829,12 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
                         {/* 4. If Completed */}
                         {isDone && (
                           <div className="space-y-2">
+                            <button
+                              onClick={() => setProfileBooking(b)}
+                              className="w-full py-2.5 px-3 rounded-xl bg-white hover:bg-slate-50 text-slate-900 font-black text-xs border border-slate-200 cursor-pointer transition"
+                            >
+                              View vendor profile
+                            </button>
                             {b.myRating ? (
                               <div className="py-2 px-3 rounded-xl bg-amber-50 text-amber-900 border border-amber-200 text-xs font-bold flex items-center justify-center gap-1.5">
                                 <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
@@ -910,6 +1021,10 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {profileBooking && (
+        <VendorProfileModal booking={profileBooking} onClose={() => setProfileBooking(null)} />
       )}
 
     </div>

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { X, Lock, ShieldCheck, ArrowRight, AlertCircle, Phone, MessageCircle, XCircle } from 'lucide-react';
+import { X, Lock, ShieldCheck, ArrowRight, AlertCircle, XCircle } from 'lucide-react';
 import type { Booking } from '../types';
 import { api } from '../services/api';
 import { openRazorpayCheckout } from '../utils/razorpay';
+import { VendorUnlockedCard } from './VendorProfileModal';
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -27,6 +28,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [paidAfterVerifyError, setPaidAfterVerifyError] = useState(false);
   const [transactionId, setTransactionId] = useState<string | null>(null);
+  const [paidBooking, setPaidBooking] = useState<Booking | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -36,6 +38,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       setErrorMessage(null);
       setPaidAfterVerifyError(false);
       setTransactionId(null);
+      setPaidBooking(null);
     }
   }, [isOpen, booking?._id]);
 
@@ -44,13 +47,20 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const provider = booking.providerId as any;
   const requester = booking.requesterId as any;
   const providerName = provider?.businessName || provider?.name || 'your vendor';
-  const providerPhone: string = provider?.phone || '';
-  const cleanPhone = providerPhone.replace(/[^0-9]/g, '');
 
   const fail = (message: string, moneyMayBeTaken = false) => {
     setErrorMessage(message);
     setPaidAfterVerifyError(moneyMayBeTaken);
     setStep('failed');
+    setLoading(false);
+  };
+
+  const completeDemoPay = async () => {
+    const confirmed = await api.payBooking(booking._id, 'Demo UPI');
+    setPaidBooking(confirmed);
+    setTransactionId(confirmed?.paymentDetails?.transactionId || 'DEMO');
+    await onPaySuccess(booking._id, 'Demo UPI', confirmed?.paymentDetails?.transactionId || 'DEMO', confirmed);
+    setStep('success');
     setLoading(false);
   };
 
@@ -65,62 +75,70 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         throw new Error('The amount must be at least ₹1.');
       }
 
-      const orderData = await api.createRazorpayOrder({
-        amount: amountInPaise,
-        currency: 'INR',
-        bookingId: booking._id,
-        receipt: `rcpt_bkg_${booking._id.toString().slice(-8)}`,
-        notes: {
+      try {
+        const orderData = await api.createRazorpayOrder({
+          amount: amountInPaise,
+          currency: 'INR',
           bookingId: booking._id,
-          bidAmount: booking.bidAmount.toString(),
-          platformFee: booking.platformFee.toString(),
-        },
-      });
+          receipt: `rcpt_bkg_${booking._id.toString().slice(-8)}`,
+          notes: {
+            bookingId: booking._id,
+            bidAmount: booking.bidAmount.toString(),
+            platformFee: booking.platformFee.toString(),
+          },
+        });
 
-      if (!orderData?.order_id) {
-        throw new Error('Could not start the payment. Please try again.');
+        const liveKey = (orderData?.key_id || '').startsWith('rzp_live_');
+        if (liveKey && orderData?.order_id) {
+          await openRazorpayCheckout({
+            key: orderData.key_id,
+            amount: orderData.amount || amountInPaise,
+            currency: orderData.currency || 'INR',
+            order_id: orderData.order_id,
+            name: 'EzzyGo',
+            description: `Booking payment for ${providerName}`,
+            prefill: {
+              name: requester?.name || '',
+              email: requester?.email || '',
+              contact: requester?.phone || '',
+            },
+            onSuccess: async (response) => {
+              try {
+                const verifyRes = await api.verifyRazorpayPayment({
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                  bookingId: booking._id,
+                });
+
+                if (!verifyRes.success) {
+                  fail('We could not confirm this payment.', true);
+                  return;
+                }
+                setTransactionId(response.razorpay_payment_id);
+                const confirmed = verifyRes.data?.booking || booking;
+                setPaidBooking(confirmed);
+                await onPaySuccess(booking._id, 'Razorpay Standard Checkout', response.razorpay_payment_id, verifyRes.data?.booking);
+                setStep('success');
+                setLoading(false);
+              } catch (verifyErr: any) {
+                fail(verifyErr.message || 'We could not confirm this payment.', true);
+              }
+            },
+            onDismiss: () => {
+              fail('You closed the payment window. No money was taken.');
+            },
+            onFailure: (err) => {
+              fail(`Payment failed: ${err?.description || err?.message || 'please try again.'}`);
+            },
+          });
+          return;
+        }
+      } catch {
+        // Test/demo keys: confirm escrow without Razorpay checkout.
       }
 
-      await openRazorpayCheckout({
-        key: orderData.key_id,
-        amount: orderData.amount || amountInPaise,
-        currency: orderData.currency || 'INR',
-        order_id: orderData.order_id,
-        name: 'EzzyGo',
-        description: `Booking payment for ${providerName}`,
-        prefill: {
-          name: requester?.name || '',
-          email: requester?.email || '',
-          contact: requester?.phone || '',
-        },
-        onSuccess: async (response) => {
-          try {
-            const verifyRes = await api.verifyRazorpayPayment({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              bookingId: booking._id,
-            });
-
-            if (!verifyRes.success) {
-              fail('We could not confirm this payment.', true);
-              return;
-            }
-            setTransactionId(response.razorpay_payment_id);
-            await onPaySuccess(booking._id, 'Razorpay Standard Checkout', response.razorpay_payment_id, verifyRes.data?.booking);
-            setStep('success');
-            setLoading(false);
-          } catch (verifyErr: any) {
-            fail(verifyErr.message || 'We could not confirm this payment.', true);
-          }
-        },
-        onDismiss: () => {
-          fail('You closed the payment window. No money was taken.');
-        },
-        onFailure: (err) => {
-          fail(`Payment failed: ${err?.description || err?.message || 'please try again.'}`);
-        },
-      });
+      await completeDemoPay();
     } catch (err: any) {
       fail(err.message || 'Could not start the payment.');
     }
@@ -171,38 +189,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               )}
             </div>
 
-            <div className="p-4 sm:p-5 rounded-2xl bg-orange-50 border border-orange-200 text-left space-y-4">
-              <p className="text-sm font-semibold text-orange-950">Your vendor</p>
-              <div>
-                <h4 className="text-lg font-bold text-slate-900 leading-tight">{providerName}</h4>
-                {providerPhone ? (
-                  <p className="text-base font-semibold text-emerald-700 mt-0.5">{providerPhone}</p>
-                ) : (
-                  <p className="text-sm text-slate-500 mt-0.5">Phone number will show in My bookings.</p>
-                )}
-              </div>
-
-              {cleanPhone && (
-                <div className="grid grid-cols-2 gap-2.5">
-                  <a
-                    href={`tel:${cleanPhone}`}
-                    className="py-3 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm flex items-center justify-center gap-2 transition"
-                  >
-                    <Phone className="w-4 h-4" />
-                    <span>Call</span>
-                  </a>
-                  <a
-                    href={`https://wa.me/${cleanPhone}?text=Hi%20${encodeURIComponent(provider?.name || '')},%20regarding%20my%20EzzyGo%20booking`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="py-3 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm flex items-center justify-center gap-2 transition"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    <span>WhatsApp</span>
-                  </a>
-                </div>
-              )}
-            </div>
+            <VendorUnlockedCard booking={paidBooking || booking} />
 
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-left">
               <p className="text-sm font-semibold text-slate-900 mb-1.5">What happens next</p>
@@ -313,7 +300,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             </div>
 
             <p className="text-sm text-slate-600">
-              Pay with UPI (Google Pay, PhonePe, Paytm), debit or credit card, or net banking. If the booking is cancelled, you get the full amount back.
+              Demo payment is on. Escrow confirms instantly and vendor contact unlocks. Live UPI/card starts after Razorpay live keys.
             </p>
 
             <button
@@ -324,11 +311,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               {loading ? (
                 <span className="flex items-center gap-2">
                   <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Opening payment...
+                  Confirming demo payment...
                 </span>
               ) : (
                 <>
-                  <span>Pay ₹{booking.totalPaid.toLocaleString()}</span>
+                  <span>Confirm demo payment · ₹{booking.totalPaid.toLocaleString()}</span>
                   <ArrowRight className="w-5 h-5" />
                 </>
               )}

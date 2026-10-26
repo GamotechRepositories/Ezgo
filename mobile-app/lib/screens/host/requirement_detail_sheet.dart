@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../models/bid_model.dart';
+import '../../models/booking_model.dart';
 import '../../models/requirement_model.dart';
+import '../../providers/bookings_provider.dart';
+import '../../providers/requirements_provider.dart';
 import 'bids_comparison_screen.dart';
 import 'escrow_payment_sheet.dart';
 
@@ -14,17 +18,26 @@ class RequirementDetailSheet extends StatelessWidget {
     required this.requirement,
   });
 
-  Future<void> _onAcceptBid(BuildContext context, BidModel bid) async {
+  Future<void> _onAcceptBid(BuildContext context, RequirementModel req, BidModel bid) async {
     await acceptBidAndOpenEscrow(
       context: context,
-      requirement: requirement,
+      requirement: req,
       bid: bid,
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final req = requirement;
+    final live = context.watch<RequirementsProvider>().allRequirements.where((r) => r.id == requirement.id);
+    final req = live.isNotEmpty ? live.first : requirement;
+    final bookings = context.watch<BookingsProvider>().bookings;
+    BookingModel? booking;
+    for (final b in bookings) {
+      if (b.requirementId == req.id && b.status != 'CANCELLED') {
+        booking = b;
+        break;
+      }
+    }
     final hasBids = req.bids.isNotEmpty;
 
     return Container(
@@ -284,7 +297,7 @@ class RequirementDetailSheet extends StatelessWidget {
                       ),
                     ),
                   ] else ...[
-                    ...req.bids.map((bid) => _buildBidCard(context, bid)),
+                    ...req.bids.map((bid) => _buildBidCard(context, req, bid, booking)),
                   ],
                 ],
               ),
@@ -295,7 +308,20 @@ class RequirementDetailSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildBidCard(BuildContext context, BidModel bid) {
+  Widget _buildBidCard(BuildContext context, RequirementModel req, BidModel bid, BookingModel? booking) {
+    final thisAccepted = bid.isAccepted ||
+        (booking != null &&
+            ((booking.bidId.isNotEmpty && booking.bidId == bid.id) ||
+                booking.vendorName == bid.vendorName));
+    final otherChosen = req.isBooked && !thisAccepted;
+    final awaitingPay = thisAccepted && (booking == null || booking.isAwaitingPayment);
+    final canSelect = bid.isEligibleForAccept || bid.amount <= req.maxAcceptableBid;
+    final label = thisAccepted
+        ? (awaitingPay ? 'Pay now to lock escrow' : 'Selected')
+        : otherChosen
+            ? 'Not selected'
+            : (canSelect ? 'Accept Bid (₹${bid.amount}) & Lock Escrow' : 'Need 15%+ off to accept');
+
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(16),
@@ -408,25 +434,27 @@ class RequirementDetailSheet extends StatelessWidget {
           const SizedBox(height: 12),
 
           ElevatedButton(
-            onPressed: (bid.isEligibleForAccept || bid.amount <= requirement.maxAcceptableBid)
-                ? () => _onAcceptBid(context, bid)
-                : null,
+            onPressed: thisAccepted && awaitingPay && booking != null
+                ? () {
+                    showEscrowPaymentSheet(context: context, booking: booking);
+                  }
+                : (!thisAccepted && !otherChosen && canSelect ? () => _onAcceptBid(context, req, bid) : null),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primary,
+              backgroundColor: thisAccepted ? AppTheme.emerald : AppTheme.primary,
               foregroundColor: Colors.white,
+              disabledBackgroundColor: AppTheme.slate100,
+              disabledForegroundColor: AppTheme.slate500,
               minimumSize: const Size.fromHeight(42),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(LucideIcons.checkCircle2, size: 16),
+                Icon(thisAccepted ? LucideIcons.shieldCheck : LucideIcons.checkCircle2, size: 16),
                 const SizedBox(width: 8),
                 Flexible(
                   child: Text(
-                    (bid.isEligibleForAccept || bid.amount <= requirement.maxAcceptableBid)
-                        ? 'Accept Bid (₹${bid.amount}) & Lock Escrow'
-                        : 'Need 15%+ off to accept',
+                    label,
                     style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
                     overflow: TextOverflow.ellipsis,
                   ),

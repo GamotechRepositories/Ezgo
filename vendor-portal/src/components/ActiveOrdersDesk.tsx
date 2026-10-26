@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, Phone, MessageCircle, AlertTriangle, X } from 'lucide-react';
+import { MapPin, Phone, MessageCircle, AlertTriangle, X, Mail } from 'lucide-react';
 import type { Booking } from '../types';
 import { CardImageGallery } from './CardImageGallery';
 
@@ -107,6 +107,10 @@ export const ActiveOrdersDesk: React.FC<ActiveOrdersDeskProps> = ({ bookings, on
             const isPaid = info.step >= 2;
             const isDone = info.step === 4;
             const phone = booking.requesterId?.phone || '';
+            const email = booking.requesterId?.email || '';
+            const hostName = booking.requesterId?.name || 'Host';
+            const hostAvatar = booking.requesterId?.avatar || '';
+            const waDigits = phone.replace(/[^0-9]/g, '').slice(-10);
 
             return (
               <div
@@ -161,36 +165,57 @@ export const ActiveOrdersDesk: React.FC<ActiveOrdersDeskProps> = ({ bookings, on
                   )}
 
                   {isPaid && booking.status !== 'CANCELLED' ? (
-                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                      <div className="text-sm text-slate-500">Host contact</div>
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <div className="text-base font-semibold text-slate-900">{booking.requesterId?.name}</div>
-                          <div className="text-sm text-slate-600 mt-0.5">{phone}</div>
+                    <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 space-y-3">
+                      <div className="text-xs font-bold uppercase tracking-wide text-emerald-800">Host details unlocked</div>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3 min-w-0">
+                          {hostAvatar ? (
+                            <img src={hostAvatar} alt="" className="w-12 h-12 rounded-2xl object-cover border border-emerald-200" />
+                          ) : (
+                            <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white font-black text-lg flex items-center justify-center">
+                              {hostName.charAt(0)}
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <div className="text-base font-semibold text-slate-900">{hostName}</div>
+                            {phone ? <div className="text-sm text-slate-700 mt-0.5">{phone}</div> : null}
+                            {email ? <div className="text-sm text-slate-600 mt-0.5 truncate">{email}</div> : null}
+                          </div>
                         </div>
-                        {phone && (
-                          <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 shrink-0">
+                          {phone && (
+                            <>
+                              <a
+                                href={`https://wa.me/91${waDigits}?text=${encodeURIComponent(`Hi ${hostName}, this is regarding your EzzyGo booking for ${req?.title || 'the event'}.`)}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="px-4 py-2.5 min-h-[42px] rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm flex items-center gap-1.5 transition active:scale-95 shadow-sm"
+                              >
+                                <MessageCircle className="w-4 h-4" />
+                                <span>WhatsApp</span>
+                              </a>
+                              <a
+                                href={`tel:${phone}`}
+                                aria-label="Call host"
+                                className="p-2.5 min-h-[42px] min-w-[42px] rounded-full bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 transition flex items-center justify-center active:scale-95"
+                              >
+                                <Phone className="w-4 h-4" />
+                              </a>
+                            </>
+                          )}
+                          {email && (
                             <a
-                              href={`https://wa.me/91${phone.replace(/[^0-9]/g, '').slice(-10)}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="px-4 py-2.5 min-h-[42px] rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm flex items-center gap-1.5 transition active:scale-95 shadow-sm"
-                            >
-                              <MessageCircle className="w-4 h-4" />
-                              <span>WhatsApp</span>
-                            </a>
-                            <a
-                              href={`tel:${phone}`}
-                              aria-label="Call host"
+                              href={`mailto:${email}`}
+                              aria-label="Email host"
                               className="p-2.5 min-h-[42px] min-w-[42px] rounded-full bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 transition flex items-center justify-center active:scale-95"
                             >
-                              <Phone className="w-4 h-4" />
+                              <Mail className="w-4 h-4" />
                             </a>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
                       {req.location.venueAddress && (
-                        <div className="pt-3 border-t border-slate-200 text-sm text-slate-700 flex items-start gap-1.5">
+                        <div className="pt-3 border-t border-emerald-200 text-sm text-slate-700 flex items-start gap-1.5">
                           <MapPin className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                           <span>{req.location.venueAddress}, {req.location.area}, {req.location.city}</span>
                         </div>
@@ -198,7 +223,7 @@ export const ActiveOrdersDesk: React.FC<ActiveOrdersDeskProps> = ({ bookings, on
                     </div>
                   ) : booking.status === 'AWAITING_PAYMENT' ? (
                     <p className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-sm text-amber-900">
-                      The host picked your bid but has not paid yet. Their phone number appears here after payment.
+                      The host picked your bid but has not paid yet. Their name, phone, WhatsApp and email appear here after payment.
                     </p>
                   ) : null}
 

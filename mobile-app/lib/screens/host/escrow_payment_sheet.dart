@@ -7,7 +7,28 @@ import '../../models/booking_model.dart';
 import '../../models/requirement_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/bookings_provider.dart';
+import '../../providers/notifications_provider.dart';
+import '../../providers/payments_provider.dart';
 import '../../providers/requirements_provider.dart';
+import 'vendor_profile_screen.dart';
+
+Future<T?> showEscrowPaymentSheet<T>({
+  required BuildContext context,
+  required BookingModel booking,
+  VoidCallback? onPaymentSuccess,
+}) {
+  return showModalBottomSheet<T>(
+    context: context,
+    isScrollControlled: true,
+    useRootNavigator: true,
+    backgroundColor: Colors.transparent,
+    barrierColor: Colors.black54,
+    builder: (_) => EscrowPaymentSheet(
+      booking: booking,
+      onPaymentSuccess: onPaymentSuccess,
+    ),
+  );
+}
 
 Future<void> acceptBidAndOpenEscrow({
   required BuildContext context,
@@ -48,19 +69,28 @@ Future<void> acceptBidAndOpenEscrow({
       requesterId: requesterId,
     );
     if (!context.mounted) return;
-    requirements.markAccepted(requirement.id);
+    requirements.markAccepted(requirement.id, bidId: bid.id);
+    await requirements.fetchRequirement(requirement.id);
+    await bookings.loadData();
+    if (context.mounted) {
+      context.read<NotificationsProvider>().load();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Selected ${bid.vendorName}. Pay now to lock this vendor in escrow.'),
+          backgroundColor: AppTheme.emerald,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+    if (!context.mounted) return;
 
-    await showModalBottomSheet(
+    await showEscrowPaymentSheet(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => EscrowPaymentSheet(
-        booking: booking,
-        onPaymentSuccess: () {
-          final latest = bookings.bookings.where((b) => b.id == booking.id);
-          onPaid?.call(latest.isNotEmpty ? latest.first : booking);
-        },
-      ),
+      booking: booking,
+      onPaymentSuccess: () {
+        final latest = bookings.bookings.where((b) => b.id == booking.id);
+        onPaid?.call(latest.isNotEmpty ? latest.first : booking);
+      },
     );
   } catch (e) {
     if (!context.mounted) return;
@@ -75,12 +105,12 @@ Future<void> acceptBidAndOpenEscrow({
 
 class EscrowPaymentSheet extends StatefulWidget {
   final BookingModel booking;
-  final VoidCallback onPaymentSuccess;
+  final VoidCallback? onPaymentSuccess;
 
   const EscrowPaymentSheet({
     super.key,
     required this.booking,
-    required this.onPaymentSuccess,
+    this.onPaymentSuccess,
   });
 
   @override
@@ -94,12 +124,34 @@ class _EscrowPaymentSheetState extends State<EscrowPaymentSheet> {
   Future<void> _processPayment() async {
     if (_isProcessing) return;
     setState(() => _isProcessing = true);
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final navigator = Navigator.of(context, rootNavigator: true);
+    final bookings = context.read<BookingsProvider>();
+    final auth = context.read<AuthProvider>();
+    final requirements = context.read<RequirementsProvider>();
     try {
-      await context.read<BookingsProvider>().payEscrow(widget.booking.id);
+      final paid = await bookings.payEscrow(
+        bookingId: widget.booking.id,
+        method: _selectedMethod,
+        customerName: auth.user?.name,
+        customerEmail: auth.user?.displayEmail,
+        customerPhone: auth.user?.phone,
+        description: 'Escrow for ${widget.booking.requirementTitle}',
+      );
+      await requirements.loadData(requesterId: auth.user?.id);
+      await bookings.loadData();
+      await context.read<PaymentsProvider>().load();
+      final latest = bookings.bookings.where((b) => b.id == paid.id);
+      final shown = latest.isNotEmpty ? latest.first : paid;
       if (!mounted) return;
-      Navigator.of(context).pop();
-      widget.onPaymentSuccess();
-      ScaffoldMessenger.of(context).showSnackBar(
+      navigator.pop();
+      widget.onPaymentSuccess?.call();
+      if (shown.isEscrowPaid) {
+        navigator.push(
+          MaterialPageRoute(builder: (_) => VendorProfileScreen(booking: shown)),
+        );
+      }
+      messenger?.showSnackBar(
         SnackBar(
           content: Row(
             children: [
@@ -119,7 +171,7 @@ class _EscrowPaymentSheetState extends State<EscrowPaymentSheet> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger?.showSnackBar(
         SnackBar(
           content: Text(e.toString()),
           backgroundColor: AppTheme.rose,
@@ -134,192 +186,209 @@ class _EscrowPaymentSheetState extends State<EscrowPaymentSheet> {
   @override
   Widget build(BuildContext context) {
     final b = widget.booking;
+    final media = MediaQuery.of(context);
+    final keyboard = media.viewInsets.bottom;
+    final sheetHeight = (media.size.height * 0.9).clamp(420.0, media.size.height);
 
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 44,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppTheme.slate200,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            Row(
-              children: [
-                IconButton(
-                  visualDensity: VisualDensity.compact,
-                  icon: const Icon(LucideIcons.arrowLeft, size: 20, color: AppTheme.slate700),
-                  onPressed: () => Navigator.of(context).maybePop(),
-                ),
-                const SizedBox(width: 4),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Lock in Escrow',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.slate900),
-                      ),
-                      Text(
-                        'EzzyGo 100% Protected Payment',
-                        style: TextStyle(fontSize: 12, color: AppTheme.slate500, fontWeight: FontWeight.w600),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppTheme.emeraldLight,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(LucideIcons.shieldCheck, size: 14, color: AppTheme.emerald),
-                      SizedBox(width: 4),
-                      Text(
-                        'Escrow Protected',
-                        style: TextStyle(color: AppTheme.emerald, fontSize: 11, fontWeight: FontWeight.w800),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-
-            // Booking Summary Box
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: AppTheme.slate50,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.slate200),
-              ),
+    return Padding(
+      padding: EdgeInsets.only(bottom: keyboard),
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: SizedBox(
+          height: sheetHeight,
+          child: Material(
+            color: Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            clipBehavior: Clip.antiAlias,
+            child: SafeArea(
+              top: false,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    b.requirementTitle,
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: AppTheme.slate900),
+                  const SizedBox(height: 12),
+                  Container(
+                    width: 44,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppTheme.slate200,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Vendor: ${b.vendorName}',
-                    style: const TextStyle(color: AppTheme.slate600, fontSize: 12),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(8, 12, 16, 8),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          icon: const Icon(LucideIcons.arrowLeft, size: 20, color: AppTheme.slate700),
+                          onPressed: () => Navigator.of(context).maybePop(),
+                        ),
+                        const SizedBox(width: 4),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Lock in Escrow',
+                                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.slate900),
+                              ),
+                              Text(
+                                'EzzyGo 100% Protected Payment',
+                                style: TextStyle(fontSize: 12, color: AppTheme.slate500, fontWeight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppTheme.emeraldLight,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(LucideIcons.shieldCheck, size: 14, color: AppTheme.emerald),
+                              SizedBox(width: 4),
+                              Text(
+                                'Escrow Protected',
+                                style: TextStyle(color: AppTheme.emerald, fontSize: 11, fontWeight: FontWeight.w800),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const Divider(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Agreed Bid Amount', style: TextStyle(color: AppTheme.slate600, fontSize: 13)),
-                      Text('₹${b.bidAmount}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('EzzyGo Escrow & Guarantee (10%)', style: TextStyle(color: AppTheme.slate600, fontSize: 13)),
-                      Text('₹${b.platformFee}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                    ],
-                  ),
-                  const Divider(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Total to Deposit in Escrow', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
-                      Text(
-                        '₹${b.totalPaid}',
-                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: AppTheme.primary),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Escrow Guarantee Notice
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppTheme.amberLight,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.amber.withValues(alpha: 0.3)),
-              ),
-              child: const Row(
-                children: [
-                  Icon(LucideIcons.lock, size: 18, color: AppTheme.amber),
-                  SizedBox(width: 8),
                   Expanded(
-                    child: Text(
-                      'Your money is held in escrow and ONLY released after you confirm the event is complete.',
-                      style: TextStyle(color: AppTheme.slate800, fontSize: 11, fontWeight: FontWeight.w600, height: 1.3),
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: AppTheme.slate50,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppTheme.slate200),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                b.requirementTitle,
+                                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: AppTheme.slate900),
+                              ),
+                              const SizedBox(height: 4),
+                              const Text(
+                                'Vendor details unlock after this payment succeeds.',
+                                style: TextStyle(color: AppTheme.slate600, fontSize: 12),
+                              ),
+                              const Divider(height: 16),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text('Agreed Bid Amount', style: TextStyle(color: AppTheme.slate600, fontSize: 13)),
+                                  Text('₹${b.bidAmount}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text('EzzyGo Escrow & Guarantee (10%)', style: TextStyle(color: AppTheme.slate600, fontSize: 13)),
+                                  Text('₹${b.platformFee}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                                ],
+                              ),
+                              const Divider(height: 16),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text('Total to Deposit in Escrow', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                                  Text(
+                                    '₹${b.totalPaid}',
+                                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: AppTheme.primary),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppTheme.amberLight,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppTheme.amber.withValues(alpha: 0.3)),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(LucideIcons.lock, size: 18, color: AppTheme.amber),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Your money is held in escrow and ONLY released after you confirm the event is complete.',
+                                  style: TextStyle(color: AppTheme.slate800, fontSize: 11, fontWeight: FontWeight.w600, height: 1.3),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text('Choose Payment Method', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryLight,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text(
+                            'Demo payment is on. Escrow confirms instantly. Live UPI/card starts after Razorpay live keys.',
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.slate800, height: 1.35),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        _buildPaymentOption(
+                          id: 'upi',
+                          title: 'UPI (Demo)',
+                          subtitle: 'Confirms escrow now. Live GPay/PhonePe after live keys.',
+                          icon: LucideIcons.smartphone,
+                        ),
+                        const SizedBox(height: 8),
+                        _buildPaymentOption(
+                          id: 'card',
+                          title: 'Card (Demo)',
+                          subtitle: 'Confirms escrow now. Live cards after live keys.',
+                          icon: LucideIcons.creditCard,
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                    child: ElevatedButton(
+                      onPressed: _isProcessing ? null : _processPayment,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size.fromHeight(50),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                      child: _isProcessing
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            )
+                          : Text(
+                              'Confirm demo payment · ₹${b.totalPaid}',
+                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
+                            ),
                     ),
                   ),
                 ],
               ),
             ),
-
-            const SizedBox(height: 16),
-
-            const Text('Choose Payment Method', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
-            const SizedBox(height: 10),
-
-            // Payment Options
-            _buildPaymentOption(
-              id: 'upi',
-              title: 'UPI (Google Pay / PhonePe / Paytm)',
-              subtitle: 'Instant authorization & instant vendor reveal',
-              icon: LucideIcons.smartphone,
-            ),
-            const SizedBox(height: 8),
-            _buildPaymentOption(
-              id: 'card',
-              title: 'Credit / Debit Card',
-              subtitle: 'Visa, MasterCard, RuPay',
-              icon: LucideIcons.creditCard,
-            ),
-
-            const SizedBox(height: 20),
-
-            ElevatedButton(
-              onPressed: _isProcessing ? null : _processPayment,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                foregroundColor: Colors.white,
-                minimumSize: const Size.fromHeight(50),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              ),
-              child: _isProcessing
-                  ? const SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                    )
-                  : Text(
-                      'Authorize & Lock ₹${b.totalPaid} in Escrow',
-                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
-                    ),
-            ),
-          ],
+          ),
         ),
       ),
     );

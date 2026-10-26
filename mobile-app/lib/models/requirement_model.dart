@@ -80,7 +80,7 @@ class RequirementModel {
           : (requester ?? '').toString(),
       title: json['title'] ?? 'Event Requirement',
       category: json['category'] ?? 'Event Services',
-      occasion: json['occasion'],
+      occasion: (json['occasion'] ?? json['eventType'])?.toString(),
       description: json['description'] ?? '',
       budget: budgetVal,
       maxAcceptableBid: maxBid,
@@ -150,6 +150,18 @@ class RequirementModel {
   }
 
   bool get isOpen => status.toUpperCase() == 'OPEN';
+
+  bool get hasBids => liveBidsCount > 0;
+
+  bool get isBooked {
+    final s = status.toUpperCase();
+    return s == 'ACCEPTED' || s == 'ACTIVE' || s == 'BOOKED';
+  }
+
+  bool get isClosed {
+    final s = status.toUpperCase();
+    return s == 'COMPLETED' || s == 'EXPIRED' || s == 'CANCELLED';
+  }
 
   String get coverAsset {
     final key = '${occasion ?? ''} $category $title'.toLowerCase();

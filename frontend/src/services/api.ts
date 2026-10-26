@@ -19,6 +19,24 @@ export interface DemoAccount {
   password: string;
 }
 
+export interface PaymentHistoryItem {
+  _id: string;
+  type: string;
+  label: string;
+  amount: number;
+  status: string;
+  referenceId: string;
+  method: string;
+  createdAt: string;
+  bookingId: string;
+  bookingStatus: string;
+  eventTitle: string;
+  eventDate: string;
+  category: string;
+  vendorName: string;
+  escrowStatus: string;
+}
+
 export interface AppNotification {
   _id: string;
   title: string;
@@ -266,6 +284,10 @@ export const api = {
 
   payBooking(bookingId: string, paymentMethod: string): Promise<Booking> {
     return unwrap(request('/bookings/pay', jsonBody('POST', { bookingId, paymentMethod }), 'Payment processing failed'));
+  },
+
+  getPaymentHistory(): Promise<PaymentHistoryItem[]> {
+    return unwrap(request('/payments/history', {}, 'Could not load payment history'));
   },
 
   cancelBooking(bookingId: string, reason?: string): Promise<{ message: string; data: Booking }> {

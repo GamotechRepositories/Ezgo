@@ -6,7 +6,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import morgan from 'morgan';
 import connectDB from './config/db.js';
-import { seedDatabase } from './config/seedData.js';
+import { seedDatabase, ensureOpenMarketplaceLeads } from './config/seedData.js';
 import { ensureDemoPasswords, ensurePortalLogins } from './config/demoPasswords.js';
 import { requireAuth } from './middlewares/auth.js';
 import { initSocket } from './services/socketService.js';
@@ -34,6 +34,7 @@ connectDB().then(async () => {
   await seedDatabase();
   await ensureDemoPasswords();
   await ensurePortalLogins();
+  await ensureOpenMarketplaceLeads();
 });
 
 const app = express();

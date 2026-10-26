@@ -36,6 +36,28 @@ class BidModel {
   String get vendorName => businessName.isNotEmpty ? businessName : providerName;
   double get rating => providerRating;
   int get completedJobsCount => completedJobs;
+  bool get isAccepted => status.toUpperCase() == 'ACCEPTED';
+  bool get isRejected => status.toUpperCase() == 'REJECTED';
+
+  BidModel copyWith({String? status}) {
+    return BidModel(
+      id: id,
+      requirementId: requirementId,
+      providerId: providerId,
+      providerName: providerName,
+      businessName: businessName,
+      providerPhone: providerPhone,
+      providerRating: providerRating,
+      completedJobs: completedJobs,
+      isVerified: isVerified,
+      amount: amount,
+      proposalNotes: proposalNotes,
+      equipmentDetails: equipmentDetails,
+      discountPercent: discountPercent,
+      isEligibleForAccept: isEligibleForAccept,
+      status: status ?? this.status,
+    );
+  }
   List<String> get deliverables {
     if (proposalNotes.isNotEmpty) {
       return proposalNotes.split(';').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
@@ -64,7 +86,10 @@ class BidModel {
       requirementId: json['requirementId'] is Map
           ? (json['requirementId']['_id'] ?? '')
           : (json['requirementId'] ?? ''),
-      providerId: provider['_id'] ?? provider['id'] ?? '',
+      providerId: (provider['_id'] ??
+              provider['id'] ??
+              (json['providerId'] is Map ? '' : json['providerId'] ?? ''))
+          .toString(),
       providerName: provider['name'] ?? 'Verified Vendor',
       businessName: provider['businessName'] ?? provider['name'] ?? 'Professional Crew',
       providerPhone: provider['phone'] ?? '',

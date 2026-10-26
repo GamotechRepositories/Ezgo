@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:intl/intl.dart';
@@ -41,6 +42,7 @@ class _PostRequirementScreenState extends State<PostRequirementScreen> {
   final _areaController = TextEditingController(text: 'Baner');
   final _titleController = TextEditingController();
   final _notesController = TextEditingController();
+  final _customServiceController = TextEditingController();
   int _guestCount = 200;
 
   // Step 2: Selected Services
@@ -56,6 +58,7 @@ class _PostRequirementScreenState extends State<PostRequirementScreen> {
     {'name': 'Corporate', 'asset': 'assets/images/occasion_corporate.jpg'},
     {'name': 'Private Parties', 'asset': 'assets/images/occasion_parties.jpg'},
     {'name': 'Engagement', 'asset': 'assets/images/occasion_parties.jpg'},
+    {'name': 'Other', 'asset': null},
   ];
 
   List<Map<String, dynamic>> get _allServices => EventServices.all
@@ -89,7 +92,9 @@ class _PostRequirementScreenState extends State<PostRequirementScreen> {
         : 'Pune';
 
     _budgetController = TextEditingController(
-      text: widget.initialBudget != null ? widget.initialBudget.toString() : '500000',
+      text: widget.initialBudget != null && widget.initialBudget! > 0
+          ? widget.initialBudget.toString()
+          : '25000',
     );
     if (widget.initialGuests != null) {
       _guestCount = widget.initialGuests!;
@@ -105,7 +110,11 @@ class _PostRequirementScreenState extends State<PostRequirementScreen> {
       }
     }
     if (widget.initialCategory != null) {
-      _selectedServices.add(EventServices.matchTitle(widget.initialCategory));
+      final matched = EventServices.matchTitle(widget.initialCategory);
+      _selectedServices.add(matched);
+      if (matched == 'Other') {
+        _customServiceController.text = '';
+      }
       _currentStep = 2;
     } else {
       _selectedServices.addAll(['Catering', 'Photography', 'Decoration']);
@@ -117,27 +126,22 @@ class _PostRequirementScreenState extends State<PostRequirementScreen> {
     _areaController.dispose();
     _titleController.dispose();
     _notesController.dispose();
+    _customServiceController.dispose();
     _budgetController.dispose();
     super.dispose();
   }
 
-  int get _budget => int.tryParse(_budgetController.text) ?? 500000;
-  int get _ceiling => (_budget * 0.85).round();
-
-  int _estimateFor(String title) {
-    final t = title.toLowerCase();
-    if (t.contains('cater')) return 300 * _guestCount;
-    if (t.contains('decor')) return 25000;
-    if (t.contains('photo')) return 15000;
-    if (t.contains('dj') || t.contains('sound') || t.contains('music')) return 12000;
-    if (t.contains('makeup')) return 8000;
-    if (t.contains('pandit') || t.contains('priest') || t.contains('mehendi')) return 5000;
-    if (t.contains('light')) return 8000;
-    if (t.contains('tent') || t.contains('venue') || t.contains('stage')) return 15000;
-    return 10000;
+  List<String> get _resolvedServices {
+    return _selectedServices.map((title) {
+      if (title != 'Other') return title;
+      final custom = _customServiceController.text.trim();
+      return custom.isEmpty ? 'Other' : custom;
+    }).toList();
   }
 
-  int get _retailTotal => _selectedServices.fold(0, (sum, title) => sum + _estimateFor(title));
+  int get _budget => int.tryParse(_budgetController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+  int get _ceiling => (_budget * 0.85).floor();
+  int get _minSavings => _budget > 0 ? _budget - _ceiling : 0;
 
   void _onQuickBudgetSelect(int amount) {
     setState(() {
@@ -193,12 +197,47 @@ class _PostRequirementScreenState extends State<PostRequirementScreen> {
 
   bool _isSubmitting = false;
 
+  void _goNext() {
+    if (_currentStep == 2 &&
+        _selectedServices.contains('Other') &&
+        _customServiceController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tell us which other service you need.'),
+          backgroundColor: AppTheme.rose,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    if (_currentStep == 3 && _titleController.text.trim().isEmpty) {
+      _titleController.text =
+          '$_selectedOccasion · ${_resolvedServices.join(", ")} ($_guestCount Guests in $_city)';
+    }
+    if (_currentStep == 4 && _budget < 1000) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Set your maximum budget. Minimum is ₹1,000.'),
+          backgroundColor: AppTheme.rose,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    if (_currentStep < 4) {
+      setState(() => _currentStep++);
+    } else {
+      _handleSubmit();
+    }
+  }
+
   Future<void> _handleSubmit() async {
     if (_isSubmitting) return;
+    final services = _resolvedServices;
     final title = _titleController.text.trim().isNotEmpty
         ? _titleController.text.trim()
-        : '$_selectedOccasion Celebration (${_selectedServices.join(", ")})';
-    final primaryCategory = _selectedServices.isNotEmpty ? _selectedServices.first : 'Event Management';
+        : '$_selectedOccasion Celebration (${services.join(", ")})';
+    final primaryCategory = services.isNotEmpty ? services.first : 'Event Management';
     final area = _areaController.text.trim().isNotEmpty ? _areaController.text.trim() : 'City Center';
     final budget = _budget < 1000 ? 1000 : _budget;
 
@@ -209,7 +248,7 @@ class _PostRequirementScreenState extends State<PostRequirementScreen> {
       occasion: _selectedOccasion,
       description: _notesController.text.trim().isNotEmpty
           ? _notesController.text.trim()
-          : 'Requirement for $_selectedOccasion with ${_selectedServices.join(", ")} for $_guestCount guests in $area, $_city.',
+          : 'Requirement for $_selectedOccasion with ${services.join(", ")} for $_guestCount guests in $area, $_city.',
       budget: budget,
       maxAcceptableBid: (budget * 0.85).floor(),
       bidsCount: 0,
@@ -225,7 +264,7 @@ class _PostRequirementScreenState extends State<PostRequirementScreen> {
     try {
       await context.read<RequirementsProvider>().addRequirement(req);
       if (!mounted) return;
-      Navigator.of(context).pop();
+      Navigator.of(context).pop(true);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Event posted. Verified vendors can now bid lower.'),
@@ -280,7 +319,7 @@ class _PostRequirementScreenState extends State<PostRequirementScreen> {
               child: Row(
                 children: List.generate(4, (i) {
                   final step = i + 1;
-                  final labels = ['Occasion', 'Services', 'Details', 'Review'];
+                  final labels = ['Occasion', 'Services', 'Details', 'Budget'];
                   final active = _currentStep == step;
                   final done = _currentStep > step;
                   return Expanded(
@@ -352,13 +391,14 @@ class _PostRequirementScreenState extends State<PostRequirementScreen> {
           itemBuilder: (context, index) {
             final occ = _occasions[index];
             final name = occ['name'] as String;
+            final asset = occ['asset'] as String?;
             final isSelected = _selectedOccasion == name;
             return InkWell(
               onTap: () => setState(() => _selectedOccasion = name),
               borderRadius: BorderRadius.circular(18),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: name == 'Other' ? const Color(0xFFFFF6F1) : Colors.white,
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(color: isSelected ? AppTheme.primary : AppTheme.borderSubtle, width: isSelected ? 2 : 1),
                 ),
@@ -369,7 +409,14 @@ class _PostRequirementScreenState extends State<PostRequirementScreen> {
                         Expanded(
                           child: ClipRRect(
                             borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                            child: Image.asset(occ['asset'] as String, width: double.infinity, fit: BoxFit.cover),
+                            child: asset == null
+                                ? const ColoredBox(
+                                    color: Color(0xFFFFF1EA),
+                                    child: Center(
+                                      child: Icon(LucideIcons.plus, size: 32, color: AppTheme.primary),
+                                    ),
+                                  )
+                                : Image.asset(asset, width: double.infinity, fit: BoxFit.cover),
                           ),
                         ),
                         Padding(
@@ -525,7 +572,106 @@ class _PostRequirementScreenState extends State<PostRequirementScreen> {
             ),
           );
         }),
+
+        _buildOtherServiceTile(),
+        if (_selectedServices.contains('Other')) ...[
+          const SizedBox(height: 4),
+          TextField(
+            controller: _customServiceController,
+            textCapitalization: TextCapitalization.words,
+            onChanged: (_) => setState(() {}),
+            decoration: const InputDecoration(
+              hintText: 'e.g. Choreographer, Valet, Generator, Hostess',
+              labelText: 'Which other service do you need?',
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Vendors in your city will bid on this request.',
+            style: TextStyle(fontSize: 12, color: AppTheme.textSecondary, height: 1.35),
+          ),
+        ],
       ],
+    );
+  }
+
+  Widget _buildOtherServiceTile() {
+    const title = 'Other';
+    final isSelected = _selectedServices.contains(title);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            if (isSelected) {
+              if (_selectedServices.length > 1) {
+                _selectedServices.remove(title);
+              }
+            } else {
+              _selectedServices.add(title);
+            }
+          });
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFFFFF6F1) : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isSelected ? AppTheme.primary : AppTheme.borderSubtle,
+              width: isSelected ? 1.5 : 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF1EA),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(LucideIcons.plus, size: 22, color: AppTheme.primary),
+              ),
+              const SizedBox(width: 14),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Other Services',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 3),
+                    Text(
+                      'Request any service not listed',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: isSelected ? AppTheme.primary : Colors.white,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: isSelected ? AppTheme.primary : AppTheme.slate300),
+                ),
+                child: isSelected ? const Icon(Icons.check, size: 16, color: Colors.white) : null,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -611,23 +757,175 @@ class _PostRequirementScreenState extends State<PostRequirementScreen> {
 
   Widget _buildStep3Budget() {
     final formatCurrency = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
-    final savings = (_retailTotal * 0.15).round();
-    final target = _retailTotal - savings;
+    const quickAmounts = [10000, 25000, 50000, 100000, 200000];
 
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        Text('Review Your Event Plan', style: AppTheme.headingFont(fontSize: 22, fontWeight: FontWeight.w800)),
+        Text('What is your maximum budget?', style: AppTheme.headingFont(fontSize: 22, fontWeight: FontWeight.w800)),
+        const SizedBox(height: 6),
+        const Text(
+          'You set the price. Vendors can only bid at least 15% below this ceiling.',
+          style: TextStyle(color: AppTheme.textSecondary, fontSize: 13, height: 1.35),
+        ),
         const SizedBox(height: 16),
         Container(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFF7ED),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFFBBF24), width: 1.4),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppTheme.primary, width: 1.6),
+                ),
+                child: Row(
+                  children: [
+                    const Text(
+                      '₹',
+                      style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: AppTheme.primary),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        controller: _budgetController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(8),
+                        ],
+                        onChanged: (_) => setState(() {}),
+                        style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w900,
+                          color: AppTheme.textPrimary,
+                        ),
+                        decoration: const InputDecoration(
+                          hintText: 'Enter budget',
+                          hintStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.slate400),
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          isDense: true,
+                          contentPadding: EdgeInsets.symmetric(vertical: 10),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: quickAmounts.map((amount) {
+                  final selected = _budget == amount;
+                  return GestureDetector(
+                    onTap: () => _onQuickBudgetSelect(amount),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: selected ? AppTheme.primary : Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: selected ? AppTheme.primary : AppTheme.borderSubtle),
+                      ),
+                      child: Text(
+                        formatCurrency.format(amount),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: selected ? Colors.white : AppTheme.textPrimary,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFFDE68A)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Max winning bid',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.slate500),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _budget >= 1000 ? formatCurrency.format(_ceiling) : '—',
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppTheme.textPrimary),
+                          ),
+                          const Text(
+                            '85% ceiling',
+                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppTheme.slate500),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppTheme.emerald,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Min 15% savings',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white70),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _budget >= 1000 ? '≥ ${formatCurrency.format(_minSavings)}' : '—',
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white),
+                          ),
+                          const Text(
+                            'Before 10% fee',
+                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white70),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        Container(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.borderSubtle)),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppTheme.borderSubtle),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  const Expanded(child: Text('Selected Services', style: TextStyle(fontWeight: FontWeight.w800))),
+                  const Expanded(child: Text('Summary before posting', style: TextStyle(fontWeight: FontWeight.w800))),
                   GestureDetector(
                     onTap: () => setState(() => _currentStep = 2),
                     child: const Text('Edit', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w700)),
@@ -635,57 +933,22 @@ class _PostRequirementScreenState extends State<PostRequirementScreen> {
                 ],
               ),
               const SizedBox(height: 10),
-              ..._selectedServices.map((title) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      children: [
-                        Expanded(child: Text(title, style: const TextStyle(fontWeight: FontWeight.w600))),
-                        Text(formatCurrency.format(_estimateFor(title)), style: const TextStyle(fontWeight: FontWeight.w800)),
-                      ],
-                    ),
-                  )),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.borderSubtle)),
-          child: Column(
-            children: [
+              Text(
+                _resolvedServices.join(', '),
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, height: 1.35),
+              ),
+              const SizedBox(height: 8),
               _reviewRow(LucideIcons.heart, 'Occasion', _selectedOccasion),
               _reviewRow(LucideIcons.users, 'Guest Count', '$_guestCount Guests'),
               _reviewRow(LucideIcons.calendar, 'Event Date', DateFormat('dd MMM yyyy').format(_eventDate)),
-              _reviewRow(LucideIcons.mapPin, 'Location', '$_city, Maharashtra'),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.borderSubtle)),
-          child: Column(
-            children: [
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                const Text('Estimated Total', style: TextStyle(fontWeight: FontWeight.w700)),
-                Text(formatCurrency.format(_retailTotal), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
-              ]),
-              const SizedBox(height: 8),
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                const Text('Potential Savings', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF18794E))),
-                Text(formatCurrency.format(savings), style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF18794E))),
-              ]),
-              const Divider(height: 20),
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                const Text('Estimated Price', style: TextStyle(fontWeight: FontWeight.w800)),
-                Text(formatCurrency.format(target), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 20, color: AppTheme.primary)),
-              ]),
+              _reviewRow(LucideIcons.mapPin, 'Location', '$_city'),
+              _reviewRow(LucideIcons.banknote, 'Your ceiling', _budget >= 1000 ? formatCurrency.format(_budget) : 'Set a budget'),
             ],
           ),
         ),
         const SizedBox(height: 8),
         const Text(
-          'Savings shown are the 15% minimum from reverse-bidding rules. Final payable is the accepted bid plus a 10% fee.',
+          'A vendor wins only with a bid 15% or more below your budget. You pay the accepted bid plus a 10% fee, held in escrow until the event is done.',
           style: TextStyle(fontSize: 11, color: AppTheme.textSecondary, height: 1.35),
         ),
       ],
@@ -775,20 +1038,7 @@ class _PostRequirementScreenState extends State<PostRequirementScreen> {
                 child: SizedBox(
                   height: 48,
                   child: ElevatedButton(
-                onPressed: _isSubmitting
-                    ? null
-                    : () {
-                  if (_currentStep == 3 && _titleController.text.trim().isEmpty) {
-                    _titleController.text =
-                        '$_selectedOccasion · ${_selectedServices.join(", ")} ($_guestCount Guests in $_city)';
-                    _budgetController.text = '$_retailTotal';
-                  }
-                  if (_currentStep < 4) {
-                    setState(() => _currentStep++);
-                  } else {
-                    _handleSubmit();
-                  }
-                },
+                onPressed: _isSubmitting ? null : _goNext,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primary,
                   foregroundColor: Colors.white,
@@ -814,7 +1064,7 @@ class _PostRequirementScreenState extends State<PostRequirementScreen> {
                             : _currentStep == 2
                                 ? 'Next: Event Details'
                                 : _currentStep == 3
-                                    ? 'Next: Review'
+                                    ? 'Next: Set Budget'
                                     : 'Request Vendor Bids',
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),

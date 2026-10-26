@@ -12,6 +12,7 @@ import '../utils/app_nav.dart';
 import '../widgets/rule_explainer_sheet.dart';
 import '../widgets/shell_bottom_insets.dart';
 import '../widgets/tab_scroll_registry.dart';
+import 'host/payment_history_screen.dart';
 import 'role_selection_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -169,8 +170,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _MenuRow(LucideIcons.userRoundPen, 'Edit profile', 'Name, email, city and photo', () => _openEditSheet()),
             _MenuRow(LucideIcons.calendar, 'My events', 'See posted events and vendor bids', () => widget.onNavigateToEvents?.call()),
             _MenuRow(LucideIcons.shieldCheck, 'My bookings', 'Pay, track and complete bookings', () => widget.onNavigateToBookings?.call()),
+            _MenuRow(LucideIcons.creditCard, 'Payment history', 'Escrow payments, refunds and receipts', () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const PaymentHistoryScreen()),
+              );
+            }),
             _MenuRow(LucideIcons.circleHelp, 'How EzzyGo works', '15% bids, 10% fee, escrow until event done', () {
-              showModalBottomSheet(
+              showAppBottomSheet(
                 context: context,
                 isScrollControlled: true,
                 backgroundColor: Colors.transparent,
@@ -316,7 +322,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _openEditSheet() async {
     final auth = context.read<AuthProvider>();
     final reqs = context.read<RequirementsProvider>();
-    await showModalBottomSheet(
+    await showAppBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -329,7 +335,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _openHelpSheet() {
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),

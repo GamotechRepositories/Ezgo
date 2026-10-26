@@ -45,20 +45,11 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
   const vendorCity = rawServiceArea ? rawServiceArea.split(',')[0].trim() : '';
 
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
-  const [selectedCity, setSelectedCity] = useState<string>(vendorCity || 'ALL');
+  const [selectedCity, setSelectedCity] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('EVENT_DATE_ASC');
-  const [activeFilterTab, setActiveFilterTab] = useState<'ALL' | 'MY_CITY' | 'MY_BIDS' | 'OUTBID'>(
-    vendorCity ? 'MY_CITY' : 'ALL'
-  );
+  const [activeFilterTab, setActiveFilterTab] = useState<'ALL' | 'MY_CITY' | 'MY_BIDS' | 'OUTBID'>('ALL');
   const [showHowItWorks, setShowHowItWorks] = useState(false);
-
-  React.useEffect(() => {
-    if (vendorCity) {
-      setSelectedCity(vendorCity);
-      setActiveFilterTab('MY_CITY');
-    }
-  }, [vendorCity]);
 
   // Helper to normalize city names (handles Bangalore/Bengaluru, Delhi/NCR, case differences)
   const normalizeCity = (c?: string) => {
@@ -68,6 +59,24 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
     if (s.includes('delhi') || s.includes('ncr')) return 'delhi';
     return s.split(' ')[0].replace(/[^a-z]/g, '');
   };
+
+  const didAutoCity = React.useRef(false);
+  React.useEffect(() => {
+    if (didAutoCity.current || !vendorCity) return;
+    const open = requirements.filter((r) => r.status === 'OPEN');
+    const local = open.filter(
+      (r) => normalizeCity(r.location?.city) === normalizeCity(vendorCity)
+    );
+    if (local.length > 0) {
+      setSelectedCity(vendorCity);
+      setActiveFilterTab('MY_CITY');
+      didAutoCity.current = true;
+    } else if (open.length > 0) {
+      setSelectedCity('ALL');
+      setActiveFilterTab('ALL');
+      didAutoCity.current = true;
+    }
+  }, [vendorCity, requirements]);
 
   const canonicalCityName = (c: string) => {
     const norm = normalizeCity(c);
@@ -363,60 +372,57 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
           )}
         </div>
 
-        {/* Search & City Filter Bar */}
-        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-          <div className="relative flex-1 max-w-lg">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by event title, area, city, occasion or equipment..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-full bg-white border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-hidden focus:border-orange-500 shadow-2xs"
-            />
-          </div>
-
-          {/* Operating City Pills */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
-            <span className="text-slate-500 font-bold flex items-center gap-1 shrink-0 mr-1">
-              <MapPin className="w-3.5 h-3.5 text-orange-500" />
-              <span>City:</span>
-            </span>
-            {cities.map((c) => {
-              const isMatch = selectedCity === c;
-              const isVendorCity = vendorCity && c.toLowerCase().includes(vendorCity.toLowerCase());
-              return (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => {
-                    setSelectedCity(c);
-                    if (c === vendorCity) {
-                      setActiveFilterTab('MY_CITY');
-                    } else if (c === 'ALL') {
-                      setActiveFilterTab('ALL');
-                    }
-                  }}
-                  className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition cursor-pointer flex items-center gap-1 active:scale-95 ${
-                    isMatch
-                      ? 'bg-orange-500 text-white shadow-xs'
-                      : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200'
-                  }`}
-                >
-                  <span>{c === 'ALL' ? 'All Cities' : c}</span>
-                  {isVendorCity && c !== 'ALL' && (
-                    <span className={`text-[10px] px-1 py-0.2 rounded-full font-bold uppercase ${isMatch ? 'bg-white/20 text-white' : 'bg-orange-100 text-orange-700'}`}>
-                      My City
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+        <div className="relative w-full">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by event title, area, city or occasion"
+            className="w-full pl-10 pr-4 py-2.5 rounded-full bg-white border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-hidden focus:border-orange-500 shadow-2xs"
+          />
         </div>
 
-        {/* Categories Pills (scoped to selected city!) */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs min-w-0">
+          <span className="text-slate-500 font-bold flex items-center gap-1 shrink-0 mr-1">
+            <MapPin className="w-3.5 h-3.5 text-orange-500" />
+            <span>City:</span>
+          </span>
+          {cities.map((c) => {
+            const isMatch = selectedCity === c || (c !== 'ALL' && normalizeCity(c) === normalizeCity(selectedCity));
+            const isVendorCity = vendorCity && c !== 'ALL' && normalizeCity(c) === normalizeCity(vendorCity);
+            return (
+              <button
+                key={c}
+                type="button"
+                onClick={() => {
+                  setSelectedCity(c);
+                  if (isVendorCity) {
+                    setActiveFilterTab('MY_CITY');
+                  } else if (c === 'ALL') {
+                    setActiveFilterTab('ALL');
+                  } else if (activeFilterTab === 'MY_CITY') {
+                    setActiveFilterTab('ALL');
+                  }
+                }}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition cursor-pointer flex items-center gap-1 shrink-0 active:scale-95 ${
+                  isMatch
+                    ? 'bg-orange-500 text-white shadow-xs'
+                    : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200'
+                }`}
+              >
+                <span>{c === 'ALL' ? 'All Cities' : c}</span>
+                {isVendorCity && (
+                  <span className={`text-[10px] px-1 py-0.2 rounded-full font-bold uppercase ${isMatch ? 'bg-white/20 text-white' : 'bg-orange-100 text-orange-700'}`}>
+                    My City
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none min-w-0">
           {categories.map((cat) => {
             const count = cat === 'ALL' ? scopedCityReqs.length : scopedCityReqs.filter((r) => r.category === cat).length;
             return (

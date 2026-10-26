@@ -12,6 +12,24 @@ export interface DemoAccount {
   password: string;
 }
 
+export interface PaymentHistoryItem {
+  _id: string;
+  type: string;
+  label: string;
+  amount: number;
+  status: string;
+  referenceId: string;
+  method: string;
+  createdAt: string;
+  bookingId: string;
+  bookingStatus: string;
+  eventTitle: string;
+  eventDate: string;
+  category: string;
+  vendorName: string;
+  escrowStatus: string;
+}
+
 export interface AppNotification {
   _id: string;
   title: string;
@@ -235,6 +253,10 @@ export const api = {
 
   getMyBookings(vendorId: string): Promise<Booking[]> {
     return request<Booking[]>(`/bookings/provider/${vendorId}`, {}, 'Could not load your orders');
+  },
+
+  getPaymentHistory(): Promise<PaymentHistoryItem[]> {
+    return request<PaymentHistoryItem[]>('/payments/history', {}, 'Could not load payment history');
   },
 
   raiseDispute(bookingId: string, reason: string): Promise<{ message: string; data: Booking }> {

@@ -7,7 +7,10 @@ import 'providers/auth_provider.dart';
 import 'providers/requirements_provider.dart';
 import 'providers/bookings_provider.dart';
 import 'providers/banners_provider.dart';
+import 'providers/notifications_provider.dart';
+import 'providers/payments_provider.dart';
 import 'screens/splash_screen.dart';
+import 'widgets/live_updates_binder.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,12 +40,16 @@ class EzzyGoApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => RequirementsProvider()),
         ChangeNotifierProvider(create: (_) => BookingsProvider()),
         ChangeNotifierProvider(create: (_) => BannersProvider()),
+        ChangeNotifierProvider(create: (_) => NotificationsProvider()),
+        ChangeNotifierProvider(create: (_) => PaymentsProvider()),
       ],
       child: MaterialApp(
         title: 'EzzyGo',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
-        builder: (context, child) => _TopSafeView(child: child ?? const SizedBox.shrink()),
+        builder: (context, child) => LiveUpdatesBinder(
+          child: _TopSafeView(child: child ?? const SizedBox.shrink()),
+        ),
         home: const SplashScreen(),
       ),
     );

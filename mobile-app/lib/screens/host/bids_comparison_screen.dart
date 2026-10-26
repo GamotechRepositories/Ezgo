@@ -4,7 +4,9 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:intl/intl.dart';
 import '../../config/theme.dart';
 import '../../models/bid_model.dart';
+import '../../models/booking_model.dart';
 import '../../models/requirement_model.dart';
+import '../../providers/bookings_provider.dart';
 import '../../providers/requirements_provider.dart';
 import 'booking_detail_screen.dart';
 import 'escrow_payment_sheet.dart';
@@ -36,6 +38,10 @@ class _BidsComparisonScreenState extends State<BidsComparisonScreen> {
     });
   }
 
+  Future<void> _openPay(BookingModel booking) async {
+    await showEscrowPaymentSheet(context: context, booking: booking);
+  }
+
   Future<void> _onAcceptBid(RequirementModel req, BidModel bid) async {
     if (_accepting) return;
     setState(() => _accepting = true);
@@ -45,6 +51,7 @@ class _BidsComparisonScreenState extends State<BidsComparisonScreen> {
         requirement: req,
         bid: bid,
         onPaid: (booking) {
+          if (!booking.isEscrowPaid) return;
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) => BookingDetailScreen(booking: booking),
@@ -61,6 +68,14 @@ class _BidsComparisonScreenState extends State<BidsComparisonScreen> {
   Widget build(BuildContext context) {
     final live = context.watch<RequirementsProvider>().allRequirements.where((r) => r.id == widget.requirement.id);
     final req = live.isNotEmpty ? live.first : widget.requirement;
+    final bookings = context.watch<BookingsProvider>().bookings;
+    BookingModel? booking;
+    for (final b in bookings) {
+      if (b.requirementId == req.id && b.status != 'CANCELLED') {
+        booking = b;
+        break;
+      }
+    }
     final bids = List<BidModel>.from(req.bids);
     if (_selectedTab == 1) {
       bids.sort((a, b) => a.amount.compareTo(b.amount));
@@ -96,9 +111,13 @@ class _BidsComparisonScreenState extends State<BidsComparisonScreen> {
               borderRadius: BorderRadius.circular(16),
             ),
             child: Text(
-              bids.isEmpty
-                  ? 'Waiting for vendor bids.\nVerified vendors in ${req.city} can send prices below your ₹${req.maxAcceptableBid} ceiling.'
-                  : '${bids.length} vendor${bids.length == 1 ? '' : 's'} have submitted bids. Accept only bids at least 15% below budget.',
+              req.isBooked
+                  ? (booking?.status == 'AWAITING_PAYMENT'
+                      ? 'Vendor selected. Pay now to lock ${booking?.vendorName ?? 'this vendor'} in escrow.'
+                      : 'This event is booked with ${booking?.vendorName ?? 'your selected vendor'}.')
+                  : bids.isEmpty
+                      ? 'Waiting for vendor bids.\nVerified vendors in ${req.city} can send prices below your ₹${req.maxAcceptableBid} ceiling.'
+                      : '${bids.length} vendor${bids.length == 1 ? '' : 's'} have submitted bids. Accept only bids at least 15% below budget.',
               style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, height: 1.35, color: AppTheme.textPrimary),
             ),
           ),
@@ -118,11 +137,17 @@ class _BidsComparisonScreenState extends State<BidsComparisonScreen> {
 
           const SizedBox(height: 10),
 
-          // Content
           Expanded(
-            child: bids.isEmpty
-                ? _buildEmptyBids()
-                : _buildBidsList(bids, req),
+            child: RefreshIndicator(
+              color: AppTheme.primary,
+              onRefresh: () async {
+                final reqs = context.read<RequirementsProvider>();
+                final books = context.read<BookingsProvider>();
+                await reqs.fetchRequirement(widget.requirement.id);
+                await books.loadData();
+              },
+              child: bids.isEmpty ? _buildEmptyBids() : _buildBidsList(bids, req, booking),
+            ),
           ),
         ],
       ),
@@ -152,8 +177,9 @@ class _BidsComparisonScreenState extends State<BidsComparisonScreen> {
     );
   }
 
-  Widget _buildBidsList(List<BidModel> bids, RequirementModel req) {
+  Widget _buildBidsList(List<BidModel> bids, RequirementModel req, BookingModel? booking) {
     return ListView.separated(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.fromLTRB(16, 10, 16, ShellBottomInsets.of(context)),
       itemCount: bids.length,
       separatorBuilder: (_, _) => const SizedBox(height: 12),
@@ -164,12 +190,22 @@ class _BidsComparisonScreenState extends State<BidsComparisonScreen> {
             ? bid.discountPercent.round()
             : (((benchmarkBudget - bid.amount) / benchmarkBudget) * 100).round();
 
+        final thisAccepted = bid.isAccepted ||
+            (booking != null &&
+                ((booking.bidId.isNotEmpty && booking.bidId == bid.id) ||
+                    (booking.vendorName.isNotEmpty && booking.vendorName == bid.vendorName)));
+        final otherChosen = req.isBooked && !thisAccepted;
+        final awaitingPay = thisAccepted && (booking == null || booking.isAwaitingPayment);
+
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppTheme.borderSubtle),
+            border: Border.all(
+              color: thisAccepted ? AppTheme.emerald : AppTheme.borderSubtle,
+              width: thisAccepted ? 1.6 : 1,
+            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.03),
@@ -334,12 +370,20 @@ class _BidsComparisonScreenState extends State<BidsComparisonScreen> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: !_accepting && (bid.isEligibleForAccept || bid.amount <= req.maxAcceptableBid)
-                          ? () => _onAcceptBid(req, bid)
-                          : null,
+                      onPressed: thisAccepted
+                          ? (awaitingPay && booking != null && !_accepting
+                              ? () => _openPay(booking)
+                              : null)
+                          : otherChosen
+                              ? null
+                              : (!_accepting && (bid.isEligibleForAccept || bid.amount <= req.maxAcceptableBid)
+                                  ? () => _onAcceptBid(req, bid)
+                                  : null),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primary,
+                        backgroundColor: thisAccepted ? AppTheme.emerald : AppTheme.primary,
                         foregroundColor: Colors.white,
+                        disabledBackgroundColor: AppTheme.slate100,
+                        disabledForegroundColor: AppTheme.slate500,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -347,7 +391,11 @@ class _BidsComparisonScreenState extends State<BidsComparisonScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                       child: Text(
-                        (bid.isEligibleForAccept || bid.amount <= req.maxAcceptableBid) ? 'Select' : 'Need 15%+',
+                        thisAccepted
+                            ? (awaitingPay ? 'Pay now' : 'Selected')
+                            : otherChosen
+                                ? 'Not selected'
+                                : ((bid.isEligibleForAccept || bid.amount <= req.maxAcceptableBid) ? 'Select' : 'Need 15%+'),
                         style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
                       ),
                     ),
@@ -362,24 +410,20 @@ class _BidsComparisonScreenState extends State<BidsComparisonScreen> {
   }
 
   Widget _buildEmptyBids() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(LucideIcons.clock, size: 40, color: AppTheme.slate400),
-            const SizedBox(height: 12),
-            Text('No bids yet', style: AppTheme.headingFont(fontSize: 16)),
-            const SizedBox(height: 6),
-            const Text(
-              'Vendors will bid lower than your budget. Pull this screen again after they submit.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
-            ),
-          ],
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(32, 80, 32, 32),
+      children: [
+        const Icon(LucideIcons.clock, size: 40, color: AppTheme.slate400),
+        const SizedBox(height: 12),
+        Text('No bids yet', textAlign: TextAlign.center, style: AppTheme.headingFont(fontSize: 16)),
+        const SizedBox(height: 6),
+        const Text(
+          'Vendors will bid lower than your budget. Pull down to refresh after they submit.',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
         ),
-      ),
+      ],
     );
   }
 }

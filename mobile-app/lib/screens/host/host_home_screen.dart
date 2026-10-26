@@ -16,6 +16,7 @@ import '../../widgets/event_service_card.dart';
 import '../../widgets/ezzygo_logo.dart';
 import '../../widgets/image_poster_card.dart';
 import '../../widgets/event_request_card.dart';
+import '../../widgets/notification_bell.dart';
 import '../../widgets/promo_ad_banner.dart';
 import '../../widgets/rule_explainer_sheet.dart';
 import '../../widgets/shell_bottom_insets.dart';
@@ -318,50 +319,7 @@ class HostHomeScreenState extends State<HostHomeScreen> {
                     ),
                   ),
                   const Spacer(),
-                  GestureDetector(
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('You have 3 active updates on your events & bids.'),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    },
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: const Color(0xFFE5E7EB)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.08),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          const Icon(LucideIcons.bell, size: 18, color: AppTheme.textPrimary),
-                          Positioned(
-                            top: 8,
-                            right: 8,
-                            child: Container(
-                              width: 7,
-                              height: 7,
-                              decoration: const BoxDecoration(
-                                color: AppTheme.primary,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  const NotificationBellButton(),
                 ],
               ),
             ),
@@ -713,14 +671,24 @@ class HostHomeScreenState extends State<HostHomeScreen> {
           style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.35),
         ),
         const SizedBox(height: 14),
-        ...cards.map(
-          (service) => Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: EventServiceCard(
-              service: service,
-              onTap: () => _openService(service),
-            ),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: cards.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            mainAxisExtent: 218,
           ),
+          itemBuilder: (context, index) {
+            final service = cards[index];
+            return EventServiceCard(
+              service: service,
+              compact: true,
+              onTap: () => _openService(service),
+            );
+          },
         ),
       ],
     );
@@ -736,7 +704,7 @@ class HostHomeScreenState extends State<HostHomeScreen> {
           children: [
             Expanded(
               child: Text(
-                'My Event Requests',
+                'My Events',
                 style: AppTheme.headingFont(fontSize: 17, fontWeight: FontWeight.w800),
               ),
             ),
@@ -899,7 +867,7 @@ class HostHomeScreenState extends State<HostHomeScreen> {
           const SizedBox(height: 14),
           InkWell(
             onTap: () {
-              showModalBottomSheet(
+              showAppBottomSheet(
                 context: context,
                 isScrollControlled: true,
                 backgroundColor: Colors.transparent,

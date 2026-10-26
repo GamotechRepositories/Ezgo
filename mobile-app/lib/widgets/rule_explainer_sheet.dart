@@ -23,7 +23,9 @@ class _RuleExplainerSheetState extends State<RuleExplainerSheet> {
     final totalPayableByRequester = _testBid + platformFee;
     final netSavings = _testBudget - totalPayableByRequester;
 
-    return Container(
+    return SafeArea(
+      top: false,
+      child: Container(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.88,
       ),
@@ -283,6 +285,7 @@ class _RuleExplainerSheetState extends State<RuleExplainerSheet> {
           ),
         ],
       ),
+    ),
     );
   }
 

@@ -7,6 +7,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/requirements_provider.dart';
 import '../../providers/bookings_provider.dart';
 import '../../providers/banners_provider.dart';
+import '../../providers/notifications_provider.dart';
 import '../../utils/app_nav.dart';
 import '../../widgets/ezzygo_logo.dart';
 import '../main_navigation_screen.dart';
@@ -72,8 +73,10 @@ class _LoginScreenState extends State<LoginScreen> {
     final auth = context.read<AuthProvider>();
     context.read<RequirementsProvider>().loadData(
       requesterId: auth.isHost ? auth.user?.id : null,
+      marketplace: !auth.isHost,
     );
     context.read<BookingsProvider>().loadData();
+    context.read<NotificationsProvider>().load();
     context.read<BannersProvider>().loadForCity(
       context.read<RequirementsProvider>().selectedCity,
       force: true,

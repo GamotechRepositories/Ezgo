@@ -27,6 +27,7 @@ class FlipkartBottomNav extends StatefulWidget {
   final List<FlipkartNavItem> items;
   final ValueChanged<int> onTap;
   final int badgeCount;
+  final List<int> badgeCounts;
   final String? accountInitial;
   final Color activeColor;
   final GlobalKey? badgeIconKey;
@@ -37,6 +38,7 @@ class FlipkartBottomNav extends StatefulWidget {
     required this.items,
     required this.onTap,
     this.badgeCount = 0,
+    this.badgeCounts = const [],
     this.accountInitial,
     this.activeColor = const Color(0xFFFF7A00),
     this.badgeIconKey,
@@ -257,10 +259,13 @@ class _FlipkartBottomNavState extends State<FlipkartBottomNav> {
       );
     }
 
-    if (item.showBadge) {
+    final count = index < widget.badgeCounts.length
+        ? widget.badgeCounts[index]
+        : (item.showBadge ? widget.badgeCount : 0);
+    if (item.showBadge || count > 0) {
       icon = KeyedSubtree(
-        key: widget.badgeIconKey,
-        child: _BadgeIcon(count: widget.badgeCount, child: icon),
+        key: item.showBadge ? widget.badgeIconKey : null,
+        child: _BadgeIcon(count: count, child: icon),
       );
     }
 

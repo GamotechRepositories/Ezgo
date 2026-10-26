@@ -6,6 +6,7 @@ import {
   Mail,
   MapPin,
   ShieldCheck,
+  Wallet,
   Calendar,
   CheckCircle2,
   ExternalLink,
@@ -546,13 +547,22 @@ export const MyProfilePage: React.FC<MyProfilePageProps> = ({
                       <p className="text-xs text-slate-500 mt-1 mb-4 leading-relaxed">
                         View all confirmed vendor bookings, pay escrow advances securely, complete events, release payments, and download bills.
                       </p>
-                      <button
-                        onClick={onOpenBookings}
-                        className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer"
-                      >
-                        <span>Open My Bookings Page</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <button
+                          onClick={onOpenBookings}
+                          className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer"
+                        >
+                          <span>Open My Bookings</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={onOpenBookings}
+                          className="w-full py-2.5 rounded-xl bg-white border border-emerald-200 hover:bg-emerald-50 text-emerald-800 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer"
+                        >
+                          <Wallet className="w-3.5 h-3.5" />
+                          <span>Payment history</span>
+                        </button>
+                      </div>
                     </div>
 
                     {/* Requirements Card */}

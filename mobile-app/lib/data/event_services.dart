@@ -179,6 +179,7 @@ class EventServices {
   static String matchTitle(String? raw) {
     if (raw == null || raw.trim().isEmpty) return all.first.shortName;
     final q = raw.toLowerCase();
+    if (q == 'other' || q == 'other services') return 'Other';
     for (final s in all) {
       if (q.contains(s.shortName.toLowerCase()) ||
           q.contains(s.title.toLowerCase()) ||

@@ -11,6 +11,8 @@ export const createRequirement = async (req, res, next) => {
       category,
       title,
       description,
+      occasion,
+      eventType,
       location,
       eventDate,
       timeWindow,
@@ -52,11 +54,15 @@ export const createRequirement = async (req, res, next) => {
       : (imageUrl ? [imageUrl] : []);
     const primaryImage = imageUrl || (imageList.length > 0 ? imageList[0] : '');
 
+    const occasionLabel = (occasion || eventType || '').toString().trim();
+
     const requirement = await Requirement.create({
       requesterId: ownerId,
       category,
       title,
       description,
+      occasion: occasionLabel,
+      eventType: occasionLabel,
       imageUrl: primaryImage,
       images: imageList,
       location: {

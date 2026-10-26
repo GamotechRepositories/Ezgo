@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import type { Booking, User } from '../types';
+import { api, type PaymentHistoryItem } from '../services/api';
 
 interface EarningsWalletProps {
   vendor: User;
@@ -16,6 +17,22 @@ export const EarningsWallet: React.FC<EarningsWalletProps> = ({ vendor, bookings
   const totalPaid = completedBookings.reduce((acc, b) => acc + (b.payoutDetails?.amountToProvider ?? b.bidAmount), 0);
   const upcoming = activeBookings.reduce((acc, b) => acc + b.bidAmount, 0);
   const bank = vendor.bankDetails;
+  const [history, setHistory] = useState<PaymentHistoryItem[]>([]);
+
+  useEffect(() => {
+    let live = true;
+    api
+      .getPaymentHistory()
+      .then((rows) => {
+        if (live) setHistory(Array.isArray(rows) ? rows : []);
+      })
+      .catch(() => {
+        if (live) setHistory([]);
+      });
+    return () => {
+      live = false;
+    };
+  }, [bookings]);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
@@ -82,29 +99,38 @@ export const EarningsWallet: React.FC<EarningsWalletProps> = ({ vendor, bookings
       </div>
 
       <div className="rounded-3xl bg-white border border-slate-200 p-6 space-y-4 shadow-sm">
-        <h3 className="text-base font-semibold text-slate-900">Payments received</h3>
+        <h3 className="text-base font-semibold text-slate-900">Payment history</h3>
 
-        {completedBookings.length === 0 ? (
-          <p className="text-sm text-slate-500">No payments yet. They show up here after your first finished event.</p>
+        {history.length === 0 && completedBookings.length === 0 ? (
+          <p className="text-sm text-slate-500">No payments yet. They show up here after a host pays and after payout.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-200 text-slate-500">
                   <th className="pb-3 font-medium">Event</th>
+                  <th className="pb-3 font-medium">Type</th>
                   <th className="pb-3 font-medium">Paid on</th>
                   <th className="pb-3 font-medium">Reference</th>
                   <th className="pb-3 font-medium text-right">Amount</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
-                {completedBookings.map((b) => (
-                  <tr key={b._id}>
-                    <td className="py-3 font-medium text-slate-900">{b.requirementId?.title}</td>
-                    <td>{formatDate(b.payoutDetails?.releasedAt || b.completedAt)}</td>
-                    <td className="text-slate-500">{b.payoutDetails?.transferId || '—'}</td>
+                {(history.length > 0 ? history : completedBookings.map((b) => ({
+                  _id: b._id,
+                  eventTitle: b.requirementId?.title || 'Event',
+                  label: 'Payout received',
+                  createdAt: b.payoutDetails?.releasedAt || b.completedAt || '',
+                  referenceId: b.payoutDetails?.transferId || '',
+                  amount: b.payoutDetails?.amountToProvider ?? b.bidAmount,
+                }))).map((row) => (
+                  <tr key={row._id}>
+                    <td className="py-3 font-medium text-slate-900">{row.eventTitle}</td>
+                    <td>{row.label}</td>
+                    <td>{formatDate(row.createdAt)}</td>
+                    <td className="text-slate-500">{row.referenceId || '—'}</td>
                     <td className="text-right font-semibold text-slate-900">
-                      ₹{(b.payoutDetails?.amountToProvider ?? b.bidAmount).toLocaleString()}
+                      ₹{(row.amount || 0).toLocaleString()}
                     </td>
                   </tr>
                 ))}

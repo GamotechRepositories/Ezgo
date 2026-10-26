@@ -17,7 +17,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.fromLTRB(16, 16, 16, ShellBottomInsets.of(context)),
       children: [
         const Text(
           'Availability Calendar',

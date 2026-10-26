@@ -3,6 +3,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:intl/intl.dart';
 import '../../config/theme.dart';
 import '../../models/booking_model.dart';
+import '../../widgets/shell_bottom_insets.dart';
 
 class PaymentEscrowScreen extends StatelessWidget {
   final BookingModel booking;
@@ -30,7 +31,7 @@ class PaymentEscrowScreen extends StatelessWidget {
       ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.fromLTRB(16, 16, 16, ShellBottomInsets.of(context)),
           children: [
             // Green Escrow Protection Card (Screen 11)
             Container(

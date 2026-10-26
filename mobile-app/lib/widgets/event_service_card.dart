@@ -6,11 +6,13 @@ import '../data/event_services.dart';
 class EventServiceCard extends StatelessWidget {
   final EventService service;
   final VoidCallback onTap;
+  final bool compact;
 
   const EventServiceCard({
     super.key,
     required this.service,
     required this.onTap,
+    this.compact = false,
   });
 
   Color get _accent {
@@ -40,6 +42,152 @@ class EventServiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return compact ? _buildCompact() : _buildWide();
+  }
+
+  Widget _image({required double height, BorderRadius? radius}) {
+    final accent = _accent;
+    return ClipRRect(
+      borderRadius: radius ?? BorderRadius.circular(14),
+      child: SizedBox(
+        width: double.infinity,
+        height: height,
+        child: Image.asset(
+          service.asset,
+          fit: BoxFit.cover,
+          errorBuilder: (_, _, _) => Image.network(
+            service.image,
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => ColoredBox(
+              color: accent.withValues(alpha: 0.12),
+              child: Icon(service.icon, color: accent, size: 28),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompact() {
+    final accent = _accent;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppTheme.borderSubtle),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.045),
+                blurRadius: 12,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Stack(
+                children: [
+                  _image(
+                    height: 108,
+                    radius: const BorderRadius.vertical(top: Radius.circular(17)),
+                  ),
+                  Positioned(
+                    left: 8,
+                    top: 8,
+                    child: Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.14),
+                            blurRadius: 6,
+                          ),
+                        ],
+                      ),
+                      child: Icon(service.icon, size: 12, color: accent),
+                    ),
+                  ),
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: _chip('Save 15%+', const Color(0xFFE4F7EA), const Color(0xFF18794E)),
+                  ),
+                ],
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 9, 10, 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        service.shortName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          height: 1.15,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        service.priceRange,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          height: 1.15,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.textSecondary,
+                        ),
+                      ),
+                      const Spacer(),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 7),
+                        decoration: BoxDecoration(
+                          gradient: AppTheme.primaryGradient,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Get Bids',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Icon(LucideIcons.arrowRight, size: 12, color: Colors.white),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWide() {
     final accent = _accent;
 
     return Material(
@@ -66,24 +214,9 @@ class EventServiceCard extends StatelessWidget {
               children: [
                 Stack(
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
-                      child: SizedBox(
-                        width: 92,
-                        height: 92,
-                        child: Image.asset(
-                          service.asset,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => Image.network(
-                            service.image,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => ColoredBox(
-                              color: accent.withValues(alpha: 0.12),
-                              child: Icon(service.icon, color: accent, size: 28),
-                            ),
-                          ),
-                        ),
-                      ),
+                    SizedBox(
+                      width: 92,
+                      child: _image(height: 92),
                     ),
                     Positioned(
                       left: 6,

@@ -35,14 +35,16 @@ export const notifyUser = async ({
       // Non-blocking socket broadcast
     }
 
-    // Send email if user has email address
+    // Email must not block bid/accept/payment responses
     if (sendMail) {
-      const user = await User.findById(userId).select('name email');
-      if (user?.email) {
-        await sendEmail({
-          to: user.email,
-          subject: `EzzyGo: ${title}`,
-          html: `
+      void User.findById(userId)
+        .select('name email')
+        .then((user) => {
+          if (!user?.email) return null;
+          return sendEmail({
+            to: user.email,
+            subject: `EzzyGo: ${title}`,
+            html: `
             <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b;">
               <h2 style="color: #f95724; margin-bottom: 8px;">EzzyGo Update</h2>
               <h3 style="margin-top: 0;">${title}</h3>
@@ -56,8 +58,9 @@ export const notifyUser = async ({
               <p style="font-size: 12px; color: #64748b;">EzzyGo Event Services Marketplace</p>
             </div>
           `,
-        });
-      }
+          });
+        })
+        .catch((err) => console.error('Notification email failed:', err?.message));
     }
 
     return notification;

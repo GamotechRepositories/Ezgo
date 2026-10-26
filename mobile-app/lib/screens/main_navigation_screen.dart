@@ -5,10 +5,13 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../config/theme.dart';
 import '../providers/auth_provider.dart';
 import '../providers/bookings_provider.dart';
+import '../providers/notifications_provider.dart';
 import '../providers/requirements_provider.dart';
 import '../utils/app_nav.dart';
 import '../widgets/ezzygo_logo.dart';
 import '../widgets/flipkart_bottom_nav.dart';
+import '../widgets/notification_bell.dart';
+import '../widgets/shell_bottom_insets.dart';
 import '../widgets/tab_scroll_registry.dart';
 import '../widgets/tab_swipe_shell.dart';
 import 'auth/login_screen.dart';
@@ -95,8 +98,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       final auth = context.read<AuthProvider>();
       context.read<RequirementsProvider>().loadData(
         requesterId: auth.isHost ? auth.user?.id : null,
+        marketplace: !auth.isHost,
       );
       context.read<BookingsProvider>().loadData();
+      context.read<NotificationsProvider>().load();
     });
   }
 
@@ -140,11 +145,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   void _openPost() {
     _navKeyFor(_currentIndex).currentState?.push(
       MaterialPageRoute(builder: (_) => const PostRequirementScreen()),
-    );
+    ).then((posted) {
+      if (posted == true && mounted) {
+        _selectTab(1);
+      }
+    });
   }
 
   void _openLogin() {
-    showModalBottomSheet<void>(
+    showAppBottomSheet<void>(
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
@@ -201,8 +210,24 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       return;
     }
 
+    if (index == 0) {
+      context.read<RequirementsProvider>().loadData(
+        requesterId: auth.isHost ? auth.user?.id : null,
+        marketplace: !auth.isHost,
+      );
+    }
+    if (index == 1) {
+      if (auth.isHost) {
+        context.read<RequirementsProvider>().loadData(requesterId: auth.user?.id);
+      } else {
+        context.read<BookingsProvider>().loadData();
+      }
+    }
     if (index == 3) {
       context.read<BookingsProvider>().loadData();
+      if (auth.isHost) {
+        context.read<RequirementsProvider>().loadData(requesterId: auth.user?.id);
+      }
     }
 
     if (_currentIndex == index) {
@@ -228,9 +253,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   void _showCityPicker(BuildContext context) {
     final reqProvider = context.read<RequirementsProvider>();
 
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -358,14 +384,23 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 children: [
                   if (!isHost) _VendorHeader(onOpenCityPicker: () => _showCityPicker(context), city: reqProvider.selectedCity),
                   Expanded(
-                    child: TabSwipeShell(
-                      currentIndex: _stackIndex,
-                      children: [
-                        _TabNavigator(navigatorKey: _homeNavKey, root: homePage),
-                        _TabNavigator(navigatorKey: _eventsNavKey, root: eventsPage),
-                        _TabNavigator(navigatorKey: _bookingsNavKey, root: bookingsPage),
-                        _TabNavigator(navigatorKey: _profileNavKey, root: profilePage),
-                      ],
+                    child: ShellNavScope(
+                      child: Padding(
+                        padding: EdgeInsets.only(bottom: ShellBottomInsets.reserved(context)),
+                        child: MediaQuery.removePadding(
+                          context: context,
+                          removeBottom: true,
+                          child: TabSwipeShell(
+                            currentIndex: _stackIndex,
+                            children: [
+                              _TabNavigator(navigatorKey: _homeNavKey, root: homePage),
+                              _TabNavigator(navigatorKey: _eventsNavKey, root: eventsPage),
+                              _TabNavigator(navigatorKey: _bookingsNavKey, root: bookingsPage),
+                              _TabNavigator(navigatorKey: _profileNavKey, root: profilePage),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -401,7 +436,8 @@ class _ShellNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final badgeCount = context.select<BookingsProvider, int>(
+    final unread = context.select<NotificationsProvider, int>((p) => p.unreadCount);
+    final bookingBadge = context.select<BookingsProvider, int>(
       (p) => p.upcomingBookings.length + p.awaitingPaymentBookings.length,
     );
     final initial = context.select<AuthProvider, String?>((auth) {
@@ -414,7 +450,8 @@ class _ShellNavBar extends StatelessWidget {
       currentIndex: currentIndex,
       items: _MainNavigationScreenState._tabs,
       onTap: onTap,
-      badgeCount: badgeCount,
+      badgeCount: bookingBadge,
+      badgeCounts: [0, unread, 0, bookingBadge, 0],
       accountInitial: initial,
       activeColor: AppTheme.primary,
       badgeIconKey: badgeIconKey,
@@ -468,31 +505,7 @@ class _VendorHeader extends StatelessWidget {
               ),
             ),
             const Spacer(),
-            IconButton(
-              icon: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  const Icon(LucideIcons.bell, size: 20, color: AppTheme.textPrimary),
-                  Positioned(
-                    top: -2,
-                    right: -2,
-                    child: Container(
-                      width: 7,
-                      height: 7,
-                      decoration: const BoxDecoration(color: AppTheme.primary, shape: BoxShape.circle),
-                    ),
-                  ),
-                ],
-              ),
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('You have 3 active updates on your events & bids.'),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              },
-            ),
+            const NotificationBellButton(size: 36, iconSize: 18),
           ],
         ),
       ),

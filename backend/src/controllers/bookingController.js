@@ -15,6 +15,53 @@ import {
   broadcastDisputeResolved,
 } from '../services/socketService.js';
 
+const PROVIDER_PUBLIC_FIELDS =
+  'name businessName phone email rating reviewCount completedJobs isVerified avatar categories serviceArea';
+const REQUESTER_PUBLIC_FIELDS = 'name phone email avatar rating';
+const PAID_BOOKING_STATUSES = new Set(['ACTIVE', 'COMPLETED', 'PAYOUT_RELEASED', 'DISPUTED']);
+
+const isBookingPaid = (booking) =>
+  PAID_BOOKING_STATUSES.has(booking?.status) || booking?.isContactRevealed === true;
+
+const sanitizeProviderForHost = (provider, revealed) => {
+  if (!provider || typeof provider !== 'object') return provider;
+  const obj = typeof provider.toObject === 'function' ? provider.toObject() : { ...provider };
+  delete obj.bankDetails;
+  delete obj.kycDocuments;
+  delete obj.passwordHash;
+  delete obj.googleId;
+  delete obj.unavailableDates;
+  delete obj.verificationAudit;
+  if (!revealed) {
+    obj.phone = '';
+    obj.email = '';
+    obj.avatar = '';
+    obj.categories = [];
+    obj.serviceArea = '';
+    obj.rating = undefined;
+    obj.reviewCount = 0;
+    obj.completedJobs = 0;
+  }
+  return obj;
+};
+
+const sanitizeRequesterForVendor = (requester, revealed) => {
+  if (!requester || typeof requester !== 'object') return requester;
+  const obj = typeof requester.toObject === 'function' ? requester.toObject() : { ...requester };
+  delete obj.bankDetails;
+  delete obj.kycDocuments;
+  delete obj.passwordHash;
+  delete obj.googleId;
+  delete obj.unavailableDates;
+  delete obj.verificationAudit;
+  if (!revealed) {
+    obj.phone = '';
+    obj.email = '';
+    obj.avatar = '';
+  }
+  return obj;
+};
+
 const requesterOf = (booking) => (booking.requesterId?._id || booking.requesterId).toString();
 
 const assertHostOrAdmin = (req, res, booking) => {
@@ -101,9 +148,11 @@ export const acceptBid = async (req, res, next) => {
     );
 
     const populated = await Booking.findById(booking._id)
-      .populate('providerId', 'name businessName phone rating completedJobs avatar')
-      .populate('requesterId', 'name phone')
+      .populate('providerId', PROVIDER_PUBLIC_FIELDS)
+      .populate('requesterId', REQUESTER_PUBLIC_FIELDS)
       .populate('requirementId');
+
+    const vendorLabel = bid.providerId.businessName || bid.providerId.name || 'Vendor';
 
     // Notify vendor that their bid was accepted
     await notifyUser({
@@ -114,9 +163,22 @@ export const acceptBid = async (req, res, next) => {
       metadata: { bookingId: booking._id, requirementId },
     });
 
+    // Notify host so the app inbox and live lists stay in sync
+    await notifyUser({
+      userId: requesterId,
+      title: 'Bid accepted',
+      message: `You selected ${vendorLabel} at ₹${bidAmount.toLocaleString()} for "${requirement.title}". Pay now to lock the vendor in escrow.`,
+      type: 'BID_ACCEPTED',
+      metadata: { bookingId: booking._id, requirementId },
+    });
+
+    const acceptJson = populated.toJSON();
+    acceptJson.providerId = sanitizeProviderForHost(acceptJson.providerId, false);
+    acceptJson.requesterId = sanitizeRequesterForVendor(acceptJson.requesterId, false);
+
     // Real-time broadcast: notify vendor, host, and admin instantly
     try {
-      broadcastBookingCreated(populated);
+      broadcastBookingCreated(acceptJson);
       broadcastRequirementUpdated(requirement);
     } catch (e) {
       // Non-blocking socket broadcast
@@ -125,7 +187,7 @@ export const acceptBid = async (req, res, next) => {
     res.status(201).json({
       success: true,
       message: 'Bid accepted! Please proceed to payment to confirm the booking.',
-      data: populated,
+      data: acceptJson,
     });
   } catch (error) {
     next(error);
@@ -144,7 +206,7 @@ export const processPayment = async (req, res, next) => {
     }
 
     const booking = await Booking.findById(bookingId)
-      .populate('providerId')
+      .populate('providerId', PROVIDER_PUBLIC_FIELDS)
       .populate('requesterId')
       .populate('requirementId');
 
@@ -210,6 +272,7 @@ export const processPayment = async (req, res, next) => {
       metadata: {
         bidAmount: booking.bidAmount,
         platformFee: booking.platformFee,
+        method: paymentMethod || booking.paymentDetails?.method || 'Demo UPI',
         note: 'Funds held in EzzyGo Escrow until service completion',
       },
     });
@@ -223,9 +286,21 @@ export const processPayment = async (req, res, next) => {
       metadata: { bookingId: booking._id },
     });
 
+    await notifyUser({
+      userId: booking.requesterId._id,
+      title: 'Payment held in escrow',
+      message: `₹${booking.totalPaid.toLocaleString()} for "${booking.requirementId.title}" is held until the event is done. Vendor contact is unlocked.`,
+      type: 'PAYMENT_CONFIRMED',
+      metadata: { bookingId: booking._id },
+    });
+
+    const paidJson = booking.toJSON();
+    paidJson.providerId = sanitizeProviderForHost(paidJson.providerId, true);
+    paidJson.requesterId = sanitizeRequesterForVendor(paidJson.requesterId, true);
+
     // Real-time broadcast payment and active escrow status
     try {
-      broadcastBookingUpdated(booking);
+      broadcastBookingUpdated(paidJson);
       if (booking.requirementId) {
         broadcastRequirementUpdated(booking.requirementId);
       }
@@ -235,8 +310,8 @@ export const processPayment = async (req, res, next) => {
 
     res.json({
       success: true,
-      message: 'Payment confirmed! Funds are safely held in EzzyGo Escrow. Provider contact has been unlocked.',
-      data: booking,
+      message: 'Payment confirmed! Funds are safely held in EzzyGo Escrow. Contact details are unlocked.',
+      data: paidJson,
     });
   } catch (error) {
     next(error);
@@ -249,7 +324,7 @@ export const completeBooking = async (req, res, next) => {
     const { bookingId } = req.body;
 
     const booking = await Booking.findById(bookingId)
-      .populate('providerId')
+      .populate('providerId', PROVIDER_PUBLIC_FIELDS)
       .populate('requesterId')
       .populate('requirementId');
 
@@ -329,6 +404,14 @@ export const completeBooking = async (req, res, next) => {
       metadata: { bookingId: booking._id, payoutRef },
     });
 
+    await notifyUser({
+      userId: booking.requesterId._id,
+      title: 'Event completed',
+      message: `"${booking.requirementId.title}" is marked done. Vendor payout of ₹${booking.bidAmount.toLocaleString()} has been released.`,
+      type: 'PAYOUT_RELEASED',
+      metadata: { bookingId: booking._id, payoutRef },
+    });
+
     // Real-time broadcast completion & payout release
     try {
       broadcastBookingUpdated(booking);
@@ -354,7 +437,9 @@ export const cancelBooking = async (req, res, next) => {
   try {
     const { bookingId, reason } = req.body;
 
-    const booking = await Booking.findById(bookingId).populate('providerId').populate('requirementId');
+    const booking = await Booking.findById(bookingId)
+      .populate('providerId', PROVIDER_PUBLIC_FIELDS)
+      .populate('requirementId');
     if (!booking) {
       res.status(404);
       throw new Error('Booking not found');
@@ -481,7 +566,10 @@ export const raiseDispute = async (req, res, next) => {
       throw new Error('Please enter a dispute reason.');
     }
 
-    const booking = await Booking.findById(id).populate('providerId').populate('requesterId').populate('requirementId');
+    const booking = await Booking.findById(id)
+      .populate('providerId', PROVIDER_PUBLIC_FIELDS)
+      .populate('requesterId')
+      .populate('requirementId');
     if (!booking) {
       res.status(404);
       throw new Error('Booking not found');
@@ -620,8 +708,13 @@ export const getBookings = async (req, res, next) => {
 
     const bookings = await Booking.find(filter)
       .sort({ createdAt: -1 })
-      .populate('providerId', req.user.role === 'admin' ? 'name businessName phone rating reviewCount completedJobs isVerified avatar bankDetails kycDocuments' : 'name businessName phone rating reviewCount completedJobs isVerified avatar')
-      .populate('requesterId', 'name phone email')
+      .populate(
+        'providerId',
+        req.user.role === 'admin'
+          ? `${PROVIDER_PUBLIC_FIELDS} bankDetails kycDocuments`
+          : PROVIDER_PUBLIC_FIELDS
+      )
+      .populate('requesterId', REQUESTER_PUBLIC_FIELDS)
       .populate('requirementId');
 
     const myReviews = await Review.find({
@@ -630,10 +723,18 @@ export const getBookings = async (req, res, next) => {
     }).select('bookingId rating');
     const ratingByBooking = new Map(myReviews.map((r) => [r.bookingId.toString(), r.rating]));
 
-    const data = bookings.map((b) => ({
-      ...b.toJSON(),
-      myRating: ratingByBooking.get(b._id.toString()) ?? null,
-    }));
+    const data = bookings.map((b) => {
+      const json = b.toJSON();
+      const revealed = isBookingPaid(json);
+      if (req.user.role !== 'admin') {
+        json.providerId = sanitizeProviderForHost(json.providerId, revealed);
+        json.requesterId = sanitizeRequesterForVendor(json.requesterId, revealed);
+      }
+      return {
+        ...json,
+        myRating: ratingByBooking.get(b._id.toString()) ?? null,
+      };
+    });
 
     res.json({ success: true, count: data.length, data });
   } catch (error) {

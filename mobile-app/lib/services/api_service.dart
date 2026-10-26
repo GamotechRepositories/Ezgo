@@ -80,6 +80,22 @@ class ApiService {
     }
   }
 
+  Future<dynamic> patch(String endpoint, [Map<String, dynamic>? data]) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}$endpoint');
+    try {
+      final response = await http.patch(
+        url,
+        headers: _headers,
+        body: jsonEncode(data ?? const {}),
+      );
+      return _processResponse(response);
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw ApiException('Could not reach EzzyGo. Check your connection.');
+    }
+  }
+
   Future<dynamic> put(String endpoint, Map<String, dynamic> data) async {
     final url = Uri.parse('${ApiConfig.baseUrl}$endpoint');
     try {

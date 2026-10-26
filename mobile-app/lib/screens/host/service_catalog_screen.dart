@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../data/event_services.dart';
+import '../../providers/requirements_provider.dart';
 import '../../widgets/event_service_card.dart';
+import '../../widgets/other_request_card.dart';
 import '../../widgets/shell_bottom_insets.dart';
+import 'post_requirement_screen.dart';
 import 'service_detail_screen.dart';
 
 class ServiceCatalogScreen extends StatefulWidget {
@@ -37,6 +41,17 @@ class _ServiceCatalogScreenState extends State<ServiceCatalogScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => ServiceDetailScreen(service: service.detailMap),
+      ),
+    );
+  }
+
+  void _openOtherRequest() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PostRequirementScreen(
+          initialCategory: 'Other',
+          initialCity: context.read<RequirementsProvider>().selectedCity,
+        ),
       ),
     );
   }
@@ -130,29 +145,31 @@ class _ServiceCatalogScreenState extends State<ServiceCatalogScreen> {
           ),
           const SizedBox(height: 12),
           Expanded(
-            child: filtered.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(LucideIcons.searchX, size: 40, color: AppTheme.slate400),
-                        const SizedBox(height: 12),
-                        Text('No services found', style: AppTheme.headingFont(fontSize: 16)),
-                      ],
-                    ),
-                  )
-                : ListView.separated(
-                    padding: EdgeInsets.fromLTRB(16, 4, 16, ShellBottomInsets.of(context)),
-                    itemCount: filtered.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 10),
-                    itemBuilder: (context, index) {
-                      final service = filtered[index];
-                      return EventServiceCard(
-                        service: service,
-                        onTap: () => _openService(service),
-                      );
-                    },
-                  ),
+            child: GridView.builder(
+              padding: EdgeInsets.fromLTRB(16, 4, 16, ShellBottomInsets.of(context)),
+              itemCount: filtered.length + 1,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                mainAxisExtent: 218,
+              ),
+              itemBuilder: (context, index) {
+                if (index == filtered.length) {
+                  return OtherRequestCard(
+                    title: 'Other Services',
+                    subtitle: 'Need something else? Request any service and get vendor bids.',
+                    onTap: _openOtherRequest,
+                  );
+                }
+                final service = filtered[index];
+                return EventServiceCard(
+                  service: service,
+                  compact: true,
+                  onTap: () => _openService(service),
+                );
+              },
+            ),
           ),
         ],
       ),

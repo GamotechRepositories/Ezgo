@@ -18,6 +18,15 @@ class EventRequestCard extends StatelessWidget {
 
   static final _rupees = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
 
+  String get _ctaLabel {
+    final s = requirement.status.toUpperCase();
+    if (s == 'ACCEPTED') return 'Pay to confirm';
+    if (s == 'ACTIVE' || s == 'BOOKED') return 'View booking';
+    if (s == 'COMPLETED') return 'View completed';
+    final bids = requirement.liveBidsCount;
+    return bids > 0 ? 'See bids ($bids)' : 'View request';
+  }
+
   @override
   Widget build(BuildContext context) {
     return compact ? _compact() : _full();
@@ -143,7 +152,7 @@ class EventRequestCard extends StatelessWidget {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
                       child: Text(
-                        bids > 0 ? 'See bids ($bids)' : 'View request',
+                        _ctaLabel,
                         style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
                       ),
                     ),

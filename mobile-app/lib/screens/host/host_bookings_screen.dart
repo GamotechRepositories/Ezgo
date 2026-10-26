@@ -5,6 +5,7 @@ import '../../config/theme.dart';
 import '../../models/booking_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/bookings_provider.dart';
+import '../../providers/payments_provider.dart';
 import '../../providers/requirements_provider.dart';
 import '../../widgets/event_request_card.dart';
 import '../../widgets/shell_bottom_insets.dart';
@@ -12,7 +13,9 @@ import '../../widgets/tab_scroll_registry.dart';
 import 'bids_comparison_screen.dart';
 import 'booking_detail_screen.dart';
 import 'escrow_payment_sheet.dart';
+import 'payment_history_screen.dart';
 import 'post_requirement_screen.dart';
+import 'vendor_profile_screen.dart';
 
 class HostBookingsScreen extends StatefulWidget {
   const HostBookingsScreen({super.key});
@@ -29,6 +32,15 @@ class _HostBookingsScreenState extends State<HostBookingsScreen> {
   void initState() {
     super.initState();
     TabScrollRegistry.instance.register(3, _scrollController);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<BookingsProvider>().loadData();
+        context.read<PaymentsProvider>().load();
+        context.read<RequirementsProvider>().loadData(
+              requesterId: context.read<AuthProvider>().user?.id,
+            );
+      }
+    });
   }
 
   @override
@@ -139,6 +151,7 @@ class _HostBookingsScreenState extends State<HostBookingsScreen> {
   @override
   Widget build(BuildContext context) {
     final bookingsProvider = context.watch<BookingsProvider>();
+    final payments = context.watch<PaymentsProvider>();
     final auth = context.watch<AuthProvider>();
     final events = context.watch<RequirementsProvider>().mine(auth.user?.id);
 
@@ -169,8 +182,9 @@ class _HostBookingsScreenState extends State<HostBookingsScreen> {
         displayedBookings = all;
     }
 
-    final showEvents = _selectedTabIndex == 0 || _selectedTabIndex == 1;
-    final showBookings = _selectedTabIndex != 1;
+    final showPayments = _selectedTabIndex == 6;
+    final showEvents = !showPayments && (_selectedTabIndex == 0 || _selectedTabIndex == 1);
+    final showBookings = !showPayments && _selectedTabIndex != 1;
 
     final totalEscrowHeld = upcoming.fold<int>(0, (sum, b) => sum + b.totalPaid);
 
@@ -233,6 +247,7 @@ class _HostBookingsScreenState extends State<HostBookingsScreen> {
               _buildTabChip(3, 'To Pay', awaiting.length),
               _buildTabChip(4, 'Completed', completed.length),
               _buildTabChip(5, 'Cancelled', cancelled.length),
+              _buildTabChip(6, 'Payments', payments.items.length),
             ],
           ),
         ),
@@ -263,7 +278,9 @@ class _HostBookingsScreenState extends State<HostBookingsScreen> {
 
         const SizedBox(height: 16),
 
-        if (showEvents && events.isNotEmpty) ...[
+        if (showPayments)
+          const PaymentHistoryScreen(embedded: true)
+        else if (showEvents && events.isNotEmpty) ...[
           if (showBookings)
             const Padding(
               padding: EdgeInsets.only(bottom: 10),
@@ -295,7 +312,7 @@ class _HostBookingsScreenState extends State<HostBookingsScreen> {
         if (showBookings && displayedBookings.isNotEmpty)
           ...displayedBookings.map((b) => _buildBookingCard(context, b)),
 
-        if ((showEvents ? events.isEmpty : true) && (showBookings ? displayedBookings.isEmpty : true))
+        if (!showPayments && (showEvents ? events.isEmpty : true) && (showBookings ? displayedBookings.isEmpty : true))
           Container(
             padding: const EdgeInsets.all(36),
             alignment: Alignment.center,
@@ -477,52 +494,68 @@ class _HostBookingsScreenState extends State<HostBookingsScreen> {
 
           const Divider(height: 24),
 
-          // Vendor Profile Card
-          Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: AppTheme.primaryLight,
-                child: Text(
-                  b.vendorName.isNotEmpty ? b.vendorName[0] : 'V',
-                  style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w900),
+          InkWell(
+            onTap: b.isEscrowPaid ? () => openVendorProfile(context, b) : null,
+            borderRadius: BorderRadius.circular(16),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: AppTheme.primaryLight,
+                  backgroundImage: b.isEscrowPaid && b.vendorAvatar.isNotEmpty ? NetworkImage(b.vendorAvatar) : null,
+                  child: !b.isEscrowPaid || b.vendorAvatar.isEmpty
+                      ? Icon(
+                          b.isEscrowPaid ? LucideIcons.user : LucideIcons.lock,
+                          color: AppTheme.primary,
+                          size: 18,
+                        )
+                      : null,
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(b.vendorName, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-                    Text(
-                      b.isContactRevealed ? b.vendorPhone : 'Contact unlocks upon escrow payment',
-                      style: TextStyle(
-                        color: b.isContactRevealed ? AppTheme.emerald : AppTheme.slate400,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        b.isEscrowPaid ? b.vendorName : 'Vendor locked until payment',
+                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
                       ),
+                      Text(
+                        b.isEscrowPaid
+                            ? '${b.vendorCompletedJobs} events done · ${b.vendorPhone}'
+                            : 'Pay escrow to see vendor profile and contact',
+                        style: TextStyle(
+                          color: b.isEscrowPaid ? AppTheme.emerald : AppTheme.slate400,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (b.isEscrowPaid)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 2),
+                          child: Text(
+                            'View profile',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppTheme.primary),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                if (b.isEscrowPaid) ...[
+                  IconButton(
+                    icon: const Icon(LucideIcons.phone, color: AppTheme.emerald, size: 20),
+                    onPressed: () => launchVendorCall(b.vendorPhone),
+                  ),
+                  IconButton(
+                    icon: const Icon(LucideIcons.messageSquare, color: AppTheme.primary, size: 20),
+                    onPressed: () => launchVendorWhatsApp(
+                      b.vendorPhone,
+                      vendorName: b.vendorName,
+                      eventTitle: b.requirementTitle,
                     ),
-                  ],
-                ),
-              ),
-              if (b.isContactRevealed) ...[
-                IconButton(
-                  icon: const Icon(LucideIcons.phone, color: AppTheme.emerald, size: 20),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Calling vendor at ${b.vendorPhone}...')),
-                    );
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(LucideIcons.messageSquare, color: AppTheme.primary, size: 20),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Opening WhatsApp with ${b.vendorPhone}...')),
-                    );
-                  },
-                ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
 
           const SizedBox(height: 14),
@@ -531,14 +564,10 @@ class _HostBookingsScreenState extends State<HostBookingsScreen> {
           if (isAwaiting) ...[
             ElevatedButton(
               onPressed: () {
-                showModalBottomSheet(
+                showEscrowPaymentSheet(
                   context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (_) => EscrowPaymentSheet(
-                    booking: b,
-                    onPaymentSuccess: () => setState(() {}),
-                  ),
+                  booking: b,
+                  onPaymentSuccess: () => setState(() {}),
                 );
               },
               style: ElevatedButton.styleFrom(
@@ -553,6 +582,21 @@ class _HostBookingsScreenState extends State<HostBookingsScreen> {
               ),
             ),
           ] else if (isPaid) ...[
+            OutlinedButton.icon(
+              onPressed: () => openVendorProfile(context, b),
+              icon: const Icon(LucideIcons.user, size: 16),
+              label: const Text(
+                'View vendor profile',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+              ),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(44),
+                foregroundColor: AppTheme.slate900,
+                side: const BorderSide(color: AppTheme.slate200),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 8),
             ElevatedButton.icon(
               onPressed: () => _showReviewModal(context, b),
               style: ElevatedButton.styleFrom(
@@ -568,6 +612,21 @@ class _HostBookingsScreenState extends State<HostBookingsScreen> {
               ),
             ),
           ] else if (isCompleted) ...[
+            OutlinedButton.icon(
+              onPressed: () => openVendorProfile(context, b),
+              icon: const Icon(LucideIcons.user, size: 16),
+              label: const Text(
+                'View vendor profile',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+              ),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(44),
+                foregroundColor: AppTheme.slate900,
+                side: const BorderSide(color: AppTheme.slate200),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(vertical: 8),
               alignment: Alignment.center,

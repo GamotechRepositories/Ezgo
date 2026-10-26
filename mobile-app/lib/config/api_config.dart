@@ -57,6 +57,7 @@ class ApiConfig {
   static const String banners = '/banners';
   static const String bids = '/bids';
   static const String bookings = '/bookings';
+  static const String notifications = '/notifications';
   static const String acceptBid = '/bookings/accept-bid';
   static const String payBooking = '/bookings/pay';
   static const String completeBooking = '/bookings/complete';
@@ -65,6 +66,7 @@ class ApiConfig {
   static const String createOrder = '/create-order';
   static const String verifyPayment = '/verify-payment';
   static const String payments = '/payments';
+  static const String paymentHistory = '/payments/history';
   static const String blockDate = '/auth/availability/block';
   static const String unblockDate = '/auth/availability/unblock';
 }

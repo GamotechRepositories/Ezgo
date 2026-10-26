@@ -20,6 +20,14 @@ const requirementSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    occasion: {
+      type: String,
+      default: '',
+    },
+    eventType: {
+      type: String,
+      default: '',
+    },
     imageUrl: {
       type: String,
       default: '',

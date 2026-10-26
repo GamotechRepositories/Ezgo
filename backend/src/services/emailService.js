@@ -34,6 +34,9 @@ const getTransporter = async () => {
       host: process.env.SMTP_HOST,
       port,
       secure: isSecure,
+      connectionTimeout: 8000,
+      greetingTimeout: 8000,
+      socketTimeout: 10000,
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,

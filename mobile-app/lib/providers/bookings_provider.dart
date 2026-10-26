@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../config/api_config.dart';
 import '../models/booking_model.dart';
 import '../services/api_service.dart';
+import '../services/razorpay_checkout.dart';
 
 class BookingsProvider extends ChangeNotifier {
   List<BookingModel> _bookings = [];
@@ -61,58 +62,148 @@ class BookingsProvider extends ChangeNotifier {
     }
 
     final booking = BookingModel.fromJson((res['data'] as Map).cast<String, dynamic>());
-    _bookings.insert(0, booking);
-    notifyListeners();
+    upsert(booking);
     return booking;
   }
 
-  Future<void> payEscrow(String bookingId) async {
-    Map<String, dynamic>? res;
+  void upsert(BookingModel booking) {
+    if (booking.id.isEmpty) return;
+    final idx = _bookings.indexWhere((b) => b.id == booking.id);
+    if (idx == -1) {
+      _bookings.insert(0, booking);
+    } else {
+      _bookings[idx] = booking;
+    }
+    notifyListeners();
+  }
+
+  void upsertFromJson(dynamic raw) {
+    if (raw is! Map) return;
     try {
-      final paid = await ApiService().post(ApiConfig.payBooking, {
-        'bookingId': bookingId,
-        'paymentMethod': 'UPI',
-      });
-      res = paid is Map ? paid.cast<String, dynamic>() : null;
+      upsert(BookingModel.fromJson(Map<String, dynamic>.from(raw)));
+    } catch (_) {}
+  }
+
+  BookingModel? _localPaid(String bookingId) {
+    final match = _bookings.where((b) => b.id == bookingId);
+    if (match.isEmpty) return null;
+    final booking = match.first;
+    return booking.isEscrowPaid ? booking : null;
+  }
+
+  Future<BookingModel?> _paidBooking(String bookingId) async {
+    final local = _localPaid(bookingId);
+    if (local != null) return local;
+    await loadData();
+    return _localPaid(bookingId);
+  }
+
+  Future<BookingModel> _confirmSimulatedEscrow(String bookingId, String methodLabel) async {
+    final paid = await ApiService().post(ApiConfig.payBooking, {
+      'bookingId': bookingId,
+      'paymentMethod': methodLabel,
+    });
+    final booking = _bookingFromPayResponse(paid) ?? await _paidBooking(bookingId);
+    if (booking == null) {
+      throw ApiException('Payment did not confirm. Try again.');
+    }
+    return _markPaid(booking);
+  }
+
+  Future<BookingModel> payEscrow({
+    required String bookingId,
+    String method = 'upi',
+    String? customerName,
+    String? customerEmail,
+    String? customerPhone,
+    String? description,
+  }) async {
+    if (bookingId.isEmpty) {
+      throw ApiException('Booking is missing. Accept a bid again, then pay.');
+    }
+    final already = _localPaid(bookingId);
+    if (already != null) return already;
+
+    final methodLabel = method.toLowerCase() == 'card' ? 'Demo Card' : 'Demo UPI';
+    ApiException? checkoutError;
+
+    try {
+      final order = await ApiService().post(ApiConfig.createOrder, {'bookingId': bookingId});
+      if (order is Map && order['success'] == true) {
+        final orderId = (order['order_id'] ?? order['id'] ?? '').toString();
+        final key = (order['key_id'] ?? order['key'] ?? '').toString();
+        final amount = order['amount'] is num ? (order['amount'] as num).toInt() : 0;
+        final isLive = key.startsWith('rzp_live_');
+        if (isLive && orderId.isNotEmpty && key.isNotEmpty) {
+          try {
+            final checkout = await RazorpayCheckout.open(
+              key: key,
+              orderId: orderId,
+              amountPaise: amount > 0 ? amount : 100,
+              method: method,
+              description: description,
+              customerName: customerName,
+              customerEmail: customerEmail,
+              customerPhone: customerPhone,
+            );
+            final verified = await ApiService().post(ApiConfig.verifyPayment, {
+              'razorpay_order_id': checkout.orderId,
+              'razorpay_payment_id': checkout.paymentId,
+              'razorpay_signature': checkout.signature,
+              'bookingId': bookingId,
+            });
+            BookingModel? paid = _bookingFromPayResponse(verified);
+            paid ??= await _paidBooking(bookingId);
+            if (paid == null) {
+              throw ApiException('Payment received. Pull down Bookings to refresh.');
+            }
+            return _markPaid(paid);
+          } on ApiException catch (e) {
+            checkoutError = e;
+          } catch (e) {
+            checkoutError = ApiException(e.toString());
+          }
+        }
+      }
+    } on ApiException catch (e) {
+      if (e.message.toLowerCase().contains('already paid')) {
+        final paid = await _paidBooking(bookingId);
+        if (paid != null) return paid;
+      }
+      checkoutError = e;
+    }
+
+    try {
+      return await _confirmSimulatedEscrow(bookingId, methodLabel);
     } on ApiException catch (e) {
       if (e.statusCode == 403) {
-        await ApiService().post(ApiConfig.createOrder, {'bookingId': bookingId});
-        throw ApiException('Razorpay checkout is required. Simulated escrow pay is disabled on this server.');
+        throw checkoutError ??
+            ApiException('Live UPI is not ready yet. Add Razorpay live keys, or keep NODE_ENV=development for demo pay.');
       }
-      rethrow;
+      if (e.message.toLowerCase().contains('already paid') || e.message.toLowerCase().contains('already confirmed')) {
+        final paid = await _paidBooking(bookingId);
+        if (paid != null) return paid;
+      }
+      throw checkoutError ?? e;
     }
+  }
 
-    BookingModel? paid;
-    final data = res?['data'];
-    if (data is Map) {
-      paid = BookingModel.fromJson(data.cast<String, dynamic>());
+  BookingModel? _bookingFromPayResponse(dynamic res) {
+    if (res is! Map) return null;
+    final data = res['data'];
+    if (data is Map && data['booking'] is Map) {
+      return BookingModel.fromJson((data['booking'] as Map).cast<String, dynamic>());
     }
+    if (data is Map && (data['_id'] != null || data['id'] != null || data['status'] != null)) {
+      return BookingModel.fromJson(data.cast<String, dynamic>());
+    }
+    return null;
+  }
 
-    final idx = _bookings.indexWhere((b) => b.id == bookingId);
-    if (idx != -1) {
-      final b = paid ?? _bookings[idx];
-      _bookings[idx] = BookingModel(
-        id: b.id,
-        requirementId: b.requirementId,
-        requirementTitle: b.requirementTitle,
-        category: b.category,
-        eventDate: b.eventDate,
-        locationText: b.locationText,
-        bidAmount: b.bidAmount,
-        platformFee: b.platformFee,
-        totalPaid: b.totalPaid,
-        status: 'ACTIVE',
-        hostName: b.hostName,
-        hostPhone: b.hostPhone,
-        vendorName: b.vendorName,
-        vendorPhone: b.vendorPhone,
-        isContactRevealed: true,
-      );
-      notifyListeners();
-    } else if (paid != null) {
-      _bookings.insert(0, paid);
-      notifyListeners();
-    }
+  BookingModel _markPaid(BookingModel paid) {
+    final updated = paid.copyWith(status: 'ACTIVE', isContactRevealed: true);
+    upsert(updated);
+    return updated;
   }
 
   Future<void> completeBooking(String id) async {
@@ -121,23 +212,7 @@ class BookingsProvider extends ChangeNotifier {
     final idx = _bookings.indexWhere((b) => b.id == id);
     if (idx != -1) {
       final b = _bookings[idx];
-      _bookings[idx] = BookingModel(
-        id: b.id,
-        requirementId: b.requirementId,
-        requirementTitle: b.requirementTitle,
-        category: b.category,
-        eventDate: b.eventDate,
-        locationText: b.locationText,
-        bidAmount: b.bidAmount,
-        platformFee: b.platformFee,
-        totalPaid: b.totalPaid,
-        status: 'COMPLETED',
-        hostName: b.hostName,
-        hostPhone: b.hostPhone,
-        vendorName: b.vendorName,
-        vendorPhone: b.vendorPhone,
-        isContactRevealed: true,
-      );
+      _bookings[idx] = b.copyWith(status: 'COMPLETED', isContactRevealed: true);
       notifyListeners();
     }
   }

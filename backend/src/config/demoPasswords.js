@@ -46,6 +46,9 @@ const upsertPortalUser = async (login) => {
     fields.serviceArea = 'Pune';
     fields.isVerified = true;
     fields.categories = ['DJ & Sound Systems', 'Lighting & Trussing'];
+    fields.rating = 4.8;
+    fields.reviewCount = 16;
+    fields.completedJobs = 28;
   }
 
   if (!user) {

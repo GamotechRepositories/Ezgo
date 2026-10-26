@@ -734,3 +734,107 @@ export const seedDatabase = async (forceReset = false) => {
     console.error('❌ Seeding error:', error.message);
   }
 };
+
+const MARKETPLACE_LEADS = [
+  {
+    title: 'Sangeet Night DJ & Sound · Hyderabad',
+    category: 'DJ & Sound Systems',
+    occasion: 'Sangeet',
+    description: 'Punchy DJ + dual subwoofers, wireless mics and moving lights for 280 guests.',
+    imageUrl: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop&q=80',
+    location: { city: 'Hyderabad', area: 'Banjara Hills', venueAddress: 'Taj Krishna Grand Ballroom' },
+    eventDate: '2026-11-18',
+    timeWindow: { start: '18:00', end: '23:30' },
+    guestCount: 280,
+    budget: 42000,
+  },
+  {
+    title: 'Royal Floral Mandap Backdrop · Hyderabad',
+    category: 'Stage & Mandap Decoration',
+    occasion: 'Wedding',
+    description: 'Jasmine garlands, brass deepams, floral canopy and bridal entry pathway.',
+    imageUrl: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=800&auto=format&fit=crop&q=80',
+    location: { city: 'Hyderabad', area: 'Jubilee Hills', venueAddress: 'Falaknuma Palace Lawn' },
+    eventDate: '2026-11-22',
+    timeWindow: { start: '10:00', end: '18:00' },
+    guestCount: 400,
+    budget: 95000,
+  },
+  {
+    title: 'Wedding Reception Decor · Pune',
+    category: 'Stage & Mandap Decoration',
+    occasion: 'Reception',
+    description: 'Pastel floral backdrop, fairy-light canopy and couple sofa seating for 500 guests.',
+    imageUrl: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&auto=format&fit=crop&q=80',
+    location: { city: 'Pune', area: 'Koregaon Park', venueAddress: 'Mahalaxmi Lawns, North Main Road' },
+    eventDate: '2026-11-28',
+    timeWindow: { start: '16:00', end: '23:00' },
+    guestCount: 500,
+    budget: 85000,
+  },
+  {
+    title: 'Bollywood Sangeet Sound Setup · Mumbai',
+    category: 'DJ & Sound Systems',
+    occasion: 'Sangeet',
+    description: 'Concert sound, dual 18-inch subs, haze machine and wireless handheld mics.',
+    imageUrl: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&auto=format&fit=crop&q=80',
+    location: { city: 'Mumbai', area: 'Bandra West', venueAddress: 'Taj Lands End, Bandstand' },
+    eventDate: '2026-12-05',
+    timeWindow: { start: '19:00', end: '01:00' },
+    guestCount: 250,
+    budget: 50000,
+  },
+  {
+    title: 'Corporate Gala Photography · Bengaluru',
+    category: '4K Photography & Drone',
+    occasion: 'Corporate',
+    description: 'Two candid photographers plus a highlight recap reel with fast turnaround.',
+    imageUrl: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&auto=format&fit=crop&q=80',
+    location: { city: 'Bengaluru', area: 'Indiranagar', venueAddress: 'The Leela Palace, Old Airport Road' },
+    eventDate: '2026-12-08',
+    timeWindow: { start: '14:00', end: '22:00' },
+    guestCount: 300,
+    budget: 45000,
+  },
+];
+
+export const ensureOpenMarketplaceLeads = async () => {
+  try {
+    const host = await User.findOne({ email: 'host@ezzygo.in' });
+    if (!host) return;
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    let created = 0;
+    for (const lead of MARKETPLACE_LEADS) {
+      const existing = await Requirement.findOne({ title: lead.title });
+      if (existing) {
+        if (existing.status === 'OPEN' && existing.eventDate >= todayStr) continue;
+        if (existing.status === 'OPEN') {
+          existing.eventDate = lead.eventDate;
+          existing.biddingDeadline = new Date(`${lead.eventDate}T18:00:00.000Z`);
+          existing.status = 'OPEN';
+          await existing.save();
+          created += 1;
+        }
+        continue;
+      }
+      await Requirement.create({
+        requesterId: host._id,
+        ...lead,
+        eventType: lead.occasion,
+        images: [lead.imageUrl],
+        maxAcceptableBid: Math.floor(lead.budget * 0.85),
+        biddingDeadline: new Date(`${lead.eventDate}T18:00:00.000Z`),
+        status: 'OPEN',
+      });
+      created += 1;
+    }
+    const openCount = await Requirement.countDocuments({
+      status: 'OPEN',
+      eventDate: { $gte: todayStr },
+    });
+    console.log(`Open marketplace leads: ${openCount}${created ? ` (${created} refreshed)` : ''}`);
+  } catch (error) {
+    console.error('ensureOpenMarketplaceLeads:', error.message);
+  }
+};

@@ -5,6 +5,7 @@ import '../../config/theme.dart';
 import '../../models/booking_model.dart';
 import '../../widgets/shell_bottom_insets.dart';
 import 'payment_escrow_screen.dart';
+import 'vendor_profile_screen.dart';
 
 class BookingDetailScreen extends StatelessWidget {
   final BookingModel booking;
@@ -39,8 +40,9 @@ class BookingDetailScreen extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
-                  // Vendor Card (Screen 10)
-                  Container(
+                  GestureDetector(
+                    onTap: booking.isEscrowPaid ? () => openVendorProfile(context, booking) : null,
+                    child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -83,7 +85,7 @@ class BookingDetailScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                booking.vendorName,
+                                booking.isEscrowPaid ? booking.vendorName : 'Vendor locked',
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w800,
@@ -92,17 +94,26 @@ class BookingDetailScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                booking.requirementTitle.isNotEmpty ? booking.requirementTitle : 'Wedding Photography',
+                                booking.requirementTitle.isNotEmpty ? booking.requirementTitle : 'Event booking',
                                 style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
                               ),
                               const SizedBox(height: 4),
-                              const Row(
-                                children: [
-                                  Icon(Icons.star_rounded, size: 14, color: Color(0xFFFF9500)),
-                                  SizedBox(width: 3),
-                                  Text('4.8 (120)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
-                                ],
-                              ),
+                              if (booking.isEscrowPaid)
+                                Row(
+                                  children: [
+                                    const Icon(Icons.star_rounded, size: 14, color: Color(0xFFFF9500)),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      '${booking.vendorRating.toStringAsFixed(1)} (${booking.vendorReviewCount}) · ${booking.vendorCompletedJobs} events',
+                                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                                    ),
+                                  ],
+                                )
+                              else
+                                const Text(
+                                  'Pay escrow to see vendor details',
+                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.slate500),
+                                ),
                             ],
                           ),
                         ),
@@ -125,9 +136,9 @@ class BookingDetailScreen extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 6),
-                            const Text(
-                              'View Profile',
-                              style: TextStyle(
+                            Text(
+                              booking.isEscrowPaid ? 'View Profile' : 'Pay to unlock',
+                              style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
                                 color: AppTheme.primary,
@@ -137,6 +148,7 @@ class BookingDetailScreen extends StatelessWidget {
                         ),
                       ],
                     ),
+                  ),
                   ),
 
                   const SizedBox(height: 16),
@@ -229,14 +241,9 @@ class BookingDetailScreen extends StatelessWidget {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Calling vendor: ${booking.vendorPhone.isNotEmpty ? booking.vendorPhone : "+91 98765 11111"}'),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      },
+                      onPressed: booking.isEscrowPaid && booking.vendorPhone.isNotEmpty
+                          ? () => launchVendorCall(booking.vendorPhone)
+                          : null,
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppTheme.primary,
                         backgroundColor: Colors.white,
@@ -245,7 +252,10 @@ class BookingDetailScreen extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         elevation: 0,
                       ),
-                      child: const Text('Contact Vendor', style: TextStyle(fontWeight: FontWeight.w700)),
+                      child: Text(
+                        booking.isEscrowPaid ? 'Contact Vendor' : 'Pay to unlock',
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),

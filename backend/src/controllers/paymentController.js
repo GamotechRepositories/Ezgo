@@ -188,7 +188,10 @@ export const verifyPayment = async (req, res, next) => {
     let updatedBooking = null;
     if (bookingId) {
       const booking = mongoose.Types.ObjectId.isValid(bookingId)
-        ? await Booking.findById(bookingId).populate('providerId').populate('requesterId').populate('requirementId')
+        ? await Booking.findById(bookingId)
+            .populate('providerId', 'name businessName phone email rating reviewCount completedJobs isVerified avatar categories serviceArea')
+            .populate('requesterId', 'name phone email avatar rating')
+            .populate('requirementId')
         : null;
 
       if (!booking) {
@@ -243,6 +246,7 @@ export const verifyPayment = async (req, res, next) => {
           razorpayPaymentId: razorpay_payment_id,
           bidAmount: booking.bidAmount,
           platformFee: booking.platformFee,
+          method: 'Razorpay',
           note: 'Funds held in EzzyGo Escrow via Razorpay Standard Checkout',
         },
       });
@@ -316,8 +320,8 @@ export const handleRazorpayWebhook = async (req, res, next) => {
 
     if (event === 'payment.captured' || event === 'order.paid') {
       const booking = await Booking.findOne({ 'paymentDetails.orderId': orderId })
-        .populate('providerId')
-        .populate('requesterId')
+        .populate('providerId', 'name businessName phone email rating reviewCount completedJobs isVerified avatar categories serviceArea')
+        .populate('requesterId', 'name phone email avatar rating')
         .populate('requirementId');
 
       if (booking && booking.status === 'AWAITING_PAYMENT') {
@@ -348,6 +352,7 @@ export const handleRazorpayWebhook = async (req, res, next) => {
             webhookEvent: event,
             razorpayOrderId: orderId,
             razorpayPaymentId: paymentId,
+            method: payload.method || 'Razorpay Webhook',
             note: 'Reconciled via Razorpay Webhook',
           },
         });
@@ -395,5 +400,105 @@ export const handleRazorpayWebhook = async (req, res, next) => {
   } catch (error) {
     console.error('Webhook error:', error);
     return res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+const HISTORY_TYPES_HOST = new Set(['PAYMENT_HELD_ESCROW', 'REFUND', 'PAYOUT_RELEASED_PROVIDER']);
+const HISTORY_TYPES_VENDOR = new Set(['PAYMENT_HELD_ESCROW', 'PAYOUT_RELEASED_PROVIDER', 'REFUND']);
+const PAID_BOOKING_STATUSES = ['ACTIVE', 'COMPLETED', 'PAYOUT_RELEASED', 'DISPUTED'];
+
+const historyLabel = (type, isHost) => {
+  if (type === 'PAYMENT_HELD_ESCROW') return isHost ? 'Paid to EzzyGo escrow' : 'Host paid · held in escrow';
+  if (type === 'PAYOUT_RELEASED_PROVIDER') return isHost ? 'Released to vendor' : 'Payout received';
+  if (type === 'REFUND') return 'Refunded';
+  return type;
+};
+
+export const getPaymentHistory = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+    const isHost = req.user.role === 'requester' || req.user.roles?.includes('requester');
+
+    const paidBookings = await Booking.find({
+      $or: [{ requesterId: userId }, { providerId: userId }],
+      status: { $in: PAID_BOOKING_STATUSES },
+    }).select('_id totalPaid bidAmount platformFee paymentDetails requesterId providerId');
+
+    const existing = await Transaction.find({
+      bookingId: { $in: paidBookings.map((b) => b._id) },
+      type: 'PAYMENT_HELD_ESCROW',
+    }).select('bookingId');
+    const have = new Set(existing.map((t) => t.bookingId.toString()));
+
+    for (const booking of paidBookings) {
+      if (have.has(booking._id.toString())) continue;
+      await Transaction.updateOne(
+        { bookingId: booking._id, type: 'PAYMENT_HELD_ESCROW' },
+        {
+          $setOnInsert: {
+            bookingId: booking._id,
+            type: 'PAYMENT_HELD_ESCROW',
+            amount: booking.totalPaid,
+            fromUser: booking.requesterId,
+            toUser: booking.providerId,
+            status: 'SUCCESS',
+            referenceId: booking.paymentDetails?.transactionId || `PAY-${booking._id.toString().slice(-8).toUpperCase()}`,
+            metadata: {
+              bidAmount: booking.bidAmount,
+              platformFee: booking.platformFee,
+              method: booking.paymentDetails?.method || 'Demo UPI',
+              paidAt: booking.paymentDetails?.paidAt,
+              backfilled: true,
+            },
+          },
+        },
+        { upsert: true }
+      );
+    }
+
+    const txns = await Transaction.find({
+      $or: [{ fromUser: userId }, { toUser: userId }],
+    })
+      .sort({ createdAt: -1 })
+      .populate({
+        path: 'bookingId',
+        populate: [
+          { path: 'requirementId', select: 'title category eventDate location' },
+          { path: 'providerId', select: 'businessName name' },
+          { path: 'requesterId', select: 'name' },
+        ],
+      })
+      .lean();
+
+    const allowed = isHost && req.user.role !== 'provider' ? HISTORY_TYPES_HOST : HISTORY_TYPES_VENDOR;
+    const data = txns
+      .filter((t) => allowed.has(t.type))
+      .map((t) => {
+        const booking = t.bookingId && typeof t.bookingId === 'object' ? t.bookingId : null;
+        const reqDoc = booking?.requirementId && typeof booking.requirementId === 'object' ? booking.requirementId : null;
+        const revealed = booking && PAID_BOOKING_STATUSES.includes(booking.status);
+        const vendor = booking?.providerId && typeof booking.providerId === 'object' ? booking.providerId : null;
+        return {
+          _id: t._id,
+          type: t.type,
+          label: historyLabel(t.type, isHost || String(t.fromUser) === String(userId)),
+          amount: t.amount,
+          status: t.status,
+          referenceId: t.referenceId,
+          method: t.metadata?.method || booking?.paymentDetails?.method || '',
+          createdAt: t.createdAt,
+          bookingId: booking?._id || t.bookingId,
+          bookingStatus: booking?.status || '',
+          eventTitle: reqDoc?.title || 'Event booking',
+          eventDate: reqDoc?.eventDate || '',
+          category: reqDoc?.category || '',
+          vendorName: revealed ? vendor?.businessName || vendor?.name || 'Vendor' : 'Vendor locked',
+          escrowStatus: booking?.paymentDetails?.escrowStatus || '',
+        };
+      });
+
+    res.json({ success: true, count: data.length, data });
+  } catch (error) {
+    next(error);
   }
 };
