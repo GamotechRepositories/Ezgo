@@ -183,17 +183,20 @@ export const processPayment = async (req, res, next) => {
 
     await logAudit({
       req,
-      action: 'PAYOUT_RELEASED',
+      action: 'PAYMENT_HELD_ESCROW',
       targetType: 'Booking',
       targetId: booking._id,
-      amount: booking.bidAmount,
-      details: `Escrow payout of ?${booking.bidAmount} released to vendor "${booking.providerId?.businessName || booking.providerId?.name || ''}"`,
-      metadata: { transferId: payoutRef, platformFee: booking.platformFee },
+      amount: booking.totalPaid,
+      details: `Escrow hold of ₹${booking.totalPaid} for "${booking.requirementId?.title || ''}"`,
+      metadata: { transferId: transactionRef, platformFee: booking.platformFee },
       status: 'SUCCESS',
     });
 
     // Update requirement status
-    await Requirement.findByIdAndUpdate(booking.requirementId._id, { status: 'ACTIVE' });
+    const paidRequirementId = booking.requirementId?._id || booking.requirementId;
+    if (paidRequirementId) {
+      await Requirement.findByIdAndUpdate(paidRequirementId, { status: 'ACTIVE' });
+    }
 
     // Record Escrow transaction
     await Transaction.create({

@@ -15,20 +15,6 @@ interface PromoAdBannerProps {
   onActionClick?: (banner: Banner) => void;
 }
 
-const DEFAULT_BANNER: Banner = {
-  _id: 'default-hero-ad',
-  title: 'Royal Wedding Mandap & DJ Stage Setups',
-  subtitle: 'Book top verified event pros with guaranteed reverse-bidding savings.',
-  badge: 'SPECIAL AD OFFER',
-  imageUrl: '/promo_banner_grand_event.jpg',
-  targetUrl: '#services-grid',
-  ctaText: 'Claim 25% Off Deal',
-  city: 'ALL',
-  placement: 'hero_banner',
-  discountPercent: 25,
-  isActive: true,
-};
-
 export const PromoAdBanner: React.FC<PromoAdBannerProps> = ({
   banners = [],
   currentCity = 'Pune',
@@ -42,7 +28,7 @@ export const PromoAdBanner: React.FC<PromoAdBannerProps> = ({
     return b.city.toLowerCase().includes(cleanCity);
   });
 
-  const activeList = matchingBanners.length > 0 ? matchingBanners : [DEFAULT_BANNER];
+  const activeList = matchingBanners;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -63,6 +49,8 @@ export const PromoAdBanner: React.FC<PromoAdBannerProps> = ({
   }, [activeList.length, currentIndex]);
 
   const currentAd = activeList[currentIndex] || activeList[0];
+
+  if (!currentAd) return null;
 
   const handleCta = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -89,7 +77,7 @@ export const PromoAdBanner: React.FC<PromoAdBannerProps> = ({
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
           onClick={handleCta}
-          className="relative w-full rounded-2xl sm:rounded-[32px] overflow-hidden bg-slate-950 shadow-2xl shadow-orange-500/20 border-2 border-orange-200/90 group cursor-pointer transition-all duration-300 hover:shadow-orange-500/35 hover:border-orange-400"
+          className="relative w-full rounded-2xl overflow-hidden bg-slate-950 border border-[#EFE6DC] group cursor-pointer"
         >
           {/* Background Blurred Ambient Glow for Ultrawide displays */}
           <div 
@@ -113,7 +101,7 @@ export const PromoAdBanner: React.FC<PromoAdBannerProps> = ({
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/40" />
 
           {/* Relative Flex Column: Clean, high-impact commercial billboard ad layout */}
-          <div className="relative z-20 flex flex-col justify-between min-h-[260px] sm:min-h-[270px] lg:min-h-[290px] p-4 sm:p-7 lg:p-8">
+          <div className="relative z-20 flex flex-col justify-between min-h-[200px] sm:min-h-[220px] lg:min-h-[240px] p-4 sm:p-6">
             
             {/* Top Bar: Distinct AD Identifier + City Tag */}
             <div className="flex items-center justify-between gap-2">
@@ -152,7 +140,7 @@ export const PromoAdBanner: React.FC<PromoAdBannerProps> = ({
                 
                 {/* Bold Discount Sticker */}
                 {currentAd.discountPercent ? (
-                  <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-gradient-to-r from-amber-400 via-orange-400 to-[#f95724] text-slate-950 font-black text-[11px] sm:text-xs tracking-wider uppercase shadow-md shadow-orange-500/25">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-gradient-to-r from-amber-400 via-orange-400 to-[#FF5722] text-slate-950 font-black text-[11px] sm:text-xs tracking-wider uppercase shadow-md shadow-orange-500/25">
                     <Percent className="w-3 h-3 stroke-[3]" />
                     <span>SAVE UP TO {currentAd.discountPercent}% • REVERSE BIDDING</span>
                   </div>
@@ -185,7 +173,7 @@ export const PromoAdBanner: React.FC<PromoAdBannerProps> = ({
                         aria-label={`Go to ad ${idx + 1}`}
                         className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 cursor-pointer ${
                           currentIndex === idx
-                            ? 'w-5 sm:w-7 bg-[#f95724]'
+                            ? 'w-5 sm:w-7 bg-[#FF5722]'
                             : 'w-1.5 sm:w-2 bg-white/40 hover:bg-white/80'
                         }`}
                       />
@@ -197,7 +185,7 @@ export const PromoAdBanner: React.FC<PromoAdBannerProps> = ({
                 <button
                   type="button"
                   onClick={handleCta}
-                  className="px-6 sm:px-8 py-2.5 sm:py-3.5 rounded-full bg-gradient-to-r from-[#f95724] to-orange-500 hover:from-[#e04818] hover:to-[#f95724] text-white font-black text-xs sm:text-sm shadow-xl shadow-orange-500/40 flex items-center gap-2 cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95 whitespace-nowrap min-h-[42px] sm:min-h-[46px]"
+                  className="btn-primary whitespace-nowrap"
                 >
                   <span>{currentAd.ctaText || 'Claim Deal'}</span>
                   <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[3]" />

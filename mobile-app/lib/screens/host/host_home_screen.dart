@@ -3,25 +3,40 @@ import 'package:provider/provider.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../config/theme.dart';
+import '../../data/event_services.dart';
+import '../../data/occasion_cards.dart';
+import '../../models/banner_model.dart';
 import '../../models/requirement_model.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/banners_provider.dart';
 import '../../providers/requirements_provider.dart';
+import '../../widgets/event_service_card.dart';
 import '../../widgets/ezzygo_logo.dart';
+import '../../widgets/image_poster_card.dart';
+import '../../widgets/event_request_card.dart';
+import '../../widgets/promo_ad_banner.dart';
 import '../../widgets/rule_explainer_sheet.dart';
+import '../../widgets/shell_bottom_insets.dart';
 import 'bids_comparison_screen.dart';
+import 'occasion_catalog_screen.dart';
 import 'post_requirement_screen.dart';
 import 'service_catalog_screen.dart';
+import 'service_detail_screen.dart';
 
 class HostHomeScreen extends StatefulWidget {
   final ScrollController? scrollController;
   final VoidCallback? onScrollToFeed;
   final VoidCallback? onOpenCityPicker;
+  final VoidCallback? onOpenMyEvents;
 
   const HostHomeScreen({
     super.key,
     this.scrollController,
     this.onScrollToFeed,
     this.onOpenCityPicker,
+    this.onOpenMyEvents,
   });
 
   @override
@@ -31,6 +46,8 @@ class HostHomeScreen extends StatefulWidget {
 class HostHomeScreenState extends State<HostHomeScreen> {
   final TextEditingController _searchController = TextEditingController();
   final formatCurrency = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
+  final GlobalKey _servicesKey = GlobalKey();
+  String? _adsCity;
 
   void scrollToFeed() {
     if (widget.scrollController != null && widget.scrollController!.hasClients) {
@@ -42,83 +59,20 @@ class HostHomeScreenState extends State<HostHomeScreen> {
     }
   }
 
-  // Occasions with pastel tiles (Screen 3)
-  final List<Map<String, dynamic>> _occasionShortcuts = [
-    {
-      'name': 'Wedding',
-      'icon': LucideIcons.heartHandshake,
-      'bg': Color(0xFFFFECEB),
-      'color': Color(0xFFFF5148),
-    },
-    {
-      'name': 'Sangeet',
-      'icon': LucideIcons.music,
-      'bg': Color(0xFFE8F4FD),
-      'color': Color(0xFF2F80ED),
-    },
-    {
-      'name': 'Birthday',
-      'icon': LucideIcons.cake,
-      'bg': Color(0xFFE8F8F0),
-      'color': Color(0xFF27AE60),
-    },
-    {
-      'name': 'Corporate',
-      'icon': LucideIcons.briefcase,
-      'bg': Color(0xFFF0ECFC),
-      'color': Color(0xFF7B61FF),
-    },
-    {
-      'name': 'More',
-      'icon': LucideIcons.moreHorizontal,
-      'bg': Color(0xFFFFF4E8),
-      'color': Color(0xFFF2994A),
-    },
-  ];
+  int? _expandedFaq;
 
-  // Popular Services for horizontal scroll (Screen 3)
-  final List<Map<String, dynamic>> _popularServices = [
-    {
-      'title': 'Catering',
-      'price': 'From ₹300',
-      'asset': 'assets/images/service_catering.jpg',
-      'image': 'https://images.unsplash.com/photo-1555244162-803834f70033?w=400&auto=format&fit=crop&q=80',
-      'icon': LucideIcons.utensils,
-      'color': const Color(0xFFEF4444),
-    },
-    {
-      'title': 'Photography',
-      'price': 'From ₹5,000',
-      'asset': 'assets/images/occasion_parties.jpg',
-      'image': 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400&auto=format&fit=crop&q=80',
-      'icon': LucideIcons.camera,
-      'color': const Color(0xFF3B82F6),
-    },
-    {
-      'title': 'Decoration',
-      'price': 'From ₹10,000',
-      'asset': 'assets/images/occasion_weddings.jpg',
-      'image': 'https://images.unsplash.com/photo-1519741497674-611481863552?w=400&auto=format&fit=crop&q=80',
-      'icon': LucideIcons.sparkles,
-      'color': const Color(0xFFEC4899),
-    },
-    {
-      'title': 'Venue',
-      'price': 'From ₹20,000',
-      'asset': 'assets/images/occasion_corporate.jpg',
-      'image': 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=400&auto=format&fit=crop&q=80',
-      'icon': LucideIcons.building2,
-      'color': const Color(0xFF8B5CF6),
-    },
-    {
-      'title': 'Makeup Artist',
-      'price': 'From ₹3,000',
-      'asset': 'assets/images/occasion_birthdays.jpg',
-      'image': 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=400&auto=format&fit=crop&q=80',
-      'icon': LucideIcons.palette,
-      'color': const Color(0xFFF59E0B),
-    },
-  ];
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final city = context.read<RequirementsProvider>().selectedCity;
+    if (_adsCity != city) {
+      _adsCity = city;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.read<BannersProvider>().loadForCity(city, force: true);
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -126,97 +80,94 @@ class HostHomeScreenState extends State<HostHomeScreen> {
     super.dispose();
   }
 
-  void _onOccasionTap(String occasion) {
-    if (occasion == 'More') {
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const ServiceCatalogScreen()),
-      );
-    } else {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => PostRequirementScreen(
-            initialCategory: occasion == 'Wedding' ? 'Decoration & Stage Setup' : null,
-          ),
-        ),
-      );
+  Future<void> _onAdAction(BannerModel ad) async {
+    final url = ad.targetUrl.trim();
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      final uri = Uri.tryParse(url);
+      if (uri != null) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+      return;
     }
+    if (url.startsWith('#')) {
+      final target = _servicesKey.currentContext;
+      if (target != null) {
+        await Scrollable.ensureVisible(
+          target,
+          duration: const Duration(milliseconds: 450),
+          curve: Curves.easeInOut,
+        );
+      }
+      return;
+    }
+    if (!mounted) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PostRequirementScreen(initialCategory: ad.title),
+      ),
+    );
+  }
+
+  void _onOccasionTap(OccasionCard occ) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PostRequirementScreen(
+          initialOccasion: occ.occasion,
+          initialCity: context.read<RequirementsProvider>().selectedCity,
+        ),
+      ),
+    );
+  }
+
+  void _openAllOccasions() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const OccasionCatalogScreen()),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final reqProvider = context.watch<RequirementsProvider>();
-    final myRequirements = reqProvider.requirements;
+    final bannersProvider = context.watch<BannersProvider>();
+    final auth = context.watch<AuthProvider>();
+    final myRequirements = reqProvider.mine(auth.user?.id);
 
     return ListView(
       controller: widget.scrollController,
       padding: EdgeInsets.zero,
       children: [
-        // 1. Immersive Full-Bleed Top Hero Header (Reaches all the way to top edge of screen)
         _buildImmersiveTopHero(reqProvider.selectedCity),
-
+        PromoAdBanner(
+          banners: bannersProvider.banners,
+          currentCity: reqProvider.selectedCity,
+          isLoading: bannersProvider.isLoading,
+          onAction: _onAdAction,
+        ),
         const SizedBox(height: 16),
-
-        // 2. Occasion Shortcuts (Directly beneath hero, matching Screen 3 Mockup)
+        _buildPopularServicesSection(),
+        const SizedBox(height: 8),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: _buildOccasionShortcuts(),
+          child: _buildEventServicesGrid(),
         ),
+        const SizedBox(height: 24),
 
-        const SizedBox(height: 18),
-
-        // 3. Popular Services Section (Matching Screen 3 Mockup)
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: _buildPopularServicesSection(),
+          child: _buildActivitySection(myRequirements),
         ),
+        const SizedBox(height: 24),
 
-        const SizedBox(height: 20),
-
-        // 4. Quick Search Bar
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: _buildSearchBar(),
+          child: _buildPromisesSection(),
         ),
 
         const SizedBox(height: 24),
 
-        // 5. Interactive "How Reverse-Bidding Works" Banner
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: _buildHowReverseBiddingWorks(),
-        ),
-
-        const SizedBox(height: 24),
-
-        // 6. Explore All Categories (2-Column Grid)
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: _buildAllCategoriesGrid(),
-        ),
-
-        const SizedBox(height: 24),
-
-        // 7. Activity / My Event Requests (Screen 3)
-        if (myRequirements.isNotEmpty) ...[
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: _buildActivitySection(myRequirements),
-          ),
-          const SizedBox(height: 24),
-        ],
-
-        // 8. EzzyGo Trust & Escrow Guarantee
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: _buildTrustAndAssuranceSection(),
-        ),
-
-        const SizedBox(height: 24),
-
-        // 9. Real Host Testimonials & Reviews
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: _buildHostTestimonialsCard(),
+          child: _buildFaqSection(),
         ),
 
         const SizedBox(height: 28),
@@ -224,18 +175,41 @@ class HostHomeScreenState extends State<HostHomeScreen> {
         // 10. Clean App Branding Footer
         _buildFooterBranding(),
 
-        // 11. Proper Bottom Clearance for Floating Navigation Bar
-        const SizedBox(height: 100),
+        SizedBox(height: ShellBottomInsets.of(context)),
       ],
     );
   }
 
-  // 1. Full-Bleed Top Hero Header (No Box, Extends to Top Edge of Screen)
+  void _openCreateEvent({String? category}) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PostRequirementScreen(
+          initialCategory: category,
+          initialCity: context.read<RequirementsProvider>().selectedCity,
+        ),
+      ),
+    );
+  }
+
+  void _openService(EventService service) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ServiceDetailScreen(service: service.detailMap),
+      ),
+    );
+  }
+
+  void _openCatalog({String? category}) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ServiceCatalogScreen(initialCategory: category),
+      ),
+    );
+  }
+
   Widget _buildImmersiveTopHero(String rawCity) {
-    final topPadding = MediaQuery.of(context).padding.top;
     final displayCity = rawCity.split(',')[0].trim();
-    // Taller, expansive hero header so the 4K palace mandap is prominently showcased
-    final heroHeight = 350.0 + topPadding;
+    final heroHeight = MediaQuery.sizeOf(context).height * 0.5;
 
     return Container(
       width: double.infinity,
@@ -254,7 +228,6 @@ class HostHomeScreenState extends State<HostHomeScreen> {
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(28)),
         child: Stack(
           children: [
-            // 4K Background Image Extending to Top Edge, Mandap on Right
             Positioned.fill(
               child: Image.asset(
                 'assets/images/hero_wedding_bg.jpg',
@@ -267,8 +240,6 @@ class HostHomeScreenState extends State<HostHomeScreen> {
                 ),
               ),
             ),
-
-            // Light Theme Horizontal Gradient: Focused white on left for text legibility, transparent on right for full 4K clarity
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
@@ -286,8 +257,6 @@ class HostHomeScreenState extends State<HostHomeScreen> {
                 ),
               ),
             ),
-
-            // Light Theme Top Sky Vignette to ensure status bar & top navigation are crystal clear
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
@@ -304,19 +273,14 @@ class HostHomeScreenState extends State<HostHomeScreen> {
                 ),
               ),
             ),
-
-            // Integrated Top Bar (EzzyGo Logo, City Picker Pill, Notification Bell)
             Positioned(
-              top: topPadding + 6,
+              top: 10,
               left: 16,
               right: 16,
               child: Row(
                 children: [
-                  // Official EzzyGo Branding in Dark Serif with Coral Monogram (Light Theme)
                   const EzzyGoLogo(size: 24, isLight: false),
                   const SizedBox(width: 8),
-
-                  // City Selector Dropdown Pill matching Screen 3 Mockup
                   GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     onTap: widget.onOpenCityPicker,
@@ -353,10 +317,7 @@ class HostHomeScreenState extends State<HostHomeScreen> {
                       ),
                     ),
                   ),
-
                   const Spacer(),
-
-                  // Notification Bell Pill
                   GestureDetector(
                     onTap: () {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -404,8 +365,6 @@ class HostHomeScreenState extends State<HostHomeScreen> {
                 ],
               ),
             ),
-
-            // Hero Content matching Screen 3 Mockup (Light Theme)
             Positioned(
               left: 20,
               right: 20,
@@ -414,15 +373,14 @@ class HostHomeScreenState extends State<HostHomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Tag: WEDDINGS
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFF5148), // Vibrant Coral Tag
+                      color: AppTheme.primary,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: const Text(
-                      'WEDDINGS',
+                      'REVERSE BIDDING',
                       style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w900,
@@ -432,10 +390,8 @@ class HostHomeScreenState extends State<HostHomeScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-
-                  // Heading: "Plan Your Dream\nWedding" (Dark Charcoal on Light Background)
                   Text(
-                    'Plan Your Dream\nWedding',
+                    'Post your budget.\nVendors bid lower.',
                     style: GoogleFonts.poppins(
                       fontSize: 22.5,
                       fontWeight: FontWeight.w900,
@@ -445,10 +401,17 @@ class HostHomeScreenState extends State<HostHomeScreen> {
                     ),
                   ),
                   const SizedBox(height: 4),
-
-                  // Subtitle
                   Text(
-                    'Get competitive bids from verified vendors',
+                    'You pick the best one.',
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'A vendor can win only by bidding at least 15% below your budget.',
                     style: GoogleFonts.poppins(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -456,26 +419,20 @@ class HostHomeScreenState extends State<HostHomeScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-
-                  // Row with "Post Your Requirement →" button & "1/3" badge
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       InkWell(
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const PostRequirementScreen()),
-                          );
-                        },
+                        onTap: () => _openCreateEvent(),
                         borderRadius: BorderRadius.circular(24),
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8.5),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFF5148), // Vibrant Coral Button
+                            color: AppTheme.primary,
                             borderRadius: BorderRadius.circular(24),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFFFF5148).withValues(alpha: 0.35),
+                                color: AppTheme.primary.withValues(alpha: 0.35),
                                 blurRadius: 10,
                                 offset: const Offset(0, 3),
                               ),
@@ -485,7 +442,7 @@ class HostHomeScreenState extends State<HostHomeScreen> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                'Post Your Requirement',
+                                'Post Requirement',
                                 style: GoogleFonts.poppins(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w800,
@@ -498,8 +455,6 @@ class HostHomeScreenState extends State<HostHomeScreen> {
                           ),
                         ),
                       ),
-
-                      // "1/3" Badge (Light Theme)
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                         decoration: BoxDecoration(
@@ -571,164 +526,79 @@ class HostHomeScreenState extends State<HostHomeScreen> {
     );
   }
 
-  // 3. Occasion Shortcuts (Screen 3)
-  Widget _buildOccasionShortcuts() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: _occasionShortcuts.map((occ) {
-        final name = occ['name'] as String;
-        return GestureDetector(
-          onTap: () => _onOccasionTap(name),
-          child: Column(
-            children: [
-              Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  color: occ['bg'] as Color,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  occ['icon'] as IconData,
-                  color: occ['color'] as Color,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                name,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimary,
-                ),
-              ),
-            ],
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  // 3. Popular Services Horizontally Scrollable Cards (Screen 3)
-  Widget _buildPopularServicesSection() {
+  Widget _buildOccasionCarousel() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Popular Services',
-              style: AppTheme.headingFont(fontSize: 17, fontWeight: FontWeight.w800),
-            ),
-            GestureDetector(
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const ServiceCatalogScreen()),
-                );
-              },
-              child: const Text(
-                'See All',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.primary,
-                ),
-              ),
-            ),
-          ],
+        Text(
+          'FOR EVERY OCCASION',
+          style: GoogleFonts.poppins(
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            color: AppTheme.primary,
+            letterSpacing: 1,
+          ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 4),
+        Text(
+          'Find the Right Professionals',
+          style: AppTheme.headingFont(fontSize: 20, fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          'From weddings to festivals, get the best deals from trusted local professionals.',
+          style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.35),
+        ),
+        const SizedBox(height: 14),
         SizedBox(
-          height: 148,
+          height: 200,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            itemCount: _popularServices.length,
+            itemCount: OccasionCards.all.length,
             separatorBuilder: (_, _) => const SizedBox(width: 12),
             itemBuilder: (context, index) {
-              final service = _popularServices[index];
+              final occ = OccasionCards.all[index];
               return GestureDetector(
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => ServiceCatalogScreen(
-                        initialCategory: service['title'] as String,
-                      ),
-                    ),
-                  );
-                },
-                child: Container(
-                  width: 116,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppTheme.borderSubtle),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.03),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ClipRRect(
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
-                        child: Image.asset(
-                          service['asset'] as String,
-                          width: 116,
-                          height: 86,
+                onTap: () => _onOccasionTap(occ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: SizedBox(
+                    width: 148,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Image.asset(
+                          occ.image,
                           fit: BoxFit.cover,
-                          filterQuality: FilterQuality.high,
-                          errorBuilder: (context, error, stackTrace) => Image.network(
-                            service['image'] as String,
-                            width: 116,
-                            height: 86,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Container(
-                              width: 116,
-                              height: 86,
-                              color: (service['color'] as Color).withValues(alpha: 0.12),
-                              child: Icon(
-                                service['icon'] as IconData,
-                                size: 26,
-                                color: service['color'] as Color,
-                              ),
+                          errorBuilder: (_, _, _) => Container(color: AppTheme.primaryLight),
+                        ),
+                        DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.black.withValues(alpha: 0.05),
+                                Colors.black.withValues(alpha: 0.65),
+                              ],
                             ),
                           ),
                         ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              service['title'] as String,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w800,
-                                color: AppTheme.textPrimary,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                        Positioned(
+                          left: 12,
+                          right: 12,
+                          bottom: 12,
+                          child: Text(
+                            occ.name,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 15,
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              service['price'] as String,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.textSecondary,
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               );
@@ -739,22 +609,146 @@ class HostHomeScreenState extends State<HostHomeScreen> {
     );
   }
 
-  // 5. Activity / My Event Requests (Screen 3)
-  Widget _buildActivitySection(List<RequirementModel> requirements) {
-    if (requirements.isEmpty) return const SizedBox.shrink();
+  Widget _buildPopularServicesSection() {
+    return Column(
+      key: _servicesKey,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Popular Services', style: AppTheme.headingFont(fontSize: 18, fontWeight: FontWeight.w800)),
+                    const SizedBox(height: 2),
+                    const Text(
+                      'From weddings to festivals, pick your occasion',
+                      style: TextStyle(fontSize: 12, color: AppTheme.textSecondary, fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
+              ),
+              GestureDetector(
+                onTap: _openAllOccasions,
+                child: const Text('View All', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppTheme.primary)),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        SizedBox(
+          height: 268,
+          child: ListView.separated(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+            scrollDirection: Axis.horizontal,
+            itemCount: OccasionCards.all.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 14),
+            itemBuilder: (context, i) {
+              final occ = OccasionCards.all[i];
+              return ImagePosterCard(
+                title: occ.name,
+                asset: occ.image,
+                iconWidget: occ.iconWidget,
+                width: 176,
+                onTap: () => _onOccasionTap(occ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
 
-    final recentReqs = requirements.take(2).toList();
+  Widget _buildEventServicesGrid() {
+    final cards = EventServices.all;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF1EA),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(LucideIcons.sparkles, size: 12, color: AppTheme.primary),
+                  SizedBox(width: 5),
+                  Text(
+                    'SERVICES & RATES',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.6,
+                      color: AppTheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Spacer(),
+            GestureDetector(
+              onTap: _openCatalog,
+              child: const Row(
+                children: [
+                  Text('View All', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppTheme.primary)),
+                  SizedBox(width: 2),
+                  Icon(LucideIcons.arrowRight, size: 14, color: AppTheme.primary),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Text('Event Services', style: AppTheme.headingFont(fontSize: 22, fontWeight: FontWeight.w800)),
+        const SizedBox(height: 4),
+        const Text(
+          'Typical market rates. Post once — vendors bid lower.',
+          style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.35),
+        ),
+        const SizedBox(height: 14),
+        ...cards.map(
+          (service) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: EventServiceCard(
+              service: service,
+              onTap: () => _openService(service),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActivitySection(List<RequirementModel> requirements) {
+    final recentReqs = requirements.take(3).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'My Event Requests',
-              style: AppTheme.headingFont(fontSize: 17, fontWeight: FontWeight.w800),
+            Expanded(
+              child: Text(
+                'My Event Requests',
+                style: AppTheme.headingFont(fontSize: 17, fontWeight: FontWeight.w800),
+              ),
             ),
+            if (requirements.isNotEmpty)
+              GestureDetector(
+                onTap: () => widget.onOpenMyEvents?.call(),
+                child: const Text(
+                  'View All',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.primary),
+                ),
+              ),
+            const SizedBox(width: 12),
             GestureDetector(
               onTap: () {
                 Navigator.of(context).push(
@@ -762,113 +756,71 @@ class HostHomeScreenState extends State<HostHomeScreen> {
                 );
               },
               child: const Text(
-                '+ New Event',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.primary,
-                ),
+                '+ New',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.primary),
               ),
             ),
           ],
         ),
         const SizedBox(height: 12),
-        ...recentReqs.map((req) {
-          final bidsCount = req.bids.isNotEmpty ? req.bids.length : (req.bidsCount > 0 ? req.bidsCount : 3);
-
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: InkWell(
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => BidsComparisonScreen(requirement: req),
-                  ),
-                );
-              },
-              borderRadius: BorderRadius.circular(16),
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppTheme.borderSubtle),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.02),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.network(
-                        req.imageUrl ?? 'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&auto=format&fit=crop&q=80',
-                        width: 70,
-                        height: 70,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => Container(
-                          width: 70,
-                          height: 70,
-                          color: AppTheme.slate100,
-                          child: const Icon(LucideIcons.calendar, size: 20, color: AppTheme.slate400),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            req.title,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                              color: AppTheme.textPrimary,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            '${req.eventDate} · ${req.city}',
-                            style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
-                          ),
-                          const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.successBg,
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  '$bidsCount Bids Received',
-                                  style: const TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppTheme.successText,
-                                  ),
-                                ),
-                              ),
-                              const Spacer(),
-                              const Icon(LucideIcons.chevronRight, size: 16, color: AppTheme.slate400),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+        if (recentReqs.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 18),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppTheme.borderSubtle),
             ),
-          );
-        }),
+            child: Column(
+              children: [
+                const Icon(LucideIcons.clipboardList, size: 32, color: AppTheme.primary),
+                const SizedBox(height: 10),
+                const Text(
+                  'No event requests yet',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Post a request with your budget. Vendors will bid at least 15% below it.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, color: AppTheme.slate500, height: 1.35),
+                ),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  height: 44,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const PostRequirementScreen()),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    child: const Text('Post Event Request', style: TextStyle(fontWeight: FontWeight.w800)),
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          ...recentReqs.map((req) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: EventRequestCard(
+                  requirement: req,
+                  compact: true,
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => BidsComparisonScreen(requirement: req)),
+                    );
+                  },
+                ),
+              )),
       ],
     );
   }
@@ -1190,186 +1142,136 @@ class HostHomeScreenState extends State<HostHomeScreen> {
     );
   }
 
-  // 8. EzzyGo Trust & Escrow Guarantee
-  Widget _buildTrustAndAssuranceSection() {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF0FDF4),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF86EFAC).withValues(alpha: 0.6)),
+  Widget _buildPromisesSection() {
+    const items = [
+      (
+        LucideIcons.indianRupee,
+        'At least 15% below your budget',
+        'You can only pick a vendor whose price is 15% or more below the budget you set.',
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: const BoxDecoration(
-                  color: Color(0xFF10B981),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(LucideIcons.shieldCheck, size: 18, color: Colors.white),
-              ),
-              const SizedBox(width: 10),
-              const Expanded(
-                child: Text(
-                  'EzzyGo Trust & Escrow Guarantee',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF065F46)),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          _buildTrustPoint(
-            icon: LucideIcons.lock,
-            title: '100% Escrow Protection',
-            desc: 'Your advance is held safely with EzzyGo and released only after event completion.',
-          ),
-          const SizedBox(height: 10),
-          _buildTrustPoint(
-            icon: LucideIcons.badgeCheck,
-            title: 'Verified Partner Vendors',
-            desc: 'KYC verified, portfolio inspected, and rated by real host reviews.',
-          ),
-          const SizedBox(height: 10),
-          _buildTrustPoint(
-            icon: LucideIcons.trendingDown,
-            title: '15% Lowest Price Guarantee',
-            desc: 'Vendors must bid at least 15% below your target budget.',
-          ),
-          const SizedBox(height: 10),
-          _buildTrustPoint(
-            icon: LucideIcons.phoneCall,
-            title: '24/7 Dedicated Concierge Support',
-            desc: 'Personal event manager on call for dispute resolution & coordination.',
-          ),
-        ],
+      (
+        LucideIcons.shield,
+        'Money held until the event is done',
+        'EzzyGo keeps your payment safe. The vendor gets paid only after you click "Event done".',
       ),
-    );
-  }
-
-  Widget _buildTrustPoint({required IconData icon, required String title, required String desc}) {
-    return Row(
+      (
+        LucideIcons.rotateCcw,
+        'Full refund if cancelled',
+        'If a paid booking is cancelled, you get back everything you paid, including the EzzyGo fee.',
+      ),
+    ];
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 16, color: const Color(0xFF059669)),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF064E3B)),
+        Text(
+          'Why hosts use EzzyGo',
+          style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w800, color: AppTheme.primary, letterSpacing: 0.6),
+        ),
+        const SizedBox(height: 4),
+        Text('Book with no risk', style: AppTheme.headingFont(fontSize: 20, fontWeight: FontWeight.w800)),
+        const SizedBox(height: 4),
+        const Text('Three simple promises on every booking.', style: TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+        const SizedBox(height: 14),
+        ...items.map((item) => Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: const Color(0xFFFDE68A).withValues(alpha: 0.7)),
               ),
-              const SizedBox(height: 1),
-              Text(
-                desc,
-                style: const TextStyle(fontSize: 11, color: Color(0xFF047857), height: 1.3),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: const BoxDecoration(color: AppTheme.primaryLight, shape: BoxShape.circle),
+                    child: Icon(item.$1, size: 18, color: AppTheme.primary),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(item.$2, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                        const SizedBox(height: 4),
+                        Text(item.$3, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary, height: 1.35)),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
+            )),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PostRequirementScreen()));
+            },
+            child: const Text('Post your requirement'),
           ),
         ),
       ],
     );
   }
 
-  // 9. Real Host Testimonials & Reviews
-  Widget _buildHostTestimonialsCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.borderSubtle),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Row(
-                children: [
-                  Icon(Icons.star_rounded, size: 18, color: Color(0xFFFF9500)),
-                  Icon(Icons.star_rounded, size: 18, color: Color(0xFFFF9500)),
-                  Icon(Icons.star_rounded, size: 18, color: Color(0xFFFF9500)),
-                  Icon(Icons.star_rounded, size: 18, color: Color(0xFFFF9500)),
-                  Icon(Icons.star_rounded, size: 18, color: Color(0xFFFF9500)),
-                ],
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                '4.9 / 5 Rating',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppTheme.slate100,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Text(
-                  '1,200+ Events',
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppTheme.slate600),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            '“We posted our wedding catering & stage decoration requirement on EzzyGo. Received 4 vendor bids within 3 hours and saved ₹38,000! Escrow made it completely risk-free.”',
-            style: TextStyle(
-              fontSize: 12,
-              color: AppTheme.slate700,
-              fontStyle: FontStyle.italic,
-              height: 1.4,
+  Widget _buildFaqSection() {
+    const faqs = [
+      ('How does the 15% rule help me?', 'You set a budget when you post. Vendors can bid any price below it, but you can only pick a bid that is at least 15% below your budget. So every booking saves you at least 15%.'),
+      ('How is my money kept safe?', 'When you pick a vendor, you pay their price plus a 10% EzzyGo fee. EzzyGo holds this money. The vendor is paid only after you click "Event done".'),
+      ('When do I get the vendor\'s phone number?', 'Right after you pay. You can then call or WhatsApp the vendor directly.'),
+      ('What if the booking is cancelled?', 'If a paid booking is cancelled, you get back everything you paid, including the EzzyGo fee. Your request opens again so you can pick another vendor.'),
+      ('Do vendors pay a commission?', 'No. Vendors get 100% of their bid after the event. The only fee is the 10% the host pays on top.'),
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('GOT QUESTIONS?', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w800, color: AppTheme.primary, letterSpacing: 0.6)),
+        const SizedBox(height: 4),
+        Text('Frequently Asked Questions', style: AppTheme.headingFont(fontSize: 20, fontWeight: FontWeight.w800)),
+        const SizedBox(height: 4),
+        const Text(
+          'Everything you need to know about the 15% discount rule, escrow safety, and booking flow.',
+          style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+        ),
+        const SizedBox(height: 12),
+        ...List.generate(faqs.length, (i) {
+          final open = _expandedFaq == i;
+          return Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: open ? AppTheme.primary.withValues(alpha: 0.4) : AppTheme.borderSubtle),
             ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              ClipOval(
-                child: Image.asset(
-                  'assets/images/user_avatar.png',
-                  width: 32,
-                  height: 32,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    width: 32,
-                    height: 32,
-                    color: AppTheme.pastelAmber,
-                    child: const Icon(LucideIcons.user, size: 16, color: Color(0xFFD97706)),
-                  ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () => setState(() => _expandedFaq = open ? null : i),
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text((i + 1).toString().padLeft(2, '0'), style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w800)),
+                        const SizedBox(width: 10),
+                        Expanded(child: Text(faqs[i].$1, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13))),
+                        Icon(open ? LucideIcons.chevronUp : LucideIcons.chevronDown, size: 16, color: AppTheme.slate500),
+                      ],
+                    ),
+                    if (open) ...[
+                      const SizedBox(height: 8),
+                      Text(faqs[i].$2, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary, height: 1.4)),
+                    ],
+                  ],
                 ),
               ),
-              const SizedBox(width: 10),
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Priya & Amit S.',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
-                  ),
-                  Text(
-                    'Pune Wedding Host · Verified Booking',
-                    style: TextStyle(fontSize: 10, color: AppTheme.textSecondary),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
-      ),
+            ),
+          );
+        }),
+      ],
     );
   }
 

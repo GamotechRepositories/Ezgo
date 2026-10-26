@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
 import Otp from '../models/Otp.js';
 import { signToken } from '../middlewares/auth.js';
@@ -227,6 +228,54 @@ export const verifyAdminOtp = async (req, res, next) => {
     return res.json({
       success: true,
       message: 'Admin authentication successful',
+      data: {
+        token,
+        user: withoutPassword(admin),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /api/admin/auth/login
+ * Email + password sign-in for administrator accounts only.
+ */
+export const loginAdminPassword = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !EMAIL_REGEX.test(String(email).trim())) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please enter a valid administrator email address.',
+      });
+    }
+    if (!password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Enter your password.',
+      });
+    }
+
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const admin = await User.findOne({
+      email: normalizedEmail,
+      $or: [{ role: 'admin' }, { roles: 'admin' }],
+    }).select('+passwordHash');
+
+    const matches = admin?.passwordHash && (await bcrypt.compare(String(password), admin.passwordHash));
+    if (!matches) {
+      return res.status(401).json({
+        success: false,
+        message: 'Wrong email or password.',
+      });
+    }
+
+    const token = signToken(admin);
+    return res.json({
+      success: true,
+      message: 'Logged in successfully.',
       data: {
         token,
         user: withoutPassword(admin),

@@ -138,14 +138,16 @@ export const register = async (req, res, next) => {
       googleId,
     } = req.body;
     const digits = normalizePhone(phone);
+    const emailNorm = email ? String(email).trim().toLowerCase() : '';
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNorm);
 
     if (!name || !String(name).trim()) {
       res.status(400);
       throw new Error('Enter your name.');
     }
-    if (digits.length !== 10) {
+    if (digits.length !== 10 && !emailOk) {
       res.status(400);
-      throw new Error('Enter a 10-digit mobile number.');
+      throw new Error('Enter a valid email or a 10-digit mobile number.');
     }
     if (!googleId && (!password || String(password).length < 6)) {
       res.status(400);
@@ -165,10 +167,10 @@ export const register = async (req, res, next) => {
     if (googleId) {
       existingUser = await User.findOne({ googleId });
     }
-    if (!existingUser && email) {
-      existingUser = await User.findOne({ email: String(email).trim().toLowerCase() });
+    if (!existingUser && emailOk) {
+      existingUser = await User.findOne({ email: emailNorm });
     }
-    if (!existingUser) {
+    if (!existingUser && digits.length === 10) {
       existingUser = await findByPhone(digits);
     }
 
@@ -232,8 +234,8 @@ export const register = async (req, res, next) => {
 
     const user = await User.create({
       name: String(name).trim(),
-      phone: digits,
-      email: email ? String(email).trim().toLowerCase() : '',
+      phone: digits.length === 10 ? digits : undefined,
+      email: emailOk ? emailNorm : '',
       googleId: googleId || undefined,
       authProvider: googleId ? 'google' : 'local',
       role,
@@ -286,14 +288,41 @@ export const register = async (req, res, next) => {
 
 export const login = async (req, res, next) => {
   try {
-    const { phone, password, role } = req.body;
-    const user = await findByPhone(phone);
-    const matches = user?.passwordHash && (await bcrypt.compare(String(password || ''), user.passwordHash));
+    const { phone, email, password, role } = req.body;
+    const rawEmail = String(email || '').trim().toLowerCase();
+    const rawPhone = String(phone || '').trim();
+    const identifier = rawEmail || rawPhone;
 
+    if (!identifier) {
+      res.status(400);
+      throw new Error('Enter your email or mobile number.');
+    }
+    if (!password) {
+      res.status(400);
+      throw new Error('Enter your password.');
+    }
+
+    const isEmail = identifier.includes('@');
+    const user = isEmail
+      ? await User.findOne({ email: identifier }).select('+passwordHash')
+      : await findByPhone(identifier);
+
+    if (!user) {
+      res.status(401);
+      throw new Error(isEmail ? 'Wrong email or password.' : 'Wrong phone number or password.');
+    }
+
+    if (!user.passwordHash) {
+      res.status(401);
+      throw new Error('This account was created with Google. Continue with Google to sign in.');
+    }
+
+    const matches = await bcrypt.compare(String(password), user.passwordHash);
     if (!matches) {
       res.status(401);
-      throw new Error('Wrong phone number or password.');
+      throw new Error(isEmail ? 'Wrong email or password.' : 'Wrong phone number or password.');
     }
+
     let authenticatedUser = user;
     if (role) {
       authenticatedUser = await syncUserRoleForPortal(user, role);

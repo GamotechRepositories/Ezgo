@@ -53,10 +53,13 @@ class BookingModel {
     final bid = (json['bidAmount'] is num) ? (json['bidAmount'] as num).toInt() : 0;
     final fee = (json['platformFee'] is num) ? (json['platformFee'] as num).toInt() : (bid * 0.1).round();
     final total = (json['totalPaid'] is num) ? (json['totalPaid'] as num).toInt() : (bid + fee);
+    final rawReqId = json['requirementId'];
 
     return BookingModel(
       id: json['_id'] ?? json['id'] ?? '',
-      requirementId: req['_id'] ?? req['id'] ?? '',
+      requirementId: rawReqId is Map
+          ? (req['_id'] ?? req['id'] ?? '').toString()
+          : (rawReqId ?? '').toString(),
       requirementTitle: req['title'] ?? 'Event Booking',
       category: req['category'] ?? 'General',
       eventDate: req['eventDate'] ?? '',

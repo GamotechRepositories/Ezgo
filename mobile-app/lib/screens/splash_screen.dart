@@ -8,9 +8,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:audioplayers/audioplayers.dart';
 import '../config/theme.dart';
 import '../providers/auth_provider.dart';
+import '../providers/requirements_provider.dart';
+import '../utils/app_nav.dart';
 import '../widgets/ezzygo_logo.dart';
 import 'role_selection_screen.dart';
 import 'main_navigation_screen.dart';
+import 'location_onboarding_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -35,8 +38,8 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   Timer? _serviceTimer;
   int _activeServiceIndex = 0;
   bool _isMuted = false;
+  bool _leaving = false;
 
-  AudioPlayer? _splashAudioPlayer;
   AudioPlayer? _sfxAudioPlayer;
 
   final List<Map<String, dynamic>> _services = [
@@ -106,11 +109,12 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   void initState() {
     super.initState();
     _initAnimations();
-    _initAudioAndPlayChime();
+    _initSfxPlayer();
 
     _serviceTimer = Timer.periodic(const Duration(milliseconds: 2800), (_) {
       _cycleToNextService();
     });
+    _autoEnterIfLoggedIn();
   }
 
   @override
@@ -167,25 +171,11 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     )..repeat();
   }
 
-  Future<void> _initAudioAndPlayChime() async {
+  Future<void> _initSfxPlayer() async {
     try {
-      _splashAudioPlayer ??= AudioPlayer();
       _sfxAudioPlayer ??= AudioPlayer();
-      await _splashAudioPlayer?.setVolume(0.85);
       await _sfxAudioPlayer?.setVolume(0.65);
-
-      // Play introductory splash chime after brief entrance delay
-      Future.delayed(const Duration(milliseconds: 300), () async {
-        if (!mounted || _isMuted) return;
-        try {
-          await _splashAudioPlayer?.play(AssetSource('audio/splash_chime.wav'));
-        } catch (_) {
-          // Graceful fallback
-        }
-      });
-    } catch (_) {
-      // Audio driver not available
-    }
+    } catch (_) {}
   }
 
   void _cycleToNextService() {
@@ -228,10 +218,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       _isMuted = !_isMuted;
     });
     if (_isMuted) {
-      _splashAudioPlayer?.stop();
       _sfxAudioPlayer?.stop();
-    } else {
-      _playServicePopSound();
     }
   }
 
@@ -242,14 +229,22 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     _serviceController?.dispose();
     _pulseController?.dispose();
     _petalController?.dispose();
-    _splashAudioPlayer?.dispose();
     _sfxAudioPlayer?.dispose();
     super.dispose();
   }
 
-  void _onGetStarted() {
+  Future<void> _autoEnterIfLoggedIn() async {
+    final auth = context.read<AuthProvider>();
+    await auth.ensureSession();
+    if (!mounted || _leaving || !auth.isLoggedIn) return;
+    await Future.delayed(const Duration(milliseconds: 700));
+    if (!mounted || _leaving) return;
+    await _goNext();
+  }
+
+  Future<void> _onGetStarted() async {
+    if (_leaving) return;
     HapticFeedback.mediumImpact();
-    _splashAudioPlayer?.stop();
     _sfxAudioPlayer?.stop();
 
     try {
@@ -257,15 +252,30 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       p.play(AssetSource('audio/service_pop.wav')).then((_) => p.dispose()).catchError((_) {});
     } catch (_) {}
 
+    await _goNext();
+  }
+
+  Future<void> _goNext() async {
+    if (_leaving) return;
+    _leaving = true;
     final auth = context.read<AuthProvider>();
+    await auth.ensureSession();
+    if (!mounted) return;
+
     if (auth.isLoggedIn) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
+      final reqs = context.read<RequirementsProvider>();
+      await reqs.ensureCityLoaded();
+      final savedCity = auth.user?.serviceArea?.trim();
+      if (!reqs.hasChosenCity && savedCity != null && savedCity.isNotEmpty) {
+        reqs.setSelectedCity(savedCity);
+      }
+      if (!mounted) return;
+      AppNav.openRoot(
+        context,
+        reqs.hasChosenCity ? const MainNavigationScreen() : const LocationOnboardingScreen(),
       );
     } else {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const RoleSelectionScreen()),
-      );
+      AppNav.openRoot(context, const RoleSelectionScreen());
     }
   }
 
@@ -274,7 +284,9 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     _initAnimations();
     final activeService = _services[_activeServiceIndex];
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
         children: [
@@ -411,6 +423,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
             ),
           ),
         ],
+      ),
       ),
     );
   }

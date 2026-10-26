@@ -3,6 +3,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:intl/intl.dart';
 import '../../config/theme.dart';
 import '../../models/booking_model.dart';
+import '../../widgets/shell_bottom_insets.dart';
 import 'payment_escrow_screen.dart';
 
 class BookingDetailScreen extends StatelessWidget {
@@ -19,6 +20,10 @@ class BookingDetailScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Booking Details'),
         centerTitle: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, size: 22),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
         actions: [
           IconButton(
             icon: const Icon(LucideIcons.moreVertical, size: 20),
@@ -215,7 +220,7 @@ class BookingDetailScreen extends StatelessWidget {
 
             // Bottom Actions (Screen 10)
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.fromLTRB(16, 16, 16, ShellBottomInsets.of(context)),
               decoration: const BoxDecoration(
                 color: Colors.white,
                 border: Border(top: BorderSide(color: AppTheme.borderSubtle)),

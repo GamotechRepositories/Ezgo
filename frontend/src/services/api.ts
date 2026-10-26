@@ -106,9 +106,13 @@ const toQuery = (params?: Record<string, string | undefined>) => {
 };
 
 export const api = {
-  async login(phone: string, password: string): Promise<User> {
+  async login(emailOrPhone: string, password: string): Promise<User> {
+    const id = emailOrPhone.trim();
+    const payload = id.includes('@')
+      ? { email: id.toLowerCase(), password, role: 'requester' }
+      : { phone: id, password, role: 'requester' };
     const data = await unwrap<{ token: string; user: User }>(
-      request('/auth/login', jsonBody('POST', { phone, password, role: 'requester' }), 'Could not log in')
+      request('/auth/login', jsonBody('POST', payload), 'Could not log in')
     );
     setToken(data.token);
     if (data.user) setUser(data.user);
@@ -127,7 +131,7 @@ export const api = {
     return data.user;
   },
 
-  async register(input: { name: string; phone: string; password: string; email?: string }): Promise<User> {
+  async register(input: { name: string; phone?: string; password: string; email?: string }): Promise<User> {
     const data = await unwrap<{ token: string; user: User }>(
       request('/auth/register', jsonBody('POST', { ...input, role: 'requester' }), 'Could not create your account')
     );

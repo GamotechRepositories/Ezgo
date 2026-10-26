@@ -17,6 +17,7 @@ class PlaceBidModal extends StatefulWidget {
 
 class _PlaceBidModalState extends State<PlaceBidModal> {
   late TextEditingController _bidController;
+  bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -110,27 +111,46 @@ class _PlaceBidModalState extends State<PlaceBidModal> {
 
           CustomButton(
             text: 'Submit Reverse Bid',
-            onPressed: _isValid
-                ? () {
+            isLoading: _isSubmitting,
+            onPressed: _isValid && !_isSubmitting
+                ? () async {
                     final auth = context.read<AuthProvider>();
-                    final vendorName = auth.user?.name ?? 'Rajesh Sound & FX Pro';
-                    final businessName = auth.user?.businessName ?? auth.user?.name ?? 'Rajesh Pro Audio & Lightings';
-                    final phone = auth.user?.phone ?? '+91 98231 45678';
-
-                    context.read<RequirementsProvider>().placeBid(
-                          requirementId: widget.requirement.id,
-                          amount: _bidAmount,
-                          providerName: vendorName,
-                          businessName: businessName,
-                          phone: phone,
-                        );
-                    Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Bid submitted! Host notified.'),
-                        backgroundColor: AppTheme.emerald,
-                      ),
-                    );
+                    final providerId = auth.user?.id ?? '';
+                    if (providerId.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please log in as a vendor to bid.'),
+                          backgroundColor: AppTheme.rose,
+                        ),
+                      );
+                      return;
+                    }
+                    setState(() => _isSubmitting = true);
+                    try {
+                      await context.read<RequirementsProvider>().placeBid(
+                            requirementId: widget.requirement.id,
+                            amount: _bidAmount,
+                            providerId: providerId,
+                          );
+                      if (!mounted) return;
+                      Navigator.of(context).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Bid submitted. Host notified.'),
+                          backgroundColor: AppTheme.emerald,
+                        ),
+                      );
+                    } catch (e) {
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(e.toString()),
+                          backgroundColor: AppTheme.rose,
+                        ),
+                      );
+                    } finally {
+                      if (mounted) setState(() => _isSubmitting = false);
+                    }
                   }
                 : null,
           ),

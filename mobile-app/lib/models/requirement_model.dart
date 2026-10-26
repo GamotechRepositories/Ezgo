@@ -1,7 +1,9 @@
+import 'package:intl/intl.dart';
 import 'bid_model.dart';
 
 class RequirementModel {
   final String id;
+  final String requesterId;
   final String title;
   final String category;
   final String? occasion;
@@ -20,9 +22,12 @@ class RequirementModel {
   final List<String> images;
   final List<String> equipmentNeeded;
   final List<BidModel> bids;
+  final String timeStart;
+  final String timeEnd;
 
   const RequirementModel({
     required this.id,
+    this.requesterId = '',
     required this.title,
     required this.category,
     this.occasion,
@@ -41,6 +46,8 @@ class RequirementModel {
     this.images = const [],
     this.equipmentNeeded = const [],
     this.bids = const [],
+    this.timeStart = '18:00',
+    this.timeEnd = '23:00',
   });
 
   factory RequirementModel.fromJson(Map<String, dynamic> json) {
@@ -62,8 +69,15 @@ class RequirementModel {
       calculatedLowest = bidsList.map((b) => b.amount).reduce((curr, next) => curr < next ? curr : next);
     }
 
+    final requester = json['requesterId'];
+    final time = json['timeWindow'] is Map
+        ? (json['timeWindow'] as Map).cast<String, dynamic>()
+        : <String, dynamic>{};
     return RequirementModel(
       id: json['_id'] ?? json['id'] ?? '',
+      requesterId: requester is Map
+          ? (requester['_id'] ?? requester['id'] ?? '').toString()
+          : (requester ?? '').toString(),
       title: json['title'] ?? 'Event Requirement',
       category: json['category'] ?? 'Event Services',
       occasion: json['occasion'],
@@ -88,7 +102,68 @@ class RequirementModel {
               .toList() ??
           [],
       bids: bidsList,
+      timeStart: (time['start'] ?? '18:00').toString(),
+      timeEnd: (time['end'] ?? '23:00').toString(),
     );
+  }
+
+  int get liveBidsCount => bids.isNotEmpty ? bids.length : bidsCount;
+
+  String get displayDate {
+    final raw = eventDate.trim();
+    if (raw.isEmpty) return 'Date TBA';
+    final parsed = DateTime.tryParse(raw) ??
+        DateTime.tryParse(raw.length >= 10 ? raw.substring(0, 10) : raw);
+    if (parsed != null) {
+      return DateFormat('d MMM yyyy').format(parsed.toLocal());
+    }
+    return raw;
+  }
+
+  String get displayPlace {
+    final a = area.trim();
+    final c = city.trim();
+    if (a.isEmpty) return c.isEmpty ? 'Location TBA' : c;
+    if (c.isEmpty || a.toLowerCase() == c.toLowerCase()) return a;
+    return '$a, $c';
+  }
+
+  String get displayStatus {
+    switch (status.toUpperCase()) {
+      case 'OPEN':
+        return 'Open for bids';
+      case 'DRAFT':
+        return 'Draft';
+      case 'ACCEPTED':
+        return 'Vendor chosen';
+      case 'ACTIVE':
+        return 'Booked';
+      case 'COMPLETED':
+        return 'Completed';
+      case 'EXPIRED':
+        return 'Auction closed';
+      case 'CANCELLED':
+        return 'Cancelled';
+      default:
+        return status;
+    }
+  }
+
+  bool get isOpen => status.toUpperCase() == 'OPEN';
+
+  String get coverAsset {
+    final key = '${occasion ?? ''} $category $title'.toLowerCase();
+    if (key.contains('birthday')) return 'assets/images/occasion_birthdays.jpg';
+    if (key.contains('festival') || key.contains('pooja') || key.contains('ganesh')) {
+      return 'assets/images/occasion_festivals.jpg';
+    }
+    if (key.contains('corporat') || key.contains('conference') || key.contains('office')) {
+      return 'assets/images/occasion_corporate.jpg';
+    }
+    if (key.contains('party') || key.contains('reception')) {
+      return 'assets/images/occasion_parties.jpg';
+    }
+    return 'assets/images/occasion_weddings.jpg';
   }
 
   Map<String, dynamic> toJson() {

@@ -4,6 +4,9 @@ class UserModel {
   final String id;
   final String name;
   final String phone;
+  final String? email;
+  final String? avatar;
+  final String? serviceArea;
   final UserRole role;
   final String? businessName;
   final bool isVerified;
@@ -15,6 +18,9 @@ class UserModel {
     required this.id,
     required this.name,
     required this.phone,
+    this.email,
+    this.avatar,
+    this.serviceArea,
     required this.role,
     this.businessName,
     this.isVerified = false,
@@ -23,13 +29,20 @@ class UserModel {
     this.token,
   });
 
-  String get email => '$phone@ezzygo.in';
+  String get displayEmail {
+    final value = email?.trim() ?? '';
+    return value;
+  }
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    final emailRaw = json['email']?.toString().trim();
     return UserModel(
       id: json['_id'] ?? json['id'] ?? '',
       name: json['name'] ?? '',
       phone: json['phone'] ?? '',
+      email: (emailRaw == null || emailRaw.isEmpty) ? null : emailRaw,
+      avatar: json['avatar']?.toString(),
+      serviceArea: json['serviceArea']?.toString(),
       role: (json['role'] == 'provider' || json['role'] == 'vendor')
           ? UserRole.vendor
           : UserRole.host,
@@ -46,6 +59,9 @@ class UserModel {
       'id': id,
       'name': name,
       'phone': phone,
+      'email': email,
+      'avatar': avatar,
+      'serviceArea': serviceArea,
       'role': role == UserRole.vendor ? 'provider' : 'requester',
       'businessName': businessName,
       'isVerified': isVerified,
@@ -59,6 +75,9 @@ class UserModel {
     String? id,
     String? name,
     String? phone,
+    String? email,
+    String? avatar,
+    String? serviceArea,
     UserRole? role,
     String? businessName,
     bool? isVerified,
@@ -70,6 +89,9 @@ class UserModel {
       id: id ?? this.id,
       name: name ?? this.name,
       phone: phone ?? this.phone,
+      email: email ?? this.email,
+      avatar: avatar ?? this.avatar,
+      serviceArea: serviceArea ?? this.serviceArea,
       role: role ?? this.role,
       businessName: businessName ?? this.businessName,
       isVerified: isVerified ?? this.isVerified,

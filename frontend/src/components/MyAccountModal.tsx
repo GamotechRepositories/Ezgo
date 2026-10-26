@@ -341,7 +341,7 @@ export const MyAccountModal: React.FC<MyAccountModalProps> = ({
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Enter your name"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#f95724]/20 focus:border-[#f95724] transition font-medium"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF5722]/20 focus:border-[#FF5722] transition font-medium"
                   />
                   <UserIcon className="absolute right-3.5 top-3 w-4 h-4 text-slate-400" />
                 </div>
@@ -357,7 +357,7 @@ export const MyAccountModal: React.FC<MyAccountModalProps> = ({
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@example.com"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#f95724]/20 focus:border-[#f95724] transition font-medium"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF5722]/20 focus:border-[#FF5722] transition font-medium"
                   />
                   <Mail className="absolute right-3.5 top-3 w-4 h-4 text-slate-400" />
                 </div>
@@ -387,7 +387,7 @@ export const MyAccountModal: React.FC<MyAccountModalProps> = ({
                   <select
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#f95724]/20 focus:border-[#f95724] transition font-medium bg-white"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF5722]/20 focus:border-[#FF5722] transition font-medium bg-white"
                   >
                     {CITIES.map((c) => (
                       <option key={c} value={c}>
@@ -639,7 +639,7 @@ export const MyAccountModal: React.FC<MyAccountModalProps> = ({
                 <span>Are you an event vendor?</span>
                 <a
                   href={getVendorPortalUrl()}
-                  className="font-bold text-[#f95724] hover:underline flex items-center gap-1"
+                  className="font-bold text-[#FF5722] hover:underline flex items-center gap-1"
                 >
                   <span>Go to Vendor Portal</span>
                   <ExternalLink className="w-3.5 h-3.5" />

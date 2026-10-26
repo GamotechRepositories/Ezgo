@@ -2,8 +2,76 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../config/theme.dart';
+import '../../models/bid_model.dart';
 import '../../models/booking_model.dart';
+import '../../models/requirement_model.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/bookings_provider.dart';
+import '../../providers/requirements_provider.dart';
+
+Future<void> acceptBidAndOpenEscrow({
+  required BuildContext context,
+  required RequirementModel requirement,
+  required BidModel bid,
+  void Function(BookingModel booking)? onPaid,
+}) async {
+  final auth = context.read<AuthProvider>();
+  final requesterId = auth.user?.id ?? '';
+  if (requesterId.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Please log in again to accept a bid.'),
+        backgroundColor: AppTheme.rose,
+      ),
+    );
+    return;
+  }
+
+  if (!bid.isEligibleForAccept && bid.amount > requirement.maxAcceptableBid) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '15% rule: only bids of ₹${requirement.maxAcceptableBid} or lower can be accepted.',
+        ),
+        backgroundColor: AppTheme.rose,
+      ),
+    );
+    return;
+  }
+
+  try {
+    final bookings = context.read<BookingsProvider>();
+    final requirements = context.read<RequirementsProvider>();
+    final booking = await bookings.acceptBid(
+      requirementId: requirement.id,
+      bidId: bid.id,
+      requesterId: requesterId,
+    );
+    if (!context.mounted) return;
+    requirements.markAccepted(requirement.id);
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => EscrowPaymentSheet(
+        booking: booking,
+        onPaymentSuccess: () {
+          final latest = bookings.bookings.where((b) => b.id == booking.id);
+          onPaid?.call(latest.isNotEmpty ? latest.first : booking);
+        },
+      ),
+    );
+  } catch (e) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(e.toString()),
+        backgroundColor: AppTheme.rose,
+      ),
+    );
+  }
+}
 
 class EscrowPaymentSheet extends StatefulWidget {
   final BookingModel booking;
@@ -23,35 +91,44 @@ class _EscrowPaymentSheetState extends State<EscrowPaymentSheet> {
   String _selectedMethod = 'upi';
   bool _isProcessing = false;
 
-  void _processPayment() async {
+  Future<void> _processPayment() async {
+    if (_isProcessing) return;
     setState(() => _isProcessing = true);
-    await Future.delayed(const Duration(milliseconds: 1200));
-
-    if (!mounted) return;
-    context.read<BookingsProvider>().payEscrow(widget.booking.id);
-    setState(() => _isProcessing = false);
-
-    widget.onPaymentSuccess();
-    Navigator.of(context).pop();
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(LucideIcons.shieldCheck, color: Colors.white, size: 20),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                '₹${widget.booking.totalPaid} held in EzzyGo Escrow! Vendor contact unlocked.',
-                style: const TextStyle(fontWeight: FontWeight.w700),
+    try {
+      await context.read<BookingsProvider>().payEscrow(widget.booking.id);
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      widget.onPaymentSuccess();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(LucideIcons.shieldCheck, color: Colors.white, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  '₹${widget.booking.totalPaid} held in EzzyGo Escrow. Vendor contact unlocked.',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
+          backgroundColor: AppTheme.emerald,
+          behavior: SnackBarBehavior.floating,
         ),
-        backgroundColor: AppTheme.emerald,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: AppTheme.rose,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
+    }
   }
 
   @override
@@ -81,22 +158,28 @@ class _EscrowPaymentSheetState extends State<EscrowPaymentSheet> {
             ),
             const SizedBox(height: 16),
 
-            // Header
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Lock in Escrow',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.slate900),
-                    ),
-                    Text(
-                      'EzzyGo 100% Protected Payment',
-                      style: TextStyle(fontSize: 12, color: AppTheme.slate500, fontWeight: FontWeight.w600),
-                    ),
-                  ],
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  icon: const Icon(LucideIcons.arrowLeft, size: 20, color: AppTheme.slate700),
+                  onPressed: () => Navigator.of(context).maybePop(),
+                ),
+                const SizedBox(width: 4),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Lock in Escrow',
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.slate900),
+                      ),
+                      Text(
+                        'EzzyGo 100% Protected Payment',
+                        style: TextStyle(fontSize: 12, color: AppTheme.slate500, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

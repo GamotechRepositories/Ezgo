@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../providers/bookings_provider.dart';
+import '../../widgets/shell_bottom_insets.dart';
 
 class VendorBookingsScreen extends StatelessWidget {
   const VendorBookingsScreen({super.key});

@@ -23,6 +23,10 @@ class PaymentEscrowScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Payment Details'),
         centerTitle: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, size: 22),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
       ),
       body: SafeArea(
         child: ListView(

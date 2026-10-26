@@ -5,6 +5,7 @@ import '../../config/theme.dart';
 
 import '../../providers/requirements_provider.dart';
 import '../../widgets/requirement_card.dart';
+import '../../widgets/shell_bottom_insets.dart';
 import 'place_bid_modal.dart';
 
 class LiveAuctionsScreen extends StatelessWidget {
@@ -15,7 +16,7 @@ class LiveAuctionsScreen extends StatelessWidget {
     final reqProvider = context.watch<RequirementsProvider>();
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: ShellBottomInsets.listPadding(context),
       children: [
         // Vendor Winning Rules Card
         Container(

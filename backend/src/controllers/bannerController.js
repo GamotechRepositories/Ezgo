@@ -1,48 +1,6 @@
 import { logAudit } from '../services/auditService.js';
 import Banner from '../models/Banner.js';
 
-const defaultBanners = [
-  {
-    title: 'Grand Festive & Wedding Sound Setup',
-    subtitle: 'High-output Line Arrays, JBL Bass & Pioneer DJ Consoles with reverse-bidding savings.',
-    badge: 'SPONSORED',
-    imageUrl: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=1000&auto=format&fit=crop&q=80',
-    targetUrl: '#services-grid',
-    ctaText: 'Book Sound & DJ',
-    city: 'ALL',
-    placement: 'hero_banner',
-    discountPercent: 25,
-    order: 1,
-    isActive: true,
-  },
-  {
-    title: 'Luxury Floral Stage & Mandap Decoration',
-    subtitle: 'Handpicked fresh orchid arches, royal thematic backdrops, and fairy light canopies.',
-    badge: 'LIMITED OFFER',
-    imageUrl: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1000&auto=format&fit=crop&q=80',
-    targetUrl: '#services-grid',
-    ctaText: 'Explore Decor Deals',
-    city: 'ALL',
-    placement: 'hero_banner',
-    discountPercent: 20,
-    order: 2,
-    isActive: true,
-  },
-  {
-    title: 'Cinematic 4K Drone & Candid Photography',
-    subtitle: 'Experienced drone pilots & Sony FX3 filmmakers ready with 100% Escrow safe payments.',
-    badge: 'TOP RATED PROS',
-    imageUrl: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=1000&auto=format&fit=crop&q=80',
-    targetUrl: '#services-grid',
-    ctaText: 'Hire Photographers',
-    city: 'ALL',
-    placement: 'featured_banner',
-    discountPercent: 18,
-    order: 3,
-    isActive: true,
-  },
-];
-
 // @desc    Get all active banners (supports city and placement filters)
 // @route   GET /api/banners
 export const getBanners = async (req, res, next) => {
@@ -55,21 +13,20 @@ export const getBanners = async (req, res, next) => {
     }
 
     if (city && city !== 'ALL' && city !== 'All Cities') {
-      filter.$or = [{ city: 'ALL' }, { city: new RegExp(city.trim().split(',')[0], 'i') }];
+      const cityName = city.trim().split(',')[0];
+      filter.$or = [
+        { city: 'ALL' },
+        { city: /^all$/i },
+        { city: /all cities/i },
+        { city: new RegExp(cityName, 'i') },
+      ];
     }
 
     if (placement && placement !== 'all') {
       filter.placement = { $in: [placement, 'all'] };
     }
 
-    let banners = await Banner.find(filter).sort({ order: 1, createdAt: -1 });
-
-    // Auto-seed default banners if collection is completely empty
-    const totalCount = await Banner.countDocuments();
-    if (totalCount === 0) {
-      await Banner.insertMany(defaultBanners);
-      banners = await Banner.find(filter).sort({ order: 1, createdAt: -1 });
-    }
+    const banners = await Banner.find(filter).sort({ order: 1, createdAt: -1 });
 
     res.json({ success: true, count: banners.length, data: banners });
   } catch (error) {

@@ -82,6 +82,7 @@ export default function App() {
   if (step === 'login') {
     return (
       <LoginPage
+        onBack={() => setStep('role')}
         onSuccess={(user) => {
           setCurrentUser(user);
           setUser(user);
@@ -95,6 +96,7 @@ export default function App() {
   if (step === 'location') {
     return (
       <LocationSelectionPage
+        onBack={() => setStep('login')}
         onSelect={(city) => {
           setSelectedCityOnboard(city + ', IN');
           setStep('app');
@@ -108,6 +110,7 @@ export default function App() {
     // fallback — user somehow skipped login
     return (
       <LoginPage
+        onBack={() => setStep('role')}
         onSuccess={(user) => {
           setCurrentUser(user);
           setUser(user);
@@ -196,7 +199,7 @@ function HostApp({
     const [catsRes, occsRes, bannersRes, activityRes] = await Promise.allSettled([
       api.getCategories(),
       api.getOccasions(),
-      api.getBanners({ city: selectedCity }),
+      api.getBanners(),
       loadMyActivity(currentUser._id),
     ]);
 
@@ -338,8 +341,12 @@ function HostApp({
     setIsAccountModalOpen(false);
     setSelectedBookingForPay(null);
     setSelectedBookingForReview(null);
-    if (triggerHistoryBack && window.history.state?.modal) {
-      window.history.back();
+    if (window.history.state?.modal) {
+      if (triggerHistoryBack) {
+        window.history.back();
+      } else {
+        window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${window.location.hash}`);
+      }
     }
   }, []);
 
@@ -358,15 +365,36 @@ function HostApp({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [anyModalOpen, closeAllModals]);
 
+  const pushModal = (name: string) => {
+    if (window.history.state?.modal !== name) {
+      window.history.pushState({ modal: name }, '');
+    }
+  };
+
   const handleOpenPostModal = (data?: string | import('./types').PostRequirementInitialData) => {
     setPostModalData(data);
-    window.history.pushState({ modal: 'post' }, '');
+    pushModal('post');
     setIsPostModalOpen(true);
   };
 
   const handleOpenExplainer = () => {
-    window.history.pushState({ modal: 'explainer' }, '');
+    pushModal('explainer');
     setIsExplainerOpen(true);
+  };
+
+  const handleOpenAccountModal = () => {
+    pushModal('account');
+    setIsAccountModalOpen(true);
+  };
+
+  const handleOpenPaymentModal = (booking: Booking) => {
+    pushModal('pay');
+    setSelectedBookingForPay(booking);
+  };
+
+  const handleOpenReviewModal = (booking: Booking) => {
+    pushModal('review');
+    setSelectedBookingForReview(booking);
   };
 
   // 1. Create Requirement
@@ -374,7 +402,7 @@ function HostApp({
     try {
       const newReq = await api.createRequirement(data);
       setRequirements((prev) => [newReq, ...prev]);
-      setIsPostModalOpen(false);
+      closeAllModals(true);
       addToast(
         'success',
         'Request posted',
@@ -391,7 +419,7 @@ function HostApp({
     try {
       const createdBooking = await api.acceptBid(requirementId, bidId, currentUser._id);
       await refreshMine();
-      setSelectedBookingForPay(createdBooking);
+      handleOpenPaymentModal(createdBooking);
       addToast('success', 'Vendor chosen', 'Please pay to confirm the booking.');
     } catch (err: any) {
       addToast('error', 'Could not choose vendor', err.message);
@@ -465,7 +493,7 @@ function HostApp({
       const res = await api.completeBooking(bookingId);
       await refreshMine();
       addToast('success', 'Event marked done', res.message || 'Payment released to vendor.');
-      setSelectedBookingForReview(res.data || booking);
+      handleOpenReviewModal(res.data || booking);
     } catch (err: any) {
       addToast('error', 'Could not complete', err.message);
       throw err;
@@ -501,9 +529,28 @@ function HostApp({
 
   const goTo = (next: Page) => {
     closeAllModals();
-    if (next !== pageFromUrl()) {
-      const hash = next === 'bookings' ? '#bookings' : next === 'profile' ? '#profile' : window.location.pathname;
+    if (next === page) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    const homeUrl = `${window.location.pathname}${window.location.search}`;
+    const hash = next === 'bookings' ? '#bookings' : next === 'profile' ? '#profile' : homeUrl;
+
+    if (next === 'home') {
+      if (window.location.hash === '#bookings' || window.location.hash === '#profile') {
+        window.history.back();
+        return;
+      }
+      window.history.replaceState(null, '', homeUrl);
+      setPage('home');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    if (page === 'home') {
       window.history.pushState(null, '', hash);
+    } else {
+      window.history.replaceState(null, '', hash);
     }
     setPage(next);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -532,7 +579,7 @@ function HostApp({
         onOpenPostModal={(cat) => handleOpenPostModal(cat)}
         onOpenBookings={handleOpenBookings}
         onGoHome={() => goTo('home')}
-        onOpenAccountModal={() => setIsAccountModalOpen(true)}
+        onOpenAccountModal={handleOpenAccountModal}
         onOpenProfilePage={() => goTo('profile')}
         onOpenMyEvents={() => {
           goTo('home');
@@ -596,10 +643,10 @@ function HostApp({
             selectedCity={selectedCity}
             onBack={() => goTo('home')}
             onOpenPostModal={handleOpenPostModal}
-            onOpenPaymentModal={(b) => setSelectedBookingForPay(b)}
+            onOpenPaymentModal={handleOpenPaymentModal}
             onCancelBooking={handleCancelBooking}
             onCompleteBooking={handleCompleteBooking}
-            onOpenReviewModal={(b) => setSelectedBookingForReview(b)}
+            onOpenReviewModal={handleOpenReviewModal}
             onRaiseDispute={handleRaiseDispute}
           />
         ) : (
@@ -731,7 +778,7 @@ function HostApp({
 
       <MyAccountModal
         isOpen={isAccountModalOpen}
-        onClose={() => setIsAccountModalOpen(false)}
+        onClose={() => closeAllModals(true)}
         currentUser={currentUser}
         onUpdateUser={(updated) => {
           if (onUpdateUser) onUpdateUser(updated);

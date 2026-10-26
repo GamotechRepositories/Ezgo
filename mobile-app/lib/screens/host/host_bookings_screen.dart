@@ -3,9 +3,16 @@ import 'package:provider/provider.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../config/theme.dart';
 import '../../models/booking_model.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/bookings_provider.dart';
+import '../../providers/requirements_provider.dart';
+import '../../widgets/event_request_card.dart';
+import '../../widgets/shell_bottom_insets.dart';
+import '../../widgets/tab_scroll_registry.dart';
+import 'bids_comparison_screen.dart';
 import 'booking_detail_screen.dart';
 import 'escrow_payment_sheet.dart';
+import 'post_requirement_screen.dart';
 
 class HostBookingsScreen extends StatefulWidget {
   const HostBookingsScreen({super.key});
@@ -16,6 +23,20 @@ class HostBookingsScreen extends StatefulWidget {
 
 class _HostBookingsScreenState extends State<HostBookingsScreen> {
   int _selectedTabIndex = 0; // 0: Upcoming (Escrow), 1: Awaiting Payment, 2: Completed
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    TabScrollRegistry.instance.register(3, _scrollController);
+  }
+
+  @override
+  void dispose() {
+    TabScrollRegistry.instance.unregister(3, _scrollController);
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   void _showReviewModal(BuildContext context, BookingModel booking) {
     int rating = 5;
@@ -81,15 +102,26 @@ class _HostBookingsScreenState extends State<HostBookingsScreen> {
               child: const Text('Cancel'),
             ),
             ElevatedButton(
-              onPressed: () {
-                context.read<BookingsProvider>().completeBooking(booking.id);
-                Navigator.of(ctx).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Review submitted & Escrow funds released to vendor!'),
-                    backgroundColor: AppTheme.emerald,
-                  ),
-                );
+              onPressed: () async {
+                try {
+                  await context.read<BookingsProvider>().completeBooking(booking.id);
+                  if (!context.mounted) return;
+                  Navigator.of(ctx).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Review submitted. Escrow funds released to vendor.'),
+                      backgroundColor: AppTheme.emerald,
+                    ),
+                  );
+                } catch (e) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(e.toString()),
+                      backgroundColor: AppTheme.rose,
+                    ),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primary,
@@ -107,41 +139,64 @@ class _HostBookingsScreenState extends State<HostBookingsScreen> {
   @override
   Widget build(BuildContext context) {
     final bookingsProvider = context.watch<BookingsProvider>();
+    final auth = context.watch<AuthProvider>();
+    final events = context.watch<RequirementsProvider>().mine(auth.user?.id);
 
+    final all = bookingsProvider.bookings;
     final upcoming = bookingsProvider.upcomingBookings;
     final awaiting = bookingsProvider.awaitingPaymentBookings;
     final completed = bookingsProvider.completedBookings;
+    final cancelled = all.where((b) => b.status == 'CANCELLED').toList();
 
     List<BookingModel> displayedBookings;
-    if (_selectedTabIndex == 0) {
-      displayedBookings = upcoming;
-    } else if (_selectedTabIndex == 1) {
-      displayedBookings = awaiting;
-    } else {
-      displayedBookings = completed;
+    switch (_selectedTabIndex) {
+      case 2:
+        displayedBookings = upcoming;
+        break;
+      case 3:
+        displayedBookings = awaiting;
+        break;
+      case 4:
+        displayedBookings = completed;
+        break;
+      case 5:
+        displayedBookings = cancelled;
+        break;
+      case 1:
+        displayedBookings = all;
+        break;
+      default:
+        displayedBookings = all;
     }
+
+    final showEvents = _selectedTabIndex == 0 || _selectedTabIndex == 1;
+    final showBookings = _selectedTabIndex != 1;
 
     final totalEscrowHeld = upcoming.fold<int>(0, (sum, b) => sum + b.totalPaid);
 
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      controller: _scrollController,
+      padding: EdgeInsets.fromLTRB(16, 14, 16, ShellBottomInsets.of(context)),
       children: [
         // Title & Summary
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'My Bookings & Escrow',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.slate900),
-                ),
-                Text(
-                  'Track event status & released payments',
-                  style: TextStyle(color: AppTheme.slate500, fontSize: 12),
-                ),
-              ],
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'My Events & Bookings',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.slate900),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Posted events, vendor bids, payments and escrow.',
+                    style: TextStyle(color: AppTheme.slate500, fontSize: 12),
+                  ),
+                ],
+              ),
             ),
             if (totalEscrowHeld > 0)
               Container(
@@ -168,17 +223,16 @@ class _HostBookingsScreenState extends State<HostBookingsScreen> {
         const SizedBox(height: 14),
 
         // Tabs matching web
-        Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: AppTheme.slate100,
-            borderRadius: BorderRadius.circular(14),
-          ),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
           child: Row(
             children: [
-              _buildTabItem(0, 'Upcoming (${upcoming.length})'),
-              _buildTabItem(1, 'To Pay (${awaiting.length})'),
-              _buildTabItem(2, 'Completed (${completed.length})'),
+              _buildTabChip(0, 'All', events.length + all.length),
+              _buildTabChip(1, 'Events', events.length),
+              _buildTabChip(2, 'Confirmed', upcoming.length),
+              _buildTabChip(3, 'To Pay', awaiting.length),
+              _buildTabChip(4, 'Completed', completed.length),
+              _buildTabChip(5, 'Cancelled', cancelled.length),
             ],
           ),
         ),
@@ -209,7 +263,39 @@ class _HostBookingsScreenState extends State<HostBookingsScreen> {
 
         const SizedBox(height: 16),
 
-        if (displayedBookings.isEmpty) ...[
+        if (showEvents && events.isNotEmpty) ...[
+          if (showBookings)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 10),
+              child: Text('Posted Events', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+            ),
+          ...events.map(
+            (req) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: EventRequestCard(
+                requirement: req,
+                compact: true,
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => BidsComparisonScreen(requirement: req)),
+                  );
+                },
+              ),
+            ),
+          ),
+          if (showBookings && displayedBookings.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            const Padding(
+              padding: EdgeInsets.only(bottom: 10),
+              child: Text('Bookings', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+            ),
+          ],
+        ],
+
+        if (showBookings && displayedBookings.isNotEmpty)
+          ...displayedBookings.map((b) => _buildBookingCard(context, b)),
+
+        if ((showEvents ? events.isEmpty : true) && (showBookings ? displayedBookings.isEmpty : true))
           Container(
             padding: const EdgeInsets.all(36),
             alignment: Alignment.center,
@@ -223,57 +309,59 @@ class _HostBookingsScreenState extends State<HostBookingsScreen> {
                 const Icon(LucideIcons.calendarCheck, size: 40, color: AppTheme.slate400),
                 const SizedBox(height: 12),
                 Text(
-                  _selectedTabIndex == 0
-                      ? 'No upcoming events'
-                      : (_selectedTabIndex == 1 ? 'No pending payments' : 'No completed events yet'),
+                  _selectedTabIndex == 1 ? 'No events posted yet' : 'Nothing here yet',
                   style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
                 ),
                 const SizedBox(height: 6),
-                const Text(
-                  'Accept bids on your event needs to lock vendors in escrow.',
+                Text(
+                  _selectedTabIndex == 1
+                      ? 'Post an event to receive vendor bids.'
+                      : 'Post an event, then accept a bid to create a booking.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: AppTheme.slate500, fontSize: 13),
+                  style: const TextStyle(color: AppTheme.slate500, fontSize: 13),
+                ),
+                const SizedBox(height: 14),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const PostRequirementScreen()),
+                    );
+                  },
+                  icon: const Icon(LucideIcons.plus, size: 16),
+                  label: const Text('Post Event'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primary,
+                    foregroundColor: Colors.white,
+                  ),
                 ),
               ],
             ),
           ),
-        ] else ...[
-          ...displayedBookings.map((b) => _buildBookingCard(context, b)),
-        ],
 
         const SizedBox(height: 32),
       ],
     );
   }
 
-  Widget _buildTabItem(int index, String label) {
+  Widget _buildTabChip(int index, String label, int count) {
     final isSelected = _selectedTabIndex == index;
-    return Expanded(
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
       child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
         onTap: () => setState(() => _selectedTabIndex = index),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 4,
-                      offset: const Offset(0, 1),
-                    )
-                  ]
-                : null,
+            color: isSelected ? AppTheme.slate900 : Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: isSelected ? AppTheme.slate900 : AppTheme.slate200),
           ),
-          alignment: Alignment.center,
           child: Text(
-            label,
+            '$label ($count)',
             style: TextStyle(
               fontSize: 12,
-              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-              color: isSelected ? AppTheme.slate900 : AppTheme.slate500,
+              fontWeight: FontWeight.w800,
+              color: isSelected ? Colors.white : AppTheme.slate600,
             ),
           ),
         ),
@@ -340,8 +428,8 @@ class _HostBookingsScreenState extends State<HostBookingsScreen> {
                     const SizedBox(width: 4),
                     Text(
                       isPaid
-                          ? 'Escrow Held · Active'
-                          : (isCompleted ? 'Event Completed' : 'Awaiting Payment'),
+                          ? 'Confirmed • Escrow Protected'
+                          : (isCompleted ? 'Completed • Payout Released' : 'Action Needed: Pay to Lock Vendor'),
                       style: TextStyle(
                         color: isPaid
                             ? AppTheme.emerald
@@ -454,28 +542,28 @@ class _HostBookingsScreenState extends State<HostBookingsScreen> {
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
+                backgroundColor: AppTheme.emerald,
                 foregroundColor: Colors.white,
                 minimumSize: const Size.fromHeight(44),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               child: Text(
-                'Deposit ₹${b.totalPaid} in Escrow',
+                'Pay ₹${b.totalPaid} & Confirm',
                 style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
               ),
             ),
           ] else if (isPaid) ...[
-            OutlinedButton.icon(
+            ElevatedButton.icon(
               onPressed: () => _showReviewModal(context, b),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppTheme.emerald,
-                side: const BorderSide(color: AppTheme.emerald, width: 1.5),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primary,
+                foregroundColor: Colors.white,
                 minimumSize: const Size.fromHeight(44),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               icon: const Icon(LucideIcons.checkCheck, size: 18),
               label: const Text(
-                'Event Done? Release Escrow & Rate',
+                'Event Done • Release Payout',
                 style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
               ),
             ),

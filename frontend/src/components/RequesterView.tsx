@@ -148,6 +148,13 @@ const PACKAGE_SERVICE_OPTIONS = [
   },
 ];
 
+const formatEventDate = (value?: string) => {
+  if (!value) return 'Date TBA';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
 interface RequesterViewProps {
   requirements: Requirement[];
   bookings: Booking[];
@@ -335,44 +342,34 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
   return (
     <div className="w-full overflow-x-hidden bg-[#fdfbf7]">
       
-      {/* ========================================================================= */}
-      {/* 1. EXACT FULL-SCREEN HERO SECTION (Full Wide Screen 4K Canvas)            */}
-      {/* ========================================================================= */}
       <section className="relative w-full overflow-hidden bg-[#fdfbf7] pt-20 sm:pt-32 lg:pt-36 pb-10 sm:pb-14 lg:pb-16">
         
-        {/* Full-bleed Ultra 4K Luxury Floral Wedding Pavilion Background Image */}
         <div 
           className="absolute inset-0 w-full h-full bg-cover bg-[center_right] lg:bg-right bg-no-repeat pointer-events-none opacity-80 sm:opacity-100"
           style={{ backgroundImage: `url('/hero_wedding_bg.jpg')` }}
         >
-          {/* Multi-stage luxury gradient fade for maximum text clarity & wide-screen elegance */}
           <div className="w-full h-full bg-gradient-to-r from-[#fdfbf7] via-[#fdfbf7]/98 sm:via-[#fdfbf7]/95 md:via-[#fdfbf7]/80 lg:via-[#fdfbf7]/45 to-transparent" />
         </div>
 
-        {/* Subtle Ambient Warm Glow */}
         <div className="absolute top-10 left-1/4 w-96 h-96 bg-amber-200/20 rounded-full blur-3xl pointer-events-none" />
 
-        {/* Hero Content Container (Expansive Full Wide Screen) */}
         <div className="relative z-10 w-full max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-14">
           <div className="max-w-3xl space-y-3 sm:space-y-5">
             
-            {/* Main Headline - Exactly 3 Clean Lines with Expanded Mobile Height */}
             <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl xl:text-[68px] font-extrabold text-[#0f172a] leading-[1.12] tracking-tight">
               Post your budget.<br />
               Vendors bid lower.<br />
-              <span className="text-[#f95724] font-extrabold">You pick the best one.</span>
+              <span className="text-[#FF5722] font-extrabold">You pick the best one.</span>
             </h1>
 
             <p className="text-slate-700 text-base sm:text-lg leading-relaxed max-w-xl font-medium">
               You set the most you will pay. A vendor can win only by bidding at least 15% below that. You pay the bid plus a 10% fee, and EzzyGo holds the money until the event is done.
             </p>
 
-            {/* Redesigned 100% Responsive Interactive Search / Requirement Bar */}
             <div className="w-full max-w-4xl bg-white rounded-2xl lg:rounded-full p-2 lg:p-2 lg:pl-6 lg:pr-2.5 shadow-xl shadow-slate-900/5 border border-slate-200/90 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2 lg:gap-2">
               
-              {/* Field 1: Service */}
               <div className="flex-1 bg-slate-50/60 lg:bg-transparent rounded-xl lg:rounded-none px-3.5 py-2.5 lg:p-0 lg:py-1.5 lg:px-2 flex items-center gap-3 min-w-0 border border-slate-100 lg:border-none">
-                <div className="w-7 h-7 rounded-lg lg:rounded-none bg-orange-100/70 lg:bg-transparent flex items-center justify-center text-[#f95724] shrink-0">
+                <div className="w-7 h-7 rounded-lg lg:rounded-none bg-orange-100/70 lg:bg-transparent flex items-center justify-center text-[#FF5722] shrink-0">
                   <Search className="w-4 h-4" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -389,15 +386,12 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                 </div>
               </div>
 
-              {/* Vertical Divider 1 */}
               <div className="hidden lg:block h-8 w-[1px] bg-slate-200/90 shrink-0 mx-1" />
 
-              {/* Sub-grid for Location & Date on mobile/tablet */}
               <div className="grid grid-cols-2 lg:flex lg:items-center gap-2 lg:gap-2 flex-[1.4] min-w-0">
                 
-                {/* Field 2: Location */}
                 <div className="flex-1 bg-slate-50/60 lg:bg-transparent rounded-xl lg:rounded-none px-3 py-2.5 lg:p-0 lg:py-1.5 lg:px-3 flex items-center gap-2.5 min-w-0 border border-slate-100 lg:border-none">
-                  <div className="w-6 h-6 rounded-md lg:rounded-none bg-orange-100/70 lg:bg-transparent flex items-center justify-center text-[#f95724] shrink-0">
+                  <div className="w-6 h-6 rounded-md lg:rounded-none bg-orange-100/70 lg:bg-transparent flex items-center justify-center text-[#FF5722] shrink-0">
                     <MapPin className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -420,12 +414,10 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                   </div>
                 </div>
 
-                {/* Vertical Divider 2 */}
                 <div className="hidden lg:block h-8 w-[1px] bg-slate-200/90 shrink-0 mx-1" />
 
-                {/* Field 3: Date */}
                 <div className="flex-1 bg-slate-50/60 lg:bg-transparent rounded-xl lg:rounded-none px-3 py-2.5 lg:p-0 lg:py-1.5 lg:px-3 flex items-center gap-2.5 min-w-0 relative border border-slate-100 lg:border-none">
-                  <div className="w-6 h-6 rounded-md lg:rounded-none bg-orange-100/70 lg:bg-transparent flex items-center justify-center text-[#f95724] shrink-0">
+                  <div className="w-6 h-6 rounded-md lg:rounded-none bg-orange-100/70 lg:bg-transparent flex items-center justify-center text-[#FF5722] shrink-0">
                     <Calendar className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -449,10 +441,9 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
 
               </div>
 
-              {/* Submit Action Button */}
               <button
                 onClick={() => onOpenPostModal(heroService)}
-                className="w-full lg:w-auto px-6 py-3.5 rounded-xl lg:rounded-full bg-gradient-to-r from-[#f95724] to-orange-500 hover:from-[#e04818] hover:to-[#f95724] text-white font-bold text-xs sm:text-sm shadow-md shadow-orange-500/20 flex items-center justify-center gap-2 transition active:scale-95 shrink-0 cursor-pointer whitespace-nowrap"
+                className="w-full lg:w-auto px-6 py-3.5 rounded-xl lg:rounded-full bg-[#FF5722] hover:bg-[#E64A19] text-white font-bold text-xs sm:text-sm shadow-md shadow-orange-500/20 flex items-center justify-center gap-2 transition active:scale-95 shrink-0 cursor-pointer whitespace-nowrap"
               >
                 <span>Post Requirement</span>
                 <ArrowRight className="w-4 h-4" />
@@ -463,7 +454,6 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
           </div>
         </div>
 
-        {/* Organic Wave Divider Transition (Blends into Section 2) */}
         <div className="absolute bottom-0 inset-x-0 overflow-hidden leading-none z-0">
           <svg
             className="relative block w-full h-8 sm:h-12 text-[#fffbf7]"
@@ -1666,7 +1656,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                           <p className="text-xs sm:text-sm text-slate-500 flex items-center gap-2">
                             <span>📍 {draft.location.area}, {draft.location.city}</span>
                             <span>•</span>
-                            <span>📅 {draft.eventDate}</span>
+                            <span>📅 {formatEventDate(draft.eventDate)}</span>
                             <span>•</span>
                             <span>👥 {draft.guestCount} guests</span>
                           </p>
@@ -1815,7 +1805,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                               </span>
                               <span className="flex items-center gap-1 font-medium">
                                 <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                                <span>{req.eventDate} ({req.timeWindow.start} - {req.timeWindow.end})</span>
+                                <span>{formatEventDate(req.eventDate)} ({req.timeWindow.start} - {req.timeWindow.end})</span>
                               </span>
                               <span className="flex items-center gap-1 font-medium">
                                 <Users className="w-3.5 h-3.5 text-slate-400 shrink-0" />

@@ -5,7 +5,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:audioplayers/audioplayers.dart';
 import '../config/theme.dart';
+import '../providers/banners_provider.dart';
 import '../providers/requirements_provider.dart';
+import '../utils/app_nav.dart';
 import '../widgets/ezzygo_logo.dart';
 import 'main_navigation_screen.dart';
 
@@ -171,10 +173,11 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen>
     } catch (_) {}
 
     context.read<RequirementsProvider>().setSelectedCity(_selectedCity);
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
-    );
+    context.read<BannersProvider>().loadForCity(_selectedCity);
+    AppNav.openRoot(context, const MainNavigationScreen());
   }
+
+  void _onBack() => AppNav.backOrExit(context);
 
   @override
   Widget build(BuildContext context) {
@@ -185,13 +188,23 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen>
       return query.isEmpty || name.contains(query) || state.contains(query);
     }).toList();
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        _onBack();
+      },
+      child: Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         automaticallyImplyLeading: false,
-        titleSpacing: 20,
+        leading: IconButton(
+          icon: const Icon(LucideIcons.arrowLeft, size: 20, color: AppTheme.slate700),
+          onPressed: _onBack,
+        ),
+        titleSpacing: 8,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -210,23 +223,8 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen>
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: _onContinue,
-            style: TextButton.styleFrom(
-              foregroundColor: AppTheme.textSecondary,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            ),
-            child: Text(
-              'Skip',
-              style: GoogleFonts.poppins(
-                color: const Color(0xFF6B7280),
-                fontSize: 14.5,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
+        actions: const [
+          SizedBox(width: 8),
         ],
       ),
       body: SafeArea(
@@ -391,14 +389,14 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen>
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
                                   color: isSelected
-                                      ? const Color(0xFFFF5148)
+                                      ? AppTheme.primary
                                       : const Color(0xFFE5E7EB),
                                   width: isSelected ? 1.6 : 1.0,
                                 ),
                                 boxShadow: [
                                   if (isSelected)
                                     BoxShadow(
-                                      color: const Color(0xFFFF5148).withValues(alpha: 0.12),
+                                      color: AppTheme.primary.withValues(alpha: 0.12),
                                       blurRadius: 10,
                                       offset: const Offset(0, 4),
                                     )
@@ -421,7 +419,7 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen>
                                         width: 22,
                                         height: 22,
                                         decoration: const BoxDecoration(
-                                          color: Color(0xFFFF5148),
+                                          color: AppTheme.primary,
                                           shape: BoxShape.circle,
                                         ),
                                         child: const Icon(
@@ -508,6 +506,7 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen>
             _buildBottomCTA(),
           ],
         ),
+      ),
       ),
     );
   }
@@ -602,7 +601,7 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen>
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFFF5148).withValues(alpha: 0.32),
+                  color: AppTheme.primary.withValues(alpha: 0.32),
                   blurRadius: glowBlur,
                   offset: const Offset(0, 4),
                 ),
@@ -611,7 +610,7 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen>
             child: ElevatedButton(
               onPressed: _onContinue,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFF5148),
+                backgroundColor: AppTheme.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -623,7 +622,7 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Continue',
+                    'Explore Vendors in $_selectedCity',
                     style: GoogleFonts.poppins(
                       fontSize: 16.5,
                       fontWeight: FontWeight.w800,

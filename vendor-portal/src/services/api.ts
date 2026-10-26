@@ -96,10 +96,14 @@ const jsonBody = (method: string, body: unknown): RequestInit => ({
 });
 
 export const api = {
-  async login(phone: string, password: string): Promise<User> {
+  async login(emailOrPhone: string, password: string): Promise<User> {
+    const id = emailOrPhone.trim();
+    const payload = id.includes('@')
+      ? { email: id.toLowerCase(), password, role: 'provider' }
+      : { phone: id, password, role: 'provider' };
     const data = await request<{ token: string; user: User }>(
       '/auth/login',
-      jsonBody('POST', { phone, password, role: 'provider' }),
+      jsonBody('POST', payload),
       'Could not log in'
     );
     setToken(data.token);

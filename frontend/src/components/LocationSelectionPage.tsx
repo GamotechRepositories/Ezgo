@@ -1,9 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { MapPin, Search, Navigation, ArrowRight, X, Building2, Check } from 'lucide-react';
+import { MapPin, Search, Navigation, ArrowRight, ArrowLeft, X, Building2, Check } from 'lucide-react';
 import { EzzyGoLogo } from './EzzyGoLogo';
 
 interface LocationSelectionPageProps {
   onSelect: (city: string) => void;
+  onBack?: () => void;
 }
 
 interface CityData {
@@ -110,7 +111,7 @@ const CITIES: CityData[] = [
   },
 ];
 
-export const LocationSelectionPage: React.FC<LocationSelectionPageProps> = ({ onSelect }) => {
+export const LocationSelectionPage: React.FC<LocationSelectionPageProps> = ({ onSelect, onBack }) => {
   const [selectedCity, setSelectedCity] = useState('Pune');
   const [searchQuery, setSearchQuery] = useState('');
   const [detecting, setDetecting] = useState(false);
@@ -140,16 +141,22 @@ export const LocationSelectionPage: React.FC<LocationSelectionPageProps> = ({ on
     <div className="min-h-dvh flex flex-col bg-white">
       {/* AppBar */}
       <header className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-100 bg-white sticky top-0 z-10">
-        <div className="flex flex-col">
-          <EzzyGoLogo variant="host" size="md" />
-          <div className="mt-1 h-[3px] w-10 rounded-full" style={{ background: '#f95724' }} />
+        <div className="flex items-center gap-3">
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+              aria-label="Back"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+          )}
+          <div className="flex flex-col">
+            <EzzyGoLogo variant="host" size="md" />
+            <div className="mt-1 h-[3px] w-10 rounded-full" style={{ background: '#FF5722' }} />
+          </div>
         </div>
-        <button
-          onClick={() => onSelect(selectedCity)}
-          className="text-sm font-semibold text-slate-500 hover:text-slate-800 transition cursor-pointer px-3 py-1.5"
-        >
-          Skip
-        </button>
       </header>
 
       <div className="flex-1 flex flex-col px-5 pt-5 pb-4 overflow-y-auto max-w-5xl mx-auto w-full">
@@ -162,7 +169,7 @@ export const LocationSelectionPage: React.FC<LocationSelectionPageProps> = ({ on
 
         {/* Search Bar */}
         <div className="relative mb-4">
-          <div className="flex items-center gap-2 h-12 px-4 rounded-full bg-slate-100 border border-transparent focus-within:border-[#f95724] focus-within:bg-white transition">
+          <div className="flex items-center gap-2 h-12 px-4 rounded-full bg-slate-100 border border-transparent focus-within:border-[#FF5722] focus-within:bg-white transition">
             <Search className="w-4 h-4 text-slate-400 shrink-0" />
             <input
               type="text"
@@ -186,13 +193,13 @@ export const LocationSelectionPage: React.FC<LocationSelectionPageProps> = ({ on
         <button
           onClick={handleDetect}
           disabled={detecting}
-          className="flex items-center gap-3.5 px-4 py-3 rounded-2xl border border-[#f95724]/30 bg-[#FFF8F5] mb-5 w-full text-left hover:bg-[#FFF3ED] transition cursor-pointer disabled:opacity-60"
+          className="flex items-center gap-3.5 px-4 py-3 rounded-2xl border border-[#FF5722]/30 bg-[#FFF8F5] mb-5 w-full text-left hover:bg-[#FFF3ED] transition cursor-pointer disabled:opacity-60"
         >
           <div className="w-10 h-10 rounded-xl bg-[#FFECEB] flex items-center justify-center shrink-0">
             {detecting ? (
-              <div className="w-5 h-5 border-2 border-[#f95724] border-t-transparent rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-[#FF5722] border-t-transparent rounded-full animate-spin" />
             ) : (
-              <Navigation className="w-5 h-5 text-[#f95724]" />
+              <Navigation className="w-5 h-5 text-[#FF5722]" />
             )}
           </div>
           <div>
@@ -306,8 +313,8 @@ export const LocationSelectionPage: React.FC<LocationSelectionPageProps> = ({ on
             onClick={() => onSelect(selectedCity)}
             className="w-full h-14 rounded-2xl text-white font-extrabold text-[16px] flex items-center justify-center gap-2 cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all duration-150 shadow-md"
             style={{
-              background: selectedData?.accent || '#f95724',
-              boxShadow: `0 6px 20px ${selectedData?.accent || '#f95724'}40`,
+              background: selectedData?.accent || '#FF5722',
+              boxShadow: `0 6px 20px ${selectedData?.accent || '#FF5722'}40`,
             }}
           >
             Explore Vendors in {selectedCity}

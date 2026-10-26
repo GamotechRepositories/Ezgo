@@ -5,10 +5,10 @@ import 'package:intl/intl.dart';
 import '../../config/theme.dart';
 import '../../models/bid_model.dart';
 import '../../models/requirement_model.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/bookings_provider.dart';
+import '../../providers/requirements_provider.dart';
 import 'booking_detail_screen.dart';
 import 'escrow_payment_sheet.dart';
+import '../../widgets/shell_bottom_insets.dart';
 
 class BidsComparisonScreen extends StatefulWidget {
   final RequirementModel requirement;
@@ -23,85 +23,58 @@ class BidsComparisonScreen extends StatefulWidget {
 }
 
 class _BidsComparisonScreenState extends State<BidsComparisonScreen> {
-  int _selectedTab = 0; // 0: All Bids, 1: Messages, 2: Details
+  int _selectedTab = 0; // 0: All Bids, 1: Lowest Price, 2: Top Rated
+  bool _accepting = false;
 
   final formatCurrency = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
 
-  void _onAcceptBid(BidModel bid) {
-    final auth = context.read<AuthProvider>();
-    final hostName = auth.user?.name ?? 'Roshan Chaudhari';
-    final hostPhone = auth.user?.phone ?? '+91 98765 43210';
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<RequirementsProvider>().fetchRequirement(widget.requirement.id);
+    });
+  }
 
-    final booking = context.read<BookingsProvider>().createBookingFromAcceptedBid(
-      requirement: widget.requirement,
-      bid: bid,
-      hostName: hostName,
-      hostPhone: hostPhone,
-    );
-
-    // Open Escrow Payment Sheet
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => EscrowPaymentSheet(
-        booking: booking,
-        onPaymentSuccess: () {
-          // Open Booking Details Screen
-          Navigator.of(context).pushReplacement(
+  Future<void> _onAcceptBid(RequirementModel req, BidModel bid) async {
+    if (_accepting) return;
+    setState(() => _accepting = true);
+    try {
+      await acceptBidAndOpenEscrow(
+        context: context,
+        requirement: req,
+        bid: bid,
+        onPaid: (booking) {
+          Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) => BookingDetailScreen(booking: booking),
             ),
           );
         },
-      ),
-    );
+      );
+    } finally {
+      if (mounted) setState(() => _accepting = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final req = widget.requirement;
-    final bids = req.bids.isNotEmpty ? req.bids : _getSampleBids(req);
+    final live = context.watch<RequirementsProvider>().allRequirements.where((r) => r.id == widget.requirement.id);
+    final req = live.isNotEmpty ? live.first : widget.requirement;
+    final bids = List<BidModel>.from(req.bids);
+    if (_selectedTab == 1) {
+      bids.sort((a, b) => a.amount.compareTo(b.amount));
+    } else if (_selectedTab == 2) {
+      bids.sort((a, b) => b.providerRating.compareTo(a.providerRating));
+    }
 
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              req.title,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            Row(
-              children: [
-                Text(
-                  '${bids.length} Bids Received',
-                  style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary, fontWeight: FontWeight.w500),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                  decoration: BoxDecoration(
-                    color: AppTheme.redLight,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(LucideIcons.clock, size: 10, color: AppTheme.primary),
-                      SizedBox(width: 3),
-                      Text(
-                        '2d 5h left',
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppTheme.primary),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
+        title: const Text('Vendor Bids'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, size: 22),
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
         actions: [
           IconButton(
@@ -115,15 +88,30 @@ class _BidsComparisonScreenState extends State<BidsComparisonScreen> {
         children: [
           // Sub-tabs: All Bids, Messages, Details
           Container(
+            width: double.infinity,
+            margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF1EA),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Text(
+              bids.isEmpty
+                  ? 'Waiting for vendor bids.\nVerified vendors in ${req.city} can send prices below your ₹${req.maxAcceptableBid} ceiling.'
+                  : '${bids.length} vendor${bids.length == 1 ? '' : 's'} have submitted bids. Accept only bids at least 15% below budget.',
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, height: 1.35, color: AppTheme.textPrimary),
+            ),
+          ),
+          Container(
             color: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
-                _buildSubTab(0, 'All Bids (${bids.length})'),
+                _buildSubTab(0, 'All Bids'),
                 const SizedBox(width: 10),
-                _buildSubTab(1, 'Messages'),
+                _buildSubTab(1, 'Lowest Price'),
                 const SizedBox(width: 10),
-                _buildSubTab(2, 'Details'),
+                _buildSubTab(2, 'Top Rated'),
               ],
             ),
           ),
@@ -132,11 +120,9 @@ class _BidsComparisonScreenState extends State<BidsComparisonScreen> {
 
           // Content
           Expanded(
-            child: _selectedTab == 0
-                ? _buildBidsList(bids, req)
-                : _selectedTab == 1
-                    ? _buildMessagesTab()
-                    : _buildDetailsTab(req),
+            child: bids.isEmpty
+                ? _buildEmptyBids()
+                : _buildBidsList(bids, req),
           ),
         ],
       ),
@@ -168,7 +154,7 @@ class _BidsComparisonScreenState extends State<BidsComparisonScreen> {
 
   Widget _buildBidsList(List<BidModel> bids, RequirementModel req) {
     return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: EdgeInsets.fromLTRB(16, 10, 16, ShellBottomInsets.of(context)),
       itemCount: bids.length,
       separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
@@ -348,7 +334,9 @@ class _BidsComparisonScreenState extends State<BidsComparisonScreen> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () => _onAcceptBid(bid),
+                      onPressed: !_accepting && (bid.isEligibleForAccept || bid.amount <= req.maxAcceptableBid)
+                          ? () => _onAcceptBid(req, bid)
+                          : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primary,
                         foregroundColor: Colors.white,
@@ -358,7 +346,10 @@ class _BidsComparisonScreenState extends State<BidsComparisonScreen> {
                         ),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
-                      child: const Text('Accept Bid', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                      child: Text(
+                        (bid.isEligibleForAccept || bid.amount <= req.maxAcceptableBid) ? 'Select' : 'Need 15%+',
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+                      ),
                     ),
                   ),
                 ],
@@ -370,122 +361,25 @@ class _BidsComparisonScreenState extends State<BidsComparisonScreen> {
     );
   }
 
-  Widget _buildMessagesTab() {
+  Widget _buildEmptyBids() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(LucideIcons.messageSquare, size: 40, color: AppTheme.slate400),
-          const SizedBox(height: 12),
-          Text('No vendor inquiries yet', style: AppTheme.headingFont(fontSize: 16)),
-          const SizedBox(height: 6),
-          const Text('Vendors who bid can send clarifying questions here.', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailsTab(RequirementModel req) {
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppTheme.borderSubtle),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Event Overview', style: AppTheme.headingFont(fontSize: 16)),
-              const SizedBox(height: 12),
-              _buildDetailRow(LucideIcons.tag, 'Category', req.category),
-              _buildDetailRow(LucideIcons.calendar, 'Event Date', req.eventDate),
-              _buildDetailRow(LucideIcons.mapPin, 'Location', '${req.area}, ${req.city}'),
-              _buildDetailRow(LucideIcons.users, 'Guest Count', '${req.guestCount} Guests'),
-              _buildDetailRow(LucideIcons.indianRupee, 'Budget', formatCurrency.format(req.budget)),
-              _buildDetailRow(LucideIcons.shieldCheck, 'Ceiling Cap', formatCurrency.format(req.maxAcceptableBid)),
-              const Divider(height: 20, color: AppTheme.borderSubtle),
-              Text('Description', style: AppTheme.headingFont(fontSize: 14)),
-              const SizedBox(height: 6),
-              Text(req.description, style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.4)),
-            ],
-          ),
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(LucideIcons.clock, size: 40, color: AppTheme.slate400),
+            const SizedBox(height: 12),
+            Text('No bids yet', style: AppTheme.headingFont(fontSize: 16)),
+            const SizedBox(height: 6),
+            const Text(
+              'Vendors will bid lower than your budget. Pull this screen again after they submit.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+            ),
+          ],
         ),
-      ],
-    );
-  }
-
-  Widget _buildDetailRow(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: AppTheme.primary),
-          const SizedBox(width: 10),
-          Text(label, style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
-          const Spacer(),
-          Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
-        ],
       ),
     );
-  }
-
-  List<BidModel> _getSampleBids(RequirementModel req) {
-    return [
-      BidModel(
-        id: 'bid_starlens',
-        requirementId: req.id,
-        providerId: 'v_starlens',
-        providerName: 'StarLens Studio',
-        businessName: 'StarLens Studio',
-        providerPhone: '+91 98765 11111',
-        providerRating: 4.8,
-        completedJobs: 120,
-        isVerified: true,
-        amount: 85000,
-        proposalNotes: 'Full day coverage;500+ edited photos;2 photographers',
-        equipmentDetails: 'Sony A7IV, G-Master prime lenses, DJI Ronin RS3',
-        discountPercent: 28.0,
-        isEligibleForAccept: true,
-        status: 'PENDING',
-      ),
-      BidModel(
-        id: 'bid_memorymakers',
-        requirementId: req.id,
-        providerId: 'v_memory',
-        providerName: 'Memory Makers',
-        businessName: 'Memory Makers',
-        providerPhone: '+91 98765 22222',
-        providerRating: 4.6,
-        completedJobs: 90,
-        isVerified: true,
-        amount: 95000,
-        proposalNotes: 'Full day coverage;500+ edited photos;2 photographers',
-        equipmentDetails: 'Canon R5, Cinema primes, DJI Mavic 3 Pro',
-        discountPercent: 21.0,
-        isEligibleForAccept: true,
-        status: 'PENDING',
-      ),
-      BidModel(
-        id: 'bid_clickcraft',
-        requirementId: req.id,
-        providerId: 'v_click',
-        providerName: 'ClickCraft',
-        businessName: 'ClickCraft',
-        providerPhone: '+91 98765 33333',
-        providerRating: 4.7,
-        completedJobs: 110,
-        isVerified: true,
-        amount: 105000,
-        proposalNotes: 'Full day photos;2 photographers',
-        equipmentDetails: 'Sony FX3, GM II lenses, Godox lighting truss',
-        discountPercent: 13.0,
-        isEligibleForAccept: true,
-        status: 'PENDING',
-      ),
-    ];
   }
 }

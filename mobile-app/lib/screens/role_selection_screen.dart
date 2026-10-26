@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:audioplayers/audioplayers.dart';
 import '../models/user_model.dart';
+import '../utils/app_nav.dart';
 import 'auth/login_screen.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
@@ -81,7 +82,13 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
     final screenWidth = mediaQuery.size.width;
     final bannerHeight = screenWidth * (830.0 / 1152.0);
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        AppNav.onRootBack(context);
+      },
+      child: Scaffold(
       backgroundColor: const Color(0xFFFCF9F6),
       body: Stack(
         children: [
@@ -249,6 +256,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
             ),
           ],
         ),
+      ),
       ),
     );
   }

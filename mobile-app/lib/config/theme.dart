@@ -3,23 +3,23 @@ import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // Approved EzzyGo Design System Colors
-  static const Color primary = Color(0xFFFF5148); // Coral #FF5148
-  static const Color primaryHover = Color(0xFFE2433B);
-  static const Color primaryLight = Color(0xFFFFECEB);
-  static const Color primaryDark = Color(0xFFD93830);
+  static const Color primary = Color(0xFFFF5722);
+  static const Color primaryHover = Color(0xFFE64A19);
+  static const Color primaryLight = Color(0xFFFFF7ED);
+  static const Color primaryDark = Color(0xFFE64A19);
 
   static const LinearGradient primaryGradient = LinearGradient(
-    colors: [Color(0xFFFF5148), Color(0xFFFF6D66)],
+    colors: [Color(0xFFF95724), Color(0xFFFF7443)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   // Background & Surface
-  static const Color background = Color(0xFFFFF9F4); // #FFF9F4
-  static const Color surface = Color(0xFFFFFFFF); // #FFFFFF
+  static const Color background = Color(0xFFFFF9F2);
+  static const Color surface = Color(0xFFFFFFFF);
 
   // Text
-  static const Color textPrimary = Color(0xFF202124); // #202124
+  static const Color textPrimary = Color(0xFF17233D);
   static const Color textSecondary = Color(0xFF777777); // #777777
   static const Color textMuted = Color(0xFF9E9E9E);
 

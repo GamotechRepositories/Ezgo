@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
@@ -9,18 +10,26 @@ class AuthProvider extends ChangeNotifier {
   UserModel? _user;
   UserRole _activeRole = UserRole.host;
   bool _isLoading = false;
+  bool _sessionReady = false;
   String? _errorMessage;
+  Future<void>? _sessionLoad;
 
   UserModel? get user => _user;
   UserRole get activeRole => _activeRole;
   bool get isLoading => _isLoading;
+  bool get sessionReady => _sessionReady;
   String? get errorMessage => _errorMessage;
-  bool get isLoggedIn => _user != null && _user!.token != null;
+  bool get isLoggedIn =>
+      _user != null && (ApiService().token?.isNotEmpty == true || (_user!.token?.isNotEmpty ?? false));
   bool get isHost => _activeRole == UserRole.host;
   bool get isVendor => _activeRole == UserRole.vendor;
 
   AuthProvider() {
-    _loadSession();
+    _sessionLoad = _loadSession();
+  }
+
+  Future<void> ensureSession() async {
+    await (_sessionLoad ?? _loadSession());
   }
 
   Future<void> _loadSession() async {
@@ -29,38 +38,60 @@ class AuthProvider extends ChangeNotifier {
     final roleStr = prefs.getString('active_role') ?? 'host';
     _activeRole = roleStr == 'vendor' ? UserRole.vendor : UserRole.host;
 
-    if (token != null) {
-      ApiService().setToken(token);
-      final res = await ApiService().get(ApiConfig.me);
-      if (res != null && res['success'] == true && res['data'] != null) {
-        final userData = res['data'] as Map<String, dynamic>;
-        userData['token'] = token;
-        _user = UserModel.fromJson(userData);
-        _activeRole = _user!.role;
-        notifyListeners();
-        return;
-      }
-    }
-
-    if (token == null) {
+    if (token == null || token.isEmpty) {
       _user = null;
+      ApiService().setToken(null);
+      _sessionReady = true;
       notifyListeners();
       return;
     }
 
-    // If token exists but network is offline, maintain session
-    _user = UserModel(
-      id: _activeRole == UserRole.host ? 'user_host_101' : 'user_vendor_202',
-      name: _activeRole == UserRole.host ? 'Ananya Sharma (Host)' : 'Rajesh Sound & FX Pro',
-      phone: _activeRole == UserRole.host ? '+91 98765 43210' : '+91 98231 45678',
-      role: _activeRole,
-      businessName: _activeRole == UserRole.vendor ? 'Rajesh Pro Audio & Lightings' : null,
-      isVerified: true,
-      completedJobs: 42,
-      rating: 4.9,
-      token: token,
-    );
+    ApiService().setToken(token);
+
+    final savedUser = prefs.getString('auth_user');
+    if (savedUser != null && savedUser.isNotEmpty) {
+      try {
+        final userData = jsonDecode(savedUser) as Map<String, dynamic>;
+        userData['token'] = token;
+        _user = UserModel.fromJson(userData);
+        if (_user!.role == UserRole.vendor || _user!.role == UserRole.host) {
+          _activeRole = _user!.role;
+        }
+        _sessionReady = true;
+        notifyListeners();
+      } catch (_) {}
+    }
+
+    try {
+      final res = await ApiService().get(ApiConfig.me);
+      final data = res is Map ? res['data'] : null;
+      if (data is Map) {
+        final userData = data.cast<String, dynamic>();
+        userData['token'] = token;
+        _user = UserModel.fromJson(userData);
+        _activeRole = _user!.role;
+        await _persistSession(token);
+      }
+    } on ApiException catch (e) {
+      if (e.statusCode == 401) {
+        _user = null;
+        ApiService().setToken(null);
+        await prefs.remove('auth_token');
+        await prefs.remove('auth_user');
+      }
+    } catch (_) {}
+
+    _sessionReady = true;
     notifyListeners();
+  }
+
+  Future<void> _persistSession(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('auth_token', token);
+    await prefs.setString('active_role', _activeRole == UserRole.vendor ? 'vendor' : 'host');
+    if (_user != null) {
+      await prefs.setString('auth_user', jsonEncode(_user!.toJson()));
+    }
   }
 
   Future<bool> login({
@@ -91,35 +122,19 @@ class AuthProvider extends ChangeNotifier {
         _user = UserModel.fromJson(userData);
         _activeRole = _user!.role;
         ApiService().setToken(token);
-
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('auth_token', token);
-        await prefs.setString('active_role', _activeRole == UserRole.vendor ? 'vendor' : 'host');
+        await _persistSession(token);
 
         _isLoading = false;
         notifyListeners();
         return true;
       } else {
-        // Fallback for offline demo mode if backend is not reachable
-        _activeRole = role;
-        _user = UserModel(
-          id: role == UserRole.host ? 'user_host_101' : 'user_vendor_202',
-          name: role == UserRole.host ? 'Ananya Sharma (Host)' : 'Rajesh Sound & FX Pro',
-          phone: phone,
-          role: role,
-          businessName: role == UserRole.vendor ? 'Rajesh Pro Audio & Lightings' : null,
-          isVerified: true,
-          completedJobs: 24,
-          rating: 4.95,
-          token: 'offline_token',
-        );
-
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('active_role', role == UserRole.vendor ? 'vendor' : 'host');
-
+        _errorMessage = res?['message'] ??
+            (res == null
+                ? 'Cannot reach the server. Check your connection.'
+                : 'Wrong phone number or password.');
         _isLoading = false;
         notifyListeners();
-        return true;
+        return false;
       }
     } catch (e) {
       _errorMessage = e.toString();
@@ -163,10 +178,7 @@ class AuthProvider extends ChangeNotifier {
         _user = UserModel.fromJson(userData);
         _activeRole = _user!.role;
         ApiService().setToken(token);
-
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('auth_token', token);
-        await prefs.setString('active_role', _activeRole == UserRole.vendor ? 'vendor' : 'host');
+        await _persistSession(token);
 
         _isLoading = false;
         notifyListeners();
@@ -255,10 +267,7 @@ class AuthProvider extends ChangeNotifier {
         _user = UserModel.fromJson(userData);
         _activeRole = _user!.role;
         ApiService().setToken(token);
-
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('auth_token', token);
-        await prefs.setString('active_role', _activeRole == UserRole.vendor ? 'vendor' : 'host');
+        await _persistSession(token);
 
         _isLoading = false;
         notifyListeners();
@@ -282,12 +291,49 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> updateProfile({
+    String? name,
+    String? email,
+    String? avatar,
+    String? serviceArea,
+  }) async {
+    if (_user == null) {
+      throw ApiException('Please log in again.');
+    }
+
+    final res = await ApiService().put(ApiConfig.profile, {
+      'userId': _user!.id,
+      if (name != null) 'name': name,
+      if (email != null) 'email': email,
+      if (avatar != null) 'avatar': avatar,
+      if (serviceArea != null) 'serviceArea': serviceArea,
+    });
+
+    if (res is! Map || res['data'] is! Map) {
+      throw ApiException(
+        res is Map ? (res['message'] ?? 'Could not update profile').toString() : 'Could not update profile',
+      );
+    }
+
+    final data = (res['data'] as Map).cast<String, dynamic>();
+    data['token'] = _user!.token;
+    _user = UserModel.fromJson(data);
+    await _persistSession(_user!.token ?? '');
+    notifyListeners();
+  }
+
+  Future<void> uploadAvatar(String filePath) async {
+    final url = await ApiService().uploadImage(filePath, folder: 'ezzygo/avatars');
+    await updateProfile(avatar: url);
+  }
+
   void logout() async {
     _user = null;
     ApiService().setToken(null);
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
     await prefs.remove('active_role');
+    await prefs.remove('auth_user');
     try {
       await GoogleSignIn().signOut();
     } catch (_) {}

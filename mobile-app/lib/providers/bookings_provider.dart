@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import '../config/api_config.dart';
-import '../models/bid_model.dart';
 import '../models/booking_model.dart';
-import '../models/requirement_model.dart';
 import '../services/api_service.dart';
 
 class BookingsProvider extends ChangeNotifier {
@@ -36,93 +34,63 @@ class BookingsProvider extends ChangeNotifier {
         _bookings = list
             .map((item) => BookingModel.fromJson(item as Map<String, dynamic>))
             .toList();
-        _isLoading = false;
-        notifyListeners();
-        return;
+      } else {
+        _bookings = [];
       }
-    } catch (_) {}
+    } catch (_) {
+      _bookings = [];
+    }
 
-    _loadSampleBookings();
     _isLoading = false;
     notifyListeners();
   }
 
-  void _loadSampleBookings() {
-    _bookings = [
-      const BookingModel(
-        id: 'bkg_1',
-        requirementId: '6abcd97126b2c19c05a43f1e',
-        requirementTitle: 'Modern Floral Backdrop with Fairy Light Canopy for Reception',
-        category: 'Decoration & Stage Setup',
-        eventDate: '2026-10-22',
-        locationText: 'Koregaon Park, Pune',
-        bidAmount: 67000,
-        platformFee: 6700,
-        totalPaid: 73700,
-        status: 'ACTIVE',
-        hostName: 'Ananya Sharma',
-        hostPhone: '+91 98765 43210',
-        vendorName: 'Swara Mandap & Floral Decorators',
-        vendorPhone: '+91 98877 66554',
-        isContactRevealed: true,
-      ),
-      const BookingModel(
-        id: 'bkg_2',
-        requirementId: '6abcd97126b2c19c05a43f1c',
-        requirementTitle: 'Sangeet Night Pro Sound & Intelligent Moving Lights',
-        category: 'DJ & Sound Setup',
-        eventDate: '2026-10-15',
-        locationText: 'Baner, Pune',
-        bidAmount: 25000,
-        platformFee: 2500,
-        totalPaid: 27500,
-        status: 'AWAITING_PAYMENT',
-        hostName: 'Ananya Sharma',
-        hostPhone: '+91 98765 43210',
-        vendorName: 'BeatDrop Audio Works',
-        vendorPhone: '+91 97654 32100',
-        isContactRevealed: false,
-      ),
-    ];
+  Future<BookingModel> acceptBid({
+    required String requirementId,
+    required String bidId,
+    required String requesterId,
+  }) async {
+    final res = await ApiService().post(ApiConfig.acceptBid, {
+      'requirementId': requirementId,
+      'bidId': bidId,
+      'requesterId': requesterId,
+    });
+
+    if (res is! Map || res['data'] is! Map) {
+      throw ApiException(res is Map ? (res['message'] ?? 'Failed to accept bid').toString() : 'Failed to accept bid');
+    }
+
+    final booking = BookingModel.fromJson((res['data'] as Map).cast<String, dynamic>());
+    _bookings.insert(0, booking);
     notifyListeners();
+    return booking;
   }
 
-  BookingModel createBookingFromAcceptedBid({
-    required RequirementModel requirement,
-    required BidModel bid,
-    required String hostName,
-    required String hostPhone,
-  }) {
-    final fee = (bid.amount * 0.1).round();
-    final total = bid.amount + fee;
+  Future<void> payEscrow(String bookingId) async {
+    Map<String, dynamic>? res;
+    try {
+      final paid = await ApiService().post(ApiConfig.payBooking, {
+        'bookingId': bookingId,
+        'paymentMethod': 'UPI',
+      });
+      res = paid is Map ? paid.cast<String, dynamic>() : null;
+    } on ApiException catch (e) {
+      if (e.statusCode == 403) {
+        await ApiService().post(ApiConfig.createOrder, {'bookingId': bookingId});
+        throw ApiException('Razorpay checkout is required. Simulated escrow pay is disabled on this server.');
+      }
+      rethrow;
+    }
 
-    final newBooking = BookingModel(
-      id: 'bkg_${DateTime.now().millisecondsSinceEpoch}',
-      requirementId: requirement.id,
-      requirementTitle: requirement.title,
-      category: requirement.category,
-      eventDate: requirement.eventDate,
-      locationText: '${requirement.area}, ${requirement.city}',
-      bidAmount: bid.amount,
-      platformFee: fee,
-      totalPaid: total,
-      status: 'AWAITING_PAYMENT',
-      hostName: hostName,
-      hostPhone: hostPhone,
-      vendorName: bid.businessName,
-      vendorPhone: bid.providerPhone,
-      isContactRevealed: false,
-    );
+    BookingModel? paid;
+    final data = res?['data'];
+    if (data is Map) {
+      paid = BookingModel.fromJson(data.cast<String, dynamic>());
+    }
 
-    _bookings.insert(0, newBooking);
-    notifyListeners();
-    return newBooking;
-  }
-
-  void payEscrow(String bookingId) {
     final idx = _bookings.indexWhere((b) => b.id == bookingId);
     if (idx != -1) {
-      final b = _bookings[idx];
+      final b = paid ?? _bookings[idx];
       _bookings[idx] = BookingModel(
         id: b.id,
         requirementId: b.requirementId,
@@ -141,10 +109,15 @@ class BookingsProvider extends ChangeNotifier {
         isContactRevealed: true,
       );
       notifyListeners();
+    } else if (paid != null) {
+      _bookings.insert(0, paid);
+      notifyListeners();
     }
   }
 
-  void completeBooking(String id) {
+  Future<void> completeBooking(String id) async {
+    await ApiService().post(ApiConfig.completeBooking, {'bookingId': id});
+
     final idx = _bookings.indexWhere((b) => b.id == id);
     if (idx != -1) {
       final b = _bookings[idx];
@@ -169,8 +142,11 @@ class BookingsProvider extends ChangeNotifier {
     }
   }
 
-  void cancelBooking(String id) {
-    _bookings.removeWhere((b) => b.id == id);
-    notifyListeners();
+  Future<void> cancelBooking(String id, {String? reason}) async {
+    await ApiService().post(ApiConfig.cancelBooking, {
+      'bookingId': id,
+      if (reason != null) 'reason': reason,
+    });
+    await loadData();
   }
 }

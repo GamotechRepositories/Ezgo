@@ -75,7 +75,7 @@ class BidModel {
       proposalNotes: json['proposalNotes'] ?? '',
       equipmentDetails: json['equipmentDetails'] ?? '',
       discountPercent: disc,
-      isEligibleForAccept: json['isEligibleForAccept'] ?? true,
+      isEligibleForAccept: json['isEligibleForAccept'] ?? disc >= 15,
       status: json['status'] ?? 'PENDING',
     );
   }

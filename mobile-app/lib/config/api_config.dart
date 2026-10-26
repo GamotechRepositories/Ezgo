@@ -45,11 +45,25 @@ class ApiConfig {
     );
   }
   static const String me = '/auth/me';
+  static const String profile = '/auth/profile';
+  static const String upload = '/upload';
+  static const String vendorPortalUrl = 'https://vendor.ezzygo.in';
+  static const String supportWhatsApp = 'https://wa.me/919322054199?text=Hello%20EzzyGo%20Team%2C%20I%20need%20help%20with%20my%20event%20booking';
+  static const String supportPhone = 'tel:+919322054199';
+  static const String supportEmail = 'mailto:support@ezzygo.in';
   static const String requirements = '/requirements';
   static const String categories = '/categories';
   static const String occasions = '/occasions';
+  static const String banners = '/banners';
   static const String bids = '/bids';
   static const String bookings = '/bookings';
+  static const String acceptBid = '/bookings/accept-bid';
+  static const String payBooking = '/bookings/pay';
+  static const String completeBooking = '/bookings/complete';
+  static const String reviewBooking = '/bookings/review';
+  static const String cancelBooking = '/bookings/cancel';
+  static const String createOrder = '/create-order';
+  static const String verifyPayment = '/verify-payment';
   static const String payments = '/payments';
   static const String blockDate = '/auth/availability/block';
   static const String unblockDate = '/auth/availability/unblock';

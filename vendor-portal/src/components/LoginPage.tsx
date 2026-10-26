@@ -12,6 +12,8 @@ import {
   TrendingUp,
   FileBadge,
   FileText,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { EzzyGoLogo } from './EzzyGoLogo';
 import { GoogleSignInButton } from './GoogleSignInButton';
@@ -67,7 +69,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
   const [serviceArea, setServiceArea] = useState('Pune');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
-  const [password] = useState('Vendor@123'); // Default secure fallback for Google-authenticated vendors
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [googleId, setGoogleId] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>(['Photography & Cinema']);
 
@@ -306,6 +310,20 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
       setError('Please enter a valid 10-digit mobile number.');
       return false;
     }
+    if (!email.trim() || !email.includes('@')) {
+      setError('Enter a valid email so you can log in later.');
+      return false;
+    }
+    if (!googleId) {
+      if (password.length < 6) {
+        setError('Password must be at least 6 characters.');
+        return false;
+      }
+      if (password !== confirmPassword) {
+        setError('Passwords do not match.');
+        return false;
+      }
+    }
     return true;
   };
 
@@ -341,6 +359,32 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
       if (!validateStep2()) return;
       setRegStep(3);
       saveDraft({ regStep: 3 });
+    }
+  };
+
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    const emailVal = email.trim().toLowerCase();
+    if (!emailVal.includes('@')) {
+      setError('Enter a valid email address.');
+      return;
+    }
+    if (password.length < 6) {
+      setError('Enter your password.');
+      return;
+    }
+    setBusy(true);
+    try {
+      const user = await api.login(emailVal, password);
+      try {
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
+      } catch (_) {}
+      onSuccess(user);
+    } catch (err: any) {
+      setError(err.message || 'Could not log in.');
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -517,7 +561,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                   Log in to EzzyGo
                 </h1>
                 <p className="text-sm sm:text-[14.5px] text-slate-600 leading-relaxed font-normal max-w-[340px] sm:max-w-[380px] mx-auto mt-2.5 mb-6">
-                  Continue with your Google account to access your live auction desk, submit bids, and manage event orders.
+                  Continue with Google, or log in with your email and password to bid and manage event orders.
                 </p>
               </div>
 
@@ -665,7 +709,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
 
                 {busy && (
                   <p className="text-center text-xs sm:text-sm text-[#f95724] animate-pulse font-semibold">
-                    Connecting to Google secure session, please wait...
+                    Signing you in, please wait...
                   </p>
                 )}
               </div>
@@ -676,12 +720,68 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                   <div className="w-full border-t border-slate-200/80" />
                 </div>
                 <div className="relative bg-white px-3 text-xs text-slate-400 font-medium">
-                  or
+                  or email
                 </div>
               </div>
 
+              <form onSubmit={handleEmailLogin} className="space-y-3">
+                <label className="block text-left">
+                  <span className="text-sm font-medium text-slate-700">Email</span>
+                  <input
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    type="email"
+                    autoComplete="email"
+                    placeholder="business@example.com"
+                    className={fieldClass}
+                  />
+                </label>
+                <label className="block text-left">
+                  <span className="text-sm font-medium text-slate-700">Password</span>
+                  <div className="relative">
+                    <input
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      type={showPassword ? 'text' : 'password'}
+                      autoComplete="current-password"
+                      placeholder="Your password"
+                      className={`${fieldClass} pr-12`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 mt-0.5 text-slate-400 hover:text-slate-700 cursor-pointer"
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </label>
+                <button
+                  type="submit"
+                  disabled={busy}
+                  className="w-full h-12 rounded-full bg-[#f95724] hover:bg-[#e04818] text-white font-semibold text-base disabled:opacity-50 cursor-pointer shadow-sm transition"
+                >
+                  {busy ? 'Signing in...' : 'Log in'}
+                </button>
+                <p className="text-center text-sm text-slate-600">
+                  New vendor?{' '}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode('register');
+                      setRegStep(1);
+                      setError('');
+                    }}
+                    className="text-[#f95724] font-semibold hover:underline cursor-pointer"
+                  >
+                    Create a vendor account
+                  </button>
+                </p>
+              </form>
+
               {/* 3 Quick Benefit Micro-Chips */}
-              <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
+              <div className="grid grid-cols-3 gap-2.5 sm:gap-3 mt-6">
                 {/* 1-Click */}
                 <div className="flex flex-col items-center justify-center text-center py-4 px-2 rounded-2xl bg-[#fffcf9] border border-[#ffedd5]/80 shadow-2xs">
                   <div className="w-10 h-10 rounded-full bg-[#ffedd5]/60 flex items-center justify-center text-[#f95724] mb-2.5">
@@ -713,7 +813,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
               {/* Security Guarantee Pill */}
               <div className="mt-8 flex items-center justify-center gap-2 text-xs sm:text-[13px] text-slate-500 font-normal">
                 <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0 stroke-[2.2]" />
-                <span>Official Google Auth · 256-bit SSL encrypted</span>
+                <span>Google or email login · 256-bit SSL encrypted</span>
               </div>
             </div>
           ) : (
@@ -899,7 +999,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                     </div>
 
                     <label className="block">
-                      <span className="text-sm font-medium text-slate-700">Email address</span>
+                      <span className="text-sm font-medium text-slate-700">Email address *</span>
                       <input
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
@@ -908,6 +1008,33 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                         className={fieldClass}
                       />
                     </label>
+
+                    {!googleId && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <label className="block">
+                          <span className="text-sm font-medium text-slate-700">Password *</span>
+                          <input
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            type={showPassword ? 'text' : 'password'}
+                            autoComplete="new-password"
+                            placeholder="At least 6 characters"
+                            className={fieldClass}
+                          />
+                        </label>
+                        <label className="block">
+                          <span className="text-sm font-medium text-slate-700">Confirm password *</span>
+                          <input
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            type={showPassword ? 'text' : 'password'}
+                            autoComplete="new-password"
+                            placeholder="Re-enter password"
+                            className={fieldClass}
+                          />
+                        </label>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -1196,7 +1323,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                     }}
                     className="text-xs font-semibold text-slate-500 hover:text-[#f95724] transition cursor-pointer"
                   >
-                    Cancel and return to Google login
+                    Cancel and return to login
                   </button>
                 </div>
               </form>

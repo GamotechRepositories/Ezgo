@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../config/theme.dart';
 import '../providers/auth_provider.dart';
 import '../providers/bookings_provider.dart';
 import '../providers/requirements_provider.dart';
+import '../utils/app_nav.dart';
 import '../widgets/ezzygo_logo.dart';
+import '../widgets/flipkart_bottom_nav.dart';
+import '../widgets/tab_scroll_registry.dart';
+import '../widgets/tab_swipe_shell.dart';
+import 'auth/login_screen.dart';
 import 'host/host_bookings_screen.dart';
 import 'host/host_home_screen.dart';
 import 'host/my_events_screen.dart';
@@ -27,6 +33,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   late int _currentIndex;
   final ScrollController _hostScrollController = ScrollController();
   final GlobalKey<HostHomeScreenState> _hostHomeKey = GlobalKey<HostHomeScreenState>();
+  final GlobalKey<NavigatorState> _homeNavKey = GlobalKey<NavigatorState>();
+  final GlobalKey<NavigatorState> _eventsNavKey = GlobalKey<NavigatorState>();
+  final GlobalKey<NavigatorState> _bookingsNavKey = GlobalKey<NavigatorState>();
+  final GlobalKey<NavigatorState> _profileNavKey = GlobalKey<NavigatorState>();
+  final GlobalKey _bookingsIconKey = GlobalKey();
 
   static const List<String> navbarCities = [
     'Pune',
@@ -43,22 +54,175 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     'Chennai',
   ];
 
+  static const _tabs = [
+    FlipkartNavItem(
+      label: 'Home',
+      outlinedIcon: LucideIcons.home400,
+      filledIcon: LucideIcons.home600,
+    ),
+    FlipkartNavItem(
+      label: 'My Events',
+      outlinedIcon: LucideIcons.calendarDays400,
+      filledIcon: LucideIcons.calendarDays600,
+    ),
+    FlipkartNavItem(
+      label: 'Post',
+      outlinedIcon: LucideIcons.plus,
+      filledIcon: LucideIcons.plus,
+      isAction: true,
+      accent: true,
+    ),
+    FlipkartNavItem(
+      label: 'Bookings',
+      outlinedIcon: LucideIcons.ticket400,
+      filledIcon: LucideIcons.ticket600,
+      showBadge: true,
+    ),
+    FlipkartNavItem(
+      label: 'Profile',
+      outlinedIcon: LucideIcons.userRound400,
+      filledIcon: LucideIcons.userRound600,
+      isAccount: true,
+    ),
+  ];
+
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.initialIndex;
+    _currentIndex = widget.initialIndex == 2 ? 0 : widget.initialIndex;
+    TabScrollRegistry.instance.register(0, _hostScrollController);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final auth = context.read<AuthProvider>();
+      context.read<RequirementsProvider>().loadData(
+        requesterId: auth.isHost ? auth.user?.id : null,
+      );
+      context.read<BookingsProvider>().loadData();
+    });
   }
 
   @override
   void dispose() {
+    TabScrollRegistry.instance.unregister(0, _hostScrollController);
     _hostScrollController.dispose();
     super.dispose();
   }
 
   void _scrollToFeed() {
-    if (_hostHomeKey.currentState != null) {
-      _hostHomeKey.currentState!.scrollToFeed();
+    _hostHomeKey.currentState?.scrollToFeed();
+  }
+
+  int get _stackIndex {
+    switch (_currentIndex) {
+      case 1:
+        return 1;
+      case 3:
+        return 2;
+      case 4:
+        return 3;
+      default:
+        return 0;
     }
+  }
+
+  GlobalKey<NavigatorState> _navKeyFor(int index) {
+    switch (index) {
+      case 1:
+        return _eventsNavKey;
+      case 3:
+        return _bookingsNavKey;
+      case 4:
+        return _profileNavKey;
+      default:
+        return _homeNavKey;
+    }
+  }
+
+  void _openPost() {
+    _navKeyFor(_currentIndex).currentState?.push(
+      MaterialPageRoute(builder: (_) => const PostRequirementScreen()),
+    );
+  }
+
+  void _openLogin() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Login required',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Sign in to see your events and bookings.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, color: AppTheme.slate600),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    Navigator.of(context, rootNavigator: true).push(
+                      MaterialPageRoute(
+                        builder: (_) => const LoginScreen(navigateToLocation: false),
+                      ),
+                    );
+                  },
+                  child: const Text('Login'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _onTabTap(int index) {
+    if (index == 2) {
+      _openPost();
+      return;
+    }
+
+    final auth = context.read<AuthProvider>();
+    if (!auth.isLoggedIn && (index == 1 || index == 3)) {
+      _openLogin();
+      return;
+    }
+
+    if (index == 3) {
+      context.read<BookingsProvider>().loadData();
+    }
+
+    if (_currentIndex == index) {
+      _navKeyFor(index).currentState?.popUntil((route) => route.isFirst);
+      TabScrollRegistry.instance.scrollToTop(index);
+      if (index == 0 && _hostScrollController.hasClients) {
+        _hostScrollController.animateTo(0, duration: const Duration(milliseconds: 280), curve: Curves.easeOutCubic);
+      }
+      return;
+    }
+
+    setState(() => _currentIndex = index);
+  }
+
+  void _selectTab(int index) {
+    if (index == 2) {
+      _openPost();
+      return;
+    }
+    _onTabTap(index);
   }
 
   void _showCityPicker(BuildContext context) {
@@ -145,61 +309,138 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
-    final bookingsProvider = context.watch<BookingsProvider>();
     final reqProvider = context.watch<RequirementsProvider>();
     final isHost = auth.isHost;
 
-    final activeBookingsCount = bookingsProvider.upcomingBookings.length + bookingsProvider.awaitingPaymentBookings.length;
+    final homePage = isHost
+        ? HostHomeScreen(
+            key: _hostHomeKey,
+            scrollController: _hostScrollController,
+            onScrollToFeed: _scrollToFeed,
+            onOpenCityPicker: () => _showCityPicker(context),
+            onOpenMyEvents: () => _selectTab(1),
+          )
+        : const LiveAuctionsScreen();
+    final eventsPage = isHost ? const MyEventsScreen() : const VendorBookingsScreen();
+    final bookingsPage = isHost ? const HostBookingsScreen() : const AvailabilityScreen();
+    final profilePage = ProfileScreen(
+      onNavigateToEvents: isHost ? () => _selectTab(1) : () {},
+      onNavigateToBookings: () => _selectTab(isHost ? 3 : 1),
+    );
 
-    // 5-Item Navigation Pages for Host (Approved Design)
-    final List<Widget> hostPages = [
-      HostHomeScreen(
-        key: _hostHomeKey,
-        scrollController: _hostScrollController,
-        onScrollToFeed: _scrollToFeed,
-        onOpenCityPicker: () => _showCityPicker(context),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarIconBrightness: Brightness.dark,
+        systemNavigationBarContrastEnforced: false,
       ),
-      const MyEventsScreen(),
-      const SizedBox.shrink(), // Dummy for center Post action
-      const HostBookingsScreen(),
-      ProfileScreen(
-        onNavigateToEvents: () => setState(() => _currentIndex = 1),
-        onNavigateToBookings: () => setState(() => _currentIndex = 3),
+      child: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (didPop) return;
+          final nested = _navKeyFor(_currentIndex).currentState;
+          if (nested != null && nested.canPop()) {
+            nested.maybePop();
+            return;
+          }
+          if (_currentIndex != 0) {
+            _selectTab(0);
+            return;
+          }
+          AppNav.onRootBack(context);
+        },
+        child: Scaffold(
+          extendBody: true,
+          backgroundColor: const Color(0xFFF4F5F7),
+          body: Stack(
+            children: [
+              Column(
+                children: [
+                  if (!isHost) _VendorHeader(onOpenCityPicker: () => _showCityPicker(context), city: reqProvider.selectedCity),
+                  Expanded(
+                    child: TabSwipeShell(
+                      currentIndex: _stackIndex,
+                      children: [
+                        _TabNavigator(navigatorKey: _homeNavKey, root: homePage),
+                        _TabNavigator(navigatorKey: _eventsNavKey, root: eventsPage),
+                        _TabNavigator(navigatorKey: _bookingsNavKey, root: bookingsPage),
+                        _TabNavigator(navigatorKey: _profileNavKey, root: profilePage),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: _ShellNavBar(
+                  currentIndex: _currentIndex,
+                  onTap: _onTabTap,
+                  badgeIconKey: _bookingsIconKey,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
-    ];
+    );
+  }
+}
 
-    // Vendor Pages
-    final List<Widget> vendorPages = [
-      const LiveAuctionsScreen(),
-      const VendorBookingsScreen(),
-      const SizedBox.shrink(),
-      const AvailabilityScreen(),
-      ProfileScreen(
-        onNavigateToEvents: () {},
-        onNavigateToBookings: () => setState(() => _currentIndex = 1),
-      ),
-    ];
+class _ShellNavBar extends StatelessWidget {
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+  final GlobalKey badgeIconKey;
 
-    final pages = isHost ? hostPages : vendorPages;
+  const _ShellNavBar({
+    required this.currentIndex,
+    required this.onTap,
+    required this.badgeIconKey,
+  });
 
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      appBar: isHost
-          ? null
-          : AppBar(
-              backgroundColor: Colors.white,
-              elevation: 0,
-              scrolledUnderElevation: 0,
-        titleSpacing: 16,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
+  @override
+  Widget build(BuildContext context) {
+    final badgeCount = context.select<BookingsProvider, int>(
+      (p) => p.upcomingBookings.length + p.awaitingPaymentBookings.length,
+    );
+    final initial = context.select<AuthProvider, String?>((auth) {
+      final name = auth.user?.name.trim() ?? '';
+      if (!auth.isLoggedIn || name.isEmpty) return null;
+      return name[0].toUpperCase();
+    });
+
+    return FlipkartBottomNav(
+      currentIndex: currentIndex,
+      items: _MainNavigationScreenState._tabs,
+      onTap: onTap,
+      badgeCount: badgeCount,
+      accountInitial: initial,
+      activeColor: AppTheme.primary,
+      badgeIconKey: badgeIconKey,
+    );
+  }
+}
+
+class _VendorHeader extends StatelessWidget {
+  final VoidCallback onOpenCityPicker;
+  final String city;
+
+  const _VendorHeader({required this.onOpenCityPicker, required this.city});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+        child: Row(
           children: [
             const EzzyGoLogo(size: 24),
             const SizedBox(width: 8),
-            // City Selector Dropdown (Screen 3)
             GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: () => _showCityPicker(context),
+              onTap: onOpenCityPicker,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
@@ -213,7 +454,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                     const Icon(LucideIcons.mapPin, size: 12, color: AppTheme.primary),
                     const SizedBox(width: 4),
                     Text(
-                      reqProvider.selectedCity.split(',')[0].trim(),
+                      city.split(',')[0].trim(),
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
@@ -226,248 +467,64 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 ),
               ),
             ),
-          ],
-        ),
-        actions: [
-          // Notification Bell with Red Badge (Screen 3)
-          IconButton(
-            icon: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                const Icon(LucideIcons.bell, size: 20, color: AppTheme.textPrimary),
-                Positioned(
-                  top: -2,
-                  right: -2,
-                  child: Container(
-                    width: 7,
-                    height: 7,
-                    decoration: const BoxDecoration(
-                      color: AppTheme.primary,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('You have 3 active updates on your events & bids.'),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
-          ),
-
-          // Role Switch Pill
-          GestureDetector(
-            onTap: () {
-              auth.switchRole();
-              setState(() => _currentIndex = 0);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(auth.isHost ? 'Switched to Event Host mode' : 'Switched to Vendor mode'),
-                  duration: const Duration(seconds: 2),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
-            child: Container(
-              margin: const EdgeInsets.only(right: 12),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: isHost ? AppTheme.primaryLight : AppTheme.slate900,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isHost ? AppTheme.primary.withValues(alpha: 0.3) : AppTheme.slate700,
-                ),
-              ),
-              child: Row(
+            const Spacer(),
+            IconButton(
+              icon: Stack(
+                clipBehavior: Clip.none,
                 children: [
-                  Icon(
-                    isHost ? LucideIcons.user : LucideIcons.briefcase,
-                    size: 11,
-                    color: isHost ? AppTheme.primary : Colors.white,
-                  ),
-                  const SizedBox(width: 3),
-                  Text(
-                    isHost ? 'Host' : 'Vendor',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      color: isHost ? AppTheme.primary : Colors.white,
+                  const Icon(LucideIcons.bell, size: 20, color: AppTheme.textPrimary),
+                  Positioned(
+                    top: -2,
+                    right: -2,
+                    child: Container(
+                      width: 7,
+                      height: 7,
+                      decoration: const BoxDecoration(color: AppTheme.primary, shape: BoxShape.circle),
                     ),
                   ),
                 ],
               ),
-            ),
-          ),
-        ],
-      ),
-
-      body: pages[_currentIndex >= pages.length ? 0 : _currentIndex],
-
-      // 5-ITEM MOBILE BOTTOM NAVIGATION (Approved Design)
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: const Border(top: BorderSide(color: AppTheme.borderSubtle)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('You have 3 active updates on your events & bids.'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              },
             ),
           ],
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                // 1. Home
-                _buildNavItem(
-                  icon: LucideIcons.home,
-                  label: 'Home',
-                  isSelected: _currentIndex == 0,
-                  onTap: () {
-                    setState(() => _currentIndex = 0);
-                    if (_hostScrollController.hasClients) {
-                      _hostScrollController.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
-                    }
-                  },
-                ),
-
-                // 2. My Events
-                _buildNavItem(
-                  icon: LucideIcons.calendar,
-                  label: 'My Events',
-                  isSelected: _currentIndex == 1,
-                  onTap: () => setState(() => _currentIndex = 1),
-                ),
-
-                // 3. Central Post Action (+) (Approved Design Screen 3, 8, 12)
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const PostRequirementScreen()),
-                    );
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: AppTheme.primary,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppTheme.primary.withValues(alpha: 0.35),
-                                blurRadius: 8,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(LucideIcons.plus, color: Colors.white, size: 22),
-                        ),
-                        const SizedBox(height: 3),
-                        const Text(
-                          'Post',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.slate600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // 4. Bookings
-                _buildNavItem(
-                  icon: LucideIcons.calendarCheck,
-                  label: 'Bookings',
-                  badgeCount: activeBookingsCount > 0 ? activeBookingsCount : null,
-                  isSelected: _currentIndex == 3,
-                  onTap: () => setState(() => _currentIndex = 3),
-                ),
-
-                // 5. Profile
-                _buildNavItem(
-                  icon: LucideIcons.user,
-                  label: 'Profile',
-                  isSelected: _currentIndex == 4,
-                  onTap: () => setState(() => _currentIndex = 4),
-                ),
-              ],
-            ),
-          ),
         ),
       ),
     );
   }
+}
 
-  Widget _buildNavItem({
-    required IconData icon,
-    required String label,
-    required bool isSelected,
-    required VoidCallback onTap,
-    int? badgeCount,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Icon(
-                  icon,
-                  size: 20,
-                  color: isSelected ? AppTheme.primary : AppTheme.slate500,
-                ),
-                if (badgeCount != null)
-                  Positioned(
-                    top: -4,
-                    right: -8,
-                    child: Container(
-                      padding: const EdgeInsets.all(3),
-                      decoration: const BoxDecoration(
-                        color: AppTheme.emerald,
-                        shape: BoxShape.circle,
-                      ),
-                      constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
-                      child: Text(
-                        '$badgeCount',
-                        style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w900),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 3),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                color: isSelected ? AppTheme.primary : AppTheme.slate600,
-              ),
-            ),
-          ],
-        ),
+class _TabNavigator extends StatefulWidget {
+  final GlobalKey<NavigatorState> navigatorKey;
+  final Widget root;
+
+  const _TabNavigator({required this.navigatorKey, required this.root});
+
+  @override
+  State<_TabNavigator> createState() => _TabNavigatorState();
+}
+
+class _TabNavigatorState extends State<_TabNavigator> {
+  final HeroController _heroController = HeroController();
+
+  @override
+  Widget build(BuildContext context) {
+    return HeroControllerScope(
+      controller: _heroController,
+      child: Navigator(
+        key: widget.navigatorKey,
+        onGenerateRoute: (settings) {
+          return MaterialPageRoute<void>(
+            settings: settings,
+            builder: (_) => widget.root,
+          );
+        },
       ),
     );
   }

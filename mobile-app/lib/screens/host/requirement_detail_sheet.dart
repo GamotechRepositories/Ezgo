@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../config/theme.dart';
 import '../../models/bid_model.dart';
 import '../../models/requirement_model.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/bookings_provider.dart';
 import 'bids_comparison_screen.dart';
 import 'escrow_payment_sheet.dart';
 
@@ -17,29 +14,11 @@ class RequirementDetailSheet extends StatelessWidget {
     required this.requirement,
   });
 
-  void _onAcceptBid(BuildContext context, BidModel bid) {
-    final auth = context.read<AuthProvider>();
-    final hostName = auth.user?.name ?? 'Event Host';
-    final hostPhone = auth.user?.phone ?? '+91 98765 43210';
-
-    final booking = context.read<BookingsProvider>().createBookingFromAcceptedBid(
+  Future<void> _onAcceptBid(BuildContext context, BidModel bid) async {
+    await acceptBidAndOpenEscrow(
+      context: context,
       requirement: requirement,
       bid: bid,
-      hostName: hostName,
-      hostPhone: hostPhone,
-    );
-
-    Navigator.of(context).pop(); // Close detail sheet
-
-    // Open Escrow Payment Sheet
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => EscrowPaymentSheet(
-        booking: booking,
-        onPaymentSuccess: () {},
-      ),
     );
   }
 
@@ -68,7 +47,28 @@ class RequirementDetailSheet extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 4),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(LucideIcons.arrowLeft, size: 20, color: AppTheme.slate700),
+                    onPressed: () => Navigator.of(context).maybePop(),
+                  ),
+                  const Expanded(
+                    child: Text(
+                      'Event details',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.slate900),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(LucideIcons.x, size: 18, color: AppTheme.slate500),
+                    onPressed: () => Navigator.of(context).maybePop(),
+                  ),
+                ],
+              ),
+            ),
 
             Expanded(
               child: ListView(
@@ -408,7 +408,9 @@ class RequirementDetailSheet extends StatelessWidget {
           const SizedBox(height: 12),
 
           ElevatedButton(
-            onPressed: () => _onAcceptBid(context, bid),
+            onPressed: (bid.isEligibleForAccept || bid.amount <= requirement.maxAcceptableBid)
+                ? () => _onAcceptBid(context, bid)
+                : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primary,
               foregroundColor: Colors.white,
@@ -420,9 +422,14 @@ class RequirementDetailSheet extends StatelessWidget {
               children: [
                 const Icon(LucideIcons.checkCircle2, size: 16),
                 const SizedBox(width: 8),
-                Text(
-                  'Accept Bid (₹${bid.amount}) & Lock Escrow',
-                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                Flexible(
+                  child: Text(
+                    (bid.isEligibleForAccept || bid.amount <= requirement.maxAcceptableBid)
+                        ? 'Accept Bid (₹${bid.amount}) & Lock Escrow'
+                        : 'Need 15%+ off to accept',
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),

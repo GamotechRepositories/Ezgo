@@ -6,6 +6,8 @@ import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/requirements_provider.dart';
 import '../../providers/bookings_provider.dart';
+import '../../providers/banners_provider.dart';
+import '../../utils/app_nav.dart';
 import '../../widgets/ezzygo_logo.dart';
 import '../main_navigation_screen.dart';
 import '../location_onboarding_screen.dart';
@@ -40,13 +42,8 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     _selectedRole = widget.initialRole;
-    if (_selectedRole == UserRole.host) {
-      _phoneController = TextEditingController(text: '9876543210');
-      _passwordController = TextEditingController(text: 'host123');
-    } else {
-      _phoneController = TextEditingController(text: '9823145678');
-      _passwordController = TextEditingController(text: 'vendor123');
-    }
+    _phoneController = TextEditingController();
+    _passwordController = TextEditingController();
   }
 
   @override
@@ -59,18 +56,28 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _onRoleChanged(UserRole role) {
-    setState(() {
-      _selectedRole = role;
-      _errorMessage = null;
-      if (role == UserRole.host) {
-        _phoneController.text = '9876543210';
-        _passwordController.text = 'host123';
-      } else {
-        _phoneController.text = '9823145678';
-        _passwordController.text = 'vendor123';
-      }
-    });
+  void _openAfterAuth() {
+    final alreadyChoseCity = context.read<RequirementsProvider>().hasChosenCity;
+    final goToLocation = widget.navigateToLocation && !alreadyChoseCity;
+    if (goToLocation) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const LocationOnboardingScreen()),
+      );
+      return;
+    }
+    AppNav.openRoot(context, const MainNavigationScreen());
+  }
+
+  void _loadAccountData() {
+    final auth = context.read<AuthProvider>();
+    context.read<RequirementsProvider>().loadData(
+      requesterId: auth.isHost ? auth.user?.id : null,
+    );
+    context.read<BookingsProvider>().loadData();
+    context.read<BannersProvider>().loadForCity(
+      context.read<RequirementsProvider>().selectedCity,
+      force: true,
+    );
   }
 
   Future<void> _handleAuth() async {
@@ -82,6 +89,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (phone.isEmpty || password.isEmpty) {
       setState(() => _errorMessage = 'Please enter mobile number and password.');
+      return;
+    }
+    final digits = phone.replaceAll(RegExp(r'\D'), '');
+    if (digits.length != 10) {
+      setState(() => _errorMessage = 'Please enter a 10-digit mobile number.');
       return;
     }
 
@@ -98,6 +110,10 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() => _errorMessage = 'Please enter your name.');
         return;
       }
+      if (_selectedRole == UserRole.vendor && _businessNameController.text.trim().isEmpty) {
+        setState(() => _errorMessage = 'Please enter your business name.');
+        return;
+      }
       success = await auth.register(
         name: name,
         phone: phone,
@@ -111,33 +127,14 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (success) {
-      // Refresh providers with new auth context
-      context.read<RequirementsProvider>().loadData();
-      context.read<BookingsProvider>().loadData();
+      _loadAccountData();
 
-      if (widget.navigateToLocation) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const LocationOnboardingScreen()),
-        );
-      } else {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
-        );
-      }
+      _openAfterAuth();
     } else {
       setState(() {
         _errorMessage = auth.errorMessage ?? 'Authentication failed. Please check your credentials.';
       });
     }
-  }
-
-  void _applyDemo(String name, String phone, String password) {
-    setState(() {
-      _phoneController.text = phone.replaceAll(RegExp(r'\D'), '');
-      _passwordController.text = password;
-      _errorMessage = null;
-    });
-    _handleAuth();
   }
 
   Future<void> _handleGoogleAuth() async {
@@ -149,18 +146,8 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (success) {
-      context.read<RequirementsProvider>().loadData();
-      context.read<BookingsProvider>().loadData();
-
-      if (widget.navigateToLocation) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const LocationOnboardingScreen()),
-        );
-      } else {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
-        );
-      }
+      _loadAccountData();
+      _openAfterAuth();
     } else {
       if (auth.errorMessage != null) {
         setState(() {
@@ -180,12 +167,39 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  Widget _loginBenefitChip(IconData icon, String title, String subtitle) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFFCF9),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFFFEDD5)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 18, color: AppTheme.primary),
+            const SizedBox(height: 6),
+            Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppTheme.slate900)),
+            Text(subtitle, style: const TextStyle(fontSize: 10, color: AppTheme.slate500)),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final isHost = _selectedRole == UserRole.host;
 
-    return Scaffold(
+    return PopScope(
+      canPop: Navigator.of(context).canPop(),
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        AppNav.backOrExit(context);
+      },
+      child: Scaffold(
       backgroundColor: AppTheme.background,
       body: SafeArea(
         child: SingleChildScrollView(
@@ -193,191 +207,69 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Top Bar with Back and Skip Buttons
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Navigator.of(context).canPop()
+                    ? IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(LucideIcons.arrowLeft, size: 20, color: AppTheme.slate700),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: const BorderSide(color: AppTheme.slate200),
+                          ),
+                        ),
+                      )
+                    : const SizedBox(height: 40),
+              ),
+
+              const SizedBox(height: 8),
+
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  if (Navigator.of(context).canPop())
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(LucideIcons.arrowLeft, size: 20, color: AppTheme.slate700),
-                      style: IconButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: const BorderSide(color: AppTheme.slate200),
+                  const EzzyGoLogo(size: 32),
+                  if (isHost)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryLight,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.25)),
+                      ),
+                      child: const Text(
+                        'Host Portal',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.primary,
                         ),
                       ),
-                    )
-                  else
-                    const SizedBox(width: 40),
-
-                  TextButton(
-                    onPressed: () {
-                      if (widget.navigateToLocation) {
-                        Navigator.of(context).pushReplacement(
-                          MaterialPageRoute(builder: (_) => const LocationOnboardingScreen()),
-                        );
-                      } else {
-                        Navigator.of(context).pushReplacement(
-                          MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
-                        );
-                      }
-                    },
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Skip for now',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.slate600,
-                          ),
-                        ),
-                        SizedBox(width: 4),
-                        Icon(LucideIcons.chevronRight, size: 16, color: AppTheme.slate600),
-                      ],
                     ),
-                  ),
                 ],
               ),
-
-              const SizedBox(height: 8),
-
-              // App Logo
-              const EzzyGoLogo(size: 36),
-              const SizedBox(height: 8),
-              const Text(
-                'Reverse-Bidding Event Marketplace',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.slate500,
+              const SizedBox(height: 16),
+              if (isHost)
+                const Text(
+                  'Your Event, Your Budget. Vendors Compete Under Your Price.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.slate500,
+                    height: 1.35,
+                  ),
+                )
+              else
+                const Text(
+                  'Reverse-Bidding Event Marketplace',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.slate500,
+                  ),
                 ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Step 1: ROLE SELECTION (User / Host vs Vendor)
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppTheme.slate200),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.03),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => _onRoleChanged(UserRole.host),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          decoration: BoxDecoration(
-                            color: isHost ? AppTheme.primaryLight : Colors.transparent,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: isHost ? AppTheme.primary : Colors.transparent,
-                              width: 1.5,
-                            ),
-                          ),
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    LucideIcons.user,
-                                    size: 18,
-                                    color: isHost ? AppTheme.primary : AppTheme.slate600,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Event Host',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 15,
-                                      color: isHost ? AppTheme.primary : AppTheme.slate700,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Customer / User',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: isHost ? AppTheme.primaryDark : AppTheme.slate500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => _onRoleChanged(UserRole.vendor),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          decoration: BoxDecoration(
-                            color: !isHost ? AppTheme.slate900 : Colors.transparent,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: !isHost ? AppTheme.slate800 : Colors.transparent,
-                              width: 1.5,
-                            ),
-                          ),
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    LucideIcons.briefcase,
-                                    size: 18,
-                                    color: !isHost ? Colors.white : AppTheme.slate600,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Service Vendor',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 15,
-                                      color: !isHost ? Colors.white : AppTheme.slate700,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Pro / Agency',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: !isHost ? Colors.white70 : AppTheme.slate500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
 
               const SizedBox(height: 20),
 
@@ -476,10 +368,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     Text(
                       _isLogin
-                          ? (isHost ? 'Log in as Event Host' : 'Log in to Vendor Desk')
-                          : (isHost ? 'Create Host Account' : 'Register Vendor Business'),
-                      style: const TextStyle(
-                        fontSize: 18,
+                          ? (isHost ? 'Log in to EzzyGo' : 'Log in as Service Provider')
+                          : (isHost ? 'Create a customer account' : 'Create a vendor account'),
+                      style: TextStyle(
+                        fontSize: isHost ? 22 : 18,
                         fontWeight: FontWeight.w800,
                         color: AppTheme.slate900,
                       ),
@@ -487,8 +379,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 4),
                     Text(
                       isHost
-                          ? 'Post event needs and vendors will bid down under your budget.'
-                          : 'Submit competitive bids in real-time auctions across your city.',
+                          ? 'Continue with Google or your mobile number. Post events and get reverse-bids.'
+                          : 'Find event leads and send your price.',
                       style: const TextStyle(
                         fontSize: 13,
                         color: AppTheme.slate600,
@@ -611,8 +503,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             )
                           : Text(
                               _isLogin
-                                  ? (isHost ? 'Sign In as Event Host' : 'Sign In as Verified Vendor')
-                                  : (isHost ? 'Create Host Account' : 'Register Vendor Account'),
+                                  ? (isHost ? 'Sign in' : 'Sign in as Service Provider')
+                                  : (isHost ? 'Create customer account' : 'Create vendor account'),
                               style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
                             ),
                     ),
@@ -625,7 +517,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: 12),
                           child: Text(
-                            'OR',
+                            'or',
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
@@ -666,65 +558,28 @@ class _LoginScreenState extends State<LoginScreen> {
                         ],
                       ),
                     ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Quick One-Tap Demo Accounts (Matching Web)
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppTheme.slate200),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(LucideIcons.zap, size: 16, color: isHost ? AppTheme.primary : AppTheme.slate900),
-                        const SizedBox(width: 8),
-                        Text(
-                          isHost ? 'Quick Demo Host Accounts' : 'Quick Demo Vendor Accounts',
-                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.slate900),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
                     if (isHost) ...[
-                      _buildDemoChip(
-                        name: 'Ananya Sharma (Host)',
-                        phone: '9876543210',
-                        password: 'host123',
-                        roleSubtitle: 'Active events in Baner & Kothrud',
-                        icon: LucideIcons.userCheck,
+                      const SizedBox(height: 18),
+                      Row(
+                        children: [
+                          _loginBenefitChip(LucideIcons.zap, '1-Click', 'Sign-in'),
+                          const SizedBox(width: 8),
+                          _loginBenefitChip(LucideIcons.shieldCheck, '100%', 'Escrow Safe'),
+                          const SizedBox(width: 8),
+                          _loginBenefitChip(LucideIcons.trendingUp, 'Min. 15%', 'Savings'),
+                        ],
                       ),
-                      const SizedBox(height: 8),
-                      _buildDemoChip(
-                        name: 'Pooja Deshmukh (Host)',
-                        phone: '9890112345',
-                        password: 'host123',
-                        roleSubtitle: 'Sangeet sound requirements',
-                        icon: LucideIcons.userCheck,
-                      ),
-                    ] else ...[
-                      _buildDemoChip(
-                        name: 'Rajesh Sound & FX Pro (Vendor)',
-                        phone: '9823145678',
-                        password: 'vendor123',
-                        roleSubtitle: 'JBL Pro Audio · 64 completed jobs',
-                        icon: LucideIcons.badgeCheck,
-                      ),
-                      const SizedBox(height: 8),
-                      _buildDemoChip(
-                        name: 'BeatDrop Audio Works (Vendor)',
-                        phone: '9765432100',
-                        password: 'vendor123',
-                        roleSubtitle: 'RCF Active Line Array & Moving Heads',
-                        icon: LucideIcons.badgeCheck,
+                      const SizedBox(height: 14),
+                      const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(LucideIcons.shieldCheck, size: 14, color: AppTheme.emerald),
+                          SizedBox(width: 6),
+                          Text(
+                            'Official Google Auth · 256-bit SSL encrypted',
+                            style: TextStyle(fontSize: 11, color: AppTheme.slate500),
+                          ),
+                        ],
                       ),
                     ],
                   ],
@@ -735,68 +590,10 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildDemoChip({
-    required String name,
-    required String phone,
-    required String password,
-    required String roleSubtitle,
-    required IconData icon,
-  }) {
-    final isHost = _selectedRole == UserRole.host;
-    return InkWell(
-      onTap: () => _applyDemo(name, phone, password),
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: isHost ? AppTheme.primaryLight.withValues(alpha: 0.5) : AppTheme.slate100,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isHost ? AppTheme.primary.withValues(alpha: 0.2) : AppTheme.slate300,
-          ),
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 16,
-              backgroundColor: isHost ? AppTheme.primary : AppTheme.slate900,
-              child: Icon(icon, size: 16, color: Colors.white),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppTheme.slate900),
-                  ),
-                  Text(
-                    roleSubtitle,
-                    style: const TextStyle(fontSize: 11, color: AppTheme.slate500),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: isHost ? AppTheme.primary : AppTheme.slate900,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Text(
-                '1-Tap Login',
-                style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
+
 }
 
 class _GoogleLogoPainter extends CustomPainter {
