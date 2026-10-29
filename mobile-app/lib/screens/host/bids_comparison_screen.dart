@@ -107,7 +107,7 @@ class _BidsComparisonScreenState extends State<BidsComparisonScreen> {
             margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFF1EA),
+              color: const Color(0xFFFFF2ED),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Text(

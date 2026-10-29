@@ -117,7 +117,7 @@ export const ActiveOrdersDesk: React.FC<ActiveOrdersDeskProps> = ({ bookings, on
               onClick={() => setCityFilter(c)}
               className={`px-3 py-1 rounded-full text-xs font-bold transition whitespace-nowrap cursor-pointer flex items-center gap-1 active:scale-95 ${
                 cityFilter === c
-                  ? 'bg-[#f07d4a] text-white shadow-xs'
+                  ? 'bg-[#ff5c28] text-white shadow-xs'
                   : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200'
               }`}
             >

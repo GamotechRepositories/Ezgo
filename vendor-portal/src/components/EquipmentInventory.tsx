@@ -148,7 +148,7 @@ export const EquipmentInventory: React.FC<EquipmentInventoryProps> = ({ vendorId
             setIsAddOpen(true);
           }}
           disabled={!vendorId}
-          className="w-full sm:w-auto px-5 py-3 min-h-[44px] rounded-full bg-[#f07d4a] hover:bg-[#de6a3a] text-white font-semibold text-sm flex items-center justify-center gap-1.5 cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full sm:w-auto px-5 py-3 min-h-[44px] rounded-full bg-[#ff5c28] hover:bg-[#e64814] text-white font-semibold text-sm flex items-center justify-center gap-1.5 cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus className="w-4 h-4" />
           <span>Add equipment</span>
@@ -199,7 +199,7 @@ export const EquipmentInventory: React.FC<EquipmentInventoryProps> = ({ vendorId
                   htmlFor={`card-img-${item._id}`}
                   title="Change photo"
                   aria-label="Change photo"
-                  className={`absolute bottom-2 right-2 p-1.5 rounded-full bg-black/60 hover:bg-[#f07d4a] text-white cursor-pointer transition ${busyId === item._id ? 'pointer-events-none opacity-60' : ''}`}
+                  className={`absolute bottom-2 right-2 p-1.5 rounded-full bg-black/60 hover:bg-[#ff5c28] text-white cursor-pointer transition ${busyId === item._id ? 'pointer-events-none opacity-60' : ''}`}
                 >
                   {busyId === item._id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
                   <input
@@ -384,7 +384,7 @@ export const EquipmentInventory: React.FC<EquipmentInventoryProps> = ({ vendorId
                 <button
                   type="submit"
                   disabled={isUploading || isSaving}
-                  className="w-full sm:w-auto px-6 py-3 min-h-[44px] rounded-full bg-[#f07d4a] hover:bg-[#de6a3a] text-white font-semibold disabled:opacity-50 cursor-pointer text-center"
+                  className="w-full sm:w-auto px-6 py-3 min-h-[44px] rounded-full bg-[#ff5c28] hover:bg-[#e64814] text-white font-semibold disabled:opacity-50 cursor-pointer text-center"
                 >
                   {isSaving ? 'Saving...' : 'Save'}
                 </button>

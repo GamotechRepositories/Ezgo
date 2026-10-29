@@ -437,7 +437,7 @@ function VendorApp({ currentVendor, onUpdateVendor, onLogout }: { currentVendor:
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm text-slate-500">
             <p className="font-semibold text-slate-700">EzzyGo vendors · you receive 100% of your bid</p>
             <div className="flex flex-wrap gap-4">
-              <button type="button" onClick={() => setIsExplainerOpen(true)} className="font-semibold text-[#f07d4a] cursor-pointer">
+              <button type="button" onClick={() => setIsExplainerOpen(true)} className="font-semibold text-[#ff5c28] cursor-pointer">
                 How bidding works
               </button>
               <a href="https://wa.me/919322054199" className="font-semibold hover:text-slate-800">WhatsApp support</a>
@@ -464,14 +464,14 @@ function VendorApp({ currentVendor, onUpdateVendor, onLogout }: { currentVendor:
               key={item.id}
               onClick={() => handleTabChange(item.id)}
               className={`relative flex flex-col items-center justify-center min-w-[64px] py-1.5 rounded-xl transition cursor-pointer ${
-                active ? 'text-[#f07d4a] font-bold' : 'text-[#5c6573] font-medium'
+                active ? 'text-[#ff5c28] font-bold' : 'text-[#5c6573] font-medium'
               }`}
             >
               {item.id === 'profile' ? (
                 currentVendor.avatar ? (
-                  <img src={currentVendor.avatar} alt="" className={`w-6 h-6 rounded-full object-cover mb-0.5 ${active ? 'ring-2 ring-[#f07d4a]' : ''}`} />
+                  <img src={currentVendor.avatar} alt="" className={`w-6 h-6 rounded-full object-cover mb-0.5 ${active ? 'ring-2 ring-[#ff5c28]' : ''}`} />
                 ) : (
-                  <span className={`w-6 h-6 rounded-full mb-0.5 text-[11px] font-black flex items-center justify-center ${active ? 'bg-[#f07d4a] text-white' : 'bg-slate-200 text-slate-600'}`}>
+                  <span className={`w-6 h-6 rounded-full mb-0.5 text-[11px] font-black flex items-center justify-center ${active ? 'bg-[#ff5c28] text-white' : 'bg-slate-200 text-slate-600'}`}>
                     {initial}
                   </span>
                 )
@@ -480,7 +480,7 @@ function VendorApp({ currentVendor, onUpdateVendor, onLogout }: { currentVendor:
               )}
               <span className="text-[10px]">{item.label}</span>
               {item.badge ? (
-                <span className="absolute top-0.5 right-2 min-w-4 h-4 px-1 rounded-full bg-[#f07d4a] text-white text-[9px] font-black flex items-center justify-center ring-2 ring-white">
+                <span className="absolute top-0.5 right-2 min-w-4 h-4 px-1 rounded-full bg-[#ff5c28] text-white text-[9px] font-black flex items-center justify-center ring-2 ring-white">
                   {item.badge}
                 </span>
               ) : null}

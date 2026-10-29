@@ -400,7 +400,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
             <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl xl:text-[68px] font-extrabold text-[#0f172a] leading-[1.12] tracking-tight">
               Post your budget.<br />
               Vendors bid lower.<br />
-              <span className="text-[#f07d4a] font-extrabold">You pick the best one.</span>
+              <span className="text-[#ff5c28] font-extrabold">You pick the best one.</span>
             </h1>
 
             <p className="text-slate-600 text-sm sm:text-base leading-relaxed max-w-xl font-medium">
@@ -484,7 +484,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
 
               <button
                 onClick={() => onOpenPostModal(heroService)}
-                className="w-full lg:w-auto px-6 py-3.5 rounded-xl lg:rounded-full bg-[#f07d4a] hover:bg-[#de6a3a] text-white font-bold text-xs sm:text-sm shadow-md shadow-slate-900/12 flex items-center justify-center gap-2 transition active:scale-95 shrink-0 cursor-pointer whitespace-nowrap"
+                className="w-full lg:w-auto px-6 py-3.5 rounded-xl lg:rounded-full bg-[#ff5c28] hover:bg-[#e64814] text-white font-bold text-xs sm:text-sm shadow-md shadow-slate-900/12 flex items-center justify-center gap-2 transition active:scale-95 shrink-0 cursor-pointer whitespace-nowrap"
               >
                 <span>Post Requirement</span>
                 <ArrowRight className="w-4 h-4" />
@@ -575,7 +575,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                 <span className="text-xs font-black uppercase tracking-[0.2em] text-[#17233d]">
                   FOR EVERY OCCASION
                 </span>
-                <div className="w-12 h-[2.5px] bg-[#f07d4a] rounded-full" />
+                <div className="w-12 h-[2.5px] bg-[#ff5c28] rounded-full" />
               </div>
 
               {/* Headline in Editorial Serif */}
@@ -593,7 +593,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
               <div className="pt-2">
                 <button
                   onClick={() => onOpenPostModal()}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 sm:px-8 sm:py-4 rounded-full bg-gradient-to-r from-[#f07d4a] to-[#f4a06c] hover:from-[#de6a3a] hover:to-[#f07d4a] text-white font-bold text-sm shadow-xl shadow-orange-500/30 transition-all duration-300 hover:shadow-orange-500/50 hover:scale-[1.03] active:scale-95 cursor-pointer whitespace-nowrap min-h-[46px]"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 sm:px-8 sm:py-4 rounded-full bg-gradient-to-r from-[#ff5c28] to-[#ff8254] hover:from-[#e64814] hover:to-[#ff5c28] text-white font-bold text-sm shadow-xl shadow-orange-500/30 transition-all duration-300 hover:shadow-orange-500/50 hover:scale-[1.03] active:scale-95 cursor-pointer whitespace-nowrap min-h-[46px]"
                 >
                   <span>Explore All Services</span>
                   <ArrowRight className="w-4 h-4" />
@@ -683,7 +683,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                         </div>
 
                         {/* Right side: Circular Action Arrow */}
-                        <div className="w-8 h-8 rounded-full border border-white/70 bg-black/35 backdrop-blur-md flex items-center justify-center text-white shrink-0 group-hover:bg-[#f07d4a] group-hover:border-[#17233d] group-hover:scale-110 shadow-md transition-all duration-300">
+                        <div className="w-8 h-8 rounded-full border border-white/70 bg-black/35 backdrop-blur-md flex items-center justify-center text-white shrink-0 group-hover:bg-[#ff5c28] group-hover:border-[#17233d] group-hover:scale-110 shadow-md transition-all duration-300">
                           <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                         </div>
 
@@ -729,7 +729,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
 
             <button
               onClick={() => onOpenPostModal()}
-              className="w-full sm:w-auto px-7 py-3.5 rounded-full bg-gradient-to-r from-[#f07d4a] to-orange-500 hover:from-[#de6a3a] hover:to-[#f07d4a] text-white text-xs sm:text-sm font-black shadow-lg shadow-orange-500/30 flex items-center justify-center gap-2 self-stretch lg:self-auto cursor-pointer transition active:scale-95 whitespace-nowrap min-h-[46px]"
+              className="w-full sm:w-auto px-7 py-3.5 rounded-full bg-gradient-to-r from-[#ff5c28] to-orange-500 hover:from-[#e64814] hover:to-[#ff5c28] text-white text-xs sm:text-sm font-black shadow-lg shadow-orange-500/30 flex items-center justify-center gap-2 self-stretch lg:self-auto cursor-pointer transition active:scale-95 whitespace-nowrap min-h-[46px]"
             >
               <Plus className="w-4 h-4 stroke-[3]" />
               <span>Post Custom Requirement</span>
@@ -818,7 +818,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                   onClick={() => setSelectedCategoryFilter(pill)}
                   className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition cursor-pointer ${
                     selectedCategoryFilter === pill
-                      ? 'bg-[#f07d4a] text-white shadow-sm'
+                      ? 'bg-[#ff5c28] text-white shadow-sm'
                       : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200/80'
                   }`}
                 >
@@ -943,7 +943,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                           e.stopPropagation();
                           onOpenPostModal(cat.name);
                         }}
-                        className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#f07d4a] to-orange-500 hover:from-[#de6a3a] hover:to-[#f07d4a] text-white text-xs font-bold shadow-md shadow-slate-900/12 flex items-center justify-center gap-2 group-hover:shadow-lg group-hover:shadow-orange-500/30 transition-all cursor-pointer"
+                        className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#ff5c28] to-orange-500 hover:from-[#e64814] hover:to-[#ff5c28] text-white text-xs font-bold shadow-md shadow-slate-900/12 flex items-center justify-center gap-2 group-hover:shadow-lg group-hover:shadow-orange-500/30 transition-all cursor-pointer"
                       >
                         <span>Get Free Bids for {cat.name}</span>
                         <ArrowRight className="w-3.5 h-3.5 stroke-[2.5] group-hover:translate-x-1 transition-transform" />
@@ -1023,7 +1023,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
             {/* Right Side 3-Step Process Flow Pill */}
             <div className="flex items-center gap-2 bg-white/95 backdrop-blur-md px-4 py-2 rounded-full border border-amber-200/70 shadow-sm text-xs font-bold shrink-0 self-start lg:self-center">
               <span className="text-[#17233d] flex items-center gap-1.5">
-                <span className="w-5 h-5 rounded-full bg-[#f07d4a] text-white flex items-center justify-center text-[11px] font-black shadow-xs">1</span>
+                <span className="w-5 h-5 rounded-full bg-[#ff5c28] text-white flex items-center justify-center text-[11px] font-black shadow-xs">1</span>
                 <span>Select Services</span>
               </span>
               <span className="text-slate-300 font-normal">→</span>
@@ -1050,7 +1050,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="w-6 h-6 rounded-full bg-[#f07d4a] text-white flex items-center justify-center font-black text-xs shadow-xs">
+                    <span className="w-6 h-6 rounded-full bg-[#ff5c28] text-white flex items-center justify-center font-black text-xs shadow-xs">
                       1
                     </span>
                     <div>
@@ -1107,7 +1107,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                         }`}
                       >
                         {isSelected && (
-                          <div className="absolute top-1.5 right-1.5 z-10 w-4 h-4 rounded-full bg-[#f07d4a] text-white flex items-center justify-center shadow-xs">
+                          <div className="absolute top-1.5 right-1.5 z-10 w-4 h-4 rounded-full bg-[#ff5c28] text-white flex items-center justify-center shadow-xs">
                             <Check className="w-2.5 h-2.5 stroke-[3]" />
                           </div>
                         )}
@@ -1144,7 +1144,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
               <div className="space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                   <div className="flex items-center gap-3">
-                    <span className="w-6 h-6 rounded-full bg-[#f07d4a] text-white flex items-center justify-center font-black text-xs shadow-xs">
+                    <span className="w-6 h-6 rounded-full bg-[#ff5c28] text-white flex items-center justify-center font-black text-xs shadow-xs">
                       2
                     </span>
                     <div>
@@ -1175,7 +1175,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                           onClick={() => setServiceFilterTab(tab.id as any)}
                           className={`px-3.5 py-2 sm:py-1.5 rounded-full text-xs font-bold transition whitespace-nowrap cursor-pointer min-h-[36px] flex items-center justify-center active:scale-95 ${
                             isActive
-                              ? 'bg-[#f07d4a] text-white shadow-xs'
+                              ? 'bg-[#ff5c28] text-white shadow-xs'
                               : 'bg-slate-100/90 text-slate-600 hover:bg-slate-200/80 border border-slate-200/60'
                           }`}
                         >
@@ -1232,7 +1232,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                         {/* Checkbox */}
                         <div className={`w-5 h-5 rounded-lg flex items-center justify-center shrink-0 transition-all ${
                           isSelected 
-                            ? 'bg-[#f07d4a] text-white' 
+                            ? 'bg-[#ff5c28] text-white' 
                             : 'border-2 border-slate-300 bg-white'
                         }`}>
                           {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
@@ -1246,7 +1246,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
               {/* Step 3: Estimated Guests (Stepper + Slider + Quick Pills) */}
               <div className="pt-3.5 border-t border-slate-100 flex flex-col xl:flex-row xl:items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5 sm:gap-3">
-                  <span className="w-6 h-6 rounded-full bg-[#f07d4a] text-white flex items-center justify-center font-black text-xs shadow-xs shrink-0">
+                  <span className="w-6 h-6 rounded-full bg-[#ff5c28] text-white flex items-center justify-center font-black text-xs shadow-xs shrink-0">
                     3
                   </span>
                   <div>
@@ -1280,7 +1280,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                     <button
                       type="button"
                       onClick={() => setPackageGuests((prev) => Math.min(2000, prev + 50))}
-                      className="w-9 h-9 sm:w-8 sm:h-8 rounded-lg bg-[#f07d4a] hover:bg-[#de6a3a] text-white font-black text-sm flex items-center justify-center cursor-pointer shadow-xs active:scale-90 transition"
+                      className="w-9 h-9 sm:w-8 sm:h-8 rounded-lg bg-[#ff5c28] hover:bg-[#e64814] text-white font-black text-sm flex items-center justify-center cursor-pointer shadow-xs active:scale-90 transition"
                       aria-label="Increase guest count"
                     >
                       <Plus className="w-4 h-4" />
@@ -1296,7 +1296,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                       step="50"
                       value={packageGuests}
                       onChange={(e) => setPackageGuests(Number(e.target.value))}
-                      className="w-full h-2 rounded-full appearance-none cursor-pointer accent-[#f07d4a] bg-slate-200"
+                      className="w-full h-2 rounded-full appearance-none cursor-pointer accent-[#ff5c28] bg-slate-200"
                       aria-label="Guest count slider"
                     />
                   </div>
@@ -1312,7 +1312,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                           onClick={() => setPackageGuests(num)}
                           className={`px-3 py-2 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-black cursor-pointer transition min-h-[36px] min-w-[40px] flex items-center justify-center active:scale-95 ${
                             isMatch
-                              ? "bg-[#f07d4a] text-white shadow-sm ring-2 ring-orange-500/30"
+                              ? "bg-[#ff5c28] text-white shadow-sm ring-2 ring-orange-500/30"
                               : "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200"
                           }`}
                         >
@@ -1336,7 +1336,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                     Your Event Package
                   </h3>
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-50 border border-slate-200 text-[#17233d] text-[11px] font-black">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#f07d4a] animate-pulse"></span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#ff5c28] animate-pulse"></span>
                     <span>LIVE ESTIMATE</span>
                   </span>
                 </div>
@@ -1454,7 +1454,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                     },
                   });
                 }}
-                className="w-full py-4 sm:py-3.5 min-h-[48px] rounded-2xl bg-gradient-to-r from-[#f07d4a] to-[#f4a06c] hover:from-[#de6a3a] hover:to-[#f07d4a] text-white font-black text-sm shadow-md shadow-slate-900/12 flex items-center justify-center gap-2 cursor-pointer transition active:scale-95"
+                className="w-full py-4 sm:py-3.5 min-h-[48px] rounded-2xl bg-gradient-to-r from-[#ff5c28] to-[#ff8254] hover:from-[#e64814] hover:to-[#ff5c28] text-white font-black text-sm shadow-md shadow-slate-900/12 flex items-center justify-center gap-2 cursor-pointer transition active:scale-95"
               >
                 <span>Get Competitive Quotes Now</span>
                 <ArrowRight className="w-4 h-4" />
@@ -1512,7 +1512,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                   <button
                     type="button"
                     onClick={() => onOpenPostModal()}
-                    className="w-full h-11 rounded-[14px] bg-[#f07d4a] hover:bg-[#de6a3a] text-white font-extrabold text-sm cursor-pointer"
+                    className="w-full h-11 rounded-[14px] bg-[#ff5c28] hover:bg-[#e64814] text-white font-extrabold text-sm cursor-pointer"
                   >
                     Post Event
                   </button>
@@ -1592,7 +1592,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                     >
                       <div className="flex items-center gap-2">
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold tracking-wide ${
-                          hasBids ? 'bg-[#e8f8f0] text-[#0f766e]' : 'bg-[#fff1ea] text-[#f07d4a]'
+                          hasBids ? 'bg-[#e8f8f0] text-[#0f766e]' : 'bg-[#fff2ed] text-[#ff5c28]'
                         }`}>
                           {hasBids ? <Radio className="w-2.5 h-2.5" /> : null}
                           {hasBids ? 'LIVE' : 'WAITING'}
@@ -1646,7 +1646,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                   onClick={() => setEventFilter(index)}
                   className={`shrink-0 px-3.5 py-2 rounded-full text-xs border cursor-pointer ${
                     selected
-                      ? 'bg-[#f07d4a] text-white border-[#f07d4a] font-bold'
+                      ? 'bg-[#ff5c28] text-white border-[#ff5c28] font-bold'
                       : 'bg-[#f8fafc] text-slate-800 border-[#e8edf2] font-medium'
                   }`}
                 >
@@ -1660,7 +1660,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
         <div className="lg:hidden px-4 py-3 space-y-3.5">
           {mobileFilteredReqs.length === 0 ? (
             <div className="pt-16 text-center space-y-3">
-              <ClipboardList className="w-11 h-11 text-[#f07d4a] mx-auto" />
+              <ClipboardList className="w-11 h-11 text-[#ff5c28] mx-auto" />
               <p className="text-base font-extrabold">{requirements.length === 0 ? 'No events posted yet' : 'No events in this tab'}</p>
               <p className="text-xs text-slate-500 max-w-xs mx-auto">
                 {requirements.length === 0
@@ -1670,7 +1670,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
               <button
                 type="button"
                 onClick={() => onOpenPostModal()}
-                className="inline-flex items-center gap-1.5 px-4 h-11 rounded-xl bg-[#f07d4a] text-white font-extrabold text-sm cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-4 h-11 rounded-xl bg-[#ff5c28] text-white font-extrabold text-sm cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 Post Event Request
@@ -1688,7 +1688,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                 >
                   <div className="flex justify-between gap-2">
                     <p className="text-[15px] font-extrabold text-slate-900 truncate">{req.title}</p>
-                    <span className="text-[10px] font-extrabold text-[#f07d4a] bg-[#fff7ed] border border-[#ffd7c2] px-2 py-0.5 rounded-full shrink-0">{req.status}</span>
+                    <span className="text-[10px] font-extrabold text-[#ff5c28] bg-[#fff7ed] border border-[#ffd7c2] px-2 py-0.5 rounded-full shrink-0">{req.status}</span>
                   </div>
                   <p className="text-xs text-slate-500 mt-1">{req.location?.city} · {formatEventDate(req.eventDate)}</p>
                   <div className="flex justify-between mt-2 text-xs font-extrabold">
@@ -1721,7 +1721,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                 onClick={() => setRequirementsTab('open')}
                 className={`px-4 py-2.5 min-h-[40px] rounded-2xl text-sm font-semibold flex items-center gap-2 whitespace-nowrap cursor-pointer transition active:scale-95 ${
                   requirementsTab === 'open'
-                    ? 'bg-gradient-to-r from-orange-500 to-[#f07d4a] text-white shadow-md shadow-slate-900/15'
+                    ? 'bg-gradient-to-r from-orange-500 to-[#ff5c28] text-white shadow-md shadow-slate-900/15'
                     : 'text-slate-700 hover:text-slate-900 bg-white/90 border border-slate-200/90'
                 }`}
               >
@@ -1763,7 +1763,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
             <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={() => onOpenPostModal()}
-                className="w-full sm:w-auto px-5 py-3 sm:py-2.5 min-h-[44px] rounded-2xl bg-gradient-to-r from-orange-500 to-[#f07d4a] hover:from-orange-600 hover:to-[#f07d4a] text-white font-extrabold text-sm shadow-md shadow-slate-900/12 flex items-center justify-center gap-1.5 cursor-pointer transition active:scale-95"
+                className="w-full sm:w-auto px-5 py-3 sm:py-2.5 min-h-[44px] rounded-2xl bg-gradient-to-r from-orange-500 to-[#ff5c28] hover:from-orange-600 hover:to-[#ff5c28] text-white font-extrabold text-sm shadow-md shadow-slate-900/12 flex items-center justify-center gap-1.5 cursor-pointer transition active:scale-95"
               >
                 <Plus className="w-4 h-4" />
                 <span>New Post</span>
@@ -1828,7 +1828,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                       }}
                       className={`px-3 py-1 rounded-full text-xs font-bold transition whitespace-nowrap cursor-pointer flex items-center gap-1 active:scale-95 ${
                         isCityActive
-                          ? 'bg-[#f07d4a] text-white shadow-xs'
+                          ? 'bg-[#ff5c28] text-white shadow-xs'
                           : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80'
                       }`}
                     >
@@ -1898,7 +1898,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                                 alert(err.message || 'Failed to publish draft');
                               }
                             }}
-                            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-[#f07d4a] hover:from-orange-600 hover:to-[#ea4a17] text-white text-xs sm:text-sm font-bold shadow-md shadow-slate-900/12 flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
+                            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-[#ff5c28] hover:from-orange-600 hover:to-[#ea4a17] text-white text-xs sm:text-sm font-bold shadow-md shadow-slate-900/12 flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
                           >
                             <ArrowRight className="w-4 h-4" />
                             <span>Publish Auction Now</span>
@@ -1956,7 +1956,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                   </p>
                   <button
                     onClick={() => onOpenPostModal()}
-                    className="px-6 py-3 rounded-xl bg-[#f07d4a] hover:bg-[#de6a3a] text-white font-bold text-xs shadow-md shadow-slate-900/12 inline-flex items-center gap-2 cursor-pointer"
+                    className="px-6 py-3 rounded-xl bg-[#ff5c28] hover:bg-[#e64814] text-white font-bold text-xs shadow-md shadow-slate-900/12 inline-flex items-center gap-2 cursor-pointer"
                   >
                     <Plus className="w-4 h-4" />
                     <span>Post Event Need Now</span>
@@ -2076,7 +2076,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                             <div className="col-span-2 sm:col-span-1 flex flex-col items-center justify-center sm:min-w-[115px] pt-1 sm:pt-0">
                               <button
                                 onClick={() => setExpandedReqId(isExpanded ? null : req._id)}
-                                className="w-full py-3 sm:py-2.5 px-4 rounded-xl bg-gradient-to-r from-orange-500 to-[#f07d4a] hover:from-orange-600 hover:to-[#f07d4a] text-white font-bold text-xs sm:text-sm shadow-md shadow-slate-900/12 flex items-center justify-center gap-1.5 cursor-pointer transition active:scale-95 min-h-[44px]"
+                                className="w-full py-3 sm:py-2.5 px-4 rounded-xl bg-gradient-to-r from-orange-500 to-[#ff5c28] hover:from-orange-600 hover:to-[#ff5c28] text-white font-bold text-xs sm:text-sm shadow-md shadow-slate-900/12 flex items-center justify-center gap-1.5 cursor-pointer transition active:scale-95 min-h-[44px]"
                               >
                                 <span>{isExpanded ? 'Hide bids' : 'See bids'}</span>
                                 <ArrowRight className="w-3.5 h-3.5" />
@@ -2358,7 +2358,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                         {/* Number Badge */}
                         <span className={`w-8 h-8 rounded-full font-black text-xs flex items-center justify-center shrink-0 transition-colors ${
                           isExpanded 
-                            ? 'bg-[#f07d4a] text-white shadow-xs' 
+                            ? 'bg-[#ff5c28] text-white shadow-xs' 
                             : 'bg-slate-100 text-[#17233d]'
                         }`}>
                           {numStr}
@@ -2373,7 +2373,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                       {/* Expand / Collapse Icon */}
                       <div className="shrink-0">
                         {isExpanded ? (
-                          <div className="w-7 h-7 rounded-full bg-[#f07d4a] text-white flex items-center justify-center shadow-xs">
+                          <div className="w-7 h-7 rounded-full bg-[#ff5c28] text-white flex items-center justify-center shadow-xs">
                             <ChevronUp className="w-4 h-4 stroke-[3]" />
                           </div>
                         ) : (
@@ -2473,7 +2473,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
 
                 <button
                   onClick={() => alert('Support team is available 24/7 at support@ezzygo.in')}
-                  className="w-full py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-orange-500 to-[#f07d4a] hover:from-orange-600 hover:to-[#f07d4a] text-white font-extrabold text-xs sm:text-sm shadow-md shadow-slate-900/15 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-all"
+                  className="w-full py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-orange-500 to-[#ff5c28] hover:from-orange-600 hover:to-[#ff5c28] text-white font-extrabold text-xs sm:text-sm shadow-md shadow-slate-900/15 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-all"
                 >
                   <span>Contact Support</span>
                   <ArrowRight className="w-4 h-4" />

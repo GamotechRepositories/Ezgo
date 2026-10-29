@@ -219,7 +219,7 @@ const PlaceBidForm: React.FC<PlaceBidFormProps> = ({
                       type="checkbox"
                       checked={selectedGear.includes(eq)}
                       onChange={() => handleToggleGear(eq)}
-                      className="rounded accent-[#f07d4a] w-4 h-4"
+                      className="rounded accent-[#ff5c28] w-4 h-4"
                     />
                     <span>{eq}</span>
                   </label>
@@ -237,7 +237,7 @@ const PlaceBidForm: React.FC<PlaceBidFormProps> = ({
               type="checkbox"
               checked={includeOperator}
               onChange={(e) => setIncludeOperator(e.target.checked)}
-              className="w-4 h-4 accent-[#f07d4a]"
+              className="w-4 h-4 accent-[#ff5c28]"
             />
           </label>
 
@@ -280,7 +280,7 @@ const PlaceBidForm: React.FC<PlaceBidFormProps> = ({
             <button
               type="submit"
               disabled={!isValidBid}
-              className="w-full sm:w-auto px-7 py-3 min-h-[44px] rounded-full bg-[#f07d4a] hover:bg-[#de6a3a] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm transition active:scale-95 cursor-pointer shadow-md shadow-slate-900/12 text-center"
+              className="w-full sm:w-auto px-7 py-3 min-h-[44px] rounded-full bg-[#ff5c28] hover:bg-[#e64814] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm transition active:scale-95 cursor-pointer shadow-md shadow-slate-900/12 text-center"
             >
               {existingBid ? 'Update reverse bid' : 'Submit reverse bid'}
             </button>

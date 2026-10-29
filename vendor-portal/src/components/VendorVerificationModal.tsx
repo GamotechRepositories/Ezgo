@@ -296,7 +296,7 @@ export const VendorVerificationModal: React.FC<VendorVerificationModalProps> = (
                   type="button"
                   disabled={isReminding}
                   onClick={handleSendReminder}
-                  className="px-4 py-2 rounded-full bg-[#f07d4a] hover:bg-[#de6a3a] text-white font-bold text-xs shadow-xs transition flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                  className="px-4 py-2 rounded-full bg-[#ff5c28] hover:bg-[#e64814] text-white font-bold text-xs shadow-xs transition flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
                 >
                   <Zap className="w-3.5 h-3.5" />
                   <span>{isReminding ? 'Sending Request...' : 'Send Review Reminder to Admin'}</span>
@@ -586,7 +586,7 @@ export const VendorVerificationModal: React.FC<VendorVerificationModalProps> = (
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-6 py-2.5 rounded-full bg-[#f07d4a] hover:bg-[#de6a3a] text-white font-bold text-xs shadow-sm transition flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+                  className="px-6 py-2.5 rounded-full bg-[#ff5c28] hover:bg-[#e64814] text-white font-bold text-xs shadow-sm transition flex items-center gap-2 disabled:opacity-50 cursor-pointer"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span>{isSubmitting ? 'Submitting Updated Documents...' : 'Submit Updated KYC for Review'}</span>

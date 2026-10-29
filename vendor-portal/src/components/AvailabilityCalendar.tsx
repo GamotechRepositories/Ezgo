@@ -167,7 +167,7 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
             <button
               type="submit"
               disabled={loading || !selectedDate}
-              className="w-full py-3.5 min-h-[48px] rounded-2xl bg-[#f07d4a] hover:bg-[#ea4a17] disabled:opacity-50 text-white font-bold text-sm shadow-lg shadow-slate-900/12 transition active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-3.5 min-h-[48px] rounded-2xl bg-[#ff5c28] hover:bg-[#ea4a17] disabled:opacity-50 text-white font-bold text-sm shadow-lg shadow-slate-900/12 transition active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>{loading ? 'Saving…' : 'Block this date'}</span>

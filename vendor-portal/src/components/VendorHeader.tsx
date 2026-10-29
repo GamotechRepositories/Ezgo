@@ -90,7 +90,7 @@ export const VendorHeader: React.FC<VendorHeaderProps> = ({
           </div>
           {onMarketplaceCity && (
             <label className="lg:hidden inline-flex items-center gap-1 px-2 py-1 rounded-[10px] text-xs font-semibold bg-slate-50 text-slate-800 border border-[#e8edf2]">
-              <MapPin className="w-3 h-3 text-[#f07d4a]" />
+              <MapPin className="w-3 h-3 text-[#ff5c28]" />
               <select
                 value={marketplaceCity}
                 onChange={(e) => onMarketplaceCity(e.target.value)}
@@ -107,7 +107,7 @@ export const VendorHeader: React.FC<VendorHeaderProps> = ({
         {/* Right Section: My Account Dropdown & Verification */}
         <div className="flex items-center gap-3 shrink-0">
           {onMarketplaceCity && (
-            <label className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#fff1ea] text-[#de6a3a] border border-[#ffd7c2]">
+            <label className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#fff2ed] text-[#e64814] border border-[#ffd7c2]">
               <MapPin className="w-3.5 h-3.5" />
               <select
                 value={marketplaceCity}
@@ -243,7 +243,7 @@ export const VendorHeader: React.FC<VendorHeaderProps> = ({
                       setIsDropdownOpen(false);
                       onOpenAccountModal();
                     }}
-                    className="w-full text-left px-3 py-2 rounded-xl font-bold text-slate-800 hover:bg-[#f07d4a]/10 hover:text-[#17233d] transition flex items-center gap-2.5 cursor-pointer"
+                    className="w-full text-left px-3 py-2 rounded-xl font-bold text-slate-800 hover:bg-[#ff5c28]/10 hover:text-[#17233d] transition flex items-center gap-2.5 cursor-pointer"
                   >
                     <UserIcon className="w-4 h-4 text-[#17233d]" />
                     <span>My Account & Business Profile</span>

@@ -45,7 +45,7 @@ export const RuleExplainer: React.FC<RuleExplainerProps> = ({ isOpen, onClose })
 
         {/* Header Title */}
         <div className="flex items-start gap-4 mb-6 pr-10">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#f07d4a] to-amber-500 flex items-center justify-center shadow-lg shadow-slate-900/12 shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#ff5c28] to-amber-500 flex items-center justify-center shadow-lg shadow-slate-900/12 shrink-0">
             <ShieldCheck className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -132,7 +132,7 @@ export const RuleExplainer: React.FC<RuleExplainerProps> = ({ isOpen, onClose })
               
               {/* Step 1 */}
               <div className="p-5 rounded-2xl bg-gradient-to-b from-orange-50/70 to-amber-50/40 border border-slate-200 relative">
-                <div className="w-8 h-8 rounded-full bg-[#f07d4a] text-white flex items-center justify-center font-black text-xs shadow-md mb-3">
+                <div className="w-8 h-8 rounded-full bg-[#ff5c28] text-white flex items-center justify-center font-black text-xs shadow-md mb-3">
                   1
                 </div>
                 <div className="text-xs font-extrabold uppercase tracking-wide text-[#17233d] mb-1">
@@ -210,7 +210,7 @@ export const RuleExplainer: React.FC<RuleExplainerProps> = ({ isOpen, onClose })
 
               <button
                 onClick={() => setActiveTab('calc')}
-                className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#f07d4a] to-amber-500 hover:opacity-95 text-white font-bold text-xs shadow-md shrink-0 cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#ff5c28] to-amber-500 hover:opacity-95 text-white font-bold text-xs shadow-md shrink-0 cursor-pointer"
               >
                 View Savings Calculator ➔
               </button>
@@ -229,7 +229,7 @@ export const RuleExplainer: React.FC<RuleExplainerProps> = ({ isOpen, onClose })
 
               <div className="space-y-3 text-xs">
                 <div className="flex items-start gap-3 p-3 bg-white rounded-xl border border-slate-100 shadow-2xs">
-                  <span className="w-6 h-6 rounded-full bg-[#f07d4a] text-white flex items-center justify-center font-bold shrink-0">1</span>
+                  <span className="w-6 h-6 rounded-full bg-[#ff5c28] text-white flex items-center justify-center font-bold shrink-0">1</span>
                   <div>
                     <strong className="text-slate-900 font-bold block text-sm">Post Requirement with Budget:</strong>
                     <p className="text-slate-600 mt-0.5">
@@ -239,7 +239,7 @@ export const RuleExplainer: React.FC<RuleExplainerProps> = ({ isOpen, onClose })
                 </div>
 
                 <div className="flex items-start gap-3 p-3 bg-white rounded-xl border border-slate-100 shadow-2xs">
-                  <span className="w-6 h-6 rounded-full bg-[#f07d4a] text-white flex items-center justify-center font-bold shrink-0">2</span>
+                  <span className="w-6 h-6 rounded-full bg-[#ff5c28] text-white flex items-center justify-center font-bold shrink-0">2</span>
                   <div>
                     <strong className="text-slate-900 font-bold block text-sm">Receive Discounted Bids (Min 15% Off):</strong>
                     <p className="text-slate-600 mt-0.5">
@@ -249,7 +249,7 @@ export const RuleExplainer: React.FC<RuleExplainerProps> = ({ isOpen, onClose })
                 </div>
 
                 <div className="flex items-start gap-3 p-3 bg-white rounded-xl border border-slate-100 shadow-2xs">
-                  <span className="w-6 h-6 rounded-full bg-[#f07d4a] text-white flex items-center justify-center font-bold shrink-0">3</span>
+                  <span className="w-6 h-6 rounded-full bg-[#ff5c28] text-white flex items-center justify-center font-bold shrink-0">3</span>
                   <div>
                     <strong className="text-slate-900 font-bold block text-sm">Pay now, vendor gets paid after the event:</strong>
                     <p className="text-slate-600 mt-0.5">

@@ -102,7 +102,7 @@ export const CardImageGallery: React.FC<CardImageGalleryProps> = ({
               type="button"
               onClick={handleOpenLightbox}
               title="View full photo"
-              className="w-7 h-7 rounded-full bg-black/60 hover:bg-[#f07d4a] text-white backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer shadow-md"
+              className="w-7 h-7 rounded-full bg-black/60 hover:bg-[#ff5c28] text-white backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer shadow-md"
             >
               <Maximize2 className="w-3.5 h-3.5" />
             </button>
@@ -116,7 +116,7 @@ export const CardImageGallery: React.FC<CardImageGalleryProps> = ({
               type="button"
               onClick={handlePrev}
               title="Previous photo"
-              className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-black/60 hover:bg-[#f07d4a] text-white backdrop-blur-md flex items-center justify-center opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 cursor-pointer shadow-md active:scale-90"
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-black/60 hover:bg-[#ff5c28] text-white backdrop-blur-md flex items-center justify-center opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 cursor-pointer shadow-md active:scale-90"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -125,7 +125,7 @@ export const CardImageGallery: React.FC<CardImageGalleryProps> = ({
               type="button"
               onClick={handleNext}
               title="Next photo"
-              className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-black/60 hover:bg-[#f07d4a] text-white backdrop-blur-md flex items-center justify-center opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 cursor-pointer shadow-md active:scale-90"
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-black/60 hover:bg-[#ff5c28] text-white backdrop-blur-md flex items-center justify-center opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 cursor-pointer shadow-md active:scale-90"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -140,7 +140,7 @@ export const CardImageGallery: React.FC<CardImageGalleryProps> = ({
                   aria-label={`Go to slide ${idx + 1}`}
                   className={`transition-all duration-300 rounded-full cursor-pointer ${
                     currentIndex === idx
-                      ? 'w-4 h-1.5 bg-[#f07d4a] shadow-xs'
+                      ? 'w-4 h-1.5 bg-[#ff5c28] shadow-xs'
                       : 'w-1.5 h-1.5 bg-white/70 hover:bg-white'
                   }`}
                 />
@@ -188,14 +188,14 @@ export const CardImageGallery: React.FC<CardImageGalleryProps> = ({
                 <button
                   type="button"
                   onClick={handlePrev}
-                  className="absolute left-2 sm:-left-12 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/15 hover:bg-[#f07d4a] text-white flex items-center justify-center cursor-pointer transition shadow-lg"
+                  className="absolute left-2 sm:-left-12 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/15 hover:bg-[#ff5c28] text-white flex items-center justify-center cursor-pointer transition shadow-lg"
                 >
                   <ChevronLeft className="w-6 h-6" />
                 </button>
                 <button
                   type="button"
                   onClick={handleNext}
-                  className="absolute right-2 sm:-right-12 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/15 hover:bg-[#f07d4a] text-white flex items-center justify-center cursor-pointer transition shadow-lg"
+                  className="absolute right-2 sm:-right-12 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/15 hover:bg-[#ff5c28] text-white flex items-center justify-center cursor-pointer transition shadow-lg"
                 >
                   <ChevronRight className="w-6 h-6" />
                 </button>

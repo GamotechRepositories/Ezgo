@@ -811,7 +811,7 @@ function HostApp({
             const tabIndex = page === 'events' ? 1 : page === 'bookings' ? 3 : page === 'profile' ? 4 : 0;
             return (
               <span
-                className="pointer-events-none absolute top-1 bottom-1 rounded-[28px] bg-[#fff1ea] transition-all duration-200"
+                className="pointer-events-none absolute top-1 bottom-1 rounded-[28px] bg-[#fff2ed] transition-all duration-200"
                 style={{
                   width: 'calc(20% - 4px)',
                   left: `calc(${tabIndex * 20}% + 2px)`,
@@ -823,7 +823,7 @@ function HostApp({
             onClick={() => goTo('home')}
             className={`relative z-10 flex flex-col items-center justify-center gap-0.5 py-1 transition cursor-pointer ${
               page === 'home' || page === 'occasions' || page === 'services' || page === 'detail'
-                ? 'text-[#f07d4a] font-bold'
+                ? 'text-[#ff5c28] font-bold'
                 : 'text-[#5c6573] hover:text-slate-800'
             }`}
           >
@@ -834,13 +834,13 @@ function HostApp({
           <button
             onClick={handleOpenMyEvents}
             className={`relative z-10 flex flex-col items-center justify-center gap-0.5 py-1 transition cursor-pointer ${
-              page === 'events' ? 'text-[#f07d4a] font-bold' : 'text-[#5c6573] hover:text-slate-800'
+              page === 'events' ? 'text-[#ff5c28] font-bold' : 'text-[#5c6573] hover:text-slate-800'
             }`}
           >
             <div className="relative">
               <CalendarDays className="w-5 h-5" strokeWidth={page === 'events' ? 2.4 : 2} />
               {liveEventsCount > 0 && page !== 'events' && (
-                <span className="absolute -top-1.5 -right-2 min-w-[14px] h-3.5 px-1 rounded-full bg-[#f07d4a] text-white text-[9px] font-bold flex items-center justify-center">
+                <span className="absolute -top-1.5 -right-2 min-w-[14px] h-3.5 px-1 rounded-full bg-[#ff5c28] text-white text-[9px] font-bold flex items-center justify-center">
                   {liveEventsCount > 9 ? '9+' : liveEventsCount}
                 </span>
               )}
@@ -852,7 +852,7 @@ function HostApp({
             <button
               onClick={() => handleOpenPostModal()}
               aria-label="Post Requirement"
-              className="w-12 h-12 -mt-5 rounded-full bg-gradient-to-tr from-[#f07d4a] to-[#f4a06c] text-white shadow-lg shadow-[#f07d4a]/35 flex items-center justify-center active:scale-90 transition cursor-pointer border-[3px] border-white"
+              className="w-12 h-12 -mt-5 rounded-full bg-gradient-to-tr from-[#ff5c28] to-[#ff8254] text-white shadow-lg shadow-[#ff5c28]/35 flex items-center justify-center active:scale-90 transition cursor-pointer border-[3px] border-white"
             >
               <Plus className="w-5 h-5 stroke-[2.5]" />
             </button>
@@ -861,13 +861,13 @@ function HostApp({
           <button
             onClick={handleOpenBookings}
             className={`relative z-10 flex flex-col items-center justify-center gap-0.5 py-1 transition cursor-pointer ${
-              page === 'bookings' ? 'text-[#f07d4a] font-bold' : 'text-[#5c6573] hover:text-slate-800'
+              page === 'bookings' ? 'text-[#ff5c28] font-bold' : 'text-[#5c6573] hover:text-slate-800'
             }`}
           >
             <div className="relative">
               <Receipt className="w-5 h-5" strokeWidth={page === 'bookings' ? 2.4 : 2} />
               {activeBookingsCount > 0 && (
-                <span className="absolute -top-1.5 -right-2 min-w-[14px] h-3.5 px-1 rounded-full bg-[#f07d4a] text-white text-[9px] font-bold flex items-center justify-center">
+                <span className="absolute -top-1.5 -right-2 min-w-[14px] h-3.5 px-1 rounded-full bg-[#ff5c28] text-white text-[9px] font-bold flex items-center justify-center">
                   {activeBookingsCount > 9 ? '9+' : activeBookingsCount}
                 </span>
               )}
@@ -879,7 +879,7 @@ function HostApp({
             onClick={() => goTo('profile')}
             aria-label="My Profile"
             className={`relative z-10 flex flex-col items-center justify-center gap-0.5 py-1 transition cursor-pointer ${
-              page === 'profile' ? 'text-[#f07d4a] font-bold' : 'text-[#5c6573] hover:text-slate-800'
+              page === 'profile' ? 'text-[#ff5c28] font-bold' : 'text-[#5c6573] hover:text-slate-800'
             }`}
           >
             <UserIcon className="w-5 h-5" strokeWidth={page === 'profile' ? 2.4 : 2} />

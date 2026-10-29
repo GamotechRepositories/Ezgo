@@ -110,7 +110,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBack }) => {
           </div>
           <h2 className="text-3xl xl:text-4xl font-extrabold text-slate-900 tracking-tight leading-[1.2]">
             Your Event, Your Budget.{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#f07d4a] to-[#ea3a06]">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ff5c28] to-[#ea3a06]">
               Top Vendors Compete Under Your Price.
             </span>
           </h2>
@@ -320,7 +320,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBack }) => {
               <button
                 type="submit"
                 disabled={busy}
-                className="w-full h-12 rounded-full bg-[#f07d4a] hover:bg-[#de6a3a] text-white font-semibold text-base disabled:opacity-50 cursor-pointer shadow-sm transition"
+                className="w-full h-12 rounded-full bg-[#ff5c28] hover:bg-[#e64814] text-white font-semibold text-base disabled:opacity-50 cursor-pointer shadow-sm transition"
               >
                 {busy ? (mode === 'register' ? 'Creating account...' : 'Signing in...') : mode === 'register' ? 'Create account' : 'Log in'}
               </button>

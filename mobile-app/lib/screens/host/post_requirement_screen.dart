@@ -411,7 +411,7 @@ class _PostRequirementScreenState extends State<PostRequirementScreen> {
                             borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                             child: asset == null
                                 ? const ColoredBox(
-                                    color: Color(0xFFFFF1EA),
+                                    color: Color(0xFFFFF2ED),
                                     child: Center(
                                       child: Icon(LucideIcons.plus, size: 32, color: AppTheme.primary),
                                     ),
@@ -629,7 +629,7 @@ class _PostRequirementScreenState extends State<PostRequirementScreen> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFF1EA),
+                  color: const Color(0xFFFFF2ED),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(LucideIcons.plus, size: 22, color: AppTheme.primary),

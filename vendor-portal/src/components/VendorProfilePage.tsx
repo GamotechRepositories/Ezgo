@@ -86,13 +86,13 @@ export const VendorProfilePage: React.FC<VendorProfilePageProps> = ({
       <div className="bg-white rounded-[20px] border border-[#e8edf2] p-4 flex items-center gap-3.5">
         <button type="button" onClick={onEditProfile} className="relative shrink-0 cursor-pointer">
           {vendor.avatar ? (
-            <img src={vendor.avatar} alt="" className="w-16 h-16 rounded-full object-cover bg-[#fff1ea]" referrerPolicy="no-referrer" />
+            <img src={vendor.avatar} alt="" className="w-16 h-16 rounded-full object-cover bg-[#fff2ed]" referrerPolicy="no-referrer" />
           ) : (
-            <div className="w-16 h-16 rounded-full bg-[#fff1ea] text-[#f07d4a] font-black text-xl flex items-center justify-center">
+            <div className="w-16 h-16 rounded-full bg-[#fff2ed] text-[#ff5c28] font-black text-xl flex items-center justify-center">
               {initial}
             </div>
           )}
-          <span className="absolute -right-0.5 -bottom-0.5 w-[22px] h-[22px] rounded-full bg-[#f07d4a] text-white flex items-center justify-center">
+          <span className="absolute -right-0.5 -bottom-0.5 w-[22px] h-[22px] rounded-full bg-[#ff5c28] text-white flex items-center justify-center">
             <Camera className="w-2.5 h-2.5" />
           </span>
         </button>
@@ -102,7 +102,7 @@ export const VendorProfilePage: React.FC<VendorProfilePageProps> = ({
           {vendor.email ? <p className="text-xs text-slate-500 truncate">{vendor.email}</p> : null}
           <p className="text-xs text-slate-500 font-semibold">{city}</p>
         </div>
-        <button type="button" onClick={onEditProfile} className="text-sm font-extrabold text-[#f07d4a] cursor-pointer">
+        <button type="button" onClick={onEditProfile} className="text-sm font-extrabold text-[#ff5c28] cursor-pointer">
           Edit
         </button>
       </div>

@@ -215,8 +215,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                     aria-current={isEventsPage ? 'page' : undefined}
                     className={`flex items-center gap-1.5 font-extrabold transition cursor-pointer ${
                       isEventsPage
-                        ? 'text-[#f07d4a] underline underline-offset-8 decoration-2'
-                        : 'hover:text-[#f07d4a]'
+                        ? 'text-[#ff5c28] underline underline-offset-8 decoration-2'
+                        : 'hover:text-[#ff5c28]'
                     }`}
                   >
                     <Calendar className="w-4 h-4" />
@@ -268,7 +268,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   aria-label="Select city"
                   className="flex items-center gap-1 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-full bg-white border border-slate-200 text-slate-800 text-[11px] sm:text-xs font-semibold hover:border-slate-300 shadow-2xs transition cursor-pointer min-h-[36px]"
                 >
-                  <MapPin className="w-3.5 h-3.5 text-[#17233d] fill-[#f07d4a]/20 shrink-0" />
+                  <MapPin className="w-3.5 h-3.5 text-[#17233d] fill-[#ff5c28]/20 shrink-0" />
                   <span className="max-w-[75px] sm:max-w-none truncate">{selectedCity.split(',')[0]}</span>
                   <ChevronDown className="w-3 h-3 text-slate-400 shrink-0" />
                 </button>
@@ -302,7 +302,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Post Requirement CTA Button */}
               <button
                 onClick={() => onOpenPostModal()}
-                className="px-3 sm:px-5 py-2 sm:py-2.5 rounded-full bg-[#f07d4a] hover:bg-[#de6a3a] active:scale-95 text-white font-bold text-xs sm:text-xs shadow-md shadow-slate-900/15 flex items-center gap-1 sm:gap-1.5 transition cursor-pointer whitespace-nowrap min-h-[36px] sm:min-h-[42px]"
+                className="px-3 sm:px-5 py-2 sm:py-2.5 rounded-full bg-[#ff5c28] hover:bg-[#e64814] active:scale-95 text-white font-bold text-xs sm:text-xs shadow-md shadow-slate-900/15 flex items-center gap-1 sm:gap-1.5 transition cursor-pointer whitespace-nowrap min-h-[36px] sm:min-h-[42px]"
               >
                 <span className="hidden sm:inline">Post Requirement</span>
                 <span className="sm:hidden font-bold">+ Post Need</span>
@@ -578,7 +578,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   }
                   className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-semibold transition cursor-pointer ${
                     isEventsPage
-                      ? 'bg-orange-50 text-[#f07d4a]'
+                      ? 'bg-orange-50 text-[#ff5c28]'
                       : 'text-slate-700 hover:bg-slate-50'
                   }`}
                 >
@@ -640,7 +640,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div className="p-4 border-t border-slate-100 space-y-3 bg-slate-50/50 safe-bottom">
               <button
                 onClick={() => handleMobileNav(() => onOpenPostModal())}
-                className="w-full py-3.5 min-h-[46px] rounded-xl bg-[#f07d4a] hover:bg-[#de6a3a] active:scale-95 text-white font-bold text-sm shadow-sm transition flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3.5 min-h-[46px] rounded-xl bg-[#ff5c28] hover:bg-[#e64814] active:scale-95 text-white font-bold text-sm shadow-sm transition flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>Post Event Requirement</span>
                 <ArrowRight className="w-4 h-4" />

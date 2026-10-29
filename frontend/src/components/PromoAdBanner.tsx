@@ -140,7 +140,7 @@ export const PromoAdBanner: React.FC<PromoAdBannerProps> = ({
                 
                 {/* Bold Discount Sticker */}
                 {currentAd.discountPercent ? (
-                  <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-gradient-to-r from-amber-400 via-orange-400 to-[#f07d4a] text-slate-950 font-black text-[11px] sm:text-xs tracking-wider uppercase shadow-md shadow-slate-900/15">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-gradient-to-r from-amber-400 via-orange-400 to-[#ff5c28] text-slate-950 font-black text-[11px] sm:text-xs tracking-wider uppercase shadow-md shadow-slate-900/15">
                     <Percent className="w-3 h-3 stroke-[3]" />
                     <span>SAVE UP TO {currentAd.discountPercent}% • REVERSE BIDDING</span>
                   </div>
@@ -173,7 +173,7 @@ export const PromoAdBanner: React.FC<PromoAdBannerProps> = ({
                         aria-label={`Go to ad ${idx + 1}`}
                         className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 cursor-pointer ${
                           currentIndex === idx
-                            ? 'w-5 sm:w-7 bg-[#f07d4a]'
+                            ? 'w-5 sm:w-7 bg-[#ff5c28]'
                             : 'w-1.5 sm:w-2 bg-white/40 hover:bg-white/80'
                         }`}
                       />

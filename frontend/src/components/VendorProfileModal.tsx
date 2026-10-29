@@ -35,7 +35,7 @@ export const VendorUnlockedCard: React.FC<{
         {vendor?.avatar ? (
           <img src={vendor.avatar} alt="" className="w-14 h-14 rounded-2xl object-cover border border-slate-200" />
         ) : (
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-400 to-[#f07d4a] text-white font-black text-xl flex items-center justify-center">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-400 to-[#ff5c28] text-white font-black text-xl flex items-center justify-center">
             {name.charAt(0)}
           </div>
         )}
@@ -168,7 +168,7 @@ export const VendorProfileModal: React.FC<{
         <VendorUnlockedCard booking={booking} />
         <button
           onClick={onClose}
-          className="mt-4 w-full py-3 rounded-2xl bg-[#f07d4a] hover:bg-[#de6a3a] text-white font-semibold cursor-pointer"
+          className="mt-4 w-full py-3 rounded-2xl bg-[#ff5c28] hover:bg-[#e64814] text-white font-semibold cursor-pointer"
         >
           Done
         </button>

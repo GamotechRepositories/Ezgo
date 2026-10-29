@@ -474,7 +474,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
           </div>
           <h2 className="text-3xl xl:text-4xl font-extrabold text-slate-900 tracking-tight leading-[1.2]">
             Send your price.{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#f07d4a] to-[#ea3a06]">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ff5c28] to-[#ea3a06]">
               Keep 100% of your earnings.
             </span>
           </h2>
@@ -760,7 +760,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                 <button
                   type="submit"
                   disabled={busy}
-                  className="w-full h-12 rounded-full bg-[#f07d4a] hover:bg-[#de6a3a] text-white font-semibold text-base disabled:opacity-50 cursor-pointer shadow-sm transition"
+                  className="w-full h-12 rounded-full bg-[#ff5c28] hover:bg-[#e64814] text-white font-semibold text-base disabled:opacity-50 cursor-pointer shadow-sm transition"
                 >
                   {busy ? 'Signing in...' : 'Log in'}
                 </button>
@@ -854,7 +854,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                   }`}
                 >
                   <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-[11px] font-bold ${
-                    regStep > 1 ? 'bg-emerald-600 text-white' : regStep === 1 ? 'bg-[#f07d4a] text-white' : 'bg-slate-200 text-slate-600'
+                    regStep > 1 ? 'bg-emerald-600 text-white' : regStep === 1 ? 'bg-[#ff5c28] text-white' : 'bg-slate-200 text-slate-600'
                   }`}>
                     {regStep > 1 ? <Check className="w-3 h-3" /> : '1'}
                   </div>
@@ -879,7 +879,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                   }`}
                 >
                   <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-[11px] font-bold ${
-                    regStep > 2 ? 'bg-emerald-600 text-white' : regStep === 2 ? 'bg-[#f07d4a] text-white' : 'bg-slate-200 text-slate-600'
+                    regStep > 2 ? 'bg-emerald-600 text-white' : regStep === 2 ? 'bg-[#ff5c28] text-white' : 'bg-slate-200 text-slate-600'
                   }`}>
                     {regStep > 2 ? <Check className="w-3 h-3" /> : '2'}
                   </div>
@@ -902,7 +902,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                   }`}
                 >
                   <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-[11px] font-bold ${
-                    regStep === 3 ? 'bg-[#f07d4a] text-white' : 'bg-slate-200 text-slate-600'
+                    regStep === 3 ? 'bg-[#ff5c28] text-white' : 'bg-slate-200 text-slate-600'
                   }`}>
                     3
                   </div>
@@ -986,7 +986,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                               }}
                               className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition cursor-pointer ${
                                 isSelected
-                                  ? 'bg-[#f07d4a] text-white border-[#17233d] shadow-xs'
+                                  ? 'bg-[#ff5c28] text-white border-[#17233d] shadow-xs'
                                   : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-50/30'
                               }`}
                             >
@@ -1291,7 +1291,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                     <button
                       type="button"
                       onClick={handleNextStep}
-                      className="flex-1 h-12 rounded-full bg-[#f07d4a] hover:bg-[#de6a3a] text-white font-semibold text-base cursor-pointer shadow-sm transition flex items-center justify-center gap-2"
+                      className="flex-1 h-12 rounded-full bg-[#ff5c28] hover:bg-[#e64814] text-white font-semibold text-base cursor-pointer shadow-sm transition flex items-center justify-center gap-2"
                     >
                       <span>Continue to {regStep === 1 ? 'Bank Details' : 'KYC Verification'}</span>
                       <ArrowRight className="w-4 h-4" />
@@ -1300,7 +1300,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                     <button
                       type="submit"
                       disabled={busy}
-                      className="flex-1 h-12 rounded-full bg-[#f07d4a] hover:bg-[#de6a3a] text-white font-semibold text-base disabled:opacity-50 cursor-pointer shadow-sm transition flex items-center justify-center gap-2"
+                      className="flex-1 h-12 rounded-full bg-[#ff5c28] hover:bg-[#e64814] text-white font-semibold text-base disabled:opacity-50 cursor-pointer shadow-sm transition flex items-center justify-center gap-2"
                     >
                       {busy ? (
                         'Creating account...'

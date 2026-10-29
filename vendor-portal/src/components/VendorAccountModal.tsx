@@ -588,7 +588,7 @@ export const VendorAccountModal: React.FC<VendorAccountModalProps> = ({
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-6 py-2.5 rounded-xl bg-[#f07d4a] hover:bg-[#de6a3a] active:scale-95 text-white font-bold text-sm shadow-md shadow-slate-900/12 transition flex items-center gap-2 cursor-pointer disabled:opacity-60"
+                  className="px-6 py-2.5 rounded-xl bg-[#ff5c28] hover:bg-[#e64814] active:scale-95 text-white font-bold text-sm shadow-md shadow-slate-900/12 transition flex items-center gap-2 cursor-pointer disabled:opacity-60"
                 >
                   {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                   <span>Save Business Details</span>
@@ -669,7 +669,7 @@ export const VendorAccountModal: React.FC<VendorAccountModalProps> = ({
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-6 py-2.5 rounded-xl bg-[#f07d4a] hover:bg-[#de6a3a] active:scale-95 text-white font-bold text-sm shadow-md shadow-slate-900/12 transition flex items-center gap-2 cursor-pointer disabled:opacity-60"
+                  className="px-6 py-2.5 rounded-xl bg-[#ff5c28] hover:bg-[#e64814] active:scale-95 text-white font-bold text-sm shadow-md shadow-slate-900/12 transition flex items-center gap-2 cursor-pointer disabled:opacity-60"
                 >
                   {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                   <span>Save Bank Details</span>
@@ -806,7 +806,7 @@ export const VendorAccountModal: React.FC<VendorAccountModalProps> = ({
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-6 py-2.5 rounded-xl bg-[#f07d4a] hover:bg-[#de6a3a] active:scale-95 text-white font-bold text-sm shadow-md shadow-slate-900/12 transition flex items-center gap-2 cursor-pointer disabled:opacity-60"
+                  className="px-6 py-2.5 rounded-xl bg-[#ff5c28] hover:bg-[#e64814] active:scale-95 text-white font-bold text-sm shadow-md shadow-slate-900/12 transition flex items-center gap-2 cursor-pointer disabled:opacity-60"
                 >
                   {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                   <span>Update KYC Information</span>

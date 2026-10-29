@@ -341,7 +341,7 @@ export const MyAccountModal: React.FC<MyAccountModalProps> = ({
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Enter your name"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#f07d4a]/20 focus:border-[#17233d] transition font-medium"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5c28]/20 focus:border-[#17233d] transition font-medium"
                   />
                   <UserIcon className="absolute right-3.5 top-3 w-4 h-4 text-slate-400" />
                 </div>
@@ -357,7 +357,7 @@ export const MyAccountModal: React.FC<MyAccountModalProps> = ({
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@example.com"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#f07d4a]/20 focus:border-[#17233d] transition font-medium"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5c28]/20 focus:border-[#17233d] transition font-medium"
                   />
                   <Mail className="absolute right-3.5 top-3 w-4 h-4 text-slate-400" />
                 </div>
@@ -387,7 +387,7 @@ export const MyAccountModal: React.FC<MyAccountModalProps> = ({
                   <select
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#f07d4a]/20 focus:border-[#17233d] transition font-medium bg-white"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5c28]/20 focus:border-[#17233d] transition font-medium bg-white"
                   >
                     {CITIES.map((c) => (
                       <option key={c} value={c}>

@@ -31,6 +31,8 @@ import {
   Cake,
   AlertCircle,
   Navigation,
+  RotateCcw,
+  Pencil,
 } from 'lucide-react';
 import type { Category, Requirement, PostRequirementInitialData } from '../types';
 import { EVENT_CATEGORIES } from '../data/eventData';
@@ -129,6 +131,102 @@ const isoDate = (d: Date) =>
 const todayIso = () => isoDate(new Date());
 const twoWeeksFromNowIso = () => isoDate(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000));
 
+/**
+ * Returns a recommended baseline price for a single service category based on event context.
+ */
+export const getCategoryEstimatedPrice = (
+  categoryName: string,
+  guestCount: number = 200,
+  eventType: string = 'Wedding'
+): number => {
+  const norm = (categoryName || '').toLowerCase().trim();
+
+  // Catering & Food
+  if (norm.includes('cater') || norm.includes('food')) {
+    const validGuests = typeof guestCount === 'number' && guestCount > 0 ? guestCount : 150;
+    const perPlateRate = norm.includes('premium') || eventType === 'Wedding' ? 450 : 350;
+    return Math.max(20000, validGuests * perPlateRate);
+  }
+
+  // Decoration & Stage Design
+  if (norm.includes('decor') || norm.includes('stage design') || norm.includes('mandap')) {
+    if (eventType === 'Birthday Party' || eventType === 'Private Party') return 15000;
+    if (eventType === 'Pooja / Griha Pravesh') return 12000;
+    if (eventType === 'Corporate Event') return 35000;
+    return 30000;
+  }
+
+  // DJ / Sound / Teenmar
+  if (norm.includes('dj') || norm.includes('sound') || norm.includes('teenmar')) {
+    if (eventType === 'Birthday Party' || eventType === 'Private Party') return 12000;
+    if (eventType === 'Corporate Event') return 25000;
+    return 18000;
+  }
+
+  // Photography & Cinematography
+  if (norm.includes('photo') || norm.includes('cinematography') || norm.includes('camera') || norm.includes('video')) {
+    if (eventType === 'Birthday Party' || eventType === 'Private Party') return 15000;
+    if (eventType === 'Pooja / Griha Pravesh') return 12000;
+    if (eventType === 'Corporate Event') return 25000;
+    return 32000;
+  }
+
+  // Lighting & Stage Trussing
+  if (norm.includes('light') || norm.includes('truss')) {
+    return 15000;
+  }
+
+  // Purohit & Vedic Rituals
+  if (norm.includes('purohit') || norm.includes('priest') || norm.includes('pooja') || norm.includes('pandit') || norm.includes('vedic')) {
+    return 8000;
+  }
+
+  // Bridal Mehendi & Henna Art
+  if (norm.includes('mehendi') || norm.includes('henna')) {
+    return 10000;
+  }
+
+  // Tent, Shamiana & Seating
+  if (norm.includes('tent') || norm.includes('shamiana') || norm.includes('seating') || norm.includes('hangar')) {
+    const validGuests = typeof guestCount === 'number' && guestCount > 0 ? guestCount : 200;
+    if (validGuests > 300) return 40000;
+    return 25000;
+  }
+
+  // Performers / Bands / MC
+  if (norm.includes('performer') || norm.includes('anchor') || norm.includes('mc') || norm.includes('band')) {
+    return 20000;
+  }
+
+  // Custom / Other
+  return 15000;
+};
+
+/**
+ * Calculates dynamic aggregate budget ceiling based on selected categories, guest count, and occasion.
+ */
+export const calculateEstimatedBudget = (
+  categories: string[],
+  guestCount: number = 200,
+  eventType: string = 'Wedding'
+): number => {
+  if (!categories || categories.length === 0) return 25000;
+
+  const validGuestCount = typeof guestCount === 'number' && guestCount > 0 ? guestCount : 200;
+  let total = 0;
+
+  for (const cat of categories) {
+    total += getCategoryEstimatedPrice(cat, validGuestCount, eventType);
+  }
+
+  // Multi-service bundle synergy discount (5% package efficiency)
+  if (categories.length >= 2) {
+    total = Math.round((total * 0.95) / 500) * 500;
+  }
+
+  return Math.max(5000, total);
+};
+
 export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
   isOpen,
   onClose,
@@ -158,7 +256,9 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
   const [isTitleManual, setIsTitleManual] = useState(false);
   const [description, setDescription] = useState('');
   const [selectedEquipments, setSelectedEquipments] = useState<string[]>([]);
-  const [budget, setBudget] = useState<number | ''>(25000);
+  const [budget, setBudget] = useState<number | ''>(30000);
+  const [isBudgetManual, setIsBudgetManual] = useState(false);
+  const [isEditingPreviewBudget, setIsEditingPreviewBudget] = useState(false);
   const [customImageUrl, setCustomImageUrl] = useState<string>('');
   const [customImages, setCustomImages] = useState<string[]>([]);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
@@ -167,9 +267,42 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [packageSummary, setPackageSummary] = useState<PostRequirementInitialData['packageSummary'] | null>(null);
 
+  // Dynamic baseline budget calculation
+  const calculatedAutoBudget = useMemo(() => {
+    return calculateEstimatedBudget(
+      selectedCategories,
+      typeof guestCount === 'number' ? guestCount : 200,
+      eventType
+    );
+  }, [selectedCategories, guestCount, eventType]);
+
+  // Keep budget in sync when auto-calculation is active
+  useEffect(() => {
+    if (!isBudgetManual) {
+      setBudget(calculatedAutoBudget);
+    }
+  }, [calculatedAutoBudget, isBudgetManual]);
+
+  const handleAdjustBudget = (delta: number) => {
+    setIsBudgetManual(true);
+    setBudget((prev) => {
+      const current = typeof prev === 'number' && prev > 0 ? prev : calculatedAutoBudget;
+      return Math.max(1000, current + delta);
+    });
+  };
+
+  const handleResetToAutoBudget = () => {
+    setIsBudgetManual(false);
+    setBudget(calculatedAutoBudget);
+    setIsEditingPreviewBudget(false);
+  };
+
   // Sync incoming props / prefilled data
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      setIsEditingPreviewBudget(false);
+      return;
+    }
 
     if (initialData) {
       if (typeof initialData === 'string') {
@@ -181,6 +314,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
             : [initialData];
         setSelectedCategories(cats);
         setCustomServiceName('');
+        setIsBudgetManual(false);
       } else {
         if (initialData.category) {
           const cats = initialData.category.includes('+')
@@ -194,7 +328,12 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
           setIsTitleManual(true);
         }
         if (initialData.description) setDescription(initialData.description);
-        if (typeof initialData.budget === 'number' && initialData.budget > 0) setBudget(initialData.budget);
+        if (typeof initialData.budget === 'number' && initialData.budget > 0) {
+          setBudget(initialData.budget);
+          setIsBudgetManual(true);
+        } else {
+          setIsBudgetManual(false);
+        }
         if (typeof initialData.guestCount === 'number' && initialData.guestCount > 0)
           setGuestCount(initialData.guestCount);
         if (initialData.selectedEquipments && initialData.selectedEquipments.length > 0) {
@@ -212,6 +351,9 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
         ? initialCategory.split('+').map((s) => s.trim()).filter(Boolean)
         : [initialCategory];
       setSelectedCategories(cats);
+      setIsBudgetManual(false);
+    } else {
+      setIsBudgetManual(false);
     }
 
     if (initialCity && (!initialData || typeof initialData === 'string' || !initialData.city)) {
@@ -440,7 +582,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 sm:px-8 lg:px-12 py-3.5 shadow-2xs">
         <div className="w-full max-w-[1500px] mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#f07d4a] animate-pulse" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#ff5c28] animate-pulse" />
             <span className="text-sm font-extrabold text-slate-900">Post Event Requirement</span>
           </div>
 
@@ -466,8 +608,8 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
       <main className="flex-1 max-w-[1500px] w-full mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8">
         {/* Intro Banner */}
         <div className="mb-6">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 border border-orange-200 text-[#f07d4a] text-xs font-black uppercase tracking-wider mb-2">
-            <Sparkles className="w-3.5 h-3.5 text-[#f07d4a]" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 border border-orange-200 text-[#ff5c28] text-xs font-black uppercase tracking-wider mb-2">
+            <Sparkles className="w-3.5 h-3.5 text-[#ff5c28]" />
             <span>Fast Vendor Reverse-Bidding</span>
           </div>
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">
@@ -493,7 +635,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                   }}
                   className={`text-left p-2.5 sm:p-3.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
                     isCurrent
-                      ? 'border-[#f07d4a] bg-white ring-2 ring-orange-500/20 shadow-sm'
+                      ? 'border-[#ff5c28] bg-white ring-2 ring-orange-500/20 shadow-sm'
                       : isPassed
                         ? 'border-emerald-300 bg-emerald-50/60 hover:bg-emerald-100/60'
                         : 'border-slate-200 bg-white/70 opacity-60 pointer-events-none'
@@ -503,7 +645,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                     <span
                       className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full text-[10px] sm:text-xs font-black flex items-center justify-center ${
                         isCurrent
-                          ? 'bg-[#f07d4a] text-white shadow-xs'
+                          ? 'bg-[#ff5c28] text-white shadow-xs'
                           : isPassed
                             ? 'bg-emerald-600 text-white'
                             : 'bg-slate-200 text-slate-600'
@@ -593,14 +735,14 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                             }}
                             className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-center gap-2.5 active:scale-95 ${
                               isSel
-                                ? 'bg-[#fff5f0] border-[#f07d4a] ring-2 ring-orange-500/20 shadow-xs'
+                                ? 'bg-[#fff5f0] border-[#ff5c28] ring-2 ring-orange-500/20 shadow-xs'
                                 : 'bg-slate-50 border-slate-200 hover:border-slate-300'
                             }`}
                           >
-                            <span className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${isSel ? 'bg-[#f07d4a] text-white' : 'bg-white text-slate-700'}`}>
+                            <span className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${isSel ? 'bg-[#ff5c28] text-white' : 'bg-white text-slate-700'}`}>
                               <Icon className="w-4 h-4" />
                             </span>
-                            <span className={`text-xs font-bold leading-tight ${isSel ? 'text-[#f07d4a]' : 'text-slate-800'}`}>
+                            <span className={`text-xs font-bold leading-tight ${isSel ? 'text-[#ff5c28]' : 'text-slate-800'}`}>
                               {occ.label}
                             </span>
                           </button>
@@ -622,7 +764,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                         </div>
                       </div>
 
-                      <span className="text-xs font-extrabold text-[#f07d4a] bg-orange-50 px-2.5 py-1 rounded-full border border-orange-200">
+                      <span className="text-xs font-extrabold text-[#ff5c28] bg-orange-50 px-2.5 py-1 rounded-full border border-orange-200">
                         {selectedCategories.length} Selected
                       </span>
                     </div>
@@ -639,7 +781,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                             onClick={() => handleToggleCategory(cat.name)}
                             className={`p-3 rounded-2xl border text-left transition-all cursor-pointer group flex flex-col justify-between overflow-hidden relative ${
                               isSelected
-                                ? 'border-[#f07d4a] bg-[#fffbf9] ring-2 ring-orange-500/25 shadow-sm'
+                                ? 'border-[#ff5c28] bg-[#fffbf9] ring-2 ring-orange-500/25 shadow-sm'
                                 : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-xs'
                             }`}
                           >
@@ -654,7 +796,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                                 <Icon className="w-3.5 h-3.5" />
                               </div>
                               {isSelected && (
-                                <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-[#f07d4a] ring-2 ring-white flex items-center justify-center text-white shadow-xs">
+                                <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-[#ff5c28] ring-2 ring-white flex items-center justify-center text-white shadow-xs">
                                   <Check className="w-3.5 h-3.5 stroke-[3]" />
                                 </div>
                               )}
@@ -677,14 +819,14 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                         onClick={() => handleToggleCategory('Other')}
                         className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
                           selectedCategories.includes('Other')
-                            ? 'border-[#f07d4a] bg-[#fffbf9] ring-2 ring-orange-500/25 shadow-sm'
+                            ? 'border-[#ff5c28] bg-[#fffbf9] ring-2 ring-orange-500/25 shadow-sm'
                             : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-xs'
                         }`}
                       >
                         <div className="relative h-24 sm:h-28 w-full rounded-xl overflow-hidden mb-2.5 bg-orange-50 border border-orange-200 flex items-center justify-center">
-                          <Plus className="w-6 h-6 text-[#f07d4a]" />
+                          <Plus className="w-6 h-6 text-[#ff5c28]" />
                           {selectedCategories.includes('Other') && (
-                            <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-[#f07d4a] ring-2 ring-white flex items-center justify-center text-white shadow-xs">
+                            <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-[#ff5c28] ring-2 ring-white flex items-center justify-center text-white shadow-xs">
                               <Check className="w-3.5 h-3.5 stroke-[3]" />
                             </div>
                           )}
@@ -708,6 +850,86 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                         />
                       </div>
                     )}
+
+                    {/* Dynamic Price Estimation Bar in Step 1 */}
+                    <div className="mt-4 p-4 rounded-2xl bg-gradient-to-r from-orange-50/90 via-amber-50/60 to-emerald-50/80 border border-orange-200/80 space-y-2.5 shadow-2xs">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Sparkles className="w-4 h-4 text-[#ff5c28]" />
+                          <span className="text-xs font-black uppercase tracking-wider text-slate-800">
+                            Estimated Budget Ceiling ({selectedCategories.length} {selectedCategories.length > 1 ? 'Services' : 'Service'})
+                          </span>
+                          {isBudgetManual ? (
+                            <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-black">
+                              Custom Ceiling
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 text-[10px] font-black flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                              Auto-Updated
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-1.5 self-end sm:self-auto">
+                          <button
+                            type="button"
+                            onClick={() => handleAdjustBudget(-5000)}
+                            className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-bold transition cursor-pointer active:scale-95 shadow-2xs"
+                            title="Decrease ceiling by ₹5,000"
+                          >
+                            -₹5,000
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleAdjustBudget(5000)}
+                            className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-bold transition cursor-pointer active:scale-95 shadow-2xs"
+                            title="Increase ceiling by ₹5,000"
+                          >
+                            +₹5,000
+                          </button>
+                          {isBudgetManual && (
+                            <button
+                              type="button"
+                              onClick={handleResetToAutoBudget}
+                              className="px-2.5 py-1 rounded-lg bg-orange-100 hover:bg-orange-200 text-[#ff5c28] text-xs font-bold transition cursor-pointer flex items-center gap-1"
+                              title="Reset back to recommended estimate"
+                            >
+                              <RotateCcw className="w-3 h-3" />
+                              <span>Reset (~₹{calculatedAutoBudget.toLocaleString()})</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 pt-0.5">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-2xl font-black text-slate-900 font-mono">
+                            ₹{numericBudget.toLocaleString()}
+                          </span>
+                          <span className="text-xs font-extrabold text-emerald-700">
+                            (Vendors must bid ≤ ₹{maxAcceptableBid.toLocaleString()} • Save min. ₹{guaranteedMinSavings.toLocaleString()})
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Service Breakdown Tags */}
+                      <div className="flex items-center gap-1.5 flex-wrap pt-1 text-[11px] text-slate-600 border-t border-orange-200/50">
+                        <span className="font-bold text-slate-500">Service Baseline:</span>
+                        {selectedCategories.map((c) => {
+                          const cost = getCategoryEstimatedPrice(
+                            c,
+                            typeof guestCount === 'number' ? guestCount : 200,
+                            eventType
+                          );
+                          return (
+                            <span key={c} className="px-2 py-0.5 rounded-md bg-white/95 border border-slate-200 font-medium">
+                              {c.split('&')[0].split('/')[0].trim()}: <strong className="text-slate-900 font-bold">~₹{cost.toLocaleString()}</strong>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
@@ -735,7 +957,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                         onClick={handleDetectLocation}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition cursor-pointer"
                       >
-                        <Navigation className="w-3.5 h-3.5 text-[#f07d4a]" />
+                        <Navigation className="w-3.5 h-3.5 text-[#ff5c28]" />
                         <span>Detect Location</span>
                       </button>
                     </div>
@@ -743,7 +965,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
-                          <MapPin className="w-3.5 h-3.5 text-[#f07d4a]" />
+                          <MapPin className="w-3.5 h-3.5 text-[#ff5c28]" />
                           <span>City / District *</span>
                         </label>
                         <input
@@ -776,7 +998,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                                 if (POPULAR_AREAS_BY_CITY[popCity]?.[0]) setArea(POPULAR_AREAS_BY_CITY[popCity][0]);
                               }}
                               className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer ${
-                                city === popCity ? 'bg-[#f07d4a] text-white shadow-2xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                city === popCity ? 'bg-[#ff5c28] text-white shadow-2xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                               }`}
                             >
                               {popCity}
@@ -811,7 +1033,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                                 type="button"
                                 onClick={() => setArea(popArea)}
                                 className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition cursor-pointer ${
-                                  area === popArea ? 'bg-orange-100 text-[#f07d4a] border border-orange-300 font-bold' : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'
+                                  area === popArea ? 'bg-orange-100 text-[#ff5c28] border border-orange-300 font-bold' : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'
                                 }`}
                               >
                                 {popArea}
@@ -852,7 +1074,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div>
                         <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
-                          <Calendar className="w-3.5 h-3.5 text-[#f07d4a]" />
+                          <Calendar className="w-3.5 h-3.5 text-[#ff5c28]" />
                           <span>Event Date *</span>
                         </label>
                         <input
@@ -946,7 +1168,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
 
                       <div>
                         <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
-                          <Users className="w-3.5 h-3.5 text-[#f07d4a]" />
+                          <Users className="w-3.5 h-3.5 text-[#ff5c28]" />
                           <span>Estimated Guests *</span>
                         </label>
                         <input
@@ -969,7 +1191,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                               type="button"
                               onClick={() => setGuestCount(count)}
                               className={`px-2 py-0.5 rounded text-[10.5px] font-bold transition cursor-pointer ${
-                                guestCount === count ? 'bg-[#f07d4a] text-white' : 'bg-slate-100 text-slate-700'
+                                guestCount === count ? 'bg-[#ff5c28] text-white' : 'bg-slate-100 text-slate-700'
                               }`}
                             >
                               {count}
@@ -988,7 +1210,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                           onClick={() => setGuestCount(tier.count)}
                           className={`p-3 rounded-2xl border text-left transition cursor-pointer flex items-center justify-between active:scale-95 ${
                             guestCount === tier.count
-                              ? 'border-[#f07d4a] bg-orange-50/60 text-slate-900 font-bold'
+                              ? 'border-[#ff5c28] bg-orange-50/60 text-slate-900 font-bold'
                               : 'border-slate-200 bg-slate-50/70 text-slate-600 hover:bg-slate-100'
                           }`}
                         >
@@ -996,10 +1218,27 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                             <span className="text-xs font-bold block">{tier.label}</span>
                             <span className="text-[11px] text-slate-500 font-medium">{tier.range}</span>
                           </div>
-                          {guestCount === tier.count && <Check className="w-4 h-4 text-[#f07d4a] shrink-0" />}
+                          {guestCount === tier.count && <Check className="w-4 h-4 text-[#ff5c28] shrink-0" />}
                         </button>
                       ))}
                     </div>
+
+                    {/* Dynamic Guest-Pricing Indicator */}
+                    {selectedCategories.some((c) => c.toLowerCase().includes('cater') || c.toLowerCase().includes('food')) && (
+                      <div className="p-3.5 rounded-2xl bg-amber-50/90 border border-amber-200 text-xs text-amber-950 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+                          <span>
+                            Catering scales dynamically: <strong>{guestCount || 0} guests × ~₹450/plate = ₹{((Number(guestCount) || 0) * 450).toLocaleString()}</strong>
+                          </span>
+                        </div>
+                        {!isBudgetManual && (
+                          <span className="text-emerald-800 font-bold text-[10.5px] bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                            Auto-updated in ceiling
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -1084,7 +1323,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                     <div className="space-y-2">
                       <label className="block text-xs font-bold text-slate-700 flex items-center justify-between">
                         <span className="flex items-center gap-1.5">
-                          <ImageIcon className="w-4 h-4 text-[#f07d4a]" />
+                          <ImageIcon className="w-4 h-4 text-[#ff5c28]" />
                           <span>Venue / Theme Inspiration Photos (Optional)</span>
                         </span>
                         <span className="text-[10px] text-slate-400 font-semibold">Max 8 photos</span>
@@ -1106,12 +1345,12 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                         >
                           {isUploadingImage ? (
                             <div className="flex flex-col items-center gap-2 py-3">
-                              <Loader2 className="w-7 h-7 text-[#f07d4a] animate-spin" />
+                              <Loader2 className="w-7 h-7 text-[#ff5c28] animate-spin" />
                               <span className="font-bold text-xs text-slate-700">Uploading photos to CDN...</span>
                             </div>
                           ) : (
                             <>
-                              <div className="w-10 h-10 rounded-full bg-white text-[#f07d4a] flex items-center justify-center shadow-xs">
+                              <div className="w-10 h-10 rounded-full bg-white text-[#ff5c28] flex items-center justify-center shadow-xs">
                                 <Upload className="w-5 h-5" />
                               </div>
                               <span className="font-extrabold text-xs sm:text-sm text-slate-800">
@@ -1133,7 +1372,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                               >
                                 <img src={imgUrl} alt="" className="w-full h-full object-cover" />
                                 {idx === 0 && (
-                                  <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[8.5px] font-black bg-[#f07d4a] text-white">
+                                  <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[8.5px] font-black bg-[#ff5c28] text-white">
                                     Cover
                                   </span>
                                 )}
@@ -1167,7 +1406,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                   <div className="rounded-3xl bg-gradient-to-br from-[#fffbf8] via-amber-50/50 to-[#fffbf8] border-2 border-amber-300 p-5 sm:p-7 shadow-xs space-y-5">
                     <div className="border-b border-amber-200 pb-3 flex items-center justify-between">
                       <div className="flex items-center gap-2.5">
-                        <span className="w-6 h-6 rounded-full bg-[#f07d4a] text-white text-xs font-bold flex items-center justify-center">
+                        <span className="w-6 h-6 rounded-full bg-[#ff5c28] text-white text-xs font-bold flex items-center justify-center">
                           1
                         </span>
                         <div>
@@ -1181,8 +1420,8 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-12 gap-5 items-center">
-                      <div className="sm:col-span-5 flex items-center bg-white border-2 border-[#f07d4a] rounded-2xl px-5 py-3.5 shadow-sm">
-                        <span className="text-2xl sm:text-3xl font-black text-[#f07d4a] mr-2.5">₹</span>
+                      <div className="sm:col-span-5 flex items-center bg-white border-2 border-[#ff5c28] rounded-2xl px-5 py-3.5 shadow-sm">
+                        <span className="text-2xl sm:text-3xl font-black text-[#ff5c28] mr-2.5">₹</span>
                         <input
                           type="number"
                           step="500"
@@ -1190,6 +1429,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                           value={budget}
                           onChange={(e) => {
                             const val = e.target.value;
+                            setIsBudgetManual(true);
                             setBudget(val === '' ? '' : parseInt(val, 10) || 0);
                           }}
                           placeholder="25000"
@@ -1217,14 +1457,33 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
 
                     {/* Quick Budget Presets */}
                     <div className="flex items-center gap-2 flex-wrap pt-1">
-                      <span className="text-xs font-bold text-slate-500">Suggested Ceilings:</span>
+                      <span className="text-xs font-bold text-slate-500">Recommended & Presets:</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsBudgetManual(false);
+                          setBudget(calculatedAutoBudget);
+                        }}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition cursor-pointer flex items-center gap-1.5 ${
+                          !isBudgetManual && budget === calculatedAutoBudget
+                            ? 'bg-[#ff5c28] text-white shadow-2xs'
+                            : 'bg-orange-50 border border-orange-300 text-orange-950 hover:bg-orange-100'
+                        }`}
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>Recommended (~₹{calculatedAutoBudget.toLocaleString()})</span>
+                      </button>
+
                       {BUDGET_PRESETS.map((amt) => (
                         <button
                           key={amt}
                           type="button"
-                          onClick={() => setBudget(amt)}
+                          onClick={() => {
+                            setIsBudgetManual(true);
+                            setBudget(amt);
+                          }}
                           className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition cursor-pointer ${
-                            budget === amt ? 'bg-[#f07d4a] text-white shadow-2xs' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                            budget === amt ? 'bg-[#ff5c28] text-white shadow-2xs' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
                           }`}
                         >
                           ₹{amt.toLocaleString()}
@@ -1318,7 +1577,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                     <button
                       type="button"
                       onClick={handleNextStep}
-                      className="flex-1 sm:flex-none px-6 py-3 min-h-[44px] rounded-xl bg-gradient-to-r from-orange-500 via-[#f07d4a] to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-extrabold text-xs sm:text-sm transition shadow-md shadow-orange-500/20 flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                      className="flex-1 sm:flex-none px-6 py-3 min-h-[44px] rounded-xl bg-gradient-to-r from-orange-500 via-[#ff5c28] to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-extrabold text-xs sm:text-sm transition shadow-md shadow-orange-500/20 flex items-center justify-center gap-2 cursor-pointer active:scale-95"
                     >
                       <span>Continue</span>
                       <ArrowRight className="w-4 h-4" />
@@ -1327,7 +1586,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                     <button
                       type="submit"
                       disabled={loading}
-                      className="flex-1 sm:flex-none px-7 py-3 min-h-[44px] rounded-xl bg-gradient-to-r from-orange-500 via-[#f07d4a] to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-extrabold text-xs sm:text-sm transition shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer active:scale-95"
+                      className="flex-1 sm:flex-none px-7 py-3 min-h-[44px] rounded-xl bg-gradient-to-r from-orange-500 via-[#ff5c28] to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-extrabold text-xs sm:text-sm transition shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer active:scale-95"
                     >
                       {loading ? (
                         <>
@@ -1365,7 +1624,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20" />
-                <span className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-black bg-[#fff5f0] text-[#f07d4a] border border-[#ffd7c2]">
+                <span className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-black bg-[#fff5f0] text-[#ff5c28] border border-[#ffd7c2]">
                   OPEN FOR BIDS
                 </span>
                 <span className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-black/50 backdrop-blur-md text-white text-[10px] font-bold">
@@ -1401,20 +1660,124 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                 </div>
               </div>
 
-              {/* Budget vs Max Allowed Bid */}
-              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Budget Ceiling</span>
-                  <span className="text-base font-black text-slate-900 font-mono">₹{numericBudget.toLocaleString()}</span>
+              {/* Budget vs Max Allowed Bid (Interactive Live Dynamic Card) */}
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">
+                      Budget Ceiling
+                    </span>
+                    {isBudgetManual ? (
+                      <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 text-[9.5px] font-black">
+                        Custom
+                      </span>
+                    ) : (
+                      <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-900 text-[9.5px] font-black flex items-center gap-0.5">
+                        <Sparkles className="w-2.5 h-2.5 text-emerald-600" />
+                        Auto
+                      </span>
+                    )}
+                  </div>
+
+                  {isBudgetManual ? (
+                    <button
+                      type="button"
+                      onClick={handleResetToAutoBudget}
+                      className="text-[10px] font-bold text-orange-600 hover:text-orange-700 hover:underline flex items-center gap-0.5 cursor-pointer"
+                      title="Reset back to recommended baseline"
+                    >
+                      <RotateCcw className="w-2.5 h-2.5" />
+                      <span>Reset (~₹{calculatedAutoBudget.toLocaleString()})</span>
+                    </button>
+                  ) : (
+                    <span className="text-[10px] font-semibold text-slate-500">
+                      {selectedCategories.length} {selectedCategories.length > 1 ? 'Services' : 'Service'}
+                    </span>
+                  )}
                 </div>
-                <div className="text-right">
-                  <span className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider block">Max Allowed Bid</span>
-                  <span className="text-base font-black text-emerald-600 font-mono">₹{maxAcceptableBid.toLocaleString()}</span>
+
+                <div className="flex items-center justify-between gap-2">
+                  {isEditingPreviewBudget ? (
+                    <div className="flex items-center gap-1 flex-1 bg-white border-2 border-[#ff5c28] rounded-xl px-2 py-1 shadow-inner">
+                      <span className="text-xs font-black text-[#ff5c28]">₹</span>
+                      <input
+                        type="number"
+                        step="500"
+                        min="1000"
+                        value={budget}
+                        autoFocus
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setIsBudgetManual(true);
+                          setBudget(val === '' ? '' : parseInt(val, 10) || 0);
+                        }}
+                        onBlur={() => setIsEditingPreviewBudget(false)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') setIsEditingPreviewBudget(false);
+                        }}
+                        className="w-full text-right font-black text-slate-900 text-sm focus:outline-none bg-transparent"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingPreviewBudget(false)}
+                        className="text-[11px] font-bold text-[#ff5c28] px-1 hover:underline cursor-pointer"
+                      >
+                        Done
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-lg font-black text-slate-900 font-mono">
+                        ₹{numericBudget.toLocaleString()}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingPreviewBudget(true)}
+                        className="p-1 rounded text-slate-400 hover:text-slate-800 hover:bg-slate-200 transition cursor-pointer"
+                        title="Click to edit budget directly"
+                      >
+                        <Pencil className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleAdjustBudget(-5000)}
+                      className="px-2 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-[10.5px] font-black transition cursor-pointer active:scale-95 shadow-2xs"
+                      title="Decrease ceiling by ₹5,000"
+                    >
+                      -5k
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleAdjustBudget(5000)}
+                      className="px-2 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-[10.5px] font-black transition cursor-pointer active:scale-95 shadow-2xs"
+                      title="Increase ceiling by ₹5,000"
+                    >
+                      +5k
+                    </button>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-slate-200/70 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] text-emerald-800 font-extrabold uppercase tracking-wider block">
+                      Max Allowed Bid
+                    </span>
+                    <span className="text-sm font-black text-emerald-600 font-mono">
+                      ₹{maxAcceptableBid.toLocaleString()}
+                    </span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                    15% Reverse Discount
+                  </span>
                 </div>
               </div>
 
               {/* Guaranteed Savings Highlight */}
-              <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-center space-y-0.5">
+              <div className="p-3 rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 text-center space-y-0.5 shadow-2xs">
                 <span className="text-[11px] font-black text-emerald-800 flex items-center justify-center gap-1">
                   <Sparkles className="w-3.5 h-3.5 text-emerald-600" /> Minimum Guaranteed Savings
                 </span>

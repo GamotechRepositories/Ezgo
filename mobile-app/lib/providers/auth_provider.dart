@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
@@ -219,8 +220,10 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       final GoogleSignIn googleSignIn = GoogleSignIn(
-        clientId: ApiConfig.googleAndroidClientId.isNotEmpty
-            ? ApiConfig.googleAndroidClientId
+        clientId: kIsWeb
+            ? (ApiConfig.googleServerClientId.isNotEmpty
+                ? ApiConfig.googleServerClientId
+                : null)
             : null,
         serverClientId: ApiConfig.googleServerClientId.isNotEmpty
             ? ApiConfig.googleServerClientId

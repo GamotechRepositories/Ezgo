@@ -229,7 +229,7 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
           <div className="flex items-center gap-3">
             <button
               onClick={() => onOpenPostModal()}
-              className="px-6 py-3.5 rounded-full bg-gradient-to-r from-[#f07d4a] to-orange-500 hover:from-[#de6a3a] hover:to-[#f07d4a] text-white font-black text-xs sm:text-sm shadow-lg shadow-slate-900/15 flex items-center gap-2 cursor-pointer transition active:scale-95 whitespace-nowrap min-h-[46px]"
+              className="px-6 py-3.5 rounded-full bg-gradient-to-r from-[#ff5c28] to-orange-500 hover:from-[#e64814] hover:to-[#ff5c28] text-white font-black text-xs sm:text-sm shadow-lg shadow-slate-900/15 flex items-center gap-2 cursor-pointer transition active:scale-95 whitespace-nowrap min-h-[46px]"
             >
               <Plus className="w-4 h-4 stroke-[3]" />
               <span>Post New Requirement</span>
@@ -289,7 +289,7 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
           </div>
 
           {/* Card 4: Escrow Protection Guarantee */}
-          <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-orange-500 to-[#de6a3a] text-white shadow-md shadow-slate-900/12 relative overflow-hidden flex flex-col justify-between">
+          <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-orange-500 to-[#e64814] text-white shadow-md shadow-slate-900/12 relative overflow-hidden flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <span className="text-xs font-black uppercase tracking-wider text-orange-100 flex items-center gap-1">
                 <Lock className="w-3.5 h-3.5" />
@@ -436,7 +436,7 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
             </div>
             <button
               onClick={() => onOpenPostModal()}
-              className="mt-2 px-6 py-3 rounded-full bg-[#f07d4a] hover:bg-[#de6a3a] text-white text-xs sm:text-sm font-bold shadow-md shadow-slate-900/12 inline-flex items-center gap-2 cursor-pointer transition active:scale-95"
+              className="mt-2 px-6 py-3 rounded-full bg-[#ff5c28] hover:bg-[#e64814] text-white text-xs sm:text-sm font-bold shadow-md shadow-slate-900/12 inline-flex items-center gap-2 cursor-pointer transition active:scale-95"
             >
               <Plus className="w-4 h-4" />
               <span>Post Event Requirement</span>
@@ -609,7 +609,7 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
                                 }}
                               />
                             ) : (
-                              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-400 to-[#f07d4a] text-white font-black text-lg flex items-center justify-center shadow-xs">
+                              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-400 to-[#ff5c28] text-white font-black text-lg flex items-center justify-center shadow-xs">
                                 {vendorName(b).charAt(0)}
                               </div>
                             )
@@ -780,7 +780,7 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
                                   onOpenReviewModal(b);
                                 })
                               }
-                              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#f07d4a] to-orange-500 hover:from-[#de6a3a] hover:to-[#f07d4a] disabled:opacity-60 text-white font-black text-xs sm:text-sm shadow-md shadow-orange-500/30 flex items-center justify-center gap-2 cursor-pointer transition active:scale-95"
+                              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#ff5c28] to-orange-500 hover:from-[#e64814] hover:to-[#ff5c28] disabled:opacity-60 text-white font-black text-xs sm:text-sm shadow-md shadow-orange-500/30 flex items-center justify-center gap-2 cursor-pointer transition active:scale-95"
                             >
                               <CheckCircle2 className="w-4 h-4" />
                               <span>Event Done • Release Payout</span>

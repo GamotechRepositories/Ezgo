@@ -3,16 +3,16 @@ import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // Soft coral for CTAs — lighter and richer than the old neon orange.
-  static const Color primary = Color(0xFFF07D4A);
-  static const Color primaryHover = Color(0xFFDE6A3A);
-  static const Color primaryLight = Color(0xFFFFF1EA);
-  static const Color primaryDark = Color(0xFFDE6A3A);
+  static const Color primary = Color(0xFFFF5C28);
+  static const Color primaryHover = Color(0xFFE64814);
+  static const Color primaryLight = Color(0xFFFFF2ED);
+  static const Color primaryDark = Color(0xFFE64814);
   static const Color ink = Color(0xFF17233D);
   static const Color teal = Color(0xFF0F766E);
   static const Color tealLight = Color(0xFFE6F4F1);
 
   static const LinearGradient primaryGradient = LinearGradient(
-    colors: [Color(0xFFF4A06C), Color(0xFFF07D4A)],
+    colors: [Color(0xFFFF8254), Color(0xFFFF5C28)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );

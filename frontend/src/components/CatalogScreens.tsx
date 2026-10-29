@@ -36,7 +36,7 @@ import type { PostRequirementInitialData } from '../types';
 type PostFn = (initial?: string | PostRequirementInitialData) => void;
 
 const occasionIcon = (type: OccasionItem['iconType']) => {
-  const cls = 'w-[18px] h-[18px] text-[#f07d4a]';
+  const cls = 'w-[18px] h-[18px] text-[#ff5c28]';
   if (type === 'rings') return <Sparkles className={cls} />;
   if (type === 'lotus') return <Flower2 className={cls} />;
   if (type === 'corporate') return <Briefcase className={cls} />;
@@ -128,7 +128,7 @@ export function ServiceCard({ service, onClick }: { service: EventServiceItem; o
       <div className="p-2.5 lg:p-3.5">
         <p className="text-[14px] font-extrabold truncate">{service.shortName}</p>
         <p className="text-[11.5px] font-bold text-slate-500 truncate">{service.priceRange}</p>
-        <span className="mt-2 flex items-center justify-center gap-1 h-8 rounded-full bg-gradient-to-r from-[#f4a06c] to-[#f07d4a] text-white text-[11.5px] font-extrabold">
+        <span className="mt-2 flex items-center justify-center gap-1 h-8 rounded-full bg-gradient-to-r from-[#ff8254] to-[#ff5c28] text-white text-[11.5px] font-extrabold">
           Get Bids <ArrowRight className="w-3 h-3" />
         </span>
       </div>
@@ -153,14 +153,14 @@ export function OtherRequestCard({
     <button
       type="button"
       onClick={onClick}
-      className={`bg-[#fff6f1] rounded-[18px] border-[1.4px] border-[#f07d4a]/40 p-3 text-center cursor-pointer min-h-[180px] h-full flex flex-col items-center ${className}`}
+      className={`bg-[#fff5f0] rounded-[18px] border-[1.4px] border-[#ff5c28]/40 p-3 text-center cursor-pointer min-h-[180px] h-full flex flex-col items-center ${className}`}
     >
       <span className="w-[42px] h-[42px] rounded-full bg-white shadow-[0_4px_8px_rgba(240,125,74,0.16)] flex items-center justify-center mt-1">
-        <Plus className="w-5 h-5 text-[#f07d4a]" />
+        <Plus className="w-5 h-5 text-[#ff5c28]" />
       </span>
       <p className="mt-2.5 text-[14.5px] font-extrabold text-[#17233d] leading-tight">{title}</p>
       <p className="mt-1 text-[11.5px] text-slate-500 font-medium leading-snug flex-1 px-1">{subtitle}</p>
-      <span className="mt-2 w-full py-1.5 rounded-full bg-gradient-to-r from-[#f4a06c] to-[#f07d4a] text-white text-[11.5px] font-extrabold inline-flex items-center justify-center gap-1">
+      <span className="mt-2 w-full py-1.5 rounded-full bg-gradient-to-r from-[#ff8254] to-[#ff5c28] text-white text-[11.5px] font-extrabold inline-flex items-center justify-center gap-1">
         {cta} <ArrowRight className="w-3 h-3" />
       </span>
     </button>
@@ -266,6 +266,7 @@ interface ServiceTheme {
   image: string;
   tag: string;
   priceNote: string;
+  startingBudget: number;
 }
 
 const DECORATION_THEMES: ServiceTheme[] = [
@@ -276,6 +277,7 @@ const DECORATION_THEMES: ServiceTheme[] = [
     image: '/occasion_weddings.jpg',
     tag: 'Weddings & Vivah',
     priceNote: 'Starts ~₹35,000',
+    startingBudget: 35000,
   },
   {
     id: 'sangeet-fairy-lights',
@@ -284,6 +286,7 @@ const DECORATION_THEMES: ServiceTheme[] = [
     image: '/occasion_parties.jpg',
     tag: 'Sangeet & Receptions',
     priceNote: 'Starts ~₹25,000',
+    startingBudget: 25000,
   },
   {
     id: 'haldi-mehendi',
@@ -292,6 +295,7 @@ const DECORATION_THEMES: ServiceTheme[] = [
     image: '/occasion_festivals.jpg',
     tag: 'Pre-Wedding Rituals',
     priceNote: 'Starts ~₹15,000',
+    startingBudget: 15000,
   },
   {
     id: 'pastel-geometric',
@@ -300,6 +304,7 @@ const DECORATION_THEMES: ServiceTheme[] = [
     image: '/occasion_birthdays.jpg',
     tag: 'Engagements & Birthdays',
     priceNote: 'Starts ~₹18,000',
+    startingBudget: 18000,
   },
 ];
 
@@ -316,6 +321,7 @@ const getServiceThemes = (filterKey: string): ServiceTheme[] => {
         image: '/occasion_parties.jpg',
         tag: 'Sangeet & Receptions',
         priceNote: 'Starts ~₹15,000',
+        startingBudget: 15000,
       },
       {
         id: 'concert-line-array',
@@ -324,6 +330,7 @@ const getServiceThemes = (filterKey: string): ServiceTheme[] => {
         image: '/occasion_festivals.jpg',
         tag: 'College & Corporate Fests',
         priceNote: 'Starts ~₹25,000',
+        startingBudget: 25000,
       },
     ];
   }
@@ -336,6 +343,7 @@ const getServiceThemes = (filterKey: string): ServiceTheme[] => {
         image: '/occasion_weddings.jpg',
         tag: 'Weddings',
         priceNote: 'Starts ~₹35,000',
+        startingBudget: 35000,
       },
       {
         id: 'event-traditional',
@@ -344,10 +352,34 @@ const getServiceThemes = (filterKey: string): ServiceTheme[] => {
         image: '/occasion_parties.jpg',
         tag: 'Parties & Corporate',
         priceNote: 'Starts ~₹15,000',
+        startingBudget: 15000,
       },
     ];
   }
   return [];
+};
+
+export const getServiceStartingBudget = (filterKey: string): number => {
+  switch (filterKey) {
+    case 'decor':
+      return 30000;
+    case 'dj':
+      return 18000;
+    case 'photography':
+      return 32000;
+    case 'catering':
+      return 45000;
+    case 'lighting':
+      return 15000;
+    case 'purohit':
+      return 8000;
+    case 'mehendi':
+      return 10000;
+    case 'tent-stage':
+      return 25000;
+    default:
+      return 20000;
+  }
 };
 
 export function ServiceDetailScreen({
@@ -381,7 +413,7 @@ export function ServiceDetailScreen({
               onClick={onBack}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200 text-slate-700 font-bold hover:bg-slate-50 hover:border-slate-300 transition cursor-pointer shadow-xs"
             >
-              <ChevronLeft className="w-4 h-4 text-[#f07d4a]" />
+              <ChevronLeft className="w-4 h-4 text-[#ff5c28]" />
               <span>Back to Services</span>
             </button>
             <span className="text-slate-300">/</span>
@@ -395,8 +427,8 @@ export function ServiceDetailScreen({
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
               Verified Local Vendors
             </span>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 border border-orange-200 text-[#f07d4a] text-xs font-extrabold">
-              <Sparkles className="w-3.5 h-3.5 text-[#f07d4a]" />
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 border border-orange-200 text-[#ff5c28] text-xs font-extrabold">
+              <Sparkles className="w-3.5 h-3.5 text-[#ff5c28]" />
               Save 15%+ via Reverse Bidding
             </span>
           </div>
@@ -453,8 +485,13 @@ export function ServiceDetailScreen({
               </div>
               <button
                 type="button"
-                onClick={() => onOpenPost(service.title)}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#f07d4a] to-[#e66c35] hover:opacity-95 text-white font-extrabold text-xs shadow-md transition cursor-pointer flex items-center gap-1.5"
+                onClick={() =>
+                  onOpenPost({
+                    category: service.title,
+                    budget: getServiceStartingBudget(service.filterKey),
+                  })
+                }
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#ff5c28] to-[#e66c35] hover:opacity-95 text-white font-extrabold text-xs shadow-md transition cursor-pointer flex items-center gap-1.5"
               >
                 <span>Get Bids</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -472,7 +509,7 @@ export function ServiceDetailScreen({
             {/* 4 Feature Pillars Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="bg-white rounded-2xl p-3.5 border border-slate-200/80 shadow-xs flex flex-col justify-between">
-                <span className="w-8 h-8 rounded-xl bg-orange-50 text-[#f07d4a] flex items-center justify-center font-bold mb-2">
+                <span className="w-8 h-8 rounded-xl bg-orange-50 text-[#ff5c28] flex items-center justify-center font-bold mb-2">
                   <Flower2 className="w-4 h-4" />
                 </span>
                 <div>
@@ -533,7 +570,7 @@ export function ServiceDetailScreen({
                   {themes.map((theme) => (
                     <div
                       key={theme.id}
-                      className="group relative rounded-2xl border border-slate-200/90 overflow-hidden bg-slate-50/50 hover:bg-white hover:border-[#f07d4a]/40 hover:shadow-md transition-all duration-200 flex flex-col"
+                      className="group relative rounded-2xl border border-slate-200/90 overflow-hidden bg-slate-50/50 hover:bg-white hover:border-[#ff5c28]/40 hover:shadow-md transition-all duration-200 flex flex-col"
                     >
                       <div className="relative h-44 overflow-hidden">
                         <img
@@ -550,7 +587,7 @@ export function ServiceDetailScreen({
                       </div>
                       <div className="p-4 flex-1 flex flex-col justify-between">
                         <div>
-                          <h3 className="font-extrabold text-[15px] text-[#17233d] group-hover:text-[#f07d4a] transition">
+                          <h3 className="font-extrabold text-[15px] text-[#17233d] group-hover:text-[#ff5c28] transition">
                             {theme.title}
                           </h3>
                           <p className="text-xs text-slate-600 mt-1.5 leading-relaxed line-clamp-3">
@@ -564,9 +601,10 @@ export function ServiceDetailScreen({
                               category: service.title,
                               title: `${theme.title} Setup`,
                               description: `Looking for ${theme.title} theme: ${theme.subtitle}`,
+                              budget: theme.startingBudget,
                             })
                           }
-                          className="mt-3.5 w-full py-2 rounded-xl bg-white border border-[#f07d4a]/40 hover:bg-[#fff6f1] text-[#f07d4a] font-extrabold text-xs transition cursor-pointer flex items-center justify-center gap-1.5"
+                          className="mt-3.5 w-full py-2 rounded-xl bg-white border border-[#ff5c28]/40 hover:bg-[#fff5f0] text-[#ff5c28] font-extrabold text-xs transition cursor-pointer flex items-center justify-center gap-1.5"
                         >
                           <span>Request this Theme</span>
                           <ArrowRight className="w-3.5 h-3.5" />
@@ -637,7 +675,7 @@ export function ServiceDetailScreen({
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col justify-between">
                   <div>
-                    <span className="w-7 h-7 rounded-full bg-[#fde7d8] text-[#f07d4a] text-xs font-black flex items-center justify-center mb-3">
+                    <span className="w-7 h-7 rounded-full bg-[#fde7d8] text-[#ff5c28] text-xs font-black flex items-center justify-center mb-3">
                       1
                     </span>
                     <p className="text-sm font-extrabold text-[#17233d]">Post Your Budget</p>
@@ -645,12 +683,12 @@ export function ServiceDetailScreen({
                       Enter your event date, city, area, and max budget. Free. Takes 1 minute.
                     </p>
                   </div>
-                  <p className="mt-3 text-[11px] font-bold text-[#f07d4a]">Zero upfront fees</p>
+                  <p className="mt-3 text-[11px] font-bold text-[#ff5c28]">Zero upfront fees</p>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col justify-between">
                   <div>
-                    <span className="w-7 h-7 rounded-full bg-[#fde7d8] text-[#f07d4a] text-xs font-black flex items-center justify-center mb-3">
+                    <span className="w-7 h-7 rounded-full bg-[#fde7d8] text-[#ff5c28] text-xs font-black flex items-center justify-center mb-3">
                       2
                     </span>
                     <p className="text-sm font-extrabold text-[#17233d]">Vendors Bid Lower</p>
@@ -663,7 +701,7 @@ export function ServiceDetailScreen({
 
                 <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col justify-between">
                   <div>
-                    <span className="w-7 h-7 rounded-full bg-[#fde7d8] text-[#f07d4a] text-xs font-black flex items-center justify-center mb-3">
+                    <span className="w-7 h-7 rounded-full bg-[#fde7d8] text-[#ff5c28] text-xs font-black flex items-center justify-center mb-3">
                       3
                     </span>
                     <p className="text-sm font-extrabold text-[#17233d]">Pay via Escrow</p>
@@ -731,15 +769,15 @@ export function ServiceDetailScreen({
               </div>
 
               {/* 15% Rule Callout Box */}
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-[#fff6f1] to-[#fde7d8]/60 border border-[#f07d4a]/30">
-                <div className="flex items-center gap-1.5 text-[#f07d4a] font-black text-xs">
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-[#fff5f0] to-[#fde7d8]/60 border border-[#ff5c28]/30">
+                <div className="flex items-center gap-1.5 text-[#ff5c28] font-black text-xs">
                   <Sparkles className="w-4 h-4 shrink-0" />
                   <span>The EzzyGo Advantage</span>
                 </div>
                 <p className="text-xs text-slate-700 mt-1.5 leading-relaxed font-medium">
                   You set the budget. Verified local vendors must bid <strong className="text-[#17233d]">at least 15% lower</strong> to compete for your event.
                 </p>
-                <div className="mt-2.5 pt-2 border-t border-[#f07d4a]/20 flex items-center justify-between text-[11px] font-extrabold text-[#17233d]">
+                <div className="mt-2.5 pt-2 border-t border-[#ff5c28]/20 flex items-center justify-between text-[11px] font-extrabold text-[#17233d]">
                   <span>On a ₹30,000 budget:</span>
                   <span className="text-emerald-700 font-black">Save min ₹4,500</span>
                 </div>
@@ -749,8 +787,13 @@ export function ServiceDetailScreen({
               <div>
                 <button
                   type="button"
-                  onClick={() => onOpenPost(service.title)}
-                  className="w-full h-14 rounded-2xl bg-gradient-to-r from-[#f07d4a] to-[#e66c35] hover:opacity-95 text-white font-black text-base shadow-lg shadow-[#f07d4a]/25 hover:shadow-[#f07d4a]/40 hover:scale-[1.01] active:scale-[0.99] transition flex items-center justify-center gap-2 cursor-pointer"
+                  onClick={() =>
+                    onOpenPost({
+                      category: service.title,
+                      budget: getServiceStartingBudget(service.filterKey),
+                    })
+                  }
+                  className="w-full h-14 rounded-2xl bg-gradient-to-r from-[#ff5c28] to-[#e66c35] hover:opacity-95 text-white font-black text-base shadow-lg shadow-[#ff5c28]/25 hover:shadow-[#ff5c28]/40 hover:scale-[1.01] active:scale-[0.99] transition flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <span>Get Bids for {service.shortName}</span>
                   <ArrowRight className="w-5 h-5" />
@@ -793,7 +836,7 @@ export function ServiceDetailScreen({
             {/* Concierge Help Callout */}
             <div className="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <span className="w-10 h-10 rounded-2xl bg-orange-50 text-[#f07d4a] flex items-center justify-center shrink-0">
+                <span className="w-10 h-10 rounded-2xl bg-orange-50 text-[#ff5c28] flex items-center justify-center shrink-0">
                   <MessageSquare className="w-5 h-5" />
                 </span>
                 <div>
@@ -823,8 +866,13 @@ export function ServiceDetailScreen({
       <div className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-[#e8edf2] px-4 pt-2.5 pb-[calc(env(safe-area-inset-bottom)+12px)] shadow-xl">
         <button
           type="button"
-          onClick={() => onOpenPost(service.title)}
-          className="w-full h-[50px] rounded-2xl bg-gradient-to-r from-[#f07d4a] to-[#e66c35] text-white font-extrabold text-[15px] cursor-pointer flex items-center justify-center gap-2 shadow-md shadow-[#f07d4a]/20"
+          onClick={() =>
+            onOpenPost({
+              category: service.title,
+              budget: getServiceStartingBudget(service.filterKey),
+            })
+          }
+          className="w-full h-[50px] rounded-2xl bg-gradient-to-r from-[#ff5c28] to-[#e66c35] text-white font-extrabold text-[15px] cursor-pointer flex items-center justify-center gap-2 shadow-md shadow-[#ff5c28]/20"
         >
           <span>Get bids for {service.shortName}</span>
           <ArrowRight className="w-4 h-4" />

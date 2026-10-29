@@ -95,7 +95,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenExplainer, onOpenPostModal
                       />
                       <button
                         type="submit"
-                        className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-orange-500 to-[#f07d4a] hover:from-orange-600 hover:to-[#f07d4a] text-white font-black text-xs shadow-md shadow-slate-900/15 flex items-center justify-center gap-1.5 shrink-0 cursor-pointer active:scale-95 transition-all"
+                        className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-orange-500 to-[#ff5c28] hover:from-orange-600 hover:to-[#ff5c28] text-white font-black text-xs shadow-md shadow-slate-900/15 flex items-center justify-center gap-1.5 shrink-0 cursor-pointer active:scale-95 transition-all"
                       >
                         <span>Subscribe</span>
                         <ArrowRight className="w-3.5 h-3.5" />

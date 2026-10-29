@@ -103,7 +103,7 @@ class RazorpayCheckout {
         'order_id': orderId,
         'timeout': 300,
         'retry': {'enabled': true, 'max_count': 1},
-        'theme': {'color': '#F07D4A'},
+        'theme': {'color': '#ff5c28'},
         if (prefill.isNotEmpty) 'prefill': prefill,
         'method': {
           'upi': true,

@@ -19,14 +19,17 @@ import {
   MapPin,
   Palette,
   PartyPopper,
+  Percent,
   Plus,
   Radio,
   Search,
   Shield,
   ShieldCheck,
   Sparkles,
+  TrendingDown,
   Utensils,
   Volume2,
+  Zap,
 } from 'lucide-react';
 import { EzzyGoLogo } from './EzzyGoLogo';
 import { PromoAdBanner } from './PromoAdBanner';
@@ -59,7 +62,7 @@ interface HostHomePageProps {
 }
 
 const occasionIcon = (type: OccasionItem['iconType']) => {
-  const cls = 'w-[18px] h-[18px] text-[#f07d4a]';
+  const cls = 'w-[18px] h-[18px] text-[#ff5c28]';
   if (type === 'rings') return <Sparkles className={cls} />;
   if (type === 'lotus') return <Flower2 className={cls} />;
   if (type === 'corporate') return <Briefcase className={cls} />;
@@ -84,6 +87,20 @@ const formatEventDate = (value?: string) => {
   if (Number.isNaN(d.getTime())) return value;
   return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 };
+
+export const getRequirementCoverImage = (req: Requirement): string => {
+  if (req.imageUrl) return req.imageUrl;
+  if (req.images && req.images.length > 0) return req.images[0];
+  const cat = (req.category || '').toLowerCase();
+  const evt = (req.eventType || '').toLowerCase();
+  if (cat.includes('cater') || evt.includes('cater') || cat.includes('food')) return '/service_catering.jpg';
+  if (cat.includes('wedding') || evt.includes('wedding') || evt.includes('engagement') || evt.includes('reception') || evt.includes('mandap')) return '/occasion_weddings.jpg';
+  if (cat.includes('birthday') || evt.includes('birthday') || evt.includes('baby') || cat.includes('balloon')) return '/occasion_birthdays.jpg';
+  if (cat.includes('corporate') || evt.includes('corporate') || evt.includes('conference') || evt.includes('seminar')) return '/occasion_corporate.jpg';
+  if (cat.includes('dj') || evt.includes('dj') || cat.includes('sound') || cat.includes('festival') || evt.includes('festival')) return '/occasion_festivals.jpg';
+  return '/occasion_parties.jpg';
+};
+
 
 const HOME_FAQS = [
   { q: 'How does the 15% rule work?', a: 'You can only accept a bid that is at least 15% below your budget.' },
@@ -110,13 +127,13 @@ export const HostHomePage: React.FC<HostHomePageProps> = ({
   const [heroService, setHeroService] = useState('Decoration');
   const [heroDate, setHeroDate] = useState('');
   const heroLocation = selectedCity || 'Pune, MH';
+  const [eventsTab, setEventsTab] = useState<'live' | 'all' | 'how'>('live');
 
   const city = (selectedCity || 'Pune').split(',')[0].trim();
   const ads = banners.filter((b) => b.isActive);
-  const compactReqs = requirements.filter((r) => r.status !== 'DRAFT').slice(0, 3);
+  const compactReqs = requirements.filter((r) => r.status !== 'DRAFT');
   const liveReqs = [...requirements.filter((r) => r.status === 'OPEN')]
-    .sort((a, b) => (b.bidsCount || b.bids?.length || 0) - (a.bidsCount || a.bids?.length || 0))
-    .slice(0, 3);
+    .sort((a, b) => (b.bidsCount || b.bids?.length || 0) - (a.bidsCount || a.bids?.length || 0));
   const liveCount = requirements.filter(
     (r) => r.status === 'OPEN' && ((r.bidsCount || 0) > 0 || (r.bids || []).length > 0)
   ).length;
@@ -188,7 +205,7 @@ export const HostHomePage: React.FC<HostHomePageProps> = ({
         </div>
 
         <div className="absolute left-5 right-5 bottom-5 z-10 text-white">
-          <span className="inline-block px-2.5 py-1 rounded-md bg-[#f07d4a] text-white text-[9.5px] font-black tracking-wider uppercase shadow-xs">
+          <span className="inline-block px-2.5 py-1 rounded-md bg-[#ff5c28] text-white text-[9.5px] font-black tracking-wider uppercase shadow-xs">
             REVERSE BIDDING
           </span>
           <h1 className="mt-2 text-[23px] font-black text-white leading-[1.15] tracking-tight drop-shadow-md">
@@ -199,7 +216,7 @@ export const HostHomePage: React.FC<HostHomePageProps> = ({
             <button
               type="button"
               onClick={() => onOpenPostModal()}
-              className="inline-flex items-center gap-1.5 px-4 py-[8.5px] rounded-full bg-[#f07d4a] text-white text-[13px] font-extrabold shadow-[0_3px_10px_rgba(240,125,74,0.35)] cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-[8.5px] rounded-full bg-[#ff5c28] text-white text-[13px] font-extrabold shadow-[0_3px_10px_rgba(240,125,74,0.35)] cursor-pointer"
             >
               Post Requirement
               <ArrowRight className="w-4 h-4" />
@@ -222,7 +239,7 @@ export const HostHomePage: React.FC<HostHomePageProps> = ({
           <div className="grid grid-cols-12 gap-8 items-center">
             <div className="col-span-12 xl:col-span-8 space-y-5">
               <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/95 backdrop-blur-md border border-amber-200/80 shadow-xs text-xs font-black text-[#17233d]">
-                <Sparkles className="w-3.5 h-3.5 text-[#f07d4a]" />
+                <Sparkles className="w-3.5 h-3.5 text-[#ff5c28]" />
                 <span>India&#39;s #1 Event Marketplace</span>
                 <span className="text-slate-300">•</span>
                 <span className="text-emerald-700 font-extrabold">Min. 15% Savings Guaranteed</span>
@@ -230,7 +247,7 @@ export const HostHomePage: React.FC<HostHomePageProps> = ({
             <h1 className="font-display text-5xl xl:text-[68px] font-extrabold text-[#0f172a] leading-[1.12] tracking-tight">
               Post your budget.<br />
               Vendors bid lower.<br />
-              <span className="text-[#f07d4a] font-extrabold">You pick the best one.</span>
+              <span className="text-[#ff5c28] font-extrabold">You pick the best one.</span>
             </h1>
             <p className="text-slate-600 text-base leading-relaxed max-w-xl font-medium">
               You set the max. Vendors bid under it. You pick the best one.
@@ -285,7 +302,7 @@ export const HostHomePage: React.FC<HostHomePageProps> = ({
               <button
                 type="button"
                 onClick={() => onOpenPostModal(heroService)}
-                className="px-6 py-3.5 rounded-full bg-[#f07d4a] hover:bg-[#de6a3a] text-white font-bold text-sm shadow-md flex items-center justify-center gap-2 shrink-0 cursor-pointer whitespace-nowrap"
+                className="px-6 py-3.5 rounded-full bg-[#ff5c28] hover:bg-[#e64814] text-white font-bold text-sm shadow-md flex items-center justify-center gap-2 shrink-0 cursor-pointer whitespace-nowrap"
               >
                 <span>Post Requirement</span>
                 <ArrowRight className="w-4 h-4" />
@@ -298,7 +315,7 @@ export const HostHomePage: React.FC<HostHomePageProps> = ({
               <div className="bg-white/90 backdrop-blur-md border border-white/70 p-4 rounded-3xl shadow-xl shadow-slate-950/10 max-w-xs space-y-2.5">
                 <div className="flex items-center justify-between gap-2">
                   <span className="px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 text-[#f07d4a]" /> 4K Ultra HD Decor
+                    <Sparkles className="w-3 h-3 text-[#ff5c28]" /> 4K Ultra HD Decor
                   </span>
                   <span className="text-[11px] font-black text-emerald-600 flex items-center gap-1">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Live Bidding
@@ -309,7 +326,7 @@ export const HostHomePage: React.FC<HostHomePageProps> = ({
                 </p>
                 <div className="flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-100">
                   <span className="font-bold text-slate-700">★ 4.9 (420+ Events)</span>
-                  <span className="text-[#f07d4a] font-extrabold">Save 15%+</span>
+                  <span className="text-[#ff5c28] font-extrabold">Save 15%+</span>
                 </div>
               </div>
             </div>
@@ -344,7 +361,7 @@ export const HostHomePage: React.FC<HostHomePageProps> = ({
               </span>
               <div className="mt-auto">
                 {!!ads[adIndex].discountPercent && ads[adIndex].discountPercent! > 0 && (
-                  <span className="inline-block mb-2 px-2.5 py-1 rounded-full bg-gradient-to-r from-[#f4a06c] to-[#f07d4a] text-white text-[10px] font-extrabold">
+                  <span className="inline-block mb-2 px-2.5 py-1 rounded-full bg-gradient-to-r from-[#ff8254] to-[#ff5c28] text-white text-[10px] font-extrabold">
                     Save {ads[adIndex].discountPercent}%
                   </span>
                 )}
@@ -360,7 +377,7 @@ export const HostHomePage: React.FC<HostHomePageProps> = ({
                   key={ad._id}
                   type="button"
                   onClick={() => setAdIndex(i)}
-                  className={`h-1.5 rounded-full cursor-pointer ${i === adIndex ? 'w-[18px] bg-[#f07d4a]' : 'w-1.5 bg-slate-300'}`}
+                  className={`h-1.5 rounded-full cursor-pointer ${i === adIndex ? 'w-[18px] bg-[#ff5c28]' : 'w-1.5 bg-slate-300'}`}
                 />
               ))}
             </div>
@@ -411,7 +428,7 @@ export const HostHomePage: React.FC<HostHomePageProps> = ({
             <div className="col-span-4 space-y-6">
               <div className="flex items-center gap-3">
                 <span className="text-xs font-black uppercase tracking-[0.2em] text-[#17233d]">FOR EVERY OCCASION</span>
-                <div className="w-12 h-[2.5px] bg-[#f07d4a] rounded-full" />
+                <div className="w-12 h-[2.5px] bg-[#ff5c28] rounded-full" />
               </div>
               <h2 className="font-editorial text-5xl xl:text-[56px] font-black text-[#0f172a] leading-[1.06] tracking-tight">
                 Find the Right <br />
@@ -423,7 +440,7 @@ export const HostHomePage: React.FC<HostHomePageProps> = ({
               <button
                 type="button"
                 onClick={() => onOpenServices?.()}
-                className="inline-flex items-center gap-2.5 px-8 py-4 rounded-full bg-gradient-to-r from-[#f07d4a] to-[#f4a06c] hover:from-[#de6a3a] text-white font-bold text-sm shadow-xl shadow-orange-500/30 cursor-pointer"
+                className="inline-flex items-center gap-2.5 px-8 py-4 rounded-full bg-gradient-to-r from-[#ff5c28] to-[#ff8254] hover:from-[#e64814] text-white font-bold text-sm shadow-xl shadow-orange-500/30 cursor-pointer"
               >
                 <span>Explore All Services</span>
                 <ArrowRight className="w-4 h-4" />
@@ -472,7 +489,7 @@ export const HostHomePage: React.FC<HostHomePageProps> = ({
                           </div>
                           <span className="font-editorial text-lg font-bold text-white drop-shadow truncate">{occ.name}</span>
                         </div>
-                        <div className="w-8 h-8 rounded-full border border-white/70 bg-black/35 flex items-center justify-center text-white shrink-0 group-hover:bg-[#f07d4a]">
+                        <div className="w-8 h-8 rounded-full border border-white/70 bg-black/35 flex items-center justify-center text-white shrink-0 group-hover:bg-[#ff5c28]">
                           <ArrowRight className="w-4 h-4" />
                         </div>
                       </div>
@@ -482,14 +499,14 @@ export const HostHomePage: React.FC<HostHomePageProps> = ({
                 <button
                   type="button"
                   onClick={() => openOccasion('Other')}
-                  className="relative w-[252px] h-[380px] shrink-0 rounded-[38px] overflow-hidden group cursor-pointer border border-[#f07d4a]/30 bg-[#fff6f1] shadow-[0_22px_45px_-12px_rgba(30,20,10,0.18)] flex flex-col items-center justify-center px-6 text-center"
+                  className="relative w-[252px] h-[380px] shrink-0 rounded-[38px] overflow-hidden group cursor-pointer border border-[#ff5c28]/30 bg-[#fff5f0] shadow-[0_22px_45px_-12px_rgba(30,20,10,0.18)] flex flex-col items-center justify-center px-6 text-center"
                 >
                   <span className="w-14 h-14 rounded-full bg-white shadow-md flex items-center justify-center">
-                    <Plus className="w-6 h-6 text-[#f07d4a]" />
+                    <Plus className="w-6 h-6 text-[#ff5c28]" />
                   </span>
                   <span className="mt-4 font-editorial text-2xl font-bold text-[#17233d]">Other Events</span>
                   <span className="mt-2 text-sm text-slate-500 font-medium">Not listed? Post it and vendors will bid.</span>
-                  <span className="mt-6 inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-gradient-to-r from-[#f07d4a] to-[#f4a06c] text-white text-sm font-extrabold">
+                  <span className="mt-6 inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-gradient-to-r from-[#ff5c28] to-[#ff8254] text-white text-sm font-extrabold">
                     Post Request <ArrowRight className="w-4 h-4" />
                   </span>
                 </button>
@@ -541,7 +558,7 @@ export const HostHomePage: React.FC<HostHomePageProps> = ({
               <button
                 type="button"
                 onClick={() => onOpenPostModal()}
-                className="px-7 py-3.5 rounded-full bg-gradient-to-r from-[#f07d4a] to-orange-500 text-white text-sm font-black shadow-lg flex items-center gap-2 cursor-pointer"
+                className="px-7 py-3.5 rounded-full bg-gradient-to-r from-[#ff5c28] to-orange-500 text-white text-sm font-black shadow-lg flex items-center gap-2 cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 Post Custom Requirement
@@ -567,7 +584,7 @@ export const HostHomePage: React.FC<HostHomePageProps> = ({
                   type="button"
                   onClick={() => setServiceFilter(pill)}
                   className={`px-3.5 py-1.5 rounded-full text-xs font-bold cursor-pointer ${
-                    serviceFilter === pill ? 'bg-[#f07d4a] text-white' : 'bg-white text-slate-700 border border-slate-200'
+                    serviceFilter === pill ? 'bg-[#ff5c28] text-white' : 'bg-white text-slate-700 border border-slate-200'
                   }`}
                 >
                   {pill}
@@ -610,7 +627,7 @@ export const HostHomePage: React.FC<HostHomePageProps> = ({
                       <span className="flex items-center gap-1 text-emerald-700"><CheckCircle2 className="w-3.5 h-3.5" /> Verified Local Pros</span>
                       <span className="flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5" /> Escrow Safe</span>
                     </div>
-                    <span className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#f07d4a] to-orange-500 text-white text-xs font-bold flex items-center justify-center gap-2">
+                    <span className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#ff5c28] to-orange-500 text-white text-xs font-bold flex items-center justify-center gap-2">
                       Get Free Bids for {s.shortName}
                       <ArrowRight className="w-3.5 h-3.5" />
                     </span>
@@ -628,189 +645,169 @@ export const HostHomePage: React.FC<HostHomePageProps> = ({
         </div>
       </section>
 
-      {/* Mobile my events + live bidding */}
-      <div className="lg:hidden">
-      <section className="px-4 pt-6">
-        <div className="flex items-center gap-3">
-          <h2 className="flex-1 text-[17px] font-extrabold text-[#17233d]">My Events</h2>
-          {compactReqs.length > 0 && (
-            <button type="button" onClick={() => onOpenMyEvents?.()} className="text-[13px] font-bold text-[#17233d] cursor-pointer">View All</button>
-          )}
-          <button type="button" onClick={() => onOpenPostModal()} className="text-[13px] font-bold text-[#17233d] cursor-pointer">+ New</button>
-        </div>
-        <div className="mt-3 space-y-3">
-          {compactReqs.length === 0 ? (
-            <EmptyCard
-              icon={<ClipboardList className="w-8 h-8 text-[#17233d]" />}
-              title="No events yet"
-              text="Post your budget. Vendors bid lower."
-              cta="Post Event"
-              onCta={() => onOpenPostModal()}
-            />
-          ) : (
-            compactReqs.map((req) => {
-              const bids = req.bidsCount || req.bids?.length || 0;
-              return (
-                <button key={req._id} type="button" onClick={() => onOpenMyEvents?.()} className="w-full text-left bg-white rounded-[20px] border border-[#e8edf2] p-3.5 cursor-pointer">
-                  <div className="flex justify-between gap-2">
-                    <p className="text-[15px] font-extrabold text-slate-900 truncate">{req.title}</p>
-                    <span className="text-[10px] font-extrabold text-[#f07d4a] bg-[#fff7ed] border border-[#ffd7c2] px-2 py-0.5 rounded-full shrink-0">{req.status}</span>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1">{req.location?.city} · {formatEventDate(req.eventDate)}</p>
-                  <div className="flex justify-between mt-2 text-xs font-extrabold">
-                    <span>₹{req.budget.toLocaleString()}</span>
-                    <span className="text-[#0f766e]">{bids > 0 ? `${bids} bid${bids === 1 ? '' : 's'}` : 'Waiting'}</span>
-                  </div>
-                </button>
-              );
-            })
-          )}
-        </div>
-      </section>
-
-      <section className="px-4 pt-6">
-        <div className="flex items-center gap-2">
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0f766e] opacity-60" />
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#0f766e]" />
-          </span>
-          <h2 className="flex-1 text-[17px] font-extrabold text-[#17233d]">Live Bidding</h2>
-          {liveCount > 0 && <span className="px-2 py-0.5 rounded-full bg-[#e6f6f1] text-[#0f766e] text-[11px] font-extrabold">{liveCount} live</span>}
-          <button type="button" onClick={() => onOpenMyEvents?.()} className="text-[13px] font-bold text-[#17233d] cursor-pointer">View All</button>
-        </div>
-        <div className="mt-3 space-y-3">
-          {liveReqs.length === 0 ? (
-            <EmptyCard
-              icon={<div className="w-11 h-11 rounded-[14px] bg-[#e6f6f1] text-[#0f766e] flex items-center justify-center"><Radio className="w-5 h-5" /></div>}
-              title="No live bids yet"
-              text="Bids will show here after you post."
-            />
-          ) : (
-            liveReqs.map((req) => {
-              const bids = req.bidsCount || req.bids?.length || 0;
-              const savePct = req.lowestBid && req.budget > 0 ? Math.round(((req.budget - req.lowestBid) / req.budget) * 100) : 0;
-              return (
-                <button key={req._id} type="button" onClick={() => onOpenMyEvents?.()} className={`w-full text-left bg-white rounded-[20px] p-3.5 border cursor-pointer ${bids > 0 ? 'border-emerald-200' : 'border-[#e8edf2]'}`}>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${bids > 0 ? 'bg-[#e8f8f0] text-[#0f766e]' : 'bg-[#fff1ea] text-[#f07d4a]'}`}>
-                      {bids > 0 ? 'LIVE' : 'WAITING'}
-                    </span>
-                    <span className="text-xs font-bold text-slate-500">{bids > 0 ? `${bids} vendors bidding` : 'Vendors notified'}</span>
-                  </div>
-                  <p className="text-[15px] font-extrabold mt-2 line-clamp-2">{req.title}</p>
-                  <div className="flex justify-between mt-2 text-xs font-extrabold">
-                    <span className="text-slate-500">Budget ₹{req.budget.toLocaleString()}</span>
-                    {req.lowestBid ? <span className="text-[#0f766e]">Lowest ₹{req.lowestBid.toLocaleString()}{savePct ? ` · ${savePct}% below` : ''}</span> : <span className="text-slate-400">No bids yet</span>}
-                  </div>
-                </button>
-              );
-            })
-          )}
-        </div>
-      </section>
-      </div>
-
-      {/* Desktop my events + live bidding */}
-      <section className="hidden lg:block w-full bg-[#f8fafc] py-14">
-        <div className="w-full max-w-[1600px] mx-auto px-8 lg:px-14 space-y-10">
-          <div>
-            <div className="flex items-end justify-between mb-6">
-              <div>
-                <h2 className="font-editorial text-4xl font-black text-[#0f172a] tracking-tight">My Events</h2>
-                <p className="text-slate-500 text-sm font-semibold mt-1">
-                  {requirements.length === 0
-                    ? 'Posted requests and vendor bids'
-                    : `${requirements.length} event${requirements.length === 1 ? '' : 's'} posted`}
-                </p>
+      {/* Unified Live Reverse Bidding & My Events Command Center (Mobile & Desktop) */}
+      <section className="w-full bg-gradient-to-b from-[#f8fafc] via-[#f1f5f9]/70 to-[#f8fafc] py-10 lg:py-16 border-y border-slate-200/80">
+        <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 space-y-8">
+          
+          {/* Header */}
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 border border-orange-200 text-[#ff5c28] text-xs font-black tracking-wide mb-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ff5c28] opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#ff5c28]" />
+                </span>
+                <span>REVERSE AUCTION COMMAND CENTER</span>
               </div>
-              <div className="flex items-center gap-3">
-                <button type="button" onClick={() => onOpenMyEvents?.()} className="px-4 py-2 rounded-full bg-white border border-slate-200 text-sm font-bold text-[#17233d] cursor-pointer">View All</button>
-                <button type="button" onClick={() => onOpenPostModal()} className="px-5 py-2.5 rounded-full bg-[#f07d4a] text-white text-sm font-extrabold cursor-pointer">+ New Post</button>
-              </div>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">
+                Live Bidding & <span className="text-[#ff5c28]">My Events</span>
+              </h2>
+              <p className="mt-1 text-xs sm:text-sm text-slate-600 max-w-2xl font-medium">
+                Verified local vendors bid downwards to win your event. Guaranteed minimum 15% savings, held securely in Escrow.
+              </p>
             </div>
-            {compactReqs.length === 0 ? (
-              <div className="bg-white rounded-3xl border border-slate-200 px-10 py-12 flex items-center gap-8">
-                <div className="w-16 h-16 rounded-2xl bg-slate-50 text-[#17233d] flex items-center justify-center shrink-0">
-                  <ClipboardList className="w-8 h-8" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-xl font-extrabold text-slate-900">No events yet</p>
-                  <p className="text-sm text-slate-500 mt-1">Post your budget. Vendors bid lower. You pick the best one.</p>
-                </div>
-                <button type="button" onClick={() => onOpenPostModal()} className="px-6 py-3 rounded-xl bg-[#f07d4a] text-white font-extrabold text-sm cursor-pointer shrink-0">
-                  Post Event
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-3 gap-5">
-                {compactReqs.map((req) => {
-                  const bids = req.bidsCount || req.bids?.length || 0;
-                  const img = req.imageUrl || req.images?.[0];
-                  return (
-                    <button key={req._id} type="button" onClick={() => onOpenMyEvents?.()} className="text-left bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-lg transition cursor-pointer">
-                      {img && <img src={img} alt="" className="h-36 w-full object-cover" />}
-                      <div className="p-5">
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="text-lg font-extrabold text-slate-900 line-clamp-2">{req.title}</p>
-                          <span className="text-[10px] font-extrabold text-[#f07d4a] bg-[#fff7ed] border border-[#ffd7c2] px-2 py-0.5 rounded-full shrink-0">{req.status}</span>
-                        </div>
-                        <p className="text-sm text-slate-500 mt-2">{req.location?.city} · {formatEventDate(req.eventDate)}</p>
-                        <div className="flex justify-between mt-4 text-sm font-extrabold">
-                          <span>Budget ₹{req.budget.toLocaleString()}</span>
-                          <span className="text-[#0f766e]">{bids > 0 ? `${bids} bid${bids === 1 ? '' : 's'}` : 'Waiting'}</span>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+
+            {/* Header Actions */}
+            <div className="flex items-center gap-2.5 shrink-0 self-start lg:self-end">
+              <button
+                type="button"
+                onClick={() => onOpenMyEvents?.()}
+                className="px-4 py-2.5 rounded-full bg-white border border-slate-300 hover:border-slate-400 text-xs sm:text-sm font-bold text-slate-800 transition shadow-2xs cursor-pointer active:scale-95"
+              >
+                View Dashboard ({requirements.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => onOpenPostModal()}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-[#ff5c28] to-[#e64814] hover:from-[#e64814] hover:to-[#d03d0d] text-white text-xs sm:text-sm font-black shadow-md shadow-orange-500/25 transition cursor-pointer active:scale-95"
+              >
+                <Plus className="w-4 h-4 stroke-[3]" />
+                <span>+ Post New Event</span>
+              </button>
+            </div>
           </div>
 
-          <div>
-            <div className="flex items-center gap-2 mb-6">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0f766e] opacity-60" />
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#0f766e]" />
-              </span>
-              <h2 className="font-editorial text-4xl font-black text-[#0f172a] tracking-tight flex-1">Live Bidding</h2>
-              {liveCount > 0 && <span className="px-3 py-1 rounded-full bg-[#e6f6f1] text-[#0f766e] text-xs font-extrabold">{liveCount} live</span>}
-              <button type="button" onClick={() => onOpenMyEvents?.()} className="text-sm font-bold text-[#17233d] cursor-pointer">View All</button>
+          {/* Interactive Navigation Pills */}
+          <div className="flex items-center justify-between gap-3 border-b border-slate-200/90 pb-3 flex-wrap">
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-1">
+              <button
+                type="button"
+                onClick={() => setEventsTab('live')}
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-extrabold transition cursor-pointer ${
+                  eventsTab === 'live'
+                    ? 'bg-[#ff5c28] text-white shadow-sm shadow-orange-500/20'
+                    : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
+                }`}
+              >
+                <span className="relative flex h-2 w-2">
+                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${eventsTab === 'live' ? 'bg-white' : 'bg-[#ff5c28]'} opacity-75`} />
+                  <span className={`relative inline-flex rounded-full h-2 w-2 ${eventsTab === 'live' ? 'bg-white' : 'bg-[#ff5c28]'}`} />
+                </span>
+                <span>Live Bidding Stream</span>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                  eventsTab === 'live' ? 'bg-white/20 text-white' : 'bg-orange-50 text-[#ff5c28]'
+                }`}>
+                  {liveCount} Active
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setEventsTab('all')}
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-extrabold transition cursor-pointer ${
+                  eventsTab === 'all'
+                    ? 'bg-[#ff5c28] text-white shadow-sm shadow-orange-500/20'
+                    : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
+                }`}
+              >
+                <ClipboardList className="w-3.5 h-3.5" />
+                <span>All My Events</span>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                  eventsTab === 'all' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
+                }`}>
+                  {compactReqs.length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setEventsTab('how')}
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-extrabold transition cursor-pointer ${
+                  eventsTab === 'how'
+                    ? 'bg-[#17233d] text-white shadow-sm'
+                    : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                <span>How Reverse Bidding Works</span>
+              </button>
             </div>
-            {liveReqs.length === 0 ? (
-              <div className="bg-white rounded-3xl border border-slate-200 px-10 py-10 flex items-center gap-6">
-                <div className="w-14 h-14 rounded-2xl bg-[#e6f6f1] text-[#0f766e] flex items-center justify-center">
-                  <Radio className="w-6 h-6" />
-                </div>
-                <div>
-                  <p className="text-lg font-extrabold">No live bids yet</p>
-                  <p className="text-sm text-slate-500 mt-1">Bids will show here after you post an event.</p>
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-3 gap-5">
-                {liveReqs.map((req) => {
-                  const bids = req.bidsCount || req.bids?.length || 0;
-                  const savePct = req.lowestBid && req.budget > 0 ? Math.round(((req.budget - req.lowestBid) / req.budget) * 100) : 0;
-                  return (
-                    <button key={req._id} type="button" onClick={() => onOpenMyEvents?.()} className={`text-left bg-white rounded-3xl p-5 border shadow-sm hover:shadow-lg transition cursor-pointer ${bids > 0 ? 'border-emerald-200' : 'border-slate-200'}`}>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${bids > 0 ? 'bg-[#e8f8f0] text-[#0f766e]' : 'bg-[#fff1ea] text-[#f07d4a]'}`}>
-                          {bids > 0 ? 'LIVE' : 'WAITING'}
-                        </span>
-                        <span className="text-xs font-bold text-slate-500">{bids > 0 ? `${bids} vendors bidding` : 'Vendors notified'}</span>
-                      </div>
-                      <p className="text-lg font-extrabold mt-3 line-clamp-2">{req.title}</p>
-                      <div className="flex justify-between mt-4 text-sm font-extrabold">
-                        <span className="text-slate-500">Budget ₹{req.budget.toLocaleString()}</span>
-                        {req.lowestBid ? <span className="text-[#0f766e]">Lowest ₹{req.lowestBid.toLocaleString()}{savePct ? ` · ${savePct}%` : ''}</span> : <span className="text-slate-400">No bids yet</span>}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+
+            <div className="hidden md:flex items-center gap-2 text-xs font-bold text-slate-500">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <span>100% Escrow Protected Payments</span>
+            </div>
           </div>
+
+          {/* TAB 1: Live Bidding Stream */}
+          {eventsTab === 'live' && (
+            <div>
+              {liveReqs.length === 0 ? (
+                <EmptyReverseBiddingState onOpenPost={() => onOpenPostModal()} />
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {liveReqs.slice(0, 6).map((req) => (
+                    <LiveBiddingCard
+                      key={req._id}
+                      req={req}
+                      onOpenMyEvents={onOpenMyEvents}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 2: All My Events */}
+          {eventsTab === 'all' && (
+            <div>
+              {compactReqs.length === 0 ? (
+                <div className="bg-white rounded-3xl border border-slate-200/90 p-8 sm:p-12 text-center max-w-xl mx-auto shadow-2xs">
+                  <div className="w-16 h-16 rounded-2xl bg-orange-50 text-[#ff5c28] flex items-center justify-center mx-auto mb-4">
+                    <ClipboardList className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-xl font-black text-slate-900">No events posted yet</h3>
+                  <p className="mt-2 text-sm text-slate-500 leading-relaxed">
+                    Post your event requirement with your budget ceiling. Local verified vendors will compete with bids to give you the lowest price.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => onOpenPostModal()}
+                    className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-[#ff5c28] to-[#e64814] text-white font-black text-sm shadow-md shadow-orange-500/20 hover:shadow-lg transition cursor-pointer active:scale-95"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Post Your First Event</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {compactReqs.slice(0, 6).map((req) => (
+                    <MyEventItemCard
+                      key={req._id}
+                      req={req}
+                      onOpenMyEvents={onOpenMyEvents}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 3: How Reverse Bidding Works */}
+          {eventsTab === 'how' && (
+            <ReverseBiddingExplainerSection onOpenPost={() => onOpenPostModal()} />
+          )}
+
         </div>
       </section>
 
@@ -897,7 +894,7 @@ function ServiceCard({ service, onClick }: { service: EventServiceItem; onClick:
       <div className="p-2.5">
         <p className="text-[14px] font-extrabold truncate">{service.shortName}</p>
         <p className="text-[11.5px] font-bold text-slate-500 truncate">{service.priceRange}</p>
-        <span className="mt-2 flex items-center justify-center gap-1 h-8 rounded-full bg-gradient-to-r from-[#f4a06c] to-[#f07d4a] text-white text-[11.5px] font-extrabold">
+        <span className="mt-2 flex items-center justify-center gap-1 h-8 rounded-full bg-gradient-to-r from-[#ff8254] to-[#ff5c28] text-white text-[11.5px] font-extrabold">
           Get Bids <ArrowRight className="w-3 h-3" />
         </span>
       </div>
@@ -905,17 +902,396 @@ function ServiceCard({ service, onClick }: { service: EventServiceItem; onClick:
   );
 }
 
-function EmptyCard({ icon, title, text, cta, onCta }: { icon: React.ReactNode; title: string; text: string; cta?: string; onCta?: () => void }) {
+
+
+
+function LiveBiddingCard({
+  req,
+  onOpenMyEvents,
+}: {
+  req: Requirement;
+  onOpenMyEvents?: () => void;
+}) {
+  const bids = req.bidsCount || req.bids?.length || 0;
+  const lowestBid = req.lowestBid || (req.bids && req.bids.length > 0 ? Math.min(...req.bids.map(b => b.amount)) : null);
+  const maxAllowed = req.maxAcceptableBid || Math.round(req.budget * 0.85);
+  const saved = lowestBid && req.budget > 0 ? Math.max(0, req.budget - lowestBid) : 0;
+  const savePct = lowestBid && req.budget > 0 ? Math.round((saved / req.budget) * 100) : 0;
+  const coverImg = getRequirementCoverImage(req);
+
   return (
-    <div className="bg-white rounded-[20px] border border-[#e8edf2] px-4 py-5 text-center">
-      <div className="flex justify-center">{icon}</div>
-      <p className="mt-2.5 text-[15px] font-extrabold">{title}</p>
-      <p className="mt-1 text-xs text-slate-500">{text}</p>
-      {cta && (
-        <button type="button" onClick={onCta} className="mt-3.5 w-full h-11 rounded-[14px] bg-[#f07d4a] text-white font-extrabold text-sm cursor-pointer">
-          {cta}
+    <div
+      onClick={() => onOpenMyEvents?.()}
+      className="group relative bg-white rounded-3xl border border-slate-200/90 shadow-2xs hover:shadow-xl hover:border-orange-300 transition-all duration-300 overflow-hidden flex flex-col text-left cursor-pointer"
+    >
+      {/* Cover Image with Live Badge & Overlay */}
+      <div className="relative h-44 sm:h-48 w-full overflow-hidden bg-slate-900">
+        <img
+          src={coverImg}
+          alt={req.title}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/35 to-black/20" />
+
+        {/* Top Badges */}
+        <div className="absolute top-3.5 left-3.5 right-3.5 flex items-center justify-between gap-2">
+          {bids > 0 ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-600/95 text-white text-[11px] font-black tracking-wide backdrop-blur-md shadow-sm border border-emerald-400/30">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-90" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
+              </span>
+              {bids} VENDOR{bids === 1 ? '' : 'S'} BIDDING
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/95 text-white text-[11px] font-black tracking-wide backdrop-blur-md shadow-sm border border-amber-300/30">
+              <Radio className="w-3 h-3 animate-pulse" />
+              AUCTION OPEN · NOTIFYING
+            </span>
+          )}
+
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white text-[10.5px] font-black">
+            <Percent className="w-3 h-3 text-emerald-400 stroke-[3]" />
+            ≥15% Savings
+          </span>
+        </div>
+
+        {/* Bottom Details Over Image */}
+        <div className="absolute bottom-3 left-3.5 right-3.5 flex items-center justify-between gap-2 text-white text-xs font-bold">
+          <span className="px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-[11px] font-extrabold border border-white/20 truncate max-w-[150px]">
+            {req.category}
+          </span>
+          <span className="flex items-center gap-1 text-[11.5px] font-semibold text-slate-200 drop-shadow-sm">
+            <MapPin className="w-3.5 h-3.5 text-[#ff8254]" />
+            {req.location?.area || req.location?.city || 'Pune'} · {formatEventDate(req.eventDate)}
+          </span>
+        </div>
+      </div>
+
+      {/* Card Body */}
+      <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1.5">
+            {req.eventType && (
+              <span className="px-2 py-0.5 rounded-md bg-orange-50 text-[10.5px] font-extrabold text-[#ff5c28]">
+                {req.eventType}
+              </span>
+            )}
+            <span className="text-[11px] font-semibold text-slate-500">
+              {req.guestCount || 50} Guests
+            </span>
+          </div>
+
+          <h3 className="text-base sm:text-[17px] font-black text-slate-900 line-clamp-2 leading-snug group-hover:text-[#ff5c28] transition-colors">
+            {req.title}
+          </h3>
+        </div>
+
+        {/* Reverse Bidding Pricing Comparison Box */}
+        <div className="rounded-2xl bg-gradient-to-br from-slate-50 via-white to-orange-50/30 p-3.5 border border-slate-200/90 space-y-2.5">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Budget Ceiling</p>
+              <p className="text-sm sm:text-base font-black text-slate-700">₹{req.budget.toLocaleString()}</p>
+            </div>
+
+            <div className="w-7 h-7 rounded-full bg-orange-100 text-[#ff5c28] flex items-center justify-center shrink-0">
+              <TrendingDown className="w-3.5 h-3.5 stroke-[2.5]" />
+            </div>
+
+            <div className="text-right">
+              <p className="text-[10px] font-black uppercase tracking-wider text-emerald-700">
+                {lowestBid ? 'Lowest Bid' : 'Max Allowed Bid'}
+              </p>
+              <p className={`text-sm sm:text-base font-black ${lowestBid ? 'text-emerald-600' : 'text-slate-600'}`}>
+                ₹{(lowestBid || maxAllowed).toLocaleString()}
+              </p>
+            </div>
+          </div>
+
+          {/* Dynamic Savings Strip */}
+          <div className="pt-2 border-t border-slate-200/70">
+            {lowestBid ? (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs font-black">
+                  <span className="text-emerald-700 flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-emerald-600" />
+                    You Save ₹{saved.toLocaleString()}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black">
+                    {savePct}% Below Ceiling
+                  </span>
+                </div>
+                <div className="w-full h-1.5 rounded-full bg-slate-200/80 overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
+                    style={{ width: `${Math.min(100, Math.max(15, savePct))}%` }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between text-xs font-bold text-slate-600">
+                <span className="flex items-center gap-1 text-[#ff5c28]">
+                  <Zap className="w-3.5 h-3.5" />
+                  15% Savings Guaranteed
+                </span>
+                <span className="text-slate-500 text-[11px]">
+                  Save ≥ ₹{Math.round(req.budget * 0.15).toLocaleString()}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Action Button & Escrow Note */}
+        <div>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenMyEvents?.();
+            }}
+            className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#ff5c28] to-[#e64814] hover:from-[#e64814] hover:to-[#d03d0d] text-white text-xs font-black flex items-center justify-center gap-2 shadow-sm shadow-orange-500/20 transition-all cursor-pointer group-hover:shadow-md"
+          >
+            <span>{bids > 0 ? `Review ${bids} Competing Bid${bids === 1 ? '' : 's'}` : 'View Auction Details'}</span>
+            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+          </button>
+          <p className="mt-2 text-center text-[11px] font-bold text-slate-500 flex items-center justify-center gap-1">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+            <span>100% Escrow Protected · Zero Risk</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MyEventItemCard({
+  req,
+  onOpenMyEvents,
+}: {
+  req: Requirement;
+  onOpenMyEvents?: () => void;
+}) {
+  const bids = req.bidsCount || req.bids?.length || 0;
+  const coverImg = getRequirementCoverImage(req);
+  const open = req.status === 'OPEN';
+
+  return (
+    <div
+      onClick={() => onOpenMyEvents?.()}
+      className="group relative bg-white rounded-3xl border border-slate-200/90 shadow-2xs hover:shadow-lg hover:border-slate-300 transition-all duration-300 overflow-hidden flex flex-col text-left cursor-pointer"
+    >
+      <div className="relative h-40 w-full overflow-hidden bg-slate-900">
+        <img
+          src={coverImg}
+          alt={req.title}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
+
+        <span
+          className={`absolute top-3 left-3 px-3 py-1 rounded-full text-[10.5px] font-black tracking-wide shadow-xs ${
+            open
+              ? 'bg-[#fff7ed] text-[#ff5c28] border border-[#ffd7c2]'
+              : req.status === 'ACCEPTED' || req.status === 'ACTIVE'
+                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                : 'bg-white text-slate-700 border border-slate-200'
+          }`}
+        >
+          {req.status}
+        </span>
+
+        <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md text-white text-[10.5px] font-bold">
+          {req.category}
+        </span>
+
+        <div className="absolute bottom-2.5 left-3.5 right-3.5 flex items-center justify-between text-white text-xs font-bold">
+          <span className="flex items-center gap-1">
+            <MapPin className="w-3 h-3 text-[#ff8254]" />
+            {req.location?.area || req.location?.city || 'Pune'}
+          </span>
+          <span>{formatEventDate(req.eventDate)}</span>
+        </div>
+      </div>
+
+      <div className="p-5 flex-1 flex flex-col justify-between space-y-3">
+        <div>
+          <h3 className="text-base font-black text-slate-900 line-clamp-2 leading-snug group-hover:text-[#ff5c28] transition-colors">
+            {req.title}
+          </h3>
+          <p className="mt-1 text-xs text-slate-500">
+            {req.eventType ? `${req.eventType} · ` : ''}{req.guestCount || 50} Guests
+          </p>
+        </div>
+
+        <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Budget</p>
+            <p className="text-sm font-black text-slate-900">₹{req.budget.toLocaleString()}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Bids Received</p>
+            <p className={`text-sm font-black ${bids > 0 ? 'text-emerald-600' : 'text-slate-500'}`}>
+              {bids > 0 ? `${bids} bid${bids === 1 ? '' : 's'}` : 'Awaiting bids'}
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenMyEvents?.();
+          }}
+          className="w-full py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-[#ff5c28] hover:text-white text-slate-800 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
+        >
+          <span>Manage Event & Quotes</span>
+          <ArrowRight className="w-3.5 h-3.5" />
         </button>
-      )}
+      </div>
+    </div>
+  );
+}
+
+function EmptyReverseBiddingState({ onOpenPost }: { onOpenPost: () => void }) {
+  return (
+    <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-10 shadow-2xs">
+      <div className="max-w-4xl mx-auto space-y-8">
+        
+        {/* Top Header */}
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-black">
+            <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+            <span>HOW REVERSE BIDDING WORKS</span>
+          </div>
+          <h3 className="text-2xl sm:text-3xl font-black text-slate-900">
+            Post Your Budget. Verified Vendors Compete Lower.
+          </h3>
+          <p className="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto font-medium">
+            No endless calling or stressful haggling. You set the ceiling, vendors bid downwards, and you get guaranteed 15% – 35% savings.
+          </p>
+        </div>
+
+        {/* 3 Step Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="p-5 rounded-2xl bg-gradient-to-b from-slate-50 to-white border border-slate-200/80 space-y-2">
+            <div className="w-10 h-10 rounded-xl bg-orange-100 text-[#ff5c28] flex items-center justify-center font-black text-sm">
+              1
+            </div>
+            <h4 className="text-base font-black text-slate-900">Set Budget Ceiling</h4>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Post what you need (e.g. Mandap, DJ, Catering) and your maximum budget ceiling (e.g. ₹50,000).
+            </p>
+          </div>
+
+          <div className="p-5 rounded-2xl bg-gradient-to-b from-emerald-50/50 to-white border border-emerald-200/80 space-y-2">
+            <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-black text-sm">
+              2
+            </div>
+            <h4 className="text-base font-black text-slate-900">Vendors Bid Downward</h4>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Verified local pros review your event and submit lower quotes. Rule: Bids must be at least 15% below your budget.
+            </p>
+          </div>
+
+          <div className="p-5 rounded-2xl bg-gradient-to-b from-blue-50/50 to-white border border-blue-200/80 space-y-2">
+            <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-black text-sm">
+              3
+            </div>
+            <h4 className="text-base font-black text-slate-900">100% Escrow Protection</h4>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Choose the best vendor proposal. Payment is safely locked in Escrow and released only after your event is done!
+            </p>
+          </div>
+        </div>
+
+        {/* Live Simulation Banner */}
+        <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-md">
+          <div className="space-y-1.5 text-center md:text-left">
+            <span className="text-[10px] font-black uppercase tracking-widest text-[#ff8254]">
+              Real Example Simulation
+            </span>
+            <h4 className="text-lg font-black">Wedding Stage Decoration · Pune</h4>
+            <p className="text-xs text-slate-300">
+              Budget Ceiling: <span className="line-through text-slate-400">₹50,000</span> ➔ Winning Vendor Bid: <span className="text-emerald-400 font-black text-sm">₹38,000</span>
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="px-3.5 py-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/15 text-center">
+              <p className="text-[10px] uppercase font-bold text-slate-300">Host Saved</p>
+              <p className="text-base font-black text-emerald-400">₹12,000 (24%)</p>
+            </div>
+            <button
+              type="button"
+              onClick={onOpenPost}
+              className="px-6 py-3 rounded-full bg-gradient-to-r from-[#ff5c28] to-[#e64814] hover:from-[#e64814] hover:to-[#d03d0d] text-white font-black text-xs sm:text-sm shadow-md transition cursor-pointer active:scale-95"
+            >
+              Post Your Event ➔
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+function ReverseBiddingExplainerSection({ onOpenPost }: { onOpenPost: () => void }) {
+  return (
+    <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-10 shadow-2xs space-y-8">
+      <div className="text-center max-w-2xl mx-auto space-y-2">
+        <h3 className="text-2xl sm:text-3xl font-black text-slate-900">
+          The EzzyGo Reverse Bidding Advantage
+        </h3>
+        <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
+          Why pay standard inflated vendor rates? Reverse bidding puts the power back into host hands with complete pricing transparency and safety.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="p-6 rounded-2xl bg-orange-50/50 border border-orange-100 space-y-3">
+          <div className="w-12 h-12 rounded-2xl bg-orange-100 text-[#ff5c28] flex items-center justify-center">
+            <Percent className="w-6 h-6 stroke-[2.5]" />
+          </div>
+          <h4 className="text-lg font-black text-slate-900">Guaranteed ≥15% Savings</h4>
+          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+            Our platform algorithm strictly enforces that vendors cannot submit bids unless they discount at least 15% below your specified budget ceiling.
+          </p>
+        </div>
+
+        <div className="p-6 rounded-2xl bg-emerald-50/50 border border-emerald-100 space-y-3">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+            <ShieldCheck className="w-6 h-6 stroke-[2.5]" />
+          </div>
+          <h4 className="text-lg font-black text-slate-900">Escrow Security Guarantee</h4>
+          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+            Your payment is held safely in escrow. The vendor only receives payment after you confirm in the app that the event was completed satisfactorily.
+          </p>
+        </div>
+
+        <div className="p-6 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-3">
+          <div className="w-12 h-12 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center">
+            <Zap className="w-6 h-6 stroke-[2.5]" />
+          </div>
+          <h4 className="text-lg font-black text-slate-900">Zero Negotiation Stress</h4>
+          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+            No haggling, awkward calls, or surprise extra fees on event day. You get competitive quotes upfront and pick your favorite with full clarity.
+          </p>
+        </div>
+      </div>
+
+      <div className="text-center pt-4">
+        <button
+          type="button"
+          onClick={onOpenPost}
+          className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-gradient-to-r from-[#ff5c28] to-[#e64814] text-white font-black text-sm shadow-md shadow-orange-500/25 hover:shadow-lg transition cursor-pointer active:scale-95"
+        >
+          <Plus className="w-4 h-4 stroke-[3]" />
+          <span>Post an Event & Experience Live Bidding</span>
+        </button>
+      </div>
     </div>
   );
 }

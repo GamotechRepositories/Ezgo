@@ -41,7 +41,7 @@ class FlipkartBottomNav extends StatefulWidget {
     this.badgeCount = 0,
     this.badgeCounts = const [],
     this.accountInitial,
-    this.activeColor = const Color(0xFFF07D4A),
+    this.activeColor = const Color(0xFFFF5C28),
     this.badgeIconKey,
   });
 
