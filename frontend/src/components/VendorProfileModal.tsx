@@ -30,17 +30,17 @@ export const VendorUnlockedCard: React.FC<{
     : 'my event';
 
   return (
-    <div className={`rounded-2xl border text-left ${compact ? 'p-4' : 'p-5'} bg-orange-50/80 border-orange-200 space-y-4`}>
+    <div className={`rounded-2xl border text-left ${compact ? 'p-4' : 'p-5'} bg-slate-50/80 border-slate-200 space-y-4`}>
       <div className="flex items-start gap-3">
         {vendor?.avatar ? (
-          <img src={vendor.avatar} alt="" className="w-14 h-14 rounded-2xl object-cover border border-orange-200" />
+          <img src={vendor.avatar} alt="" className="w-14 h-14 rounded-2xl object-cover border border-slate-200" />
         ) : (
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-400 to-[#f95724] text-white font-black text-xl flex items-center justify-center">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-400 to-[#f07d4a] text-white font-black text-xl flex items-center justify-center">
             {name.charAt(0)}
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-bold uppercase tracking-wider text-orange-800">Your vendor</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-800">Your vendor</p>
           <h4 className="text-lg font-bold text-slate-900 leading-tight truncate">{name}</h4>
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-600 mt-1">
             {vendor?.isVerified && (
@@ -58,7 +58,7 @@ export const VendorUnlockedCard: React.FC<{
             ) : null}
             {vendor?.serviceArea && (
               <span className="inline-flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5 text-orange-500" />
+                <MapPin className="w-3.5 h-3.5 text-slate-600" />
                 {vendor.serviceArea}
               </span>
             )}
@@ -67,15 +67,15 @@ export const VendorUnlockedCard: React.FC<{
       </div>
 
       <div className="grid grid-cols-3 gap-2">
-        <div className="rounded-xl bg-white border border-orange-100 p-2.5 text-center">
+        <div className="rounded-xl bg-white border border-slate-100 p-2.5 text-center">
           <div className="text-lg font-black text-slate-900">{vendor?.completedJobs ?? 0}</div>
           <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Events done</div>
         </div>
-        <div className="rounded-xl bg-white border border-orange-100 p-2.5 text-center">
+        <div className="rounded-xl bg-white border border-slate-100 p-2.5 text-center">
           <div className="text-lg font-black text-slate-900">{vendor?.rating?.toFixed(1) ?? '—'}</div>
           <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Rating</div>
         </div>
-        <div className="rounded-xl bg-white border border-orange-100 p-2.5 text-center">
+        <div className="rounded-xl bg-white border border-slate-100 p-2.5 text-center">
           <div className="text-lg font-black text-slate-900">{vendor?.reviewCount ?? 0}</div>
           <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Reviews</div>
         </div>
@@ -168,7 +168,7 @@ export const VendorProfileModal: React.FC<{
         <VendorUnlockedCard booking={booking} />
         <button
           onClick={onClose}
-          className="mt-4 w-full py-3 rounded-2xl bg-[#f95724] hover:bg-[#e04818] text-white font-semibold cursor-pointer"
+          className="mt-4 w-full py-3 rounded-2xl bg-[#f07d4a] hover:bg-[#de6a3a] text-white font-semibold cursor-pointer"
         >
           Done
         </button>

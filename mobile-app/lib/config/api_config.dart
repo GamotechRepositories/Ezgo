@@ -2,8 +2,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ApiConfig {
   // Configured via mobile-app/.env file.
-  // Defaults to Wi-Fi LAN IP (192.168.1.42:5000) for real devices,
-  // or localhost:5000 with 'adb reverse tcp:5000 tcp:5000'.
+  // Defaults to this PC's Wi-Fi LAN IP for a physical phone.
+  // Update mobile-app/.env BACKEND_URL if the PC IP changes.
   static String get baseUrl {
     final envUrl = dotenv.env['BACKEND_URL'];
     if (envUrl != null && envUrl.trim().isNotEmpty) {
@@ -13,7 +13,7 @@ class ApiConfig {
     if (dartEnvUrl.isNotEmpty) {
       return dartEnvUrl;
     }
-    return 'http://192.168.1.42:5000/api';
+    return 'http://192.168.1.33:5000/api';
   }
 
   static const String demoAccounts = '/auth/demo-accounts';
@@ -48,6 +48,7 @@ class ApiConfig {
   static const String profile = '/auth/profile';
   static const String upload = '/upload';
   static const String vendorPortalUrl = 'https://vendor.ezzygo.in';
+  static const String hostPortalUrl = 'https://ezzygo.in';
   static const String supportWhatsApp = 'https://wa.me/919322054199?text=Hello%20EzzyGo%20Team%2C%20I%20need%20help%20with%20my%20event%20booking';
   static const String supportPhone = 'tel:+919322054199';
   static const String supportEmail = 'mailto:support@ezzygo.in';

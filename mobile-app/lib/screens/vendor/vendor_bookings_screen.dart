@@ -5,7 +5,9 @@ import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../models/booking_model.dart';
 import '../../providers/bookings_provider.dart';
+import '../../widgets/pull_refresh.dart';
 import '../../widgets/shell_bottom_insets.dart';
+import '../../widgets/vendor_ui.dart';
 import '../host/vendor_profile_screen.dart';
 
 class VendorBookingsScreen extends StatefulWidget {
@@ -16,7 +18,8 @@ class VendorBookingsScreen extends StatefulWidget {
 }
 
 class _VendorBookingsScreenState extends State<VendorBookingsScreen> {
-  static final _rupees = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
+  static final _pretty = DateFormat('EEE, d MMM yyyy');
+  String _filter = 'ALL';
 
   @override
   void initState() {
@@ -29,7 +32,7 @@ class _VendorBookingsScreenState extends State<VendorBookingsScreen> {
   String _label(String status) {
     switch (status.toUpperCase()) {
       case 'AWAITING_PAYMENT':
-        return 'Waiting for host payment';
+        return 'Waiting for pay';
       case 'ACTIVE':
         return 'Confirmed';
       case 'COMPLETED':
@@ -47,16 +50,54 @@ class _VendorBookingsScreenState extends State<VendorBookingsScreen> {
   Color _color(String status) {
     switch (status.toUpperCase()) {
       case 'AWAITING_PAYMENT':
-        return const Color(0xFFD97706);
+        return AppTheme.amber;
       case 'ACTIVE':
         return AppTheme.emerald;
       case 'COMPLETED':
       case 'PAYOUT_RELEASED':
-        return AppTheme.slate600;
+        return AppTheme.teal;
       case 'CANCELLED':
         return AppTheme.rose;
       default:
         return AppTheme.primary;
+    }
+  }
+
+  String _fmtDate(String raw) {
+    final parsed = DateTime.tryParse(raw) ??
+        DateTime.tryParse(raw.length >= 10 ? raw.substring(0, 10) : raw);
+    if (parsed == null) return raw.isEmpty ? 'Date TBA' : raw;
+    return _pretty.format(parsed.toLocal());
+  }
+
+  bool _isDone(BookingModel b) {
+    final s = b.status.toUpperCase();
+    return s == 'COMPLETED' || s == 'PAYOUT_RELEASED';
+  }
+
+  List<BookingModel> _filtered(List<BookingModel> bookings) {
+    switch (_filter) {
+      case 'PAY':
+        return bookings.where((b) => b.status.toUpperCase() == 'AWAITING_PAYMENT').toList();
+      case 'ACTIVE':
+        return bookings.where((b) => b.status.toUpperCase() == 'ACTIVE').toList();
+      case 'DONE':
+        return bookings.where(_isDone).toList();
+      default:
+        return bookings;
+    }
+  }
+
+  int get _segmentIndex {
+    switch (_filter) {
+      case 'PAY':
+        return 1;
+      case 'ACTIVE':
+        return 2;
+      case 'DONE':
+        return 3;
+      default:
+        return 0;
     }
   }
 
@@ -65,22 +106,43 @@ class _VendorBookingsScreenState extends State<VendorBookingsScreen> {
     final provider = context.watch<BookingsProvider>();
     final bookings = provider.bookings;
     final loading = provider.isLoading && bookings.isEmpty;
+    final waiting = bookings.where((b) => b.status.toUpperCase() == 'AWAITING_PAYMENT').toList();
+    final confirmed = bookings.where((b) => b.status.toUpperCase() == 'ACTIVE').toList();
+    final done = bookings.where(_isDone).toList();
+    final visible = _filtered(bookings);
+    final earned = done.fold<int>(0, (sum, b) => sum + b.bidAmount);
+    final pipeline = [...waiting, ...confirmed].fold<int>(0, (sum, b) => sum + b.bidAmount);
 
-    return RefreshIndicator(
-      color: AppTheme.primary,
+    return PullRefresh(
       onRefresh: () => context.read<BookingsProvider>().loadData(),
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(16, 16, 16, ShellBottomInsets.of(context)),
+        padding: ShellBottomInsets.listPadding(context),
         children: [
-          const Text(
-            'My Vendor Jobs',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppTheme.slate900),
+          VendorInkHero(
+            eyebrow: 'Confirmed work',
+            title: 'My jobs',
+            subtitle: 'Host name, phone and WhatsApp unlock after they pay escrow.',
+            stats: [
+              VendorHeroStat(value: VendorMoney.of(pipeline), label: 'In pipeline'),
+              VendorHeroStat(value: VendorMoney.of(earned), label: 'Earned'),
+              VendorHeroStat(value: '${confirmed.length}', label: 'Live jobs'),
+            ],
           ),
-          const SizedBox(height: 6),
-          const Text(
-            'After the host pays, their name, phone, WhatsApp and email unlock here.',
-            style: TextStyle(color: AppTheme.slate600, fontSize: 13, height: 1.35),
+          const SizedBox(height: 16),
+          VendorSegmentBar(
+            selectedIndex: _segmentIndex,
+            items: [
+              VendorSegmentItem(label: 'All', count: bookings.length),
+              VendorSegmentItem(label: 'Waiting', count: waiting.length),
+              VendorSegmentItem(label: 'Live', count: confirmed.length),
+              VendorSegmentItem(label: 'Done', count: done.length),
+            ],
+            onChanged: (index) {
+              setState(() {
+                _filter = const ['ALL', 'PAY', 'ACTIVE', 'DONE'][index];
+              });
+            },
           ),
           const SizedBox(height: 16),
           if (loading)
@@ -89,103 +151,181 @@ class _VendorBookingsScreenState extends State<VendorBookingsScreen> {
               child: Center(child: CircularProgressIndicator(color: AppTheme.primary)),
             )
           else if (bookings.isEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 72),
-              child: Column(
-                children: [
-                  Icon(LucideIcons.briefcase, size: 40, color: AppTheme.primary.withValues(alpha: 0.7)),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'No accepted jobs yet',
-                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
-                  ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'When a host selects your bid, it will show here instantly.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 13, color: AppTheme.slate500, height: 1.4),
-                  ),
-                ],
-              ),
+            const VendorEmptyState(
+              icon: LucideIcons.briefcase,
+              title: 'No accepted jobs yet',
+              message: 'When a host selects your reverse bid, the job lands here instantly.',
+            )
+          else if (visible.isEmpty)
+            VendorEmptyState(
+              icon: LucideIcons.filter,
+              title: 'Nothing in this filter',
+              message: 'Switch back to All to see every accepted job.',
+              actionLabel: 'Show all jobs',
+              onAction: () => setState(() => _filter = 'ALL'),
             )
           else
-            ...bookings.map((b) => _jobCard(b)),
+            ...visible.map((b) => Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: _JobCard(
+                    booking: b,
+                    statusLabel: _label(b.status),
+                    statusColor: _color(b.status),
+                    dateLabel: _fmtDate(b.eventDate),
+                  ),
+                )),
         ],
       ),
     );
   }
+}
 
-  Widget _jobCard(BookingModel b) {
-    final color = _color(b.status);
+class _JobCard extends StatelessWidget {
+  final BookingModel booking;
+  final String statusLabel;
+  final Color statusColor;
+  final String dateLabel;
+
+  const _JobCard({
+    required this.booking,
+    required this.statusLabel,
+    required this.statusColor,
+    required this.dateLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final b = booking;
     final paid = b.isEscrowPaid;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
+    return VendorSurface(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.slate200),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  _label(b.status),
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: color),
-                ),
-              ),
+              VendorStatusPill(label: statusLabel, color: statusColor),
               const Spacer(),
               Text(
-                'You get ${_rupees.format(b.bidAmount)}',
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+                VendorMoney.of(b.bidAmount),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.ink,
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Text(b.requirementTitle, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
-          if (b.locationText.trim().isNotEmpty && b.locationText.trim() != ',') ...[
-            const SizedBox(height: 4),
-            Text(b.locationText, style: const TextStyle(fontSize: 12, color: AppTheme.slate600)),
+          const SizedBox(height: 2),
+          const Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              'You receive 100%',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.slate500),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            b.requirementTitle,
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppTheme.ink),
+          ),
+          if (b.category.trim().isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              b.category,
+              style: TextStyle(
+                fontSize: 12,
+                color: vendorCategoryColor(b.category),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              const Icon(LucideIcons.calendar, size: 14, color: AppTheme.slate400),
+              const SizedBox(width: 6),
+              Text(
+                dateLabel,
+                style: const TextStyle(fontSize: 12, color: AppTheme.slate600, fontWeight: FontWeight.w600),
+              ),
+              if (b.locationText.trim().isNotEmpty && b.locationText.trim() != ',') ...[
+                const SizedBox(width: 12),
+                const Icon(LucideIcons.mapPin, size: 14, color: AppTheme.primary),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    b.locationText,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 12, color: AppTheme.slate600),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 14),
           Container(
-            padding: const EdgeInsets.all(12),
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: paid ? AppTheme.emeraldLight : AppTheme.amberLight,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: paid ? AppTheme.emerald.withValues(alpha: 0.25) : AppTheme.amber.withValues(alpha: 0.3)),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: paid
+                    ? AppTheme.emerald.withValues(alpha: 0.22)
+                    : AppTheme.amber.withValues(alpha: 0.28),
+              ),
             ),
-            child: paid ? _hostUnlocked(b) : _hostLocked(),
+            child: paid ? _HostUnlocked(booking: b) : const _HostLocked(),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _hostLocked() {
+class _HostLocked extends StatelessWidget {
+  const _HostLocked();
+
+  @override
+  Widget build(BuildContext context) {
     return const Row(
       children: [
-        Icon(LucideIcons.lock, size: 18, color: AppTheme.amber),
-        SizedBox(width: 10),
+        CircleAvatar(
+          radius: 20,
+          backgroundColor: Colors.white,
+          child: Icon(LucideIcons.lock, size: 16, color: AppTheme.amber),
+        ),
+        SizedBox(width: 12),
         Expanded(
-          child: Text(
-            'Host contact unlocks after they pay escrow.',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.slate700, height: 1.35),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Host contact locked',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppTheme.ink),
+              ),
+              SizedBox(height: 2),
+              Text(
+                'Name, phone and WhatsApp unlock after escrow payment.',
+                style: TextStyle(fontSize: 12, height: 1.35, color: AppTheme.slate600),
+              ),
+            ],
           ),
         ),
       ],
     );
   }
+}
 
-  Widget _hostUnlocked(BookingModel b) {
+class _HostUnlocked extends StatelessWidget {
+  final BookingModel booking;
+  const _HostUnlocked({required this.booking});
+
+  @override
+  Widget build(BuildContext context) {
+    final b = booking;
     final initial = b.hostName.isNotEmpty ? b.hostName[0].toUpperCase() : 'H';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -205,21 +345,22 @@ class _VendorBookingsScreenState extends State<VendorBookingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('HOST DETAILS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppTheme.emerald)),
+                  const Text(
+                    'HOST UNLOCKED',
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppTheme.emerald, letterSpacing: 0.6),
+                  ),
                   Text(b.hostName, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
                   if (b.hostPhone.isNotEmpty)
                     Text(b.hostPhone, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.slate700)),
-                  if (b.hostEmail.isNotEmpty)
-                    Text(b.hostEmail, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.slate700)),
                 ],
               ),
             ),
           ],
         ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            if (b.hostPhone.isNotEmpty) ...[
+        if (b.hostPhone.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Row(
+            children: [
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () => launchVendorCall(b.hostPhone),
@@ -228,7 +369,8 @@ class _VendorBookingsScreenState extends State<VendorBookingsScreen> {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppTheme.emerald,
                     side: BorderSide(color: AppTheme.emerald.withValues(alpha: 0.4)),
-                    minimumSize: const Size.fromHeight(42),
+                    minimumSize: const Size.fromHeight(44),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
               ),
@@ -245,13 +387,15 @@ class _VendorBookingsScreenState extends State<VendorBookingsScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.emerald,
                     foregroundColor: Colors.white,
-                    minimumSize: const Size.fromHeight(42),
+                    minimumSize: const Size.fromHeight(44),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
               ),
             ],
-          ],
-        ),
+          ),
+        ],
         if (b.hostEmail.isNotEmpty) ...[
           const SizedBox(height: 8),
           SizedBox(
@@ -263,6 +407,7 @@ class _VendorBookingsScreenState extends State<VendorBookingsScreen> {
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppTheme.slate700,
                 minimumSize: const Size.fromHeight(42),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
           ),

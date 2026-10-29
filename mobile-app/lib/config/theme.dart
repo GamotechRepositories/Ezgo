@@ -2,29 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // Approved EzzyGo Design System Colors
-  static const Color primary = Color(0xFFFF5722);
-  static const Color primaryHover = Color(0xFFE64A19);
-  static const Color primaryLight = Color(0xFFFFF7ED);
-  static const Color primaryDark = Color(0xFFE64A19);
+  // Soft coral for CTAs — lighter and richer than the old neon orange.
+  static const Color primary = Color(0xFFF07D4A);
+  static const Color primaryHover = Color(0xFFDE6A3A);
+  static const Color primaryLight = Color(0xFFFFF1EA);
+  static const Color primaryDark = Color(0xFFDE6A3A);
+  static const Color ink = Color(0xFF17233D);
+  static const Color teal = Color(0xFF0F766E);
+  static const Color tealLight = Color(0xFFE6F4F1);
 
   static const LinearGradient primaryGradient = LinearGradient(
-    colors: [Color(0xFFF95724), Color(0xFFFF7443)],
+    colors: [Color(0xFFF4A06C), Color(0xFFF07D4A)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   // Background & Surface
-  static const Color background = Color(0xFFFFF9F2);
+  static const Color background = Color(0xFFF5F6F8);
   static const Color surface = Color(0xFFFFFFFF);
 
   // Text
   static const Color textPrimary = Color(0xFF17233D);
-  static const Color textSecondary = Color(0xFF777777); // #777777
-  static const Color textMuted = Color(0xFF9E9E9E);
+  static const Color textSecondary = Color(0xFF5B6578);
+  static const Color textMuted = Color(0xFF8B93A1);
 
   // Borders
-  static const Color borderSubtle = Color(0xFFF0E8E2); // #F0E8E2
+  static const Color borderSubtle = Color(0xFFE4E7EC);
 
   // Semantic Status Colors
   static const Color successBg = Color(0xFFE4F7EA); // #E4F7EA
@@ -36,8 +39,8 @@ class AppTheme {
 
   static const Color amber = Color(0xFFF59E0B);
   static const Color amber500 = Color(0xFFF59E0B);
-  static const Color amberLight = Color(0xFFFFF7ED);
-  static const Color amber50 = Color(0xFFFFF7ED);
+  static const Color amberLight = Color(0xFFFFF8EB);
+  static const Color amber50 = Color(0xFFFFF8EB);
 
   static const Color rose = Color(0xFFFF5148);
   static const Color red500 = Color(0xFFFF5148);
@@ -51,10 +54,10 @@ class AppTheme {
   static const Color slate600 = Color(0xFF777777);
   static const Color slate500 = Color(0xFF8E8E93);
   static const Color slate400 = Color(0xFFB0B0B5);
-  static const Color slate300 = Color(0xFFDDD7D1);
-  static const Color slate200 = Color(0xFFF0E8E2);
-  static const Color slate100 = Color(0xFFF7F2ED);
-  static const Color slate50 = Color(0xFFFCF8F5);
+  static const Color slate300 = Color(0xFFD5DAE0);
+  static const Color slate200 = Color(0xFFE4E7EC);
+  static const Color slate100 = Color(0xFFF0F2F5);
+  static const Color slate50 = Color(0xFFF7F8FA);
 
   // Category Pastel Backgrounds
   static const Color pastelRed = Color(0xFFFFEAE9);
@@ -116,10 +119,17 @@ class AppTheme {
       useMaterial3: true,
       fontFamily: GoogleFonts.poppins().fontFamily,
       scaffoldBackgroundColor: background,
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: _EzFadeSlideTransitionsBuilder(),
+          TargetPlatform.iOS: _EzFadeSlideTransitionsBuilder(),
+          TargetPlatform.windows: _EzFadeSlideTransitionsBuilder(),
+        },
+      ),
       colorScheme: ColorScheme.fromSeed(
         seedColor: primary,
         primary: primary,
-        secondary: textPrimary,
+        secondary: ink,
         surface: surface,
       ),
       textTheme: const TextTheme(
@@ -206,6 +216,35 @@ class AppTheme {
           borderRadius: BorderRadius.all(Radius.circular(16)),
           side: BorderSide(color: borderSubtle),
         ),
+      ),
+    );
+  }
+}
+
+class _EzFadeSlideTransitionsBuilder extends PageTransitionsBuilder {
+  const _EzFadeSlideTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    final curved = CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    );
+    return FadeTransition(
+      opacity: curved,
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0.045, 0),
+          end: Offset.zero,
+        ).animate(curved),
+        child: child,
       ),
     );
   }

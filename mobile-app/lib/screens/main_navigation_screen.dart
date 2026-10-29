@@ -19,10 +19,13 @@ import 'host/host_bookings_screen.dart';
 import 'host/host_home_screen.dart';
 import 'host/my_events_screen.dart';
 import 'host/post_requirement_screen.dart';
+import '../models/user_model.dart';
 import 'profile_screen.dart';
 import 'vendor/availability_screen.dart';
 import 'vendor/live_auctions_screen.dart';
 import 'vendor/vendor_bookings_screen.dart';
+import 'vendor/vendor_dashboard_screen.dart';
+import 'vendor/vendor_profile_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   final int initialIndex;
@@ -34,11 +37,13 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   late int _currentIndex;
+  int _postFromIndex = 0;
   final ScrollController _hostScrollController = ScrollController();
   final GlobalKey<HostHomeScreenState> _hostHomeKey = GlobalKey<HostHomeScreenState>();
   final GlobalKey<NavigatorState> _homeNavKey = GlobalKey<NavigatorState>();
   final GlobalKey<NavigatorState> _eventsNavKey = GlobalKey<NavigatorState>();
   final GlobalKey<NavigatorState> _bookingsNavKey = GlobalKey<NavigatorState>();
+  final GlobalKey<NavigatorState> _calendarNavKey = GlobalKey<NavigatorState>();
   final GlobalKey<NavigatorState> _profileNavKey = GlobalKey<NavigatorState>();
   final GlobalKey _bookingsIconKey = GlobalKey();
 
@@ -57,34 +62,64 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     'Chennai',
   ];
 
-  static const _tabs = [
+  static const _hostTabs = [
     FlipkartNavItem(
       label: 'Home',
-      outlinedIcon: LucideIcons.home400,
-      filledIcon: LucideIcons.home600,
+      outlinedIcon: Icons.home_outlined,
+      filledIcon: Icons.home_rounded,
     ),
     FlipkartNavItem(
       label: 'My Events',
-      outlinedIcon: LucideIcons.calendarDays400,
-      filledIcon: LucideIcons.calendarDays600,
+      outlinedIcon: Icons.event_note_outlined,
+      filledIcon: Icons.event_note_rounded,
     ),
     FlipkartNavItem(
       label: 'Post',
-      outlinedIcon: LucideIcons.plus,
-      filledIcon: LucideIcons.plus,
+      outlinedIcon: Icons.add_rounded,
+      filledIcon: Icons.add_rounded,
       isAction: true,
       accent: true,
     ),
     FlipkartNavItem(
       label: 'Bookings',
-      outlinedIcon: LucideIcons.ticket400,
-      filledIcon: LucideIcons.ticket600,
+      outlinedIcon: Icons.receipt_long_outlined,
+      filledIcon: Icons.receipt_long_rounded,
       showBadge: true,
     ),
     FlipkartNavItem(
       label: 'Profile',
-      outlinedIcon: LucideIcons.userRound400,
-      filledIcon: LucideIcons.userRound600,
+      outlinedIcon: Icons.person_outline_rounded,
+      filledIcon: Icons.person_rounded,
+      isAccount: true,
+    ),
+  ];
+
+  static const _vendorTabs = [
+    FlipkartNavItem(
+      label: 'Home',
+      outlinedIcon: Icons.dashboard_outlined,
+      filledIcon: Icons.dashboard_rounded,
+    ),
+    FlipkartNavItem(
+      label: 'Leads',
+      outlinedIcon: Icons.local_fire_department_outlined,
+      filledIcon: Icons.local_fire_department_rounded,
+    ),
+    FlipkartNavItem(
+      label: 'Jobs',
+      outlinedIcon: Icons.work_outline_rounded,
+      filledIcon: Icons.work_rounded,
+      showBadge: true,
+    ),
+    FlipkartNavItem(
+      label: 'Calendar',
+      outlinedIcon: Icons.calendar_month_outlined,
+      filledIcon: Icons.calendar_month_rounded,
+    ),
+    FlipkartNavItem(
+      label: 'Profile',
+      outlinedIcon: Icons.person_outline_rounded,
+      filledIcon: Icons.person_rounded,
       isAccount: true,
     ),
   ];
@@ -92,7 +127,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.initialIndex == 2 ? 0 : widget.initialIndex;
+    final isVendor = context.read<AuthProvider>().isVendor;
+    _currentIndex = isVendor
+        ? widget.initialIndex.clamp(0, 4)
+        : (widget.initialIndex == 2 ? 0 : widget.initialIndex);
     TabScrollRegistry.instance.register(0, _hostScrollController);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = context.read<AuthProvider>();
@@ -116,8 +154,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     _hostHomeKey.currentState?.scrollToFeed();
   }
 
+  bool get _isVendor => context.read<AuthProvider>().isVendor;
+
+  int get _visibleTabIndex => _isVendor
+      ? _currentIndex
+      : (_currentIndex == 2 ? _postFromIndex : _currentIndex);
+
   int get _stackIndex {
-    switch (_currentIndex) {
+    if (_isVendor) return _currentIndex.clamp(0, 4);
+    switch (_visibleTabIndex) {
       case 1:
         return 1;
       case 3:
@@ -130,6 +175,20 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   }
 
   GlobalKey<NavigatorState> _navKeyFor(int index) {
+    if (_isVendor) {
+      switch (index) {
+        case 1:
+          return _eventsNavKey;
+        case 2:
+          return _bookingsNavKey;
+        case 3:
+          return _calendarNavKey;
+        case 4:
+          return _profileNavKey;
+        default:
+          return _homeNavKey;
+      }
+    }
     switch (index) {
       case 1:
         return _eventsNavKey;
@@ -143,16 +202,23 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   }
 
   void _openPost() {
-    _navKeyFor(_currentIndex).currentState?.push(
+    final fromIndex = _currentIndex == 2 ? _postFromIndex : _currentIndex;
+    _postFromIndex = fromIndex;
+    setState(() => _currentIndex = 2);
+    _navKeyFor(fromIndex).currentState?.push(
       MaterialPageRoute(builder: (_) => const PostRequirementScreen()),
     ).then((posted) {
-      if (posted == true && mounted) {
+      if (!mounted || _currentIndex != 2) return;
+      if (posted == true) {
         _selectTab(1);
+      } else {
+        setState(() => _currentIndex = fromIndex);
       }
     });
   }
 
   void _openLogin() {
+    final vendor = context.read<AuthProvider>().isVendor;
     showAppBottomSheet<void>(
       context: context,
       backgroundColor: Colors.white,
@@ -170,10 +236,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Sign in to see your events and bookings.',
+              Text(
+                vendor
+                    ? 'Sign in to see your jobs, leads and bookings.'
+                    : 'Sign in to see your events and bookings.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13, color: AppTheme.slate600),
+                style: const TextStyle(fontSize: 13, color: AppTheme.slate600),
               ),
               const SizedBox(height: 16),
               SizedBox(
@@ -184,7 +252,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                     Navigator.pop(ctx);
                     Navigator.of(context, rootNavigator: true).push(
                       MaterialPageRoute(
-                        builder: (_) => const LoginScreen(navigateToLocation: false),
+                        builder: (_) => LoginScreen(
+                          navigateToLocation: false,
+                          initialRole: vendor ? UserRole.vendor : UserRole.host,
+                        ),
                       ),
                     );
                   },
@@ -199,13 +270,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   }
 
   void _onTabTap(int index) {
-    if (index == 2) {
+    final auth = context.read<AuthProvider>();
+    if (auth.isHost && index == 2) {
       _openPost();
       return;
     }
 
-    final auth = context.read<AuthProvider>();
-    if (!auth.isLoggedIn && (index == 1 || index == 3)) {
+    if (!auth.isLoggedIn &&
+        (auth.isVendor ? (index == 2 || index == 3 || index == 4) : (index == 1 || index == 3))) {
       _openLogin();
       return;
     }
@@ -215,19 +287,29 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         requesterId: auth.isHost ? auth.user?.id : null,
         marketplace: !auth.isHost,
       );
+      if (auth.isVendor) context.read<BookingsProvider>().loadData();
     }
-    if (index == 1) {
-      if (auth.isHost) {
-        context.read<RequirementsProvider>().loadData(requesterId: auth.user?.id);
-      } else {
-        context.read<BookingsProvider>().loadData();
-      }
+    if (auth.isVendor && index == 1) {
+      context.read<RequirementsProvider>().loadData(marketplace: true);
     }
-    if (index == 3) {
+    if (auth.isVendor && index == 2) {
       context.read<BookingsProvider>().loadData();
-      if (auth.isHost) {
-        context.read<RequirementsProvider>().loadData(requesterId: auth.user?.id);
-      }
+      context.read<BookingsProvider>().markCurrentSeen();
+    }
+    if (auth.isVendor && index == 3) {
+      context.read<AuthProvider>().ensureSession();
+    }
+    if (auth.isVendor && index == 4) {
+      context.read<BookingsProvider>().loadData();
+    }
+    if (auth.isHost && index == 1) {
+      context.read<NotificationsProvider>().markAllRead();
+      context.read<RequirementsProvider>().loadData(requesterId: auth.user?.id);
+    }
+    if (auth.isHost && index == 3) {
+      context.read<BookingsProvider>().loadData();
+      context.read<BookingsProvider>().markCurrentSeen();
+      context.read<RequirementsProvider>().loadData(requesterId: auth.user?.id);
     }
 
     if (_currentIndex == index) {
@@ -243,15 +325,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   }
 
   void _selectTab(int index) {
-    if (index == 2) {
-      _openPost();
-      return;
-    }
     _onTabTap(index);
   }
 
-  void _showCityPicker(BuildContext context) {
+  void _showCityPicker(BuildContext context, {bool vendorMarketplace = false}) {
     final reqProvider = context.read<RequirementsProvider>();
+    final cities = vendorMarketplace ? ['All Cities', ...navbarCities] : navbarCities;
 
     showAppBottomSheet(
       context: context,
@@ -280,21 +359,24 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   ),
                 ),
               ),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                child: Text(
-                  'Select Operating City',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17, color: AppTheme.textPrimary),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  child: Text(
+                    vendorMarketplace ? 'Marketplace city' : 'Select city',
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17, color: AppTheme.textPrimary),
+                  ),
                 ),
-              ),
               const Divider(height: 1, color: AppTheme.borderSubtle),
               Expanded(
                 child: ListView.separated(
-                  itemCount: navbarCities.length,
+                  itemCount: cities.length,
                   separatorBuilder: (_, _) => const Divider(height: 1, indent: 56, color: AppTheme.borderSubtle),
                   itemBuilder: (_, index) {
-                    final city = navbarCities[index];
-                    final isSelected = reqProvider.selectedCity.toLowerCase().startsWith(city.toLowerCase());
+                    final city = cities[index];
+                    final current = vendorMarketplace ? reqProvider.marketplaceCity : reqProvider.selectedCity;
+                    final isSelected = city == 'All Cities'
+                        ? current == 'ALL'
+                        : current.toLowerCase().startsWith(city.toLowerCase());
 
                     return ListTile(
                       leading: Container(
@@ -318,7 +400,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                       ),
                       trailing: isSelected ? const Icon(Icons.check, color: AppTheme.primary, size: 20) : null,
                       onTap: () {
-                        reqProvider.setSelectedCity(city);
+                        if (vendorMarketplace) {
+                          reqProvider.setMarketplaceCity(city == 'All Cities' ? 'ALL' : city);
+                        } else {
+                          reqProvider.setSelectedCity(city);
+                        }
                         Navigator.of(ctx).pop();
                       },
                     );
@@ -346,13 +432,25 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             onOpenCityPicker: () => _showCityPicker(context),
             onOpenMyEvents: () => _selectTab(1),
           )
-        : const LiveAuctionsScreen();
-    final eventsPage = isHost ? const MyEventsScreen() : const VendorBookingsScreen();
-    final bookingsPage = isHost ? const HostBookingsScreen() : const AvailabilityScreen();
-    final profilePage = ProfileScreen(
-      onNavigateToEvents: isHost ? () => _selectTab(1) : () {},
-      onNavigateToBookings: () => _selectTab(isHost ? 3 : 1),
-    );
+        : VendorDashboardScreen(
+            onOpenLeads: () => _selectTab(1),
+            onOpenJobs: () => _selectTab(2),
+            onOpenCalendar: () => _selectTab(3),
+            onOpenProfile: () => _selectTab(4),
+          );
+    final eventsPage = isHost ? const MyEventsScreen() : const LiveAuctionsScreen();
+    final bookingsPage = isHost ? const HostBookingsScreen() : const VendorBookingsScreen();
+    final calendarPage = const AvailabilityScreen();
+    final profilePage = isHost
+        ? ProfileScreen(
+            onNavigateToEvents: () => _selectTab(1),
+            onNavigateToBookings: () => _selectTab(3),
+          )
+        : VendorProfileScreen(
+            onNavigateToLeads: () => _selectTab(1),
+            onNavigateToJobs: () => _selectTab(2),
+            onNavigateToCalendar: () => _selectTab(3),
+          );
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
@@ -382,7 +480,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             children: [
               Column(
                 children: [
-                  if (!isHost) _VendorHeader(onOpenCityPicker: () => _showCityPicker(context), city: reqProvider.selectedCity),
+                  if (!isHost)
+                    _VendorHeader(
+                      onOpenCityPicker: () => _showCityPicker(context, vendorMarketplace: true),
+                      city: reqProvider.marketplaceCity == 'ALL' ? 'All Cities' : reqProvider.marketplaceCity,
+                      showCity: _currentIndex == 0 || _currentIndex == 1,
+                    ),
                   Expanded(
                     child: ShellNavScope(
                       child: Padding(
@@ -392,12 +495,20 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                           removeBottom: true,
                           child: TabSwipeShell(
                             currentIndex: _stackIndex,
-                            children: [
-                              _TabNavigator(navigatorKey: _homeNavKey, root: homePage),
-                              _TabNavigator(navigatorKey: _eventsNavKey, root: eventsPage),
-                              _TabNavigator(navigatorKey: _bookingsNavKey, root: bookingsPage),
-                              _TabNavigator(navigatorKey: _profileNavKey, root: profilePage),
-                            ],
+                            children: isHost
+                                ? [
+                                    _TabNavigator(navigatorKey: _homeNavKey, root: homePage),
+                                    _TabNavigator(navigatorKey: _eventsNavKey, root: eventsPage),
+                                    _TabNavigator(navigatorKey: _bookingsNavKey, root: bookingsPage),
+                                    _TabNavigator(navigatorKey: _profileNavKey, root: profilePage),
+                                  ]
+                                : [
+                                    _TabNavigator(navigatorKey: _homeNavKey, root: homePage),
+                                    _TabNavigator(navigatorKey: _eventsNavKey, root: eventsPage),
+                                    _TabNavigator(navigatorKey: _bookingsNavKey, root: bookingsPage),
+                                    _TabNavigator(navigatorKey: _calendarNavKey, root: calendarPage),
+                                    _TabNavigator(navigatorKey: _profileNavKey, root: profilePage),
+                                  ],
                           ),
                         ),
                       ),
@@ -413,6 +524,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   currentIndex: _currentIndex,
                   onTap: _onTabTap,
                   badgeIconKey: _bookingsIconKey,
+                  isVendor: !isHost,
                 ),
               ),
             ],
@@ -427,31 +539,32 @@ class _ShellNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
   final GlobalKey badgeIconKey;
+  final bool isVendor;
 
   const _ShellNavBar({
     required this.currentIndex,
     required this.onTap,
     required this.badgeIconKey,
+    this.isVendor = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final unread = context.select<NotificationsProvider, int>((p) => p.unreadCount);
-    final bookingBadge = context.select<BookingsProvider, int>(
-      (p) => p.upcomingBookings.length + p.awaitingPaymentBookings.length,
-    );
+    final bookingBadge = context.select<BookingsProvider, int>((p) => p.unseenBadgeCount);
     final initial = context.select<AuthProvider, String?>((auth) {
       final name = auth.user?.name.trim() ?? '';
       if (!auth.isLoggedIn || name.isEmpty) return null;
       return name[0].toUpperCase();
     });
 
+    final items = isVendor ? _MainNavigationScreenState._vendorTabs : _MainNavigationScreenState._hostTabs;
     return FlipkartBottomNav(
-      currentIndex: currentIndex,
-      items: _MainNavigationScreenState._tabs,
+      currentIndex: currentIndex.clamp(0, items.length - 1),
+      items: items,
       onTap: onTap,
       badgeCount: bookingBadge,
-      badgeCounts: [0, unread, 0, bookingBadge, 0],
+      badgeCounts: isVendor ? [0, 0, bookingBadge, 0, 0] : [0, unread, 0, bookingBadge, 0],
       accountInitial: initial,
       activeColor: AppTheme.primary,
       badgeIconKey: badgeIconKey,
@@ -462,51 +575,79 @@ class _ShellNavBar extends StatelessWidget {
 class _VendorHeader extends StatelessWidget {
   final VoidCallback onOpenCityPicker;
   final String city;
+  final bool showCity;
 
-  const _VendorHeader({required this.onOpenCityPicker, required this.city});
+  const _VendorHeader({
+    required this.onOpenCityPicker,
+    required this.city,
+    this.showCity = true,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
-        child: Row(
-          children: [
-            const EzzyGoLogo(size: 24),
-            const SizedBox(width: 8),
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: onOpenCityPicker,
-              child: Container(
+      child: SafeArea(
+        bottom: false,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 10, 10, 12),
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: Color(0xFFF0F1F4))),
+          ),
+          child: Row(
+            children: [
+              const EzzyGoLogo(size: 24),
+              const SizedBox(width: 8),
+              Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppTheme.slate50,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppTheme.borderSubtle),
+                  color: AppTheme.primaryLight,
+                  borderRadius: BorderRadius.circular(999),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(LucideIcons.mapPin, size: 12, color: AppTheme.primary),
-                    const SizedBox(width: 4),
-                    Text(
-                      city.split(',')[0].trim(),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(width: 2),
-                    const Icon(LucideIcons.chevronDown, size: 12, color: AppTheme.slate600),
-                  ],
+                child: const Text(
+                  'PARTNER',
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.8,
+                    color: AppTheme.primary,
+                  ),
                 ),
               ),
-            ),
-            const Spacer(),
-            const NotificationBellButton(size: 36, iconSize: 18),
-          ],
+              const Spacer(),
+              if (showCity)
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: onOpenCityPicker,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: AppTheme.ink,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(LucideIcons.mapPin, size: 13, color: AppTheme.primary),
+                        const SizedBox(width: 5),
+                        Text(
+                          city.split(',')[0].trim(),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(width: 3),
+                        const Icon(LucideIcons.chevronDown, size: 13, color: Colors.white70),
+                      ],
+                    ),
+                  ),
+                ),
+              if (showCity) const SizedBox(width: 8),
+              const NotificationBellButton(size: 38, iconSize: 18),
+            ],
+          ),
         ),
       ),
     );

@@ -274,7 +274,7 @@ class EventServiceCard extends StatelessWidget {
                           children: [
                             _chip('Save 15%+', const Color(0xFFE4F7EA), const Color(0xFF18794E)),
                             const SizedBox(width: 6),
-                            _chip('Reverse Bids', const Color(0xFFFFF1EA), AppTheme.primary),
+                            _chip('Reverse Bids', AppTheme.tealLight, AppTheme.teal),
                           ],
                         ),
                         const Spacer(),

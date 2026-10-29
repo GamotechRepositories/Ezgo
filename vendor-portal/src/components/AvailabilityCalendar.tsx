@@ -91,15 +91,15 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
       {/* Header */}
       <div className="space-y-2">
         <div className="flex items-center gap-2.5">
-          <span className="p-2.5 rounded-2xl bg-orange-100 text-[#f95724]">
+          <span className="p-2.5 rounded-2xl bg-slate-100 text-[#17233d]">
             <CalendarDays className="w-5 h-5" />
           </span>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-              Availability & Date Calendar
+            <h1 className="text-[22px] sm:text-3xl font-black text-slate-900 tracking-tight">
+              Availability
             </h1>
-            <p className="text-sm sm:text-base text-slate-500 mt-0.5">
-              Manage your schedule and block dates when you are occupied with offline events or holidays.
+            <p className="text-[13px] sm:text-base text-slate-500 mt-0.5">
+              Block dates you already have offline gigs. Hosts will not get your bid on those days.
             </p>
           </div>
         </div>
@@ -112,7 +112,7 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
         <div className="lg:col-span-5 bg-white rounded-3xl border border-slate-200 p-6 sm:p-7 shadow-sm space-y-6">
           <div className="space-y-1">
             <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <CalendarIcon className="w-5 h-5 text-[#f95724]" />
+              <CalendarIcon className="w-5 h-5 text-[#17233d]" />
               <span>Block a Date</span>
             </h2>
             <p className="text-xs text-slate-500">
@@ -132,7 +132,7 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
                 required
-                className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-[#f95724] focus:bg-white transition"
+                className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-[#17233d] focus:bg-white transition"
               />
             </div>
 
@@ -146,7 +146,7 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
                 placeholder="e.g. Offline Wedding at Grand Hyatt"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-[#f95724] focus:bg-white transition"
+                className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-[#17233d] focus:bg-white transition"
               />
 
               {/* Quick Select Chips */}
@@ -156,7 +156,7 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
                     key={r}
                     type="button"
                     onClick={() => setReason(r)}
-                    className="text-xs px-3.5 py-2 min-h-[36px] rounded-full bg-slate-100 hover:bg-orange-50 hover:text-orange-700 text-slate-600 border border-slate-200 transition cursor-pointer active:scale-95 flex items-center"
+                    className="text-xs px-3.5 py-2 min-h-[36px] rounded-full bg-slate-100 hover:bg-slate-50 hover:text-slate-700 text-slate-600 border border-slate-200 transition cursor-pointer active:scale-95 flex items-center"
                   >
                     {r}
                   </button>
@@ -167,10 +167,10 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
             <button
               type="submit"
               disabled={loading || !selectedDate}
-              className="w-full py-3.5 min-h-[48px] rounded-2xl bg-[#f95724] hover:bg-[#ea4a17] disabled:opacity-50 text-white font-bold text-sm shadow-lg shadow-orange-500/20 transition active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-3.5 min-h-[48px] rounded-2xl bg-[#f07d4a] hover:bg-[#ea4a17] disabled:opacity-50 text-white font-bold text-sm shadow-lg shadow-slate-900/12 transition active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
-              <span>{loading ? 'Blocking...' : 'Block Date from Bidding'}</span>
+              <span>{loading ? 'Saving…' : 'Block this date'}</span>
             </button>
           </form>
 
@@ -193,7 +193,7 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
                 You currently have {upcomingBlocked.length} upcoming date{upcomingBlocked.length === 1 ? '' : 's'} blocked.
               </p>
             </div>
-            <span className="px-3 py-1 rounded-full text-xs font-bold bg-orange-100 text-[#f95724]">
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-[#17233d]">
               {upcomingBlocked.length} Blocked
             </span>
           </div>
@@ -213,11 +213,11 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
               {upcomingBlocked.map((item) => (
                 <div
                   key={item.date}
-                  className="p-4 rounded-2xl bg-slate-50 hover:bg-white border border-slate-200 hover:border-orange-300 transition-all flex items-center justify-between gap-4 shadow-2xs"
+                  className="p-4 rounded-2xl bg-slate-50 hover:bg-white border border-slate-200 hover:border-slate-300 transition-all flex items-center justify-between gap-4 shadow-2xs"
                 >
                   <div className="flex items-center gap-3.5">
                     <div className="w-12 h-12 rounded-2xl bg-white border border-slate-200 flex flex-col items-center justify-center text-slate-800 shrink-0 shadow-2xs">
-                      <span className="text-[10px] font-bold text-[#f95724] uppercase">
+                      <span className="text-[10px] font-bold text-[#17233d] uppercase">
                         {new Date(item.date).toLocaleDateString('en-US', { month: 'short' })}
                       </span>
                       <span className="text-base font-black leading-none">

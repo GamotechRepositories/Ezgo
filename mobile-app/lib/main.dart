@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -12,21 +14,58 @@ import 'providers/payments_provider.dart';
 import 'screens/splash_screen.dart';
 import 'widgets/live_updates_binder.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Colors.white,
-    statusBarIconBrightness: Brightness.dark,
-    statusBarBrightness: Brightness.light,
-    systemNavigationBarColor: Colors.white,
-    systemNavigationBarIconBrightness: Brightness.dark,
-  ));
-  try {
-    await dotenv.load(fileName: ".env");
-  } catch (e) {
-    debugPrint("Note: .env file not loaded or not found ($e). Using default ApiConfig.");
-  }
-  runApp(const EzzyGoApp());
+Future<void> main() async {
+  await runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    _tuneForLowRam();
+    _installErrorGuards();
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Colors.white,
+      statusBarIconBrightness: Brightness.dark,
+      statusBarBrightness: Brightness.light,
+      systemNavigationBarColor: Colors.white,
+      systemNavigationBarIconBrightness: Brightness.dark,
+    ));
+    try {
+      await dotenv.load(fileName: ".env");
+    } catch (e) {
+      debugPrint("Note: .env file not loaded or not found ($e). Using default ApiConfig.");
+    }
+    runApp(const EzzyGoApp());
+  }, (error, stack) {
+    debugPrint('EzzyGo zone error: $error');
+  });
+}
+
+void _tuneForLowRam() {
+  final cache = PaintingBinding.instance.imageCache;
+  cache.maximumSize = 70;
+  cache.maximumSizeBytes = 28 << 20;
+}
+
+void _installErrorGuards() {
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+  };
+  PlatformDispatcher.instance.onError = (error, stack) {
+    debugPrint('EzzyGo platform error: $error');
+    return true;
+  };
+  ErrorWidget.builder = (details) {
+    return const Material(
+      color: Colors.white,
+      child: Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Text(
+            'Something went wrong. Go back and try again.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          ),
+        ),
+      ),
+    );
+  };
 }
 
 class EzzyGoApp extends StatelessWidget {

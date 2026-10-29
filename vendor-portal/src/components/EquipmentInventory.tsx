@@ -148,7 +148,7 @@ export const EquipmentInventory: React.FC<EquipmentInventoryProps> = ({ vendorId
             setIsAddOpen(true);
           }}
           disabled={!vendorId}
-          className="w-full sm:w-auto px-5 py-3 min-h-[44px] rounded-full bg-[#f95724] hover:bg-[#e04818] text-white font-semibold text-sm flex items-center justify-center gap-1.5 cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full sm:w-auto px-5 py-3 min-h-[44px] rounded-full bg-[#f07d4a] hover:bg-[#de6a3a] text-white font-semibold text-sm flex items-center justify-center gap-1.5 cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus className="w-4 h-4" />
           <span>Add equipment</span>
@@ -199,7 +199,7 @@ export const EquipmentInventory: React.FC<EquipmentInventoryProps> = ({ vendorId
                   htmlFor={`card-img-${item._id}`}
                   title="Change photo"
                   aria-label="Change photo"
-                  className={`absolute bottom-2 right-2 p-1.5 rounded-full bg-black/60 hover:bg-[#f95724] text-white cursor-pointer transition ${busyId === item._id ? 'pointer-events-none opacity-60' : ''}`}
+                  className={`absolute bottom-2 right-2 p-1.5 rounded-full bg-black/60 hover:bg-[#f07d4a] text-white cursor-pointer transition ${busyId === item._id ? 'pointer-events-none opacity-60' : ''}`}
                 >
                   {busyId === item._id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
                   <input
@@ -276,7 +276,7 @@ export const EquipmentInventory: React.FC<EquipmentInventoryProps> = ({ vendorId
                   onChange={(e) => setNewName(e.target.value)}
                   placeholder="e.g. Yamaha TF5 32-Channel Digital Mixer"
                   required
-                  className="w-full mt-1 px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:outline-none focus:border-[#f95724]"
+                  className="w-full mt-1 px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:outline-none focus:border-[#17233d]"
                 />
               </div>
 
@@ -299,12 +299,12 @@ export const EquipmentInventory: React.FC<EquipmentInventoryProps> = ({ vendorId
                   >
                     {isUploading ? (
                       <div className="flex flex-col items-center gap-1.5 py-2">
-                        <Loader2 className="w-6 h-6 text-[#f95724] animate-spin" />
-                        <span className="font-medium text-sm text-[#f95724]">Uploading...</span>
+                        <Loader2 className="w-6 h-6 text-[#17233d] animate-spin" />
+                        <span className="font-medium text-sm text-[#17233d]">Uploading...</span>
                       </div>
                     ) : (
                       <>
-                        <Upload className="w-6 h-6 text-[#f95724]" />
+                        <Upload className="w-6 h-6 text-[#17233d]" />
                         <span className="font-medium text-sm text-slate-800">
                           {imageUrl ? 'Change photo' : 'Upload a photo'}
                         </span>
@@ -338,7 +338,7 @@ export const EquipmentInventory: React.FC<EquipmentInventoryProps> = ({ vendorId
                   <select
                     value={newCat}
                     onChange={(e) => setNewCat(e.target.value)}
-                    className="w-full mt-1 px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:outline-none focus:border-[#f95724]"
+                    className="w-full mt-1 px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:outline-none focus:border-[#17233d]"
                   >
                     <option>Sound Systems</option>
                     <option>DJ Gear</option>
@@ -357,7 +357,7 @@ export const EquipmentInventory: React.FC<EquipmentInventoryProps> = ({ vendorId
                     value={newRate}
                     onChange={(e) => setNewRate(e.target.value)}
                     required
-                    className="w-full mt-1 px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:outline-none focus:border-[#f95724]"
+                    className="w-full mt-1 px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:outline-none focus:border-[#17233d]"
                   />
                 </div>
               </div>
@@ -369,7 +369,7 @@ export const EquipmentInventory: React.FC<EquipmentInventoryProps> = ({ vendorId
                   value={newSpecs}
                   onChange={(e) => setNewSpecs(e.target.value)}
                   placeholder="e.g. 1750W Peak, Dual Active Tops, Flight Case included"
-                  className="w-full mt-1 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:outline-none focus:border-[#f95724]"
+                  className="w-full mt-1 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:outline-none focus:border-[#17233d]"
                 />
               </div>
 
@@ -384,7 +384,7 @@ export const EquipmentInventory: React.FC<EquipmentInventoryProps> = ({ vendorId
                 <button
                   type="submit"
                   disabled={isUploading || isSaving}
-                  className="w-full sm:w-auto px-6 py-3 min-h-[44px] rounded-full bg-[#f95724] hover:bg-[#e04818] text-white font-semibold disabled:opacity-50 cursor-pointer text-center"
+                  className="w-full sm:w-auto px-6 py-3 min-h-[44px] rounded-full bg-[#f07d4a] hover:bg-[#de6a3a] text-white font-semibold disabled:opacity-50 cursor-pointer text-center"
                 >
                   {isSaving ? 'Saving...' : 'Save'}
                 </button>

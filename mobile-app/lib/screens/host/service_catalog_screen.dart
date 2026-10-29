@@ -122,10 +122,10 @@ class _ServiceCatalogScreenState extends State<ServiceCatalogScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: isSelected ? AppTheme.primary : Colors.white,
+                      color: isSelected ? AppTheme.ink : Colors.white,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: isSelected ? AppTheme.primary : AppTheme.borderSubtle,
+                        color: isSelected ? AppTheme.ink : AppTheme.borderSubtle,
                       ),
                     ),
                     child: Center(

@@ -1,14 +1,13 @@
 import 'dart:async';
-import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:audioplayers/audioplayers.dart';
 import '../config/theme.dart';
 import '../providers/auth_provider.dart';
 import '../providers/requirements_provider.dart';
+import '../utils/app_bootstrap.dart';
 import '../utils/app_nav.dart';
 import '../widgets/ezzygo_logo.dart';
 import 'role_selection_screen.dart';
@@ -37,10 +36,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
   Timer? _serviceTimer;
   int _activeServiceIndex = 0;
-  bool _isMuted = false;
   bool _leaving = false;
-
-  AudioPlayer? _sfxAudioPlayer;
 
   final List<Map<String, dynamic>> _services = [
     {
@@ -109,7 +105,10 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   void initState() {
     super.initState();
     _initAnimations();
-    _initSfxPlayer();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      AppBootstrap.start(context);
+    });
 
     _serviceTimer = Timer.periodic(const Duration(milliseconds: 2800), (_) {
       _cycleToNextService();
@@ -171,20 +170,12 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     )..repeat();
   }
 
-  Future<void> _initSfxPlayer() async {
-    try {
-      _sfxAudioPlayer ??= AudioPlayer();
-      await _sfxAudioPlayer?.setVolume(0.65);
-    } catch (_) {}
-  }
-
   void _cycleToNextService() {
     if (!mounted) return;
     setState(() {
       _activeServiceIndex = (_activeServiceIndex + 1) % _services.length;
     });
     _serviceController?.forward(from: 0.0);
-    _playServicePopSound();
   }
 
   void _selectService(int index) {
@@ -194,32 +185,11 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       _activeServiceIndex = index;
     });
     _serviceController?.forward(from: 0.0);
-    _playServicePopSound();
 
     _serviceTimer?.cancel();
     _serviceTimer = Timer.periodic(const Duration(milliseconds: 2800), (_) {
       _cycleToNextService();
     });
-  }
-
-  void _playServicePopSound() {
-    if (_isMuted) return;
-    try {
-      HapticFeedback.selectionClick();
-      _sfxAudioPlayer?.stop();
-      _sfxAudioPlayer?.play(AssetSource('audio/service_pop.wav')).catchError((_) {});
-    } catch (_) {
-      HapticFeedback.selectionClick();
-    }
-  }
-
-  void _toggleMute() {
-    setState(() {
-      _isMuted = !_isMuted;
-    });
-    if (_isMuted) {
-      _sfxAudioPlayer?.stop();
-    }
   }
 
   @override
@@ -229,7 +199,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     _serviceController?.dispose();
     _pulseController?.dispose();
     _petalController?.dispose();
-    _sfxAudioPlayer?.dispose();
     super.dispose();
   }
 
@@ -237,7 +206,12 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     final auth = context.read<AuthProvider>();
     await auth.ensureSession();
     if (!mounted || _leaving || !auth.isLoggedIn) return;
-    await Future.delayed(const Duration(milliseconds: 700));
+    try {
+      await Future.wait([
+        AppBootstrap.start(context),
+        Future<void>.delayed(const Duration(milliseconds: 900)),
+      ]).timeout(const Duration(seconds: 5));
+    } catch (_) {}
     if (!mounted || _leaving) return;
     await _goNext();
   }
@@ -245,19 +219,19 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   Future<void> _onGetStarted() async {
     if (_leaving) return;
     HapticFeedback.mediumImpact();
-    _sfxAudioPlayer?.stop();
-
-    try {
-      final p = AudioPlayer();
-      p.play(AssetSource('audio/service_pop.wav')).then((_) => p.dispose()).catchError((_) {});
-    } catch (_) {}
-
     await _goNext();
   }
 
   Future<void> _goNext() async {
     if (_leaving) return;
     _leaving = true;
+    if (mounted) {
+      await AppBootstrap.start(context).timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {},
+      );
+    }
+    if (!mounted) return;
     final auth = context.read<AuthProvider>();
     await auth.ensureSession();
     if (!mounted) return;
@@ -268,6 +242,15 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       final savedCity = auth.user?.serviceArea?.trim();
       if (!reqs.hasChosenCity && savedCity != null && savedCity.isNotEmpty) {
         reqs.setSelectedCity(savedCity);
+      }
+      if (auth.isVendor) {
+        final vendorCity = (auth.user?.serviceArea ?? '').split(',').first.trim();
+        if (vendorCity.isNotEmpty) {
+          reqs.setMarketplaceCity(vendorCity);
+        }
+        if (!mounted) return;
+        AppNav.openRoot(context, const MainNavigationScreen());
+        return;
       }
       if (!mounted) return;
       AppNav.openRoot(
@@ -348,35 +331,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 child: Column(
                   children: [
-                    // Top Bar: Minimal Mute/Unmute Icon in Corner
-                    Align(
-                      alignment: Alignment.topRight,
-                      child: GestureDetector(
-                        onTap: _toggleMute,
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.92),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: AppTheme.borderSubtle),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.05),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Icon(
-                            _isMuted ? LucideIcons.volumeX : LucideIcons.volume2,
-                            size: 17,
-                            color: _isMuted ? AppTheme.textMuted : AppTheme.primary,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 8),
 
                     // Centered Branding (Refined Serif Typography & Official Royal 3D Emblem)
                     const EzzyGoLogo(
@@ -572,9 +527,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
             opacity: _serviceFadeAnimation ?? const AlwaysStoppedAnimation(1.0),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(22),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                child: Container(
+              child: Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.86),
@@ -751,7 +704,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
               ),
             ),
           ),
-        ),
 
         const SizedBox(height: 12),
 
@@ -941,5 +893,7 @@ class _FloatingPetalsPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _FloatingPetalsPainter oldDelegate) => true;
+  bool shouldRepaint(covariant _FloatingPetalsPainter oldDelegate) {
+    return (oldDelegate.progress - progress).abs() > 0.03;
+  }
 }

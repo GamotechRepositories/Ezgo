@@ -101,7 +101,7 @@ export const OccasionManager: React.FC<OccasionManagerProps> = ({
             setUploadError('');
             setIsModalOpen(true);
           }}
-          className="px-5 py-2.5 rounded-full bg-[#f95724] hover:bg-[#e04818] text-white font-semibold text-sm flex items-center gap-1.5 cursor-pointer transition shrink-0"
+          className="px-5 py-2.5 rounded-full bg-[#f07d4a] hover:bg-[#de6a3a] text-white font-semibold text-sm flex items-center gap-1.5 cursor-pointer transition shrink-0"
         >
           <Plus className="w-4 h-4" />
           <span>Add occasion</span>
@@ -141,7 +141,7 @@ export const OccasionManager: React.FC<OccasionManagerProps> = ({
                     htmlFor={`occ-img-${occKey}`}
                     title="Change photo"
                     aria-label="Change photo"
-                    className="p-1.5 rounded-full bg-black/60 hover:bg-[#f95724] text-white backdrop-blur-md cursor-pointer transition shadow"
+                    className="p-1.5 rounded-full bg-black/60 hover:bg-[#f07d4a] text-white backdrop-blur-md cursor-pointer transition shadow"
                   >
                     {isUpdatingThis ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
                     <input
@@ -208,7 +208,7 @@ export const OccasionManager: React.FC<OccasionManagerProps> = ({
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Haldi & Sangeet Ceremony"
                   required
-                  className="w-full mt-1 px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:outline-none focus:border-[#f95724]"
+                  className="w-full mt-1 px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:outline-none focus:border-[#17233d]"
                 />
               </div>
 
@@ -217,7 +217,7 @@ export const OccasionManager: React.FC<OccasionManagerProps> = ({
                 <select
                   value={iconType}
                   onChange={(e) => setIconType(e.target.value as any)}
-                  className="w-full mt-1 px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:outline-none focus:border-[#f95724]"
+                  className="w-full mt-1 px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:outline-none focus:border-[#17233d]"
                 >
                   <option value="sparkles">General</option>
                   <option value="rings">Weddings</option>
@@ -235,7 +235,7 @@ export const OccasionManager: React.FC<OccasionManagerProps> = ({
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="font-bold text-slate-700 flex items-center gap-1.5">
-                    <ImageIcon className="w-3.5 h-3.5 text-[#f95724]" />
+                    <ImageIcon className="w-3.5 h-3.5 text-[#17233d]" />
                     <span>Card Photo Banner *</span>
                   </label>
                   <div className="flex bg-slate-100 p-0.5 rounded-lg text-xs">
@@ -264,7 +264,7 @@ export const OccasionManager: React.FC<OccasionManagerProps> = ({
                 </div>
 
                 {imageTab === 'upload' && (
-                  <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center hover:border-orange-300 transition bg-slate-50/50">
+                  <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center hover:border-slate-300 transition bg-slate-50/50">
                     <input
                       type="file"
                       id="occasion-file-upload"
@@ -279,12 +279,12 @@ export const OccasionManager: React.FC<OccasionManagerProps> = ({
                     >
                       {isUploading ? (
                         <div className="flex flex-col items-center gap-1">
-                          <Loader2 className="w-6 h-6 border-2 border-[#f95724] border-t-transparent rounded-full animate-spin" />
-                          <span className="font-medium text-sm text-[#f95724]">Uploading...</span>
+                          <Loader2 className="w-6 h-6 border-2 border-[#17233d] border-t-transparent rounded-full animate-spin" />
+                          <span className="font-medium text-sm text-[#17233d]">Uploading...</span>
                         </div>
                       ) : (
                         <>
-                          <Upload className="w-6 h-6 text-[#f95724]" />
+                          <Upload className="w-6 h-6 text-[#17233d]" />
                           <span className="font-bold text-xs text-slate-800">
                             {imageUrl ? 'Change Photo from Device' : 'Click to upload photo from your device'}
                           </span>
@@ -309,14 +309,14 @@ export const OccasionManager: React.FC<OccasionManagerProps> = ({
                             type="button"
                             key={preset.name}
                             onClick={() => setImageUrl(preset.url)}
-                            className={`relative h-16 rounded-xl overflow-hidden border-2 text-left group transition cursor-pointer ${isSelected ? 'border-[#f95724] ring-2 ring-[#f95724]/30' : 'border-slate-200 hover:border-slate-400'}`}
+                            className={`relative h-16 rounded-xl overflow-hidden border-2 text-left group transition cursor-pointer ${isSelected ? 'border-[#17233d] ring-2 ring-[#f07d4a]/30' : 'border-slate-200 hover:border-slate-400'}`}
                           >
                             <img src={preset.url} alt={preset.name} className="w-full h-full object-cover" />
                             <div className="absolute inset-0 bg-black/40 flex items-end p-1">
                               <span className="text-xs font-medium text-white truncate drop-shadow">{preset.name}</span>
                             </div>
                             {isSelected && (
-                              <div className="absolute top-1 right-1 w-4 h-4 bg-[#f95724] text-white rounded-full flex items-center justify-center">
+                              <div className="absolute top-1 right-1 w-4 h-4 bg-[#f07d4a] text-white rounded-full flex items-center justify-center">
                                 <Check className="w-2.5 h-2.5" />
                               </div>
                             )}
@@ -334,7 +334,7 @@ export const OccasionManager: React.FC<OccasionManagerProps> = ({
                       value={imageUrl}
                       onChange={(e) => setImageUrl(e.target.value)}
                       placeholder="https://images.unsplash.com/... or any high-res image link"
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:outline-none focus:border-[#f95724]"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:outline-none focus:border-[#17233d]"
                     />
                   </div>
                 )}
@@ -361,7 +361,7 @@ export const OccasionManager: React.FC<OccasionManagerProps> = ({
                 <button
                   type="submit"
                   disabled={isUploading}
-                  className="px-5 py-2 rounded-full bg-[#f95724] hover:bg-[#e04818] text-white font-bold disabled:opacity-50 cursor-pointer shadow-md shadow-[#f95724]/20"
+                  className="px-5 py-2 rounded-full bg-[#f07d4a] hover:bg-[#de6a3a] text-white font-bold disabled:opacity-50 cursor-pointer shadow-md shadow-slate-900/12"
                 >
                   Create Occasion Card
                 </button>

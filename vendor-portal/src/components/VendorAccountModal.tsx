@@ -419,7 +419,7 @@ export const VendorAccountModal: React.FC<VendorAccountModalProps> = ({
             onClick={() => setActiveTab('profile')}
             className={`py-3 px-3.5 font-bold text-xs sm:text-sm border-b-2 transition whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'profile'
-                ? 'border-[#f95724] text-[#f95724]'
+                ? 'border-[#17233d] text-[#17233d]'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
@@ -431,7 +431,7 @@ export const VendorAccountModal: React.FC<VendorAccountModalProps> = ({
             onClick={() => setActiveTab('bank')}
             className={`py-3 px-3.5 font-bold text-xs sm:text-sm border-b-2 transition whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'bank'
-                ? 'border-[#f95724] text-[#f95724]'
+                ? 'border-[#17233d] text-[#17233d]'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
@@ -443,7 +443,7 @@ export const VendorAccountModal: React.FC<VendorAccountModalProps> = ({
             onClick={() => setActiveTab('kyc')}
             className={`py-3 px-3.5 font-bold text-xs sm:text-sm border-b-2 transition whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'kyc'
-                ? 'border-[#f95724] text-[#f95724]'
+                ? 'border-[#17233d] text-[#17233d]'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
@@ -455,7 +455,7 @@ export const VendorAccountModal: React.FC<VendorAccountModalProps> = ({
             onClick={() => setActiveTab('portals')}
             className={`py-3 px-3.5 font-bold text-xs sm:text-sm border-b-2 transition whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'portals'
-                ? 'border-[#f95724] text-[#f95724]'
+                ? 'border-[#17233d] text-[#17233d]'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
@@ -481,7 +481,7 @@ export const VendorAccountModal: React.FC<VendorAccountModalProps> = ({
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="e.g. Ramesh Patil"
-                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-hidden focus:border-[#f95724] focus:ring-2 focus:ring-[#f95724]/10 transition"
+                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-hidden focus:border-[#17233d] focus:ring-2 focus:ring-[#17233d]/10 transition"
                       required
                     />
                   </div>
@@ -498,7 +498,7 @@ export const VendorAccountModal: React.FC<VendorAccountModalProps> = ({
                       value={businessName}
                       onChange={(e) => setBusinessName(e.target.value)}
                       placeholder="e.g. Royal Photography & Films"
-                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-hidden focus:border-[#f95724] focus:ring-2 focus:ring-[#f95724]/10 transition"
+                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-hidden focus:border-[#17233d] focus:ring-2 focus:ring-[#17233d]/10 transition"
                       required
                     />
                   </div>
@@ -515,7 +515,7 @@ export const VendorAccountModal: React.FC<VendorAccountModalProps> = ({
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="business@example.com"
-                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-hidden focus:border-[#f95724] focus:ring-2 focus:ring-[#f95724]/10 transition"
+                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-hidden focus:border-[#17233d] focus:ring-2 focus:ring-[#17233d]/10 transition"
                     />
                   </div>
                 </div>
@@ -532,7 +532,7 @@ export const VendorAccountModal: React.FC<VendorAccountModalProps> = ({
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="10-digit number"
                       maxLength={10}
-                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-hidden focus:border-[#f95724] focus:ring-2 focus:ring-[#f95724]/10 transition"
+                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-hidden focus:border-[#17233d] focus:ring-2 focus:ring-[#17233d]/10 transition"
                     />
                   </div>
                 </div>
@@ -547,7 +547,7 @@ export const VendorAccountModal: React.FC<VendorAccountModalProps> = ({
                   <select
                     value={serviceArea}
                     onChange={(e) => setServiceArea(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-hidden focus:border-[#f95724] focus:ring-2 focus:ring-[#f95724]/10 transition"
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-hidden focus:border-[#17233d] focus:ring-2 focus:ring-[#17233d]/10 transition"
                   >
                     {CITIES.map((c) => (
                       <option key={c} value={c}>
@@ -572,12 +572,12 @@ export const VendorAccountModal: React.FC<VendorAccountModalProps> = ({
                         onClick={() => toggleCategory(cat)}
                         className={`p-2.5 rounded-xl border text-xs font-bold transition text-left flex items-center justify-between cursor-pointer ${
                           isSelected
-                            ? 'bg-orange-50 border-[#f95724] text-[#f95724] shadow-xs'
+                            ? 'bg-slate-50 border-[#17233d] text-[#17233d] shadow-xs'
                             : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
                         }`}
                       >
                         <span className="truncate">{cat}</span>
-                        {isSelected && <Check className="w-3.5 h-3.5 text-[#f95724] shrink-0" />}
+                        {isSelected && <Check className="w-3.5 h-3.5 text-[#17233d] shrink-0" />}
                       </button>
                     );
                   })}
@@ -588,7 +588,7 @@ export const VendorAccountModal: React.FC<VendorAccountModalProps> = ({
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-6 py-2.5 rounded-xl bg-[#f95724] hover:bg-[#e04818] active:scale-95 text-white font-bold text-sm shadow-md shadow-[#f95724]/20 transition flex items-center gap-2 cursor-pointer disabled:opacity-60"
+                  className="px-6 py-2.5 rounded-xl bg-[#f07d4a] hover:bg-[#de6a3a] active:scale-95 text-white font-bold text-sm shadow-md shadow-slate-900/12 transition flex items-center gap-2 cursor-pointer disabled:opacity-60"
                 >
                   {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                   <span>Save Business Details</span>
@@ -620,7 +620,7 @@ export const VendorAccountModal: React.FC<VendorAccountModalProps> = ({
                     value={accountHolder}
                     onChange={(e) => setAccountHolder(e.target.value)}
                     placeholder="Name as per bank passbook"
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-hidden focus:border-[#f95724] focus:ring-2 focus:ring-[#f95724]/10 transition"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-hidden focus:border-[#17233d] focus:ring-2 focus:ring-[#17233d]/10 transition"
                   />
                 </div>
 
@@ -633,7 +633,7 @@ export const VendorAccountModal: React.FC<VendorAccountModalProps> = ({
                     value={accountNumber}
                     onChange={(e) => setAccountNumber(e.target.value.replace(/\s/g, ''))}
                     placeholder="e.g. 10293847561"
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-hidden focus:border-[#f95724] focus:ring-2 focus:ring-[#f95724]/10 transition font-mono"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-hidden focus:border-[#17233d] focus:ring-2 focus:ring-[#17233d]/10 transition font-mono"
                   />
                 </div>
 
@@ -647,7 +647,7 @@ export const VendorAccountModal: React.FC<VendorAccountModalProps> = ({
                     onChange={(e) => setIfscCode(e.target.value.toUpperCase().replace(/\s/g, ''))}
                     placeholder="e.g. HDFC0001234"
                     maxLength={11}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-hidden focus:border-[#f95724] focus:ring-2 focus:ring-[#f95724]/10 transition font-mono uppercase"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-hidden focus:border-[#17233d] focus:ring-2 focus:ring-[#17233d]/10 transition font-mono uppercase"
                   />
                 </div>
 
@@ -660,7 +660,7 @@ export const VendorAccountModal: React.FC<VendorAccountModalProps> = ({
                     value={upiId}
                     onChange={(e) => setUpiId(e.target.value.trim().toLowerCase())}
                     placeholder="e.g. username@okhdfcbank"
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-hidden focus:border-[#f95724] focus:ring-2 focus:ring-[#f95724]/10 transition font-mono"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-hidden focus:border-[#17233d] focus:ring-2 focus:ring-[#17233d]/10 transition font-mono"
                   />
                 </div>
               </div>
@@ -669,7 +669,7 @@ export const VendorAccountModal: React.FC<VendorAccountModalProps> = ({
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-6 py-2.5 rounded-xl bg-[#f95724] hover:bg-[#e04818] active:scale-95 text-white font-bold text-sm shadow-md shadow-[#f95724]/20 transition flex items-center gap-2 cursor-pointer disabled:opacity-60"
+                  className="px-6 py-2.5 rounded-xl bg-[#f07d4a] hover:bg-[#de6a3a] active:scale-95 text-white font-bold text-sm shadow-md shadow-slate-900/12 transition flex items-center gap-2 cursor-pointer disabled:opacity-60"
                 >
                   {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                   <span>Save Bank Details</span>
@@ -695,7 +695,7 @@ export const VendorAccountModal: React.FC<VendorAccountModalProps> = ({
                           onClose();
                           onOpenVerificationModal();
                         }}
-                        className="text-xs font-bold text-[#f95724] hover:underline cursor-pointer"
+                        className="text-xs font-bold text-[#17233d] hover:underline cursor-pointer"
                       >
                         Open Full Desk &rarr;
                       </button>
@@ -756,7 +756,7 @@ export const VendorAccountModal: React.FC<VendorAccountModalProps> = ({
                     onChange={(e) => setAadhaarNumber(e.target.value.replace(/\D/g, ''))}
                     placeholder="XXXX XXXX XXXX"
                     maxLength={12}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-hidden focus:border-[#f95724] focus:ring-2 focus:ring-[#f95724]/10 transition font-mono"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-hidden focus:border-[#17233d] focus:ring-2 focus:ring-[#17233d]/10 transition font-mono"
                   />
                 </div>
 
@@ -770,7 +770,7 @@ export const VendorAccountModal: React.FC<VendorAccountModalProps> = ({
                     onChange={(e) => setPanNumber(e.target.value.toUpperCase().replace(/\s/g, ''))}
                     placeholder="ABCDE1234F"
                     maxLength={10}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-hidden focus:border-[#f95724] focus:ring-2 focus:ring-[#f95724]/10 transition font-mono uppercase"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-hidden focus:border-[#17233d] focus:ring-2 focus:ring-[#17233d]/10 transition font-mono uppercase"
                   />
                 </div>
               </div>
@@ -784,7 +784,7 @@ export const VendorAccountModal: React.FC<VendorAccountModalProps> = ({
                   onChange={(e) => setBusinessAddress(e.target.value)}
                   placeholder="Studio / Office / Registered Work Address"
                   rows={2}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-hidden focus:border-[#f95724] focus:ring-2 focus:ring-[#f95724]/10 transition"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-hidden focus:border-[#17233d] focus:ring-2 focus:ring-[#17233d]/10 transition"
                 />
               </div>
 
@@ -798,7 +798,7 @@ export const VendorAccountModal: React.FC<VendorAccountModalProps> = ({
                   onChange={(e) => setGstNumber(e.target.value.toUpperCase().replace(/\s/g, ''))}
                   placeholder="e.g. 27AAAAA0000A1Z5"
                   maxLength={15}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-hidden focus:border-[#f95724] focus:ring-2 focus:ring-[#f95724]/10 transition font-mono uppercase"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-hidden focus:border-[#17233d] focus:ring-2 focus:ring-[#17233d]/10 transition font-mono uppercase"
                 />
               </div>
 
@@ -806,7 +806,7 @@ export const VendorAccountModal: React.FC<VendorAccountModalProps> = ({
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-6 py-2.5 rounded-xl bg-[#f95724] hover:bg-[#e04818] active:scale-95 text-white font-bold text-sm shadow-md shadow-[#f95724]/20 transition flex items-center gap-2 cursor-pointer disabled:opacity-60"
+                  className="px-6 py-2.5 rounded-xl bg-[#f07d4a] hover:bg-[#de6a3a] active:scale-95 text-white font-bold text-sm shadow-md shadow-slate-900/12 transition flex items-center gap-2 cursor-pointer disabled:opacity-60"
                 >
                   {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                   <span>Update KYC Information</span>
@@ -828,20 +828,20 @@ export const VendorAccountModal: React.FC<VendorAccountModalProps> = ({
                     href={getUserPortalUrl()}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center justify-between p-3.5 rounded-xl bg-white border border-slate-200 hover:border-[#f95724] hover:shadow-sm transition group cursor-pointer"
+                    className="flex items-center justify-between p-3.5 rounded-xl bg-white border border-slate-200 hover:border-[#17233d] hover:shadow-sm transition group cursor-pointer"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-orange-50 text-[#f95724] flex items-center justify-center font-bold">
+                      <div className="w-9 h-9 rounded-xl bg-slate-50 text-[#17233d] flex items-center justify-center font-bold">
                         H
                       </div>
                       <div>
-                        <div className="text-sm font-bold text-slate-900 group-hover:text-[#f95724] transition">
+                        <div className="text-sm font-bold text-slate-900 group-hover:text-[#17233d] transition">
                           Host / Customer Portal
                         </div>
                         <div className="text-xs text-slate-500">Post event needs, view incoming bids & book vendors</div>
                       </div>
                     </div>
-                    <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-[#f95724]" />
+                    <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-[#17233d]" />
                   </a>
 
                   {isAdmin && (

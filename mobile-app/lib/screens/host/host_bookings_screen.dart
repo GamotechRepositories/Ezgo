@@ -8,6 +8,7 @@ import '../../providers/bookings_provider.dart';
 import '../../providers/payments_provider.dart';
 import '../../providers/requirements_provider.dart';
 import '../../widgets/event_request_card.dart';
+import '../../widgets/pull_refresh.dart';
 import '../../widgets/shell_bottom_insets.dart';
 import '../../widgets/tab_scroll_registry.dart';
 import 'bids_comparison_screen.dart';
@@ -188,8 +189,11 @@ class _HostBookingsScreenState extends State<HostBookingsScreen> {
 
     final totalEscrowHeld = upcoming.fold<int>(0, (sum, b) => sum + b.totalPaid);
 
-    return ListView(
+    return PullRefresh(
+      onRefresh: _refreshBookings,
+      child: ListView(
       controller: _scrollController,
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.fromLTRB(16, 14, 16, ShellBottomInsets.of(context)),
       children: [
         // Title & Summary
@@ -357,7 +361,17 @@ class _HostBookingsScreenState extends State<HostBookingsScreen> {
 
         const SizedBox(height: 32),
       ],
+    ),
     );
+  }
+
+  Future<void> _refreshBookings() async {
+    final auth = context.read<AuthProvider>();
+    await Future.wait([
+      context.read<BookingsProvider>().loadData(),
+      context.read<PaymentsProvider>().load(),
+      context.read<RequirementsProvider>().loadData(requesterId: auth.user?.id),
+    ]);
   }
 
   Widget _buildTabChip(int index, String label, int count) {

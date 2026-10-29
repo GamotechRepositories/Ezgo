@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:audioplayers/audioplayers.dart';
 import '../config/theme.dart';
 import '../providers/banners_provider.dart';
 import '../providers/requirements_provider.dart';
@@ -22,7 +21,6 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen>
     with SingleTickerProviderStateMixin {
   String _selectedCity = 'Pune';
   final TextEditingController _searchController = TextEditingController();
-  AudioPlayer? _audioPlayer;
   AnimationController? _pulseController;
   bool _isDetectingLocation = false;
 
@@ -100,30 +98,17 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1400),
     )..repeat(reverse: true);
-
-    try {
-      _audioPlayer = AudioPlayer();
-    } catch (_) {}
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     _pulseController?.dispose();
-    _audioPlayer?.dispose();
     super.dispose();
   }
 
-  void _playPopSound() {
-    HapticFeedback.selectionClick();
-    try {
-      _audioPlayer?.stop();
-      _audioPlayer?.play(AssetSource('audio/service_pop.wav')).catchError((_) {});
-    } catch (_) {}
-  }
-
   void _onCitySelect(String cityName) {
-    _playPopSound();
+    HapticFeedback.selectionClick();
     setState(() {
       _selectedCity = cityName;
     });
@@ -140,7 +125,7 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen>
       _selectedCity = 'Pune';
       _isDetectingLocation = false;
     });
-    _playPopSound();
+    HapticFeedback.selectionClick();
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -167,10 +152,6 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen>
 
   void _onContinue() {
     HapticFeedback.mediumImpact();
-    try {
-      final p = AudioPlayer();
-      p.play(AssetSource('audio/service_pop.wav')).then((_) => p.dispose()).catchError((_) {});
-    } catch (_) {}
 
     context.read<RequirementsProvider>().setSelectedCity(_selectedCity);
     context.read<BannersProvider>().loadForCity(_selectedCity);

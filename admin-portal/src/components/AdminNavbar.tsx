@@ -84,7 +84,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
       id: 'metrics' as const,
       label: 'Dashboard',
       icon: LayoutDashboard,
-      iconColor: 'text-[#f95724]',
+      iconColor: 'text-[#17233d]',
       badge: null,
     },
     {
@@ -263,10 +263,10 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
                       href={getUserPortalUrl()}
                       target="_blank"
                       rel="noreferrer"
-                      className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-700 hover:bg-orange-50 hover:text-[#f95724] transition group"
+                      className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-[#17233d] transition group"
                     >
                       <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-orange-500"></span>
+                        <span className="w-2 h-2 rounded-full bg-slate-500"></span>
                         <span>Host & Event App</span>
                       </div>
                       <ExternalLink className="w-3 h-3 opacity-50 group-hover:opacity-100" />
@@ -495,7 +495,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
                   href={getUserPortalUrl()}
                   target="_blank"
                   rel="noreferrer"
-                  className="px-3 py-1.5 rounded-full bg-orange-50 text-[#f95724] font-bold"
+                  className="px-3 py-1.5 rounded-full bg-slate-50 text-[#17233d] font-bold"
                 >
                   Host App ↗
                 </a>

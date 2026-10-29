@@ -131,7 +131,7 @@ export const ProviderKycManager: React.FC<ProviderKycManagerProps> = ({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by name, business, phone, or category"
-          className="w-full pl-10 pr-10 py-2.5 rounded-full bg-white border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#f95724]"
+          className="w-full pl-10 pr-10 py-2.5 rounded-full bg-white border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#17233d]"
         />
         {search && (
           <button
@@ -403,7 +403,7 @@ export const ProviderKycManager: React.FC<ProviderKycManagerProps> = ({
                               url: selectedProvider.kycDocuments!.aadhaarFront!,
                             })
                           }
-                          className="group relative p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-orange-400 hover:bg-orange-50/50 transition cursor-pointer flex flex-col items-center justify-between text-center overflow-hidden"
+                          className="group relative p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-orange-400 hover:bg-slate-50/50 transition cursor-pointer flex flex-col items-center justify-between text-center overflow-hidden"
                         >
                           <div className="w-full h-24 mb-2 rounded-xl bg-white border border-slate-100 overflow-hidden flex items-center justify-center relative">
                             <img
@@ -417,7 +417,7 @@ export const ProviderKycManager: React.FC<ProviderKycManagerProps> = ({
                               }}
                             />
                             <div className="fallback-icon-af hidden flex flex-col items-center justify-center p-2">
-                              <FileText className="w-8 h-8 text-orange-500" />
+                              <FileText className="w-8 h-8 text-slate-600" />
                               <span className="text-[10px] text-slate-500 font-semibold mt-1">PDF File</span>
                             </div>
                             {isPdfDocument(selectedProvider.kycDocuments.aadhaarFront) && (
@@ -430,7 +430,7 @@ export const ProviderKycManager: React.FC<ProviderKycManagerProps> = ({
                             </div>
                           </div>
                           <span className="text-xs font-semibold text-slate-800">Aadhaar Front</span>
-                          <span className="text-xs text-[#f95724] font-medium mt-0.5 flex items-center gap-1">
+                          <span className="text-xs text-[#17233d] font-medium mt-0.5 flex items-center gap-1">
                             <Eye className="w-3 h-3" /> View Preview
                           </span>
                         </div>
@@ -445,7 +445,7 @@ export const ProviderKycManager: React.FC<ProviderKycManagerProps> = ({
                               url: selectedProvider.kycDocuments!.aadhaarBack!,
                             })
                           }
-                          className="group relative p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-orange-400 hover:bg-orange-50/50 transition cursor-pointer flex flex-col items-center justify-between text-center overflow-hidden"
+                          className="group relative p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-orange-400 hover:bg-slate-50/50 transition cursor-pointer flex flex-col items-center justify-between text-center overflow-hidden"
                         >
                           <div className="w-full h-24 mb-2 rounded-xl bg-white border border-slate-100 overflow-hidden flex items-center justify-center relative">
                             <img
@@ -459,7 +459,7 @@ export const ProviderKycManager: React.FC<ProviderKycManagerProps> = ({
                               }}
                             />
                             <div className="fallback-icon-ab hidden flex flex-col items-center justify-center p-2">
-                              <FileText className="w-8 h-8 text-orange-500" />
+                              <FileText className="w-8 h-8 text-slate-600" />
                               <span className="text-[10px] text-slate-500 font-semibold mt-1">PDF File</span>
                             </div>
                             {isPdfDocument(selectedProvider.kycDocuments.aadhaarBack) && (
@@ -472,7 +472,7 @@ export const ProviderKycManager: React.FC<ProviderKycManagerProps> = ({
                             </div>
                           </div>
                           <span className="text-xs font-semibold text-slate-800">Aadhaar Back</span>
-                          <span className="text-xs text-[#f95724] font-medium mt-0.5 flex items-center gap-1">
+                          <span className="text-xs text-[#17233d] font-medium mt-0.5 flex items-center gap-1">
                             <Eye className="w-3 h-3" /> View Preview
                           </span>
                         </div>
@@ -487,7 +487,7 @@ export const ProviderKycManager: React.FC<ProviderKycManagerProps> = ({
                               url: selectedProvider.kycDocuments!.panCard!,
                             })
                           }
-                          className="group relative p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-orange-400 hover:bg-orange-50/50 transition cursor-pointer flex flex-col items-center justify-between text-center overflow-hidden"
+                          className="group relative p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-orange-400 hover:bg-slate-50/50 transition cursor-pointer flex flex-col items-center justify-between text-center overflow-hidden"
                         >
                           <div className="w-full h-24 mb-2 rounded-xl bg-white border border-slate-100 overflow-hidden flex items-center justify-center relative">
                             <img
@@ -501,7 +501,7 @@ export const ProviderKycManager: React.FC<ProviderKycManagerProps> = ({
                               }}
                             />
                             <div className="fallback-icon-pan hidden flex flex-col items-center justify-center p-2">
-                              <FileText className="w-8 h-8 text-orange-500" />
+                              <FileText className="w-8 h-8 text-slate-600" />
                               <span className="text-[10px] text-slate-500 font-semibold mt-1">PDF File</span>
                             </div>
                             {isPdfDocument(selectedProvider.kycDocuments.panCard) && (
@@ -514,7 +514,7 @@ export const ProviderKycManager: React.FC<ProviderKycManagerProps> = ({
                             </div>
                           </div>
                           <span className="text-xs font-semibold text-slate-800">PAN Card</span>
-                          <span className="text-xs text-[#f95724] font-medium mt-0.5 flex items-center gap-1">
+                          <span className="text-xs text-[#17233d] font-medium mt-0.5 flex items-center gap-1">
                             <Eye className="w-3 h-3" /> View Preview
                           </span>
                         </div>
@@ -529,7 +529,7 @@ export const ProviderKycManager: React.FC<ProviderKycManagerProps> = ({
                               url: selectedProvider.kycDocuments!.gstDoc!,
                             })
                           }
-                          className="group relative p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-orange-400 hover:bg-orange-50/50 transition cursor-pointer flex flex-col items-center justify-between text-center overflow-hidden"
+                          className="group relative p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-orange-400 hover:bg-slate-50/50 transition cursor-pointer flex flex-col items-center justify-between text-center overflow-hidden"
                         >
                           <div className="w-full h-24 mb-2 rounded-xl bg-white border border-slate-100 overflow-hidden flex items-center justify-center relative">
                             <img
@@ -543,7 +543,7 @@ export const ProviderKycManager: React.FC<ProviderKycManagerProps> = ({
                               }}
                             />
                             <div className="fallback-icon-gst hidden flex flex-col items-center justify-center p-2">
-                              <FileText className="w-8 h-8 text-orange-500" />
+                              <FileText className="w-8 h-8 text-slate-600" />
                               <span className="text-[10px] text-slate-500 font-semibold mt-1">PDF File</span>
                             </div>
                             {isPdfDocument(selectedProvider.kycDocuments.gstDoc) && (
@@ -556,7 +556,7 @@ export const ProviderKycManager: React.FC<ProviderKycManagerProps> = ({
                             </div>
                           </div>
                           <span className="text-xs font-semibold text-slate-800">GST Certificate</span>
-                          <span className="text-xs text-[#f95724] font-medium mt-0.5 flex items-center gap-1">
+                          <span className="text-xs text-[#17233d] font-medium mt-0.5 flex items-center gap-1">
                             <Eye className="w-3 h-3" /> View Preview
                           </span>
                         </div>
@@ -677,7 +677,7 @@ export const ProviderKycManager: React.FC<ProviderKycManagerProps> = ({
             {/* Header */}
             <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
               <div className="flex items-center gap-2.5">
-                <FileText className="w-5 h-5 text-[#f95724]" />
+                <FileText className="w-5 h-5 text-[#17233d]" />
                 <div>
                   <h4 className="font-bold text-slate-900 text-base sm:text-lg">{previewDoc.title}</h4>
                   {isPdfDocument(previewDoc.url) && (
@@ -722,13 +722,13 @@ export const ProviderKycManager: React.FC<ProviderKycManagerProps> = ({
                 }}
               />
               <div id="modal-doc-fallback" className="hidden text-center text-white p-8 space-y-3">
-                <FileText className="w-16 h-16 text-orange-400 mx-auto" />
+                <FileText className="w-16 h-16 text-slate-500 mx-auto" />
                 <p className="text-sm font-semibold">Could not render inline image</p>
                 <a
                   href={previewDoc.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#f95724] text-white text-xs font-bold"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#f07d4a] text-white text-xs font-bold"
                 >
                   <Download className="w-4 h-4" /> Download / Open Document
                 </a>
@@ -785,7 +785,7 @@ export const ProviderKycManager: React.FC<ProviderKycManagerProps> = ({
                     key={preset}
                     type="button"
                     onClick={() => setRejectionReasonText(preset)}
-                    className="text-[11px] px-2.5 py-1 rounded-lg border border-slate-200 bg-slate-50 hover:bg-orange-50 hover:border-orange-300 text-slate-700 transition text-left cursor-pointer"
+                    className="text-[11px] px-2.5 py-1 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-50 hover:border-slate-300 text-slate-700 transition text-left cursor-pointer"
                   >
                     + {preset}
                   </button>

@@ -26,7 +26,7 @@ interface LoginPageProps {
 }
 
 const fieldClass =
-  'mt-1.5 w-full h-12 px-4 rounded-xl border border-slate-200 bg-white text-base text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#f95724] focus:ring-2 focus:ring-[#f95724]/15 transition';
+  'mt-1.5 w-full h-12 px-4 rounded-xl border border-slate-200 bg-white text-base text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#17233d] focus:ring-2 focus:ring-[#17233d]/15 transition';
 
 const trustBadges = [
   {
@@ -456,25 +456,25 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
       />
 
       {/* LEFT COLUMN: Hero Brand Experience (Visible on Laptop / Desktop) */}
-      <aside className={`hidden lg:flex ${mode === 'register' ? 'lg:col-span-5' : 'lg:col-span-7'} flex-col justify-between bg-gradient-to-br from-[#fff3eb] via-[#fff8f4] to-[#fef6f0] border-r border-orange-100/80 p-10 xl:p-14 relative overflow-hidden sticky top-0 h-screen`}>
+      <aside className={`hidden lg:flex ${mode === 'register' ? 'lg:col-span-5' : 'lg:col-span-7'} flex-col justify-between bg-gradient-to-br from-[#fff3eb] via-[#fff8f4] to-[#fef6f0] border-r border-slate-100/80 p-10 xl:p-14 relative overflow-hidden sticky top-0 h-screen`}>
         {/* Ambient subtle glow background shapes */}
         <div className="absolute -top-24 -left-24 w-96 h-96 bg-orange-200/40 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-amber-200/30 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex items-center justify-between">
           <EzzyGoLogo variant="vendor" size="lg" />
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/90 border border-orange-200/70 text-xs font-semibold text-[#f95724] shadow-xs">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/90 border border-slate-200/70 text-xs font-semibold text-[#17233d] shadow-xs">
             Vendor Partner Hub
           </span>
         </div>
 
         <div className="relative z-10 my-auto py-8 max-w-xl">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-orange-50 border border-orange-200/80 text-xs font-bold text-[#f95724] uppercase tracking-wider mb-5">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-50 border border-slate-200/80 text-xs font-bold text-[#17233d] uppercase tracking-wider mb-5">
             <Store className="w-3.5 h-3.5" /> Vendor Partner Console
           </div>
           <h2 className="text-3xl xl:text-4xl font-extrabold text-slate-900 tracking-tight leading-[1.2]">
             Send your price.{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#f95724] to-[#ea3a06]">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#f07d4a] to-[#ea3a06]">
               Keep 100% of your earnings.
             </span>
           </h2>
@@ -488,9 +488,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
               return (
                 <div
                   key={badge.title}
-                  className="flex items-start gap-4 p-3.5 rounded-2xl bg-white/80 backdrop-blur-sm border border-orange-100 shadow-xs hover:shadow-sm transition"
+                  className="flex items-start gap-4 p-3.5 rounded-2xl bg-white/80 backdrop-blur-sm border border-slate-100 shadow-xs hover:shadow-sm transition"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-orange-50 border border-orange-200/60 flex items-center justify-center shrink-0 text-[#f95724]">
+                  <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-center shrink-0 text-[#17233d]">
                     <Icon className="w-5 h-5" />
                   </div>
                   <div>
@@ -503,7 +503,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
           </div>
 
           {/* Social Proof & Rating Strip */}
-          <div className="mt-8 pt-6 border-t border-orange-200/50 flex items-center justify-between text-xs text-slate-600">
+          <div className="mt-8 pt-6 border-t border-slate-200/50 flex items-center justify-between text-xs text-slate-600">
             <div className="flex items-center gap-2">
               <div className="flex -space-x-2 overflow-hidden">
                 <img
@@ -531,11 +531,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
           </div>
         </div>
 
-        <div className="relative z-10 flex items-center justify-between text-xs text-slate-500 pt-4 border-t border-orange-100">
+        <div className="relative z-10 flex items-center justify-between text-xs text-slate-500 pt-4 border-t border-slate-100">
           <span>&copy; {new Date().getFullYear()} EzzyGo Events Marketplace</span>
           <a
             href={getUserPortalUrl()}
-            className="text-[#f95724] font-semibold hover:underline flex items-center gap-1 cursor-pointer"
+            className="text-[#17233d] font-semibold hover:underline flex items-center gap-1 cursor-pointer"
           >
             Booking an event? Open Host App <ArrowRight className="w-3.5 h-3.5" />
           </a>
@@ -548,7 +548,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
           {/* Mobile Top Brand Bar (Visible only on Mobile & Tablets) */}
           <div className="lg:hidden flex items-center justify-between mb-6">
             <EzzyGoLogo variant="vendor" size="md" />
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-orange-50 border border-orange-200 text-xs font-semibold text-[#f95724]">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200 text-xs font-semibold text-[#17233d]">
               Vendor Portal
             </span>
           </div>
@@ -708,7 +708,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                 )}
 
                 {busy && (
-                  <p className="text-center text-xs sm:text-sm text-[#f95724] animate-pulse font-semibold">
+                  <p className="text-center text-xs sm:text-sm text-[#17233d] animate-pulse font-semibold">
                     Signing you in, please wait...
                   </p>
                 )}
@@ -760,7 +760,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                 <button
                   type="submit"
                   disabled={busy}
-                  className="w-full h-12 rounded-full bg-[#f95724] hover:bg-[#e04818] text-white font-semibold text-base disabled:opacity-50 cursor-pointer shadow-sm transition"
+                  className="w-full h-12 rounded-full bg-[#f07d4a] hover:bg-[#de6a3a] text-white font-semibold text-base disabled:opacity-50 cursor-pointer shadow-sm transition"
                 >
                   {busy ? 'Signing in...' : 'Log in'}
                 </button>
@@ -773,7 +773,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                       setRegStep(1);
                       setError('');
                     }}
-                    className="text-[#f95724] font-semibold hover:underline cursor-pointer"
+                    className="text-[#17233d] font-semibold hover:underline cursor-pointer"
                   >
                     Create a vendor account
                   </button>
@@ -784,8 +784,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
               <div className="grid grid-cols-3 gap-2.5 sm:gap-3 mt-6">
                 {/* 1-Click */}
                 <div className="flex flex-col items-center justify-center text-center py-4 px-2 rounded-2xl bg-[#fffcf9] border border-[#ffedd5]/80 shadow-2xs">
-                  <div className="w-10 h-10 rounded-full bg-[#ffedd5]/60 flex items-center justify-center text-[#f95724] mb-2.5">
-                    <Zap className="w-5 h-5 fill-orange-500 text-orange-500" />
+                  <div className="w-10 h-10 rounded-full bg-[#ffedd5]/60 flex items-center justify-center text-[#17233d] mb-2.5">
+                    <Zap className="w-5 h-5 fill-orange-500 text-slate-600" />
                   </div>
                   <div className="text-sm sm:text-[15px] font-bold text-slate-900 leading-tight">1-Click</div>
                   <div className="text-xs text-slate-500 mt-1 font-normal">Sign-in</div>
@@ -793,8 +793,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
 
                 {/* 100% Escrow Safe */}
                 <div className="flex flex-col items-center justify-center text-center py-4 px-2 rounded-2xl bg-[#fffcf9] border border-[#ffedd5]/80 shadow-2xs">
-                  <div className="w-10 h-10 rounded-full bg-[#ffedd5]/60 flex items-center justify-center text-[#f95724] mb-2.5">
-                    <ShieldCheck className="w-5 h-5 text-orange-500 stroke-[2.2]" />
+                  <div className="w-10 h-10 rounded-full bg-[#ffedd5]/60 flex items-center justify-center text-[#17233d] mb-2.5">
+                    <ShieldCheck className="w-5 h-5 text-slate-600 stroke-[2.2]" />
                   </div>
                   <div className="text-sm sm:text-[15px] font-bold text-slate-900 leading-tight">100%</div>
                   <div className="text-xs text-slate-500 mt-1 font-normal">Escrow Safe</div>
@@ -802,8 +802,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
 
                 {/* Min. 15% Savings */}
                 <div className="flex flex-col items-center justify-center text-center py-4 px-2 rounded-2xl bg-[#fffcf9] border border-[#ffedd5]/80 shadow-2xs">
-                  <div className="w-10 h-10 rounded-full bg-[#ffedd5]/60 flex items-center justify-center text-[#f95724] mb-2.5">
-                    <TrendingUp className="w-5 h-5 text-orange-500 stroke-[2.2]" />
+                  <div className="w-10 h-10 rounded-full bg-[#ffedd5]/60 flex items-center justify-center text-[#17233d] mb-2.5">
+                    <TrendingUp className="w-5 h-5 text-slate-600 stroke-[2.2]" />
                   </div>
                   <div className="text-sm sm:text-[15px] font-bold text-slate-900 leading-tight">Min. 15%</div>
                   <div className="text-xs text-slate-500 mt-1 font-normal">Savings</div>
@@ -823,7 +823,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                 <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
                   Complete Vendor Profile
                 </h1>
-                <span className="text-xs font-semibold px-2.5 py-1 bg-orange-50 text-[#f95724] border border-orange-200 rounded-full">
+                <span className="text-xs font-semibold px-2.5 py-1 bg-slate-50 text-[#17233d] border border-slate-200 rounded-full">
                   Step {regStep} of 3
                 </span>
               </div>
@@ -847,14 +847,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                   }}
                   className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-semibold transition text-left cursor-pointer ${
                     regStep === 1
-                      ? 'border-[#f95724] bg-orange-50 text-[#f95724]'
+                      ? 'border-[#17233d] bg-slate-50 text-[#17233d]'
                       : regStep > 1
                       ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
                       : 'border-slate-200 text-slate-500 bg-slate-50'
                   }`}
                 >
                   <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-[11px] font-bold ${
-                    regStep > 1 ? 'bg-emerald-600 text-white' : regStep === 1 ? 'bg-[#f95724] text-white' : 'bg-slate-200 text-slate-600'
+                    regStep > 1 ? 'bg-emerald-600 text-white' : regStep === 1 ? 'bg-[#f07d4a] text-white' : 'bg-slate-200 text-slate-600'
                   }`}>
                     {regStep > 1 ? <Check className="w-3 h-3" /> : '1'}
                   </div>
@@ -872,14 +872,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                   }}
                   className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-semibold transition text-left cursor-pointer ${
                     regStep === 2
-                      ? 'border-[#f95724] bg-orange-50 text-[#f95724]'
+                      ? 'border-[#17233d] bg-slate-50 text-[#17233d]'
                       : regStep > 2
                       ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
                       : 'border-slate-200 text-slate-500 bg-slate-50'
                   }`}
                 >
                   <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-[11px] font-bold ${
-                    regStep > 2 ? 'bg-emerald-600 text-white' : regStep === 2 ? 'bg-[#f95724] text-white' : 'bg-slate-200 text-slate-600'
+                    regStep > 2 ? 'bg-emerald-600 text-white' : regStep === 2 ? 'bg-[#f07d4a] text-white' : 'bg-slate-200 text-slate-600'
                   }`}>
                     {regStep > 2 ? <Check className="w-3 h-3" /> : '2'}
                   </div>
@@ -897,12 +897,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                   }}
                   className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-semibold transition text-left cursor-pointer ${
                     regStep === 3
-                      ? 'border-[#f95724] bg-orange-50 text-[#f95724]'
+                      ? 'border-[#17233d] bg-slate-50 text-[#17233d]'
                       : 'border-slate-200 text-slate-500 bg-slate-50'
                   }`}
                 >
                   <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-[11px] font-bold ${
-                    regStep === 3 ? 'bg-[#f95724] text-white' : 'bg-slate-200 text-slate-600'
+                    regStep === 3 ? 'bg-[#f07d4a] text-white' : 'bg-slate-200 text-slate-600'
                   }`}>
                     3
                   </div>
@@ -986,8 +986,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                               }}
                               className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition cursor-pointer ${
                                 isSelected
-                                  ? 'bg-[#f95724] text-white border-[#f95724] shadow-xs'
-                                  : 'bg-white text-slate-700 border-slate-200 hover:border-orange-300 hover:bg-orange-50/30'
+                                  ? 'bg-[#f07d4a] text-white border-[#17233d] shadow-xs'
+                                  : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-50/30'
                               }`}
                             >
                               {isSelected ? '✓ ' : '+ '}
@@ -1040,8 +1040,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
 
                 {regStep === 2 && (
                   <div className="space-y-4 animate-in fade-in duration-200">
-                    <div className="rounded-xl bg-orange-50/70 border border-orange-100 p-3.5 text-xs text-slate-600 flex items-start gap-2.5">
-                      <CreditCard className="w-4 h-4 text-[#f95724] shrink-0 mt-0.5" />
+                    <div className="rounded-xl bg-slate-50/70 border border-slate-100 p-3.5 text-xs text-slate-600 flex items-start gap-2.5">
+                      <CreditCard className="w-4 h-4 text-[#17233d] shrink-0 mt-0.5" />
                       <span>Direct automated event payouts will be wired to this bank account upon host milestone releases.</span>
                     </div>
 
@@ -1109,8 +1109,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
 
                 {regStep === 3 && (
                   <div className="space-y-4 animate-in fade-in duration-200">
-                    <div className="rounded-xl bg-orange-50/70 border border-orange-100 p-3.5 text-xs text-slate-600 flex items-start gap-2.5">
-                      <FileBadge className="w-4 h-4 text-[#f95724] shrink-0 mt-0.5" />
+                    <div className="rounded-xl bg-slate-50/70 border border-slate-100 p-3.5 text-xs text-slate-600 flex items-start gap-2.5">
+                      <FileBadge className="w-4 h-4 text-[#17233d] shrink-0 mt-0.5" />
                       <span>KYC verified vendors receive a verified badge on all bids, boosting host acceptance rate by 3x.</span>
                     </div>
 
@@ -1122,7 +1122,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                         required
                         rows={2}
                         placeholder="Complete shop/studio address where you operate"
-                        className="mt-1.5 w-full p-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#f95724] focus:ring-2 focus:ring-[#f95724]/15 transition resize-none"
+                        className="mt-1.5 w-full p-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#17233d] focus:ring-2 focus:ring-[#17233d]/15 transition resize-none"
                       />
                     </label>
 
@@ -1180,7 +1180,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                                 }}
                               />
                               <div className="fb-af hidden">
-                                <FileText className="w-5 h-5 text-orange-500" />
+                                <FileText className="w-5 h-5 text-slate-600" />
                               </div>
                               {isPdfDocument(aadhaarFront) && (
                                 <span className="absolute bottom-0 right-0 px-1 py-0.2 rounded-tl text-[8px] font-bold bg-rose-600 text-white">
@@ -1193,7 +1193,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                               <button
                                 type="button"
                                 onClick={() => triggerUpload('aadhaarFront')}
-                                className="text-[#f95724] hover:underline cursor-pointer"
+                                className="text-[#17233d] hover:underline cursor-pointer"
                               >
                                 Replace
                               </button>
@@ -1204,7 +1204,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                             type="button"
                             disabled={uploadingDoc === 'aadhaarFront'}
                             onClick={() => triggerUpload('aadhaarFront')}
-                            className="mt-2 text-xs font-semibold px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:border-orange-300 hover:text-[#f95724] transition cursor-pointer flex items-center gap-1.5"
+                            className="mt-2 text-xs font-semibold px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:border-slate-300 hover:text-[#17233d] transition cursor-pointer flex items-center gap-1.5"
                           >
                             <Upload className="w-3 h-3" />
                             {uploadingDoc === 'aadhaarFront' ? 'Uploading...' : 'Upload front'}
@@ -1228,7 +1228,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                                 }}
                               />
                               <div className="fb-pan hidden">
-                                <FileText className="w-5 h-5 text-orange-500" />
+                                <FileText className="w-5 h-5 text-slate-600" />
                               </div>
                               {isPdfDocument(panCard) && (
                                 <span className="absolute bottom-0 right-0 px-1 py-0.2 rounded-tl text-[8px] font-bold bg-rose-600 text-white">
@@ -1241,7 +1241,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                               <button
                                 type="button"
                                 onClick={() => triggerUpload('panCard')}
-                                className="text-[#f95724] hover:underline cursor-pointer"
+                                className="text-[#17233d] hover:underline cursor-pointer"
                               >
                                 Replace
                               </button>
@@ -1252,7 +1252,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                             type="button"
                             disabled={uploadingDoc === 'panCard'}
                             onClick={() => triggerUpload('panCard')}
-                            className="mt-2 text-xs font-semibold px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:border-orange-300 hover:text-[#f95724] transition cursor-pointer flex items-center gap-1.5"
+                            className="mt-2 text-xs font-semibold px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:border-slate-300 hover:text-[#17233d] transition cursor-pointer flex items-center gap-1.5"
                           >
                             <Upload className="w-3 h-3" />
                             {uploadingDoc === 'panCard' ? 'Uploading...' : 'Upload PAN'}
@@ -1291,7 +1291,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                     <button
                       type="button"
                       onClick={handleNextStep}
-                      className="flex-1 h-12 rounded-full bg-[#f95724] hover:bg-[#e04818] text-white font-semibold text-base cursor-pointer shadow-sm transition flex items-center justify-center gap-2"
+                      className="flex-1 h-12 rounded-full bg-[#f07d4a] hover:bg-[#de6a3a] text-white font-semibold text-base cursor-pointer shadow-sm transition flex items-center justify-center gap-2"
                     >
                       <span>Continue to {regStep === 1 ? 'Bank Details' : 'KYC Verification'}</span>
                       <ArrowRight className="w-4 h-4" />
@@ -1300,7 +1300,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                     <button
                       type="submit"
                       disabled={busy}
-                      className="flex-1 h-12 rounded-full bg-[#f95724] hover:bg-[#e04818] text-white font-semibold text-base disabled:opacity-50 cursor-pointer shadow-sm transition flex items-center justify-center gap-2"
+                      className="flex-1 h-12 rounded-full bg-[#f07d4a] hover:bg-[#de6a3a] text-white font-semibold text-base disabled:opacity-50 cursor-pointer shadow-sm transition flex items-center justify-center gap-2"
                     >
                       {busy ? (
                         'Creating account...'
@@ -1321,7 +1321,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                       setMode('login');
                       setError('');
                     }}
-                    className="text-xs font-semibold text-slate-500 hover:text-[#f95724] transition cursor-pointer"
+                    className="text-xs font-semibold text-slate-500 hover:text-[#17233d] transition cursor-pointer"
                   >
                     Cancel and return to login
                   </button>
@@ -1336,7 +1336,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
               Booking an event as a host?{' '}
               <a
                 href={getUserPortalUrl()}
-                className="text-[#f95724] font-semibold hover:underline inline-flex items-center gap-1 ml-0.5 cursor-pointer"
+                className="text-[#17233d] font-semibold hover:underline inline-flex items-center gap-1 ml-0.5 cursor-pointer"
               >
                 Go to Host App <ArrowRight className="w-3.5 h-3.5" />
               </a>

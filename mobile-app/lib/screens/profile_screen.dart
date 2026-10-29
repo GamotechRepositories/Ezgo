@@ -9,6 +9,7 @@ import '../providers/auth_provider.dart';
 import '../providers/bookings_provider.dart';
 import '../providers/requirements_provider.dart';
 import '../utils/app_nav.dart';
+import '../widgets/pull_refresh.dart';
 import '../widgets/rule_explainer_sheet.dart';
 import '../widgets/shell_bottom_insets.dart';
 import '../widgets/tab_scroll_registry.dart';
@@ -36,11 +37,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
+    TabScrollRegistry.instance.register(3, _scrollController);
     TabScrollRegistry.instance.register(4, _scrollController);
   }
 
   @override
   void dispose() {
+    TabScrollRegistry.instance.unregister(3, _scrollController);
     TabScrollRegistry.instance.unregister(4, _scrollController);
     _scrollController.dispose();
     super.dispose();
@@ -131,11 +134,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final events = reqs.mine(user?.id).length;
     final active = bookings.upcomingBookings.length + bookings.awaitingPaymentBookings.length;
     final done = bookings.completedBookings.length;
+    final city = reqs.selectedCity;
 
     return Scaffold(
       backgroundColor: AppTheme.background,
-      body: ListView(
+      body: PullRefresh(
+        onRefresh: _refreshProfile,
+        child: ListView(
         controller: _scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: EdgeInsets.fromLTRB(16, 8, 16, ShellBottomInsets.of(context)),
         children: [
           const Text(
@@ -152,7 +159,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             name: name,
             phone: _formatPhone(user?.phone ?? ''),
             email: user?.displayEmail ?? '',
-            city: reqs.selectedCity,
+            city: city,
             avatarUrl: user?.avatar,
           ),
           const SizedBox(height: 12),
@@ -198,7 +205,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ],
       ),
+      ),
     );
+  }
+
+  Future<void> _refreshProfile() async {
+    final auth = context.read<AuthProvider>();
+    await Future.wait([
+      auth.ensureSession(),
+      context.read<BookingsProvider>().loadData(),
+      context.read<RequirementsProvider>().loadData(
+        requesterId: auth.isHost ? auth.user?.id : null,
+        marketplace: !auth.isHost,
+      ),
+    ]);
   }
 
   Widget _accountCard({
@@ -290,12 +310,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _menuCard(List<_MenuRow> rows) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return Material(
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.borderSubtle),
+        side: const BorderSide(color: AppTheme.borderSubtle),
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
           for (var i = 0; i < rows.length; i++) ...[
@@ -305,8 +326,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               leading: Container(
                 width: 38,
                 height: 38,
-                decoration: BoxDecoration(color: AppTheme.primaryLight, borderRadius: BorderRadius.circular(12)),
-                child: Icon(rows[i].icon, size: 18, color: AppTheme.primary),
+                decoration: BoxDecoration(color: AppTheme.slate100, borderRadius: BorderRadius.circular(12)),
+                child: Icon(rows[i].icon, size: 18, color: AppTheme.ink),
               ),
               title: Text(rows[i].title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
               subtitle: Text(rows[i].subtitle, style: const TextStyle(fontSize: 12, color: AppTheme.slate500)),
@@ -322,6 +343,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _openEditSheet() async {
     final auth = context.read<AuthProvider>();
     final reqs = context.read<RequirementsProvider>();
+    final serviceCity = (auth.user?.serviceArea ?? '').split(',').first.trim();
     await showAppBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -329,7 +351,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (_) => _EditProfileSheet(
         name: auth.user?.name ?? '',
         email: auth.user?.displayEmail ?? '',
-        city: reqs.selectedCity,
+        city: serviceCity.isNotEmpty ? serviceCity : reqs.selectedCity,
       ),
     );
   }
@@ -466,6 +488,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     setState(() => _saving = true);
     try {
       reqs.setSelectedCity(_city);
+      if (auth.isVendor) reqs.setMarketplaceCity(_city);
       await auth.updateProfile(
         name: name,
         email: _email.text.trim(),

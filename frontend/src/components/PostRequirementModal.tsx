@@ -239,6 +239,8 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [packageSummary, setPackageSummary] = useState<PostRequirementInitialData['packageSummary'] | null>(null);
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
+  const [customServiceName, setCustomServiceName] = useState('');
+  const [eventType, setEventType] = useState('');
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -266,18 +268,33 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
 
     if (initialData) {
       if (typeof initialData === 'string') {
-        const cats = initialData.includes('+') ? initialData.split('+').map((s) => s.trim()).filter(Boolean) : [initialData];
+        const isOther = initialData.trim().toLowerCase() === 'other';
+        const cats = isOther
+          ? ['Other']
+          : initialData.includes('+')
+            ? initialData.split('+').map((s) => s.trim()).filter(Boolean)
+            : [initialData];
         setSelectedCategories(cats);
+        setCustomServiceName('');
+        setEventType('');
         const isRealCategory = (_categories || []).some((c) => c.name.toLowerCase() === initialData.toLowerCase());
-        if (!isRealCategory) {
+        if (!isRealCategory && !isOther) {
           setTitle((prev) => prev || initialData);
         }
         setPackageSummary(null);
       } else {
         if (initialData.category) {
-          const cats = initialData.category.includes('+') ? initialData.category.split('+').map((s) => s.trim()).filter(Boolean) : [initialData.category];
+          const isOther = initialData.category.trim().toLowerCase() === 'other';
+          const cats = isOther
+            ? ['Other']
+            : initialData.category.includes('+')
+              ? initialData.category.split('+').map((s) => s.trim()).filter(Boolean)
+              : [initialData.category];
           setSelectedCategories(cats);
+          setCustomServiceName('');
         }
+        if (initialData.eventType) setEventType(initialData.eventType);
+        else setEventType('');
         if (initialData.title) setTitle(initialData.title);
         if (initialData.description) setDescription(initialData.description);
         if (typeof initialData.budget === 'number' && initialData.budget > 0) setBudget(initialData.budget);
@@ -352,6 +369,10 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
       })
     )
   );
+  const resolvedCategories = selectedCategories.map((c) =>
+    c === 'Other' ? (customServiceName.trim() || 'Other') : c
+  );
+  const otherSelected = selectedCategories.includes('Other');
 
   const toggleEquipment = (eq: string) => {
     setSelectedEquipments((prev) =>
@@ -380,7 +401,8 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
       }
 
       // Auto update title based on selected categories
-      const shortNames = next.map((c) => c.split('&')[0].trim());
+      const shortNames = next
+        .map((c) => (c === 'Other' ? (customServiceName.trim() || 'Other') : c.split('&')[0].trim()));
       const titlePrefix = shortNames.length <= 2 ? shortNames.join(' + ') : `${shortNames[0]} + ${next.length - 1} more`;
       setTitle(`${titlePrefix} for ${guestCount || 200} Guests in ${area}`);
 
@@ -416,7 +438,8 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
     try {
       await onSubmit({
         requesterId,
-        category: selectedCategories.join(' + ') || 'Event Services',
+        category: resolvedCategories.join(' + ') || 'Event Services',
+        eventType: eventType || undefined,
         title,
         description,
         imageUrl: customImageUrl || activeCategoryData.image,
@@ -438,7 +461,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
 
   
   const canProceedStep1 = Boolean(city.trim() && area.trim() && eventDate);
-  const canProceedStep2 = selectedCategories.length > 0;
+  const canProceedStep2 = selectedCategories.length > 0 && (!otherSelected || Boolean(customServiceName.trim()));
   const canProceedStep3 = Boolean(title.trim() && (typeof guestCount === 'number' ? guestCount > 0 : true));
   const canProceedStep4 = Boolean(typeof budget === 'number' && budget >= 1000);
 
@@ -451,7 +474,9 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
       setCurrentStep(2);
     } else if (currentStep === 2) {
       if (!canProceedStep2) {
-        alert('Please select at least one service category.');
+        alert(otherSelected && !customServiceName.trim()
+          ? 'Tell us which other service you need.'
+          : 'Please select at least one service category.');
         return;
       }
       setCurrentStep(3);
@@ -473,9 +498,9 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
     try {
       await onSubmit({
         requesterId,
-        category: selectedCategories.join(' + '),
+        category: resolvedCategories.join(' + '),
+        eventType: eventType || undefined,
         title,
-        description,
         imageUrl: customImages[0] || customImageUrl || activeCategoryData.image,
         images: customImages.length > 0 ? customImages : (customImageUrl ? [customImageUrl] : []),
         equipmentNeeded: selectedEquipments,
@@ -494,7 +519,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#f8fafc] overflow-y-auto w-full min-h-screen text-slate-900 flex flex-col justify-between selection:bg-orange-100 selection:text-orange-900">
+    <div className="fixed inset-0 z-50 bg-[#f8fafc] overflow-y-auto w-full min-h-screen text-slate-900 flex flex-col justify-between selection:bg-slate-100 selection:text-orange-900">
       
       {/* Top Header */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 sm:px-8 lg:px-12 py-3.5 shadow-xs">
@@ -528,8 +553,8 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
         
         {/* Simple & Friendly Intro Banner */}
         <div className="mb-6 sm:mb-8">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-100/90 text-orange-800 text-xs font-bold uppercase tracking-wider mb-2">
-            <ShieldCheck className="w-3.5 h-3.5 text-orange-600" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100/90 text-slate-800 text-xs font-bold uppercase tracking-wider mb-2">
+            <ShieldCheck className="w-3.5 h-3.5 text-slate-700" />
             <span>Ezzygo Reverse Bidding</span>
           </div>
           
@@ -546,7 +571,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
         <div className="mb-6 sm:mb-8">
           <div className="sm:hidden mb-2.5 flex items-center justify-between text-xs">
             <span className="font-bold text-slate-800">
-              Step {currentStep} of 4: <span className="text-[#f95724]">{STEP_TITLES[currentStep - 1].title}</span>
+              Step {currentStep} of 4: <span className="text-[#17233d]">{STEP_TITLES[currentStep - 1].title}</span>
             </span>
             <span className="text-slate-400 font-medium font-mono">{Math.round((currentStep / 4) * 100)}% Complete</span>
           </div>
@@ -564,7 +589,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                   }}
                   className={`text-left p-2 sm:p-3 rounded-xl border transition cursor-pointer flex flex-col justify-between ${
                     isCurrent
-                      ? 'border-[#f95724] bg-orange-50/70 ring-2 ring-[#f95724]/20'
+                      ? 'border-[#17233d] bg-slate-50/70 ring-2 ring-[#f07d4a]/20'
                       : isPassed
                       ? 'border-emerald-300 bg-emerald-50/50 hover:bg-emerald-50'
                       : 'border-slate-200 bg-white opacity-60 pointer-events-none'
@@ -574,7 +599,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                     <span
                       className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full text-[10px] sm:text-xs font-bold flex items-center justify-center ${
                         isCurrent
-                          ? 'bg-[#f95724] text-white'
+                          ? 'bg-[#f07d4a] text-white'
                           : isPassed
                           ? 'bg-emerald-600 text-white'
                           : 'bg-slate-200 text-slate-600'
@@ -607,7 +632,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
           <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-7 shadow-xs space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
               <div className="flex items-center gap-2.5">
-                <span className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center shadow-xs">
+                <span className="w-7 h-7 rounded-full bg-slate-900 text-white text-xs font-bold flex items-center justify-center shadow-xs">
                   2
                 </span>
                 <div>
@@ -624,7 +649,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-5">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5 text-orange-500" />
+                  <MapPin className="w-3.5 h-3.5 text-slate-600" />
                   <span>City / Town / District *</span>
                 </label>
                 <input
@@ -720,7 +745,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                       onClick={() => setArea(popArea)}
                       className={`px-3.5 py-2 sm:py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer min-h-[36px] flex items-center justify-center active:scale-95 ${
                         area === popArea
-                          ? 'bg-orange-100 text-orange-900 font-bold border border-orange-300'
+                          ? 'bg-slate-100 text-orange-900 font-bold border border-orange-300'
                           : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
                       }`}
                     >
@@ -735,7 +760,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
           {/* STEP 3: Date, Time & Estimated Guests */}
           <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-7 shadow-xs space-y-4">
             <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3.5">
-              <span className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center shadow-xs">
+              <span className="w-7 h-7 rounded-full bg-slate-900 text-white text-xs font-bold flex items-center justify-center shadow-xs">
                 3
               </span>
               <h2 className="text-base sm:text-lg font-bold text-slate-900 font-heading">
@@ -746,7 +771,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
-                  <Calendar className="w-3.5 h-3.5 text-orange-500" />
+                  <Calendar className="w-3.5 h-3.5 text-slate-600" />
                   <span>Event Date *</span>
                 </label>
                 <input
@@ -786,7 +811,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
-                  <Users className="w-3.5 h-3.5 text-orange-500" />
+                  <Users className="w-3.5 h-3.5 text-slate-600" />
                   <span>Estimated Guests *</span>
                 </label>
                 <input
@@ -819,7 +844,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                   onClick={() => setGuestCount(tier.count)}
                   className={`p-3.5 min-h-[50px] rounded-xl border text-left transition cursor-pointer flex items-center justify-between active:scale-95 ${
                     guestCount === tier.count
-                      ? 'border-orange-500 bg-orange-50/80 text-orange-950 font-bold shadow-xs'
+                      ? 'border-orange-500 bg-slate-50/80 text-orange-950 font-bold shadow-xs'
                       : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
                   }`}
                 >
@@ -827,7 +852,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                     <span className="text-xs sm:text-sm block font-bold">{tier.label}</span>
                     <span className="text-[11px] text-slate-500">{tier.range}</span>
                   </div>
-                  {guestCount === tier.count && <Check className="w-4 h-4 text-orange-600 shrink-0" />}
+                  {guestCount === tier.count && <Check className="w-4 h-4 text-slate-700 shrink-0" />}
                 </button>
               ))}
             </div>
@@ -841,9 +866,9 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
           {currentStep === 2 && (
             <div className="space-y-5 animate-in fade-in duration-200">
           {packageSummary && (
-            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/10 to-orange-500/5 border border-orange-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in">
+            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/10 to-orange-500/5 border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in">
               <div className="flex items-start sm:items-center gap-3.5">
-                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#f95724] to-[#ea4a17] text-white flex items-center justify-center font-bold text-xl shadow-sm shrink-0">
+                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#f07d4a] to-[#ea4a17] text-white flex items-center justify-center font-bold text-xl shadow-sm shrink-0">
                   ✨
                 </div>
                 <div>
@@ -851,7 +876,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                     <span className="text-sm sm:text-base font-black text-slate-900">
                       {packageSummary.eventType} Custom Package Loaded
                     </span>
-                    <span className="text-[11px] font-black uppercase tracking-wider bg-[#f95724] text-white px-2.5 py-0.5 rounded-full shadow-xs">
+                    <span className="text-[11px] font-black uppercase tracking-wider bg-[#f07d4a] text-white px-2.5 py-0.5 rounded-full shadow-xs">
                       {packageSummary.servicesCount} Services Selected
                     </span>
                   </div>
@@ -861,14 +886,14 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                 </div>
               </div>
               
-              <div className="flex items-center gap-3 sm:gap-4 shrink-0 border-t sm:border-t-0 sm:border-l border-orange-200/60 pt-2 sm:pt-0 sm:pl-4 justify-between sm:justify-end">
+              <div className="flex items-center gap-3 sm:gap-4 shrink-0 border-t sm:border-t-0 sm:border-l border-slate-200/60 pt-2 sm:pt-0 sm:pl-4 justify-between sm:justify-end">
                 <div>
                   <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Standard Rate</span>
                   <span className="text-xs text-slate-400 line-through font-mono font-bold">₹{packageSummary.retailTotal.toLocaleString()}</span>
                 </div>
                 <div>
                   <span className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider block">Target Reverse-Bid</span>
-                  <span className="text-base font-black text-[#f95724] font-mono">₹{packageSummary.targetBid.toLocaleString()}</span>
+                  <span className="text-base font-black text-[#17233d] font-mono">₹{packageSummary.targetBid.toLocaleString()}</span>
                 </div>
                 <button
                   type="button"
@@ -886,7 +911,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
           <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-7 shadow-xs space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3.5 flex-wrap gap-2">
               <div className="flex items-center gap-2.5">
-                <span className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center shadow-xs">
+                <span className="w-7 h-7 rounded-full bg-slate-900 text-white text-xs font-bold flex items-center justify-center shadow-xs">
                   1
                 </span>
                 <div>
@@ -902,7 +927,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                 {selectedCategories.map((catName) => (
                   <span
                     key={catName}
-                    className="text-xs font-bold text-orange-600 bg-orange-50 px-2.5 py-1 rounded-lg border border-orange-200 flex items-center gap-1.5 shadow-2xs"
+                    className="text-xs font-bold text-slate-700 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200 flex items-center gap-1.5 shadow-2xs"
                   >
                     <span>{catName}</span>
                     {selectedCategories.length > 1 && (
@@ -912,7 +937,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                           e.stopPropagation();
                           handleToggleCategory(catName);
                         }}
-                        className="w-3.5 h-3.5 rounded-full hover:bg-orange-200 text-orange-700 flex items-center justify-center text-[10px] font-bold"
+                        className="w-3.5 h-3.5 rounded-full hover:bg-orange-200 text-slate-700 flex items-center justify-center text-[10px] font-bold"
                         title="Remove service"
                       >
                         ✕
@@ -938,8 +963,8 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                     onClick={() => handleToggleCategory(cat.name)}
                     className={`p-2.5 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer group overflow-hidden relative ${
                       isSelected
-                        ? 'border-orange-500 bg-orange-50/80 ring-2 ring-orange-500/30 shadow-md shadow-orange-500/10 scale-[1.02]'
-                        : 'border-slate-200 bg-white hover:border-orange-300 hover:shadow-md hover:scale-[1.01]'
+                        ? 'border-orange-500 bg-slate-50/80 ring-2 ring-orange-500/30 shadow-md shadow-orange-500/10 scale-[1.02]'
+                        : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-md hover:scale-[1.01]'
                     }`}
                   >
                     {/* Category Image Thumbnail */}
@@ -954,12 +979,12 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
                       
-                      <div className="absolute top-2 left-2 w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/95 backdrop-blur-md flex items-center justify-center text-[#f95724] shadow-xs">
+                      <div className="absolute top-2 left-2 w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/95 backdrop-blur-md flex items-center justify-center text-[#17233d] shadow-xs">
                         <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       </div>
 
                       {isSelected && (
-                        <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-orange-500 ring-2 ring-white flex items-center justify-center text-white shadow-md">
+                        <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-slate-500 ring-2 ring-white flex items-center justify-center text-white shadow-md">
                           <Check className="w-3.5 h-3.5 stroke-[3]" />
                         </div>
                       )}
@@ -971,14 +996,57 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                           {cat.name}
                         </span>
                       </div>
-                      <span className="text-[11px] sm:text-xs font-semibold text-[#f95724] block mt-0.5 truncate">
+                      <span className="text-[11px] sm:text-xs font-semibold text-[#17233d] block mt-0.5 truncate">
                         Avg. {cat.avgPriceRange || '₹0,000 - ₹50,000'}
                       </span>
                     </div>
                   </button>
                 );
               })}
+              <button
+                type="button"
+                onClick={() => handleToggleCategory('Other')}
+                className={`p-2.5 rounded-2xl border text-left transition-all flex flex-col cursor-pointer ${
+                  otherSelected
+                    ? 'border-orange-500 bg-[#fff6f1] ring-2 ring-orange-500/30 shadow-md'
+                    : 'border-slate-200 bg-white hover:border-orange-200 hover:shadow-md'
+                }`}
+              >
+                <div className="relative h-24 sm:h-28 lg:h-32 w-full rounded-xl overflow-hidden mb-2.5 bg-[#fff1ea] flex items-center justify-center">
+                  <span className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center">
+                    <Plus className="w-5 h-5 text-[#f07d4a]" />
+                  </span>
+                  {otherSelected && (
+                    <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-orange-500 ring-2 ring-white flex items-center justify-center text-white">
+                      <Check className="w-3.5 h-3.5 stroke-[3]" />
+                    </div>
+                  )}
+                </div>
+                <div className="px-1 pb-1">
+                  <span className="text-xs sm:text-sm font-bold text-slate-900 block leading-tight">Other Services</span>
+                  <span className="text-[11px] sm:text-xs font-semibold text-slate-500 block mt-0.5">Request any service not listed</span>
+                </div>
+              </button>
             </div>
+            {otherSelected && (
+              <div className="pt-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Which other service do you need?</label>
+                <input
+                  type="text"
+                  value={customServiceName}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setCustomServiceName(value);
+                    if (value.trim()) {
+                      setTitle(`${value.trim()} for ${guestCount || 200} Guests in ${area}`);
+                    }
+                  }}
+                  placeholder="e.g. Choreographer, Valet, Generator, Hostess"
+                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold focus:outline-none focus:border-orange-500 focus:bg-white"
+                />
+                <p className="text-xs text-slate-500 mt-1.5">Vendors in your city will bid on this request.</p>
+              </div>
+            )}
           </div>
 
             </div>
@@ -991,7 +1059,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
           {/* STEP 5: Title, Notes & Reference Image (Spacious Multi-Column on Laptop) */}
           <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-7 shadow-xs space-y-5">
             <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3.5">
-              <span className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center shadow-xs">
+              <span className="w-7 h-7 rounded-full bg-slate-900 text-white text-xs font-bold flex items-center justify-center shadow-xs">
                 5
               </span>
               <h2 className="text-base sm:text-lg font-bold text-slate-900 font-heading">
@@ -1033,7 +1101,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                             onClick={() => toggleEquipment(eq)}
                             className={`px-3.5 py-2 sm:py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 cursor-pointer border min-h-[38px] active:scale-95 ${
                               isSelected
-                                ? 'bg-orange-500 border-orange-600 text-white shadow-xs'
+                                ? 'bg-slate-500 border-orange-600 text-white shadow-xs'
                                 : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
                             }`}
                           >
@@ -1064,7 +1132,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
               <div className="lg:col-span-5 space-y-3">
                 <label className="block text-xs font-bold text-slate-700 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
-                    <ImageIcon className="w-4 h-4 text-orange-500" />
+                    <ImageIcon className="w-4 h-4 text-slate-600" />
                     <span>Venue / Inspiration Photo (Optional)</span>
                   </span>
                   <span className="text-[10px] text-slate-400 font-normal">Cloudinary CDN</span>
@@ -1086,12 +1154,12 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                   >
                     {isUploadingImage ? (
                       <div className="flex flex-col items-center gap-2 py-3">
-                        <Loader2 className="w-7 h-7 text-orange-500 animate-spin" />
-                        <span className="font-bold text-xs text-orange-600">Uploading photo(s) to Cloudinary CDN...</span>
+                        <Loader2 className="w-7 h-7 text-slate-600 animate-spin" />
+                        <span className="font-bold text-xs text-slate-700">Uploading photo(s) to Cloudinary CDN...</span>
                       </div>
                     ) : (
                       <>
-                        <div className="w-11 h-11 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center shadow-xs">
+                        <div className="w-11 h-11 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center shadow-xs">
                           <Upload className="w-5 h-5" />
                         </div>
                         <span className="font-bold text-xs sm:text-sm text-slate-800">
@@ -1125,7 +1193,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                               className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform"
                             />
                             {idx === 0 && (
-                              <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#f95724] text-white shadow-xs">
+                              <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#f07d4a] text-white shadow-xs">
                                 Cover
                               </span>
                             )}
@@ -1251,12 +1319,12 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                   <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/60">
                     <span className="text-slate-400 font-semibold block mb-1 uppercase text-[10px] tracking-wider">Guests & Budget</span>
                     <span className="text-slate-900 font-bold block">{guestCount || 200} Guests</span>
-                    <span className="text-[#f95724] font-black block font-mono text-sm">Max ₹{numericBudget.toLocaleString()}</span>
+                    <span className="text-[#17233d] font-black block font-mono text-sm">Max ₹{numericBudget.toLocaleString()}</span>
                   </div>
                 </div>
 
                 {title && (
-                  <div className="p-3.5 bg-orange-50/60 rounded-xl border border-orange-200/70 text-xs">
+                  <div className="p-3.5 bg-slate-50/60 rounded-xl border border-slate-200/70 text-xs">
                     <span className="text-slate-600 font-medium block">Requirement Title: <strong className="text-slate-900 font-bold">{title}</strong></span>
                     {description && <span className="text-slate-600 block mt-1 line-clamp-2">Special notes: {description}</span>}
                   </div>
@@ -1313,7 +1381,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                 <button
                   type="button"
                   onClick={handleNextStep}
-                  className="flex-1 sm:flex-none px-6 py-3 min-h-[44px] rounded-xl bg-gradient-to-r from-orange-500 via-[#f95724] to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-xs sm:text-sm transition shadow-md shadow-orange-500/20 flex items-center justify-center gap-2 cursor-pointer"
+                  className="flex-1 sm:flex-none px-6 py-3 min-h-[44px] rounded-xl bg-gradient-to-r from-orange-500 via-[#f07d4a] to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-xs sm:text-sm transition shadow-md shadow-slate-900/12 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <span>Continue</span>
                   <ArrowRight className="w-4 h-4" />
@@ -1322,7 +1390,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 sm:flex-none px-7 py-3 min-h-[44px] rounded-xl bg-gradient-to-r from-orange-500 via-[#f95724] to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-xs sm:text-sm transition shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                  className="flex-1 sm:flex-none px-7 py-3 min-h-[44px] rounded-xl bg-gradient-to-r from-orange-500 via-[#f07d4a] to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-xs sm:text-sm transition shadow-lg shadow-slate-900/15 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
                 >
                   {loading ? (
                     'Publishing...'

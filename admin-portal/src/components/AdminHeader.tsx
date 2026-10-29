@@ -165,7 +165,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                     <div className="min-w-0 flex-1">
                       <div className="font-bold text-xs text-slate-900 truncate flex items-center gap-1">
                         <span>{admin.name || 'Super Admin'}</span>
-                        <ShieldCheck className="w-3.5 h-3.5 text-orange-600 shrink-0" />
+                        <ShieldCheck className="w-3.5 h-3.5 text-slate-700 shrink-0" />
                       </div>
                       <div className="text-[11px] text-slate-500 font-medium truncate">
                         {admin.email || admin.phone || 'Platform Administrator'}
@@ -181,9 +181,9 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                       setIsDropdownOpen(false);
                       onOpenAccountModal();
                     }}
-                    className="w-full text-left px-3 py-2 rounded-xl font-bold text-slate-800 hover:bg-[#f95724]/10 hover:text-[#f95724] transition flex items-center gap-2.5 cursor-pointer"
+                    className="w-full text-left px-3 py-2 rounded-xl font-bold text-slate-800 hover:bg-[#f07d4a]/10 hover:text-[#17233d] transition flex items-center gap-2.5 cursor-pointer"
                   >
-                    <UserIcon className="w-4 h-4 text-[#f95724]" />
+                    <UserIcon className="w-4 h-4 text-[#17233d]" />
                     <span>My Account & Admin Profile</span>
                   </button>
 

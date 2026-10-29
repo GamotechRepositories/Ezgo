@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 import '../models/booking_model.dart';
 import '../services/api_service.dart';
 import '../services/razorpay_checkout.dart';
 
 class BookingsProvider extends ChangeNotifier {
+  static const _seenKey = 'eg_seen_booking_keys';
+  static const _maxSeen = 300;
+
   List<BookingModel> _bookings = [];
+  final List<String> _seenKeys = [];
   bool _isLoading = false;
+  bool _seenLoaded = false;
 
   List<BookingModel> get bookings => _bookings;
   bool get isLoading => _isLoading;
@@ -20,16 +26,71 @@ class BookingsProvider extends ChangeNotifier {
   List<BookingModel> get completedBookings =>
       _bookings.where((b) => b.status == 'COMPLETED').toList();
 
+  List<BookingModel> get _badgeBookings => [
+        ...awaitingPaymentBookings,
+        ...upcomingBookings,
+      ];
+
+  String _badgeKey(BookingModel booking) => '${booking.id}:${booking.status}';
+
+  int get unseenBadgeCount => _badgeBookings
+      .where((b) => b.id.isNotEmpty && !_seenKeys.contains(_badgeKey(b)))
+      .length;
+
+  int _loadSeq = 0;
+
   BookingsProvider() {
-    loadData();
+    _ensureSeenLoaded();
+  }
+
+  Future<void> _ensureSeenLoaded() async {
+    if (_seenLoaded) return;
+    final prefs = await SharedPreferences.getInstance();
+    _seenKeys
+      ..clear()
+      ..addAll(prefs.getStringList(_seenKey) ?? const []);
+    _seenLoaded = true;
+    notifyListeners();
+  }
+
+  Future<void> _persistSeen() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_seenKey, List<String>.from(_seenKeys));
+  }
+
+  void _remember(Iterable<String> keys) {
+    for (final key in keys) {
+      if (key.isEmpty) continue;
+      _seenKeys.remove(key);
+      _seenKeys.add(key);
+    }
+    if (_seenKeys.length > _maxSeen) {
+      _seenKeys.removeRange(0, _seenKeys.length - _maxSeen);
+    }
+  }
+
+  Future<void> markCurrentSeen() async {
+    await _ensureSeenLoaded();
+    _remember(_badgeBookings.map(_badgeKey));
+    notifyListeners();
+    await _persistSeen();
   }
 
   Future<void> loadData() async {
+    await _ensureSeenLoaded();
+    if (ApiService().token == null || ApiService().token!.isEmpty) {
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
+
+    final seq = ++_loadSeq;
     _isLoading = true;
     notifyListeners();
 
     try {
       final res = await ApiService().get(ApiConfig.bookings);
+      if (seq != _loadSeq) return;
       if (res != null && res['success'] == true && res['data'] is List) {
         final list = res['data'] as List<dynamic>;
         _bookings = list
@@ -39,9 +100,11 @@ class BookingsProvider extends ChangeNotifier {
         _bookings = [];
       }
     } catch (_) {
+      if (seq != _loadSeq) return;
       _bookings = [];
     }
 
+    if (seq != _loadSeq) return;
     _isLoading = false;
     notifyListeners();
   }

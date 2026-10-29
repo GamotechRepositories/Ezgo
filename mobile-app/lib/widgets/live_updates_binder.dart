@@ -70,7 +70,7 @@ class _LiveUpdatesBinderState extends State<LiveUpdatesBinder> {
     context.read<NotificationsProvider>().load();
     context.read<PaymentsProvider>().load();
     _poll?.cancel();
-    _poll = Timer.periodic(const Duration(seconds: 25), (_) {
+    _poll = Timer.periodic(const Duration(seconds: 45), (_) {
       if (!mounted) return;
       context.read<NotificationsProvider>().load();
     });

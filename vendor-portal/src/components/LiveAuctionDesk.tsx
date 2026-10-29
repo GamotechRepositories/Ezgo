@@ -33,6 +33,8 @@ interface LiveAuctionDeskProps {
   currentUser: User;
   onOpenBidModal: (requirement: Requirement) => void;
   onOpenExplainer: () => void;
+  marketplaceCity?: string;
+  onMarketplaceCity?: (city: string) => void;
 }
 
 export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
@@ -40,12 +42,19 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
   currentUser,
   onOpenBidModal,
   onOpenExplainer,
+  marketplaceCity,
+  onMarketplaceCity,
 }) => {
   const rawServiceArea = currentUser.serviceArea || currentUser.kycDocuments?.businessAddress || '';
   const vendorCity = rawServiceArea ? rawServiceArea.split(',')[0].trim() : '';
 
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
-  const [selectedCity, setSelectedCity] = useState<string>('ALL');
+  const [localCity, setLocalCity] = useState<string>('ALL');
+  const selectedCity = marketplaceCity ?? localCity;
+  const setSelectedCity = (city: string) => {
+    setLocalCity(city);
+    onMarketplaceCity?.(city);
+  };
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('EVENT_DATE_ASC');
   const [activeFilterTab, setActiveFilterTab] = useState<'ALL' | 'MY_CITY' | 'MY_BIDS' | 'OUTBID'>('ALL');
@@ -76,7 +85,18 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
       setActiveFilterTab('ALL');
       didAutoCity.current = true;
     }
-  }, [vendorCity, requirements]);
+  }, [vendorCity, requirements, onMarketplaceCity]);
+
+  React.useEffect(() => {
+    if (activeFilterTab === 'MY_BIDS' || activeFilterTab === 'OUTBID') return;
+    if (selectedCity === 'ALL') {
+      setActiveFilterTab('ALL');
+    } else if (vendorCity && normalizeCity(selectedCity) === normalizeCity(vendorCity)) {
+      setActiveFilterTab('MY_CITY');
+    } else {
+      setActiveFilterTab('ALL');
+    }
+  }, [selectedCity, vendorCity]);
 
   const canonicalCityName = (c: string) => {
     const norm = normalizeCity(c);
@@ -93,7 +113,23 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
     if (selectedCity === 'ALL') return true;
     return normalizeCity(req.location?.city) === normalizeCity(selectedCity);
   });
-  const categories = ['ALL', ...Array.from(new Set(scopedCityReqs.map((r) => r.category).filter(Boolean))).sort()];
+  const defaultCategories = [
+    ...(currentUser.categories || []),
+    'DJ & Sound Systems',
+    'Stage & Mandap Decoration',
+    'Photography & 4K Film',
+    'Catering Buffets',
+    'Lighting & Trussing',
+  ];
+  const categories = [
+    'ALL',
+    ...Array.from(
+      new Set([
+        ...defaultCategories.filter(Boolean),
+        ...scopedCityReqs.map((r) => r.category).filter(Boolean),
+      ])
+    ),
+  ];
 
   // Cities list deduplicated by normalized city
   const defaultCities = ['Pune', 'Mumbai', 'Hyderabad', 'Bengaluru', 'Delhi NCR', 'Nagpur', 'Goa', 'Jaipur'];
@@ -127,7 +163,7 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
     return myBid && r.lowestBid && myBid.amount > r.lowestBid;
   });
   const myCityReqs = openReqs.filter((r) =>
-    vendorCity && r.location?.city && r.location.city.toLowerCase().includes(vendorCity.toLowerCase())
+    vendorCity && normalizeCity(r.location?.city) === normalizeCity(vendorCity)
   );
 
   // Filtered requirements
@@ -135,19 +171,18 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
     const myBid = getMyBid(req);
     const isOutbid = myBid && req.lowestBid && myBid.amount > req.lowestBid;
 
-    // Filter tab
-    if (activeFilterTab === 'MY_CITY') {
-      if (!vendorCity || normalizeCity(req.location?.city) !== normalizeCity(vendorCity)) {
-        return false;
-      }
-    } else if (activeFilterTab === 'MY_BIDS') {
+    if (activeFilterTab === 'MY_BIDS') {
       if (!myBid) return false;
     } else if (activeFilterTab === 'OUTBID') {
       if (!isOutbid) return false;
+    } else if (activeFilterTab === 'MY_CITY') {
+      if (!vendorCity || normalizeCity(req.location?.city) !== normalizeCity(vendorCity)) {
+        return false;
+      }
     }
 
-    // City dropdown/pill filter with normalized matching
     const matchesCity =
+      activeFilterTab === 'MY_BIDS' ||
       selectedCity === 'ALL' ||
       normalizeCity(req.location?.city) === normalizeCity(selectedCity);
 
@@ -202,29 +237,29 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
       <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 p-6 sm:p-8 text-white shadow-xl border border-slate-700/50">
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-2 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/20 border border-orange-500/30 text-orange-400 text-xs font-bold uppercase tracking-wider">
-              <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
-              Live Reverse Bidding Market
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#f07d4a]/20 border border-[#f07d4a]/40 text-[#F4A06C] text-xs font-bold uppercase tracking-wider">
+              <span className="w-2 h-2 rounded-full bg-[#f07d4a] animate-pulse" />
+              Live reverse bidding
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+            <h1 className="hidden sm:block text-2xl sm:text-3xl font-extrabold tracking-tight">
               Event Leads & Reverse Auctions
             </h1>
-            <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-              Hosts have posted these verified event requirements with budgets. Submit your lowest eligible quote (<span className="text-orange-400 font-semibold">at least 15% below host budget</span>). When accepted, you receive <span className="text-emerald-400 font-semibold">100% of your bid</span> directly into your bank via EzzyGo Escrow!
+            <p className="text-slate-300 text-[13px] sm:text-base leading-relaxed">
+              Hosts have posted these verified event requirements with budgets. Submit your lowest eligible quote (<span className="text-slate-500 font-semibold">at least 15% below host budget</span>). When accepted, you receive <span className="text-emerald-400 font-semibold">100% of your bid</span> directly into your bank via EzzyGo Escrow!
             </p>
           </div>
 
-          <div className="flex flex-wrap sm:flex-nowrap gap-3 shrink-0">
+          <div className="hidden sm:flex flex-wrap sm:flex-nowrap gap-3 shrink-0">
             <button
               onClick={() => setShowHowItWorks(!showHowItWorks)}
               className="px-4 py-2.5 rounded-full bg-slate-800/90 hover:bg-slate-700 border border-slate-600 text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 cursor-pointer"
             >
-              <Info className="w-4 h-4 text-orange-400" />
+              <Info className="w-4 h-4 text-slate-500" />
               <span>{showHowItWorks ? 'Hide Rules' : 'How Bidding Works'}</span>
             </button>
             <button
               onClick={onOpenExplainer}
-              className="px-5 py-2.5 rounded-full bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm font-bold shadow-lg shadow-orange-500/25 transition flex items-center gap-1.5 cursor-pointer"
+              className="px-5 py-2.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold shadow-lg shadow-slate-900/15 transition flex items-center gap-1.5 cursor-pointer"
             >
               <span>15% Rule Guide</span>
               <ArrowRight className="w-4 h-4" />
@@ -233,7 +268,7 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
         </div>
 
         {/* Dynamic Summary Metric Cards */}
-        <div className="relative z-10 grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-slate-700/60">
+        <div className="relative z-10 grid grid-cols-3 sm:grid-cols-4 gap-2 sm:gap-3 mt-6 pt-6 border-t border-slate-700/60">
           <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xs">
             <div className="text-xs text-slate-400 font-medium">Open Leads</div>
             <div className="text-xl sm:text-2xl font-bold text-white mt-0.5">{openReqs.length}</div>
@@ -241,7 +276,7 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
           </div>
           <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xs">
             <div className="text-xs text-slate-400 font-medium">In {vendorCity || 'Your City'}</div>
-            <div className="text-xl sm:text-2xl font-bold text-orange-400 mt-0.5">{myCityReqs.length}</div>
+            <div className="text-xl sm:text-2xl font-bold text-[#F4A06C] mt-0.5">{myCityReqs.length}</div>
             <div className="text-[11px] text-slate-400">Local opportunities</div>
           </div>
           <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xs">
@@ -249,7 +284,7 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
             <div className="text-xl sm:text-2xl font-bold text-blue-400 mt-0.5">{myBidsReqs.length}</div>
             <div className="text-[11px] text-slate-400">Events bid on</div>
           </div>
-          <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xs">
+          <div className="hidden sm:block p-3.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xs">
             <div className="text-xs text-slate-400 font-medium">Leading (Lowest)</div>
             <div className="text-xl sm:text-2xl font-bold text-emerald-400 mt-0.5">{leadingBidsReqs.length}</div>
             <div className="text-[11px] text-emerald-300">Ranked #1 to win</div>
@@ -259,41 +294,41 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
 
       {/* Expandable "How Reverse Bidding Works" Educational Box */}
       {showHowItWorks && (
-        <div className="rounded-3xl bg-orange-50/90 border border-orange-200/80 p-5 sm:p-6 space-y-4 animate-in slide-in-from-top-4 duration-300">
+        <div className="rounded-3xl bg-slate-50/90 border border-slate-200/80 p-5 sm:p-6 space-y-4 animate-in slide-in-from-top-4 duration-300">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-orange-600" />
+              <Sparkles className="w-5 h-5 text-slate-700" />
               <h3 className="font-bold text-slate-900 text-base">Simple 4-Step Reverse Bidding Process</h3>
             </div>
-            <span className="text-xs font-semibold text-orange-700 bg-orange-100 px-2.5 py-1 rounded-full">
+            <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-full">
               Host Pays · EzzyGo Protects
             </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs sm:text-sm">
-            <div className="p-3.5 rounded-2xl bg-white border border-orange-100 space-y-1.5 shadow-2xs">
-              <div className="w-6 h-6 rounded-full bg-orange-100 text-orange-600 font-bold flex items-center justify-center text-xs">1</div>
+            <div className="p-3.5 rounded-2xl bg-white border border-slate-100 space-y-1.5 shadow-2xs">
+              <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-700 font-bold flex items-center justify-center text-xs">1</div>
               <h4 className="font-bold text-slate-900">Host Sets Budget</h4>
               <p className="text-slate-600 text-xs leading-relaxed">
                 Client posts the requirement with their maximum target budget (e.g. ₹50,000).
               </p>
             </div>
-            <div className="p-3.5 rounded-2xl bg-white border border-orange-100 space-y-1.5 shadow-2xs">
-              <div className="w-6 h-6 rounded-full bg-orange-100 text-orange-600 font-bold flex items-center justify-center text-xs">2</div>
+            <div className="p-3.5 rounded-2xl bg-white border border-slate-100 space-y-1.5 shadow-2xs">
+              <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-700 font-bold flex items-center justify-center text-xs">2</div>
               <h4 className="font-bold text-slate-900">15% Rule Ceiling</h4>
               <p className="text-slate-600 text-xs leading-relaxed">
                 Your bid must be at least 15% lower than host budget (e.g. ₹42,500 or below).
               </p>
             </div>
-            <div className="p-3.5 rounded-2xl bg-white border border-orange-100 space-y-1.5 shadow-2xs">
-              <div className="w-6 h-6 rounded-full bg-orange-100 text-orange-600 font-bold flex items-center justify-center text-xs">3</div>
+            <div className="p-3.5 rounded-2xl bg-white border border-slate-100 space-y-1.5 shadow-2xs">
+              <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-700 font-bold flex items-center justify-center text-xs">3</div>
               <h4 className="font-bold text-slate-900">Lowest Bid Leads</h4>
               <p className="text-slate-600 text-xs leading-relaxed">
                 Other vendors will compete. The lowest bid holds the winning position. You can revise anytime!
               </p>
             </div>
-            <div className="p-3.5 rounded-2xl bg-white border border-orange-100 space-y-1.5 shadow-2xs">
-              <div className="w-6 h-6 rounded-full bg-orange-100 text-orange-600 font-bold flex items-center justify-center text-xs">4</div>
+            <div className="p-3.5 rounded-2xl bg-white border border-slate-100 space-y-1.5 shadow-2xs">
+              <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-700 font-bold flex items-center justify-center text-xs">4</div>
               <h4 className="font-bold text-slate-900">100% Guaranteed Payout</h4>
               <p className="text-slate-600 text-xs leading-relaxed">
                 When accepted, host funds escrow upfront. After event, you get 100% of your bid with 0% vendor deduction!
@@ -314,7 +349,7 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
               setSelectedCity('ALL');
             }}
             className={`px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition flex items-center gap-1.5 cursor-pointer ${
-              activeFilterTab === 'ALL'
+              activeFilterTab === 'ALL' && selectedCity === 'ALL'
                 ? 'bg-slate-900 text-white shadow-xs'
                 : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
             }`}
@@ -331,14 +366,14 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
                 setSelectedCity(vendorCity);
               }}
               className={`px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                activeFilterTab === 'MY_CITY'
-                  ? 'bg-orange-600 text-white shadow-xs'
+                activeFilterTab !== 'MY_BIDS' && activeFilterTab !== 'OUTBID' && normalizeCity(selectedCity) === normalizeCity(vendorCity)
+                  ? 'bg-[#f07d4a] text-white shadow-xs'
                   : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
               }`}
             >
               <MapPin className="w-3.5 h-3.5" />
               <span>In {vendorCity}</span>
-              <span className="px-1.5 py-0.2 rounded-full bg-orange-100 text-orange-700 text-[11px] font-extrabold">{myCityReqs.length}</span>
+              <span className="px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-700 text-[11px] font-extrabold">{myCityReqs.length}</span>
             </button>
           )}
 
@@ -385,7 +420,7 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
 
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs min-w-0">
           <span className="text-slate-500 font-bold flex items-center gap-1 shrink-0 mr-1">
-            <MapPin className="w-3.5 h-3.5 text-orange-500" />
+            <MapPin className="w-3.5 h-3.5 text-slate-600" />
             <span>City:</span>
           </span>
           {cities.map((c) => {
@@ -397,23 +432,19 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
                 type="button"
                 onClick={() => {
                   setSelectedCity(c);
-                  if (isVendorCity) {
-                    setActiveFilterTab('MY_CITY');
-                  } else if (c === 'ALL') {
-                    setActiveFilterTab('ALL');
-                  } else if (activeFilterTab === 'MY_CITY') {
-                    setActiveFilterTab('ALL');
-                  }
+                  if (c === 'ALL') setActiveFilterTab('ALL');
+                  else if (isVendorCity) setActiveFilterTab('MY_CITY');
+                  else setActiveFilterTab('ALL');
                 }}
                 className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition cursor-pointer flex items-center gap-1 shrink-0 active:scale-95 ${
                   isMatch
-                    ? 'bg-orange-500 text-white shadow-xs'
+                    ? 'bg-[#17233d] text-white shadow-xs'
                     : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200'
                 }`}
               >
                 <span>{c === 'ALL' ? 'All Cities' : c}</span>
                 {isVendorCity && (
-                  <span className={`text-[10px] px-1 py-0.2 rounded-full font-bold uppercase ${isMatch ? 'bg-white/20 text-white' : 'bg-orange-100 text-orange-700'}`}>
+                  <span className={`text-[10px] px-1 py-0.2 rounded-full font-bold uppercase ${isMatch ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'}`}>
                     My City
                   </span>
                 )}
@@ -447,9 +478,9 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
 
       {/* Active City Filter Alert Banner */}
       {selectedCity !== 'ALL' && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3.5 rounded-2xl bg-orange-50/90 border border-orange-200 text-xs sm:text-sm text-orange-950 shadow-2xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3.5 rounded-2xl bg-slate-50/90 border border-slate-200 text-xs sm:text-sm text-orange-950 shadow-2xs">
           <div className="flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-orange-600 shrink-0" />
+            <MapPin className="w-4 h-4 text-slate-700 shrink-0" />
             <span>
               Showing requests in <strong>{selectedCity}</strong>
               {vendorCity && selectedCity.toLowerCase() === vendorCity.toLowerCase() && ' (Your Operating City)'}
@@ -461,7 +492,7 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
               setSelectedCity('ALL');
               setActiveFilterTab('ALL');
             }}
-            className="text-xs font-bold text-orange-700 hover:text-orange-900 underline cursor-pointer self-start sm:self-auto"
+            className="text-xs font-bold text-slate-700 hover:text-slate-900 underline cursor-pointer self-start sm:self-auto"
           >
             Show All Cities Across India ({openReqs.length})
           </button>
@@ -485,8 +516,8 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
         </div>
 
         {/* Sorting Dropdown Control */}
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          <ArrowUpDown className="w-3.5 h-3.5 text-orange-600 shrink-0" />
+        <div className="hidden sm:flex items-center gap-2 self-start sm:self-auto">
+          <ArrowUpDown className="w-3.5 h-3.5 text-slate-700 shrink-0" />
           <span className="font-semibold text-slate-700 whitespace-nowrap">Sort By:</span>
           <select
             value={sortBy}
@@ -544,7 +575,7 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
                   ? 'border-emerald-300 ring-2 ring-emerald-500/10 hover:border-emerald-400'
                   : isOutbid
                   ? 'border-amber-300 ring-2 ring-amber-500/10 hover:border-amber-400'
-                  : 'border-slate-200/90 hover:border-orange-300'
+                  : 'border-slate-200/90 hover:border-slate-300'
               } p-5 sm:p-6`}
             >
               <div className="space-y-4">
@@ -559,7 +590,7 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
 
                     {/* Occasion / Event Type Pill */}
                     {req.eventType && (
-                      <span className="px-2.5 py-1 rounded-full bg-orange-100 text-orange-800 text-xs font-bold border border-orange-200 flex items-center gap-1">
+                      <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-800 text-xs font-bold border border-slate-200 flex items-center gap-1">
                         <span>🎪 {req.eventType}</span>
                       </span>
                     )}
@@ -614,7 +645,7 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
 
                 {/* 3. Title & Description */}
                 <div>
-                  <h3 className="text-lg sm:text-xl font-bold text-slate-900 group-hover:text-orange-600 transition leading-snug">
+                  <h3 className="text-lg sm:text-xl font-bold text-slate-900 group-hover:text-slate-700 transition leading-snug">
                     {req.title}
                   </h3>
                   <p className="text-sm text-slate-600 mt-1.5 line-clamp-2 leading-relaxed">
@@ -626,7 +657,7 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70 text-xs">
                   <div className="space-y-0.5">
                     <span className="text-slate-400 font-medium flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5 text-orange-500" />
+                      <Calendar className="w-3.5 h-3.5 text-slate-600" />
                       <span>Event Date</span>
                     </span>
                     <div className="font-bold text-slate-800 truncate">{formattedDate}</div>
@@ -634,7 +665,7 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
 
                   <div className="space-y-0.5">
                     <span className="text-slate-400 font-medium flex items-center gap-1">
-                      <MapPin className="w-3.5 h-3.5 text-orange-500" />
+                      <MapPin className="w-3.5 h-3.5 text-slate-600" />
                       <span>Location</span>
                     </span>
                     <div className="font-bold text-slate-800 truncate" title={`${req.location.area}, ${req.location.city}`}>
@@ -644,7 +675,7 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
 
                   <div className="space-y-0.5">
                     <span className="text-slate-400 font-medium flex items-center gap-1">
-                      <Users className="w-3.5 h-3.5 text-orange-500" />
+                      <Users className="w-3.5 h-3.5 text-slate-600" />
                       <span>Guests</span>
                     </span>
                     <div className="font-bold text-slate-800">{req.guestCount || 0} People</div>
@@ -652,7 +683,7 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
 
                   <div className="space-y-0.5">
                     <span className="text-slate-400 font-medium flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5 text-orange-500" />
+                      <Clock className="w-3.5 h-3.5 text-slate-600" />
                       <span>Time Window</span>
                     </span>
                     <div className="font-bold text-slate-800 truncate">
@@ -665,7 +696,7 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
 
                 {/* 5. Equipment & Items Needed */}
                 {req.equipmentNeeded && req.equipmentNeeded.length > 0 && (
-                  <div className="space-y-1.5 pt-0.5">
+                  <div className="hidden sm:block space-y-1.5 pt-0.5">
                     <div className="text-xs font-semibold text-slate-500">
                       Required Equipment / Gear Checklist:
                     </div>
@@ -673,9 +704,9 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
                       {req.equipmentNeeded.map((eq, i) => (
                         <span
                           key={i}
-                          className="px-2.5 py-1 rounded-lg bg-orange-50/70 text-slate-700 text-xs font-medium border border-orange-200/60 flex items-center gap-1"
+                          className="px-2.5 py-1 rounded-lg bg-slate-50/70 text-slate-700 text-xs font-medium border border-slate-200/60 flex items-center gap-1"
                         >
-                          <Check className="w-3 h-3 text-orange-600" />
+                          <Check className="w-3 h-3 text-slate-700" />
                           <span>{eq}</span>
                         </span>
                       ))}
@@ -687,7 +718,7 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
                 <div className="rounded-2xl border border-slate-200 overflow-hidden bg-white shadow-2xs">
                   <div className="px-3.5 py-1.5 bg-slate-100/80 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider flex items-center justify-between">
                     <span>Reverse Bidding Pricing Desk</span>
-                    <span className="text-orange-600 font-semibold lowercase">15% discount rule applies</span>
+                    <span className="text-slate-700 font-semibold lowercase">15% discount rule applies</span>
                   </div>
 
                   <div className="grid grid-cols-3 divide-x divide-slate-200 p-3 text-center sm:text-left sm:p-3.5">
@@ -701,12 +732,12 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
                     </div>
 
                     {/* Max Allowed Bid (15% Rule Ceiling) */}
-                    <div className="px-1.5 sm:px-2 space-y-0.5 bg-orange-50/40">
-                      <div className="text-[11px] text-orange-700 font-bold">Bid Up To (Max)</div>
-                      <div className="text-sm sm:text-base font-extrabold text-orange-600">
+                    <div className="px-1.5 sm:px-2 space-y-0.5 bg-slate-50/40">
+                      <div className="text-[11px] text-slate-700 font-bold">Bid Up To (Max)</div>
+                      <div className="text-sm sm:text-base font-extrabold text-slate-700">
                         ₹{ceiling.toLocaleString()}
                       </div>
-                      <div className="text-[10px] text-orange-700">Min 15% discount</div>
+                      <div className="text-[10px] text-slate-700">Min 15% discount</div>
                     </div>
 
                     {/* Current Lowest Bid */}
@@ -824,10 +855,10 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
                   ) : (
                     <button
                       onClick={() => onOpenBidModal(req)}
-                      className="w-full sm:w-auto px-6 py-2.5 min-h-[42px] rounded-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs sm:text-sm transition active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-orange-500/25"
+                      className="w-full sm:w-auto px-6 py-2.5 min-h-[42px] rounded-full bg-[#f07d4a] hover:bg-[#de6a3a] text-white font-bold text-xs sm:text-sm transition active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-[#f07d4a]/25"
                     >
                       <Zap className="w-4 h-4" />
-                      <span>Place a Bid (Max ₹{ceiling.toLocaleString()})</span>
+                      <span>Place reverse bid (max ₹{ceiling.toLocaleString()})</span>
                     </button>
                   )}
                 </div>
@@ -841,19 +872,23 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
       {/* Empty State */}
       {sortedReqs.length === 0 && (
         <div className="rounded-3xl bg-white border border-slate-200 p-10 sm:p-12 text-center space-y-4">
-          <div className="w-14 h-14 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center mx-auto">
+          <div className="w-14 h-14 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center mx-auto">
             <MapPin className="w-7 h-7" />
           </div>
           <div className="space-y-1.5">
             <h3 className="text-lg font-bold text-slate-800">
-              {selectedCity !== 'ALL'
-                ? `No open requests in ${selectedCity} right now`
-                : 'No matching open requests right now'}
+              {openReqs.length === 0
+                ? 'No open leads yet'
+                : selectedCity !== 'ALL'
+                  ? `No open requests in ${selectedCity} right now`
+                  : 'No matching open requests right now'}
             </h3>
             <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
-              {selectedCity !== 'ALL' ? (
+              {openReqs.length === 0
+                ? 'Hosts have not posted any live reverse-bid requests yet. Pull to refresh, or check back after a host posts from the customer app.'
+                : selectedCity !== 'ALL' ? (
                 <>
-                  There are currently no active host requests posted in <strong>{selectedCity}</strong>. However, there are <strong>{openReqs.length}</strong> active requests posted in other cities (Pune, Mumbai, etc.).
+                  There are currently no active host requests posted in <strong>{selectedCity}</strong>. There are <strong>{openReqs.length}</strong> open requests in other cities.
                 </>
               ) : (
                 'There are no open event leads matching your current category or search filters.'
@@ -867,7 +902,7 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
               setActiveFilterTab('ALL');
               setSearchQuery('');
             }}
-            className="px-6 py-2.5 rounded-full bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm font-bold transition cursor-pointer shadow-md shadow-orange-500/20 active:scale-95"
+            className="px-6 py-2.5 rounded-full bg-[#f07d4a] hover:bg-[#de6a3a] text-white text-xs sm:text-sm font-bold transition cursor-pointer shadow-md shadow-[#f07d4a]/20 active:scale-95"
           >
             {selectedCity !== 'ALL'
               ? `View All Leads Across India (${openReqs.length})`

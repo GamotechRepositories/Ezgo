@@ -7,6 +7,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/bookings_provider.dart';
 import '../../providers/requirements_provider.dart';
 import '../../widgets/event_request_card.dart';
+import '../../widgets/pull_refresh.dart';
 import '../../widgets/shell_bottom_insets.dart';
 import '../../widgets/tab_scroll_registry.dart';
 import 'bids_comparison_screen.dart';
@@ -170,8 +171,7 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
             ),
           ),
           Expanded(
-            child: RefreshIndicator(
-              color: AppTheme.primary,
+            child: PullRefresh(
               onRefresh: _refresh,
               child: loading
                   ? ListView(

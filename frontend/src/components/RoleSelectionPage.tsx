@@ -49,7 +49,7 @@ export const RoleSelectionPage: React.FC<RoleSelectionPageProps> = ({ onSelect }
       {/* Top Bar */}
       <header className="flex items-center justify-between px-5 pt-5 pb-2">
         <EzzyGoLogo variant="host" size="md" />
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-orange-200/70 text-xs font-semibold text-[#FF5722] shadow-sm">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200/70 text-xs font-semibold text-[#17233d] shadow-sm">
           India&#39;s #1 Event Marketplace
         </span>
       </header>

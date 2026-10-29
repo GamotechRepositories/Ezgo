@@ -205,7 +205,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 onClose();
                 onNavigateToBookings?.();
               }}
-              className="w-full py-3.5 rounded-2xl bg-[#f95724] hover:bg-[#e04818] text-white font-semibold text-base transition flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-3.5 rounded-2xl bg-[#f07d4a] hover:bg-[#de6a3a] text-white font-semibold text-base transition flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>View my bookings</span>
               <ArrowRight className="w-4 h-4" />

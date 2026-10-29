@@ -34,7 +34,7 @@ export const EzzyGoLogo: React.FC<EzzyGoLogoProps> = ({
       />
 
       {showBadge && variant === 'vendor' && (
-        <span className={`font-black rounded-full uppercase tracking-wider bg-orange-500/10 text-[#FF5722] border border-[#FF5722]/20 ${currentSize.badge}`}>
+        <span className={`font-black rounded-full uppercase tracking-wider bg-slate-500/10 text-[#17233d] border border-[#f07d4a]/20 ${currentSize.badge}`}>
           PRO VENDOR
         </span>
       )}

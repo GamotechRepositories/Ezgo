@@ -11,6 +11,8 @@ import '../../models/banner_model.dart';
 import '../../models/requirement_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/banners_provider.dart';
+import '../../providers/bookings_provider.dart';
+import '../../providers/notifications_provider.dart';
 import '../../providers/requirements_provider.dart';
 import '../../widgets/event_service_card.dart';
 import '../../widgets/ezzygo_logo.dart';
@@ -18,6 +20,7 @@ import '../../widgets/image_poster_card.dart';
 import '../../widgets/event_request_card.dart';
 import '../../widgets/notification_bell.dart';
 import '../../widgets/promo_ad_banner.dart';
+import '../../widgets/pull_refresh.dart';
 import '../../widgets/rule_explainer_sheet.dart';
 import '../../widgets/shell_bottom_insets.dart';
 import 'bids_comparison_screen.dart';
@@ -133,8 +136,11 @@ class HostHomeScreenState extends State<HostHomeScreen> {
     final auth = context.watch<AuthProvider>();
     final myRequirements = reqProvider.mine(auth.user?.id);
 
-    return ListView(
+    return PullRefresh(
+      onRefresh: _refreshHome,
+      child: ListView(
       controller: widget.scrollController,
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.zero,
       children: [
         _buildImmersiveTopHero(reqProvider.selectedCity),
@@ -161,6 +167,12 @@ class HostHomeScreenState extends State<HostHomeScreen> {
 
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: _buildLiveBiddingSection(myRequirements),
+        ),
+        const SizedBox(height: 24),
+
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: _buildPromisesSection(),
         ),
 
@@ -178,7 +190,22 @@ class HostHomeScreenState extends State<HostHomeScreen> {
 
         SizedBox(height: ShellBottomInsets.of(context)),
       ],
+    ),
     );
+  }
+
+  Future<void> _refreshHome() async {
+    final auth = context.read<AuthProvider>();
+    final reqs = context.read<RequirementsProvider>();
+    await Future.wait([
+      reqs.loadData(
+        requesterId: auth.isHost ? auth.user?.id : null,
+        marketplace: !auth.isHost,
+      ),
+      context.read<BookingsProvider>().loadData(),
+      context.read<BannersProvider>().loadForCity(reqs.selectedCity, force: true),
+      context.read<NotificationsProvider>().load(),
+    ]);
   }
 
   void _openCreateEvent({String? category}) {
@@ -302,7 +329,7 @@ class HostHomeScreenState extends State<HostHomeScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(LucideIcons.mapPin, size: 13, color: AppTheme.primary),
+                          const Icon(LucideIcons.mapPin, size: 13, color: AppTheme.ink),
                           const SizedBox(width: 4),
                           Text(
                             displayCity.isEmpty ? 'Pune' : displayCity,
@@ -334,7 +361,7 @@ class HostHomeScreenState extends State<HostHomeScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: AppTheme.primary,
+                      color: AppTheme.ink,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: const Text(
@@ -365,15 +392,6 @@ class HostHomeScreenState extends State<HostHomeScreen> {
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
                       color: AppTheme.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'A vendor can win only by bidding at least 15% below your budget.',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF4B5563),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -493,7 +511,7 @@ class HostHomeScreenState extends State<HostHomeScreen> {
           style: GoogleFonts.poppins(
             fontSize: 11,
             fontWeight: FontWeight.w800,
-            color: AppTheme.primary,
+            color: AppTheme.ink,
             letterSpacing: 1,
           ),
         ),
@@ -577,21 +595,11 @@ class HostHomeScreenState extends State<HostHomeScreen> {
           child: Row(
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Popular Services', style: AppTheme.headingFont(fontSize: 18, fontWeight: FontWeight.w800)),
-                    const SizedBox(height: 2),
-                    const Text(
-                      'From weddings to festivals, pick your occasion',
-                      style: TextStyle(fontSize: 12, color: AppTheme.textSecondary, fontWeight: FontWeight.w500),
-                    ),
-                  ],
-                ),
+                child: Text('Popular Services', style: AppTheme.headingFont(fontSize: 18, fontWeight: FontWeight.w800)),
               ),
               GestureDetector(
                 onTap: _openAllOccasions,
-                child: const Text('View All', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppTheme.primary)),
+                  child: const Text('View All', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppTheme.ink)),
               ),
             ],
           ),
@@ -627,50 +635,16 @@ class HostHomeScreenState extends State<HostHomeScreen> {
       children: [
         Row(
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFF1EA),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(LucideIcons.sparkles, size: 12, color: AppTheme.primary),
-                  SizedBox(width: 5),
-                  Text(
-                    'SERVICES & RATES',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.6,
-                      color: AppTheme.primary,
-                    ),
-                  ),
-                ],
-              ),
+            Expanded(
+              child: Text('Event Services', style: AppTheme.headingFont(fontSize: 18, fontWeight: FontWeight.w800)),
             ),
-            const Spacer(),
             GestureDetector(
               onTap: _openCatalog,
-              child: const Row(
-                children: [
-                  Text('View All', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppTheme.primary)),
-                  SizedBox(width: 2),
-                  Icon(LucideIcons.arrowRight, size: 14, color: AppTheme.primary),
-                ],
-              ),
+              child: const Text('View All', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppTheme.ink)),
             ),
           ],
         ),
-        const SizedBox(height: 10),
-        Text('Event Services', style: AppTheme.headingFont(fontSize: 22, fontWeight: FontWeight.w800)),
-        const SizedBox(height: 4),
-        const Text(
-          'Typical market rates. Post once — vendors bid lower.',
-          style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.35),
-        ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 12),
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -713,7 +687,7 @@ class HostHomeScreenState extends State<HostHomeScreen> {
                 onTap: () => widget.onOpenMyEvents?.call(),
                 child: const Text(
                   'View All',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.primary),
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.ink),
                 ),
               ),
             const SizedBox(width: 12),
@@ -725,7 +699,7 @@ class HostHomeScreenState extends State<HostHomeScreen> {
               },
               child: const Text(
                 '+ New',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.primary),
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.ink),
               ),
             ),
           ],
@@ -742,15 +716,15 @@ class HostHomeScreenState extends State<HostHomeScreen> {
             ),
             child: Column(
               children: [
-                const Icon(LucideIcons.clipboardList, size: 32, color: AppTheme.primary),
+                const Icon(LucideIcons.clipboardList, size: 32, color: AppTheme.ink),
                 const SizedBox(height: 10),
                 const Text(
-                  'No event requests yet',
+                  'No events yet',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
                 ),
                 const SizedBox(height: 4),
                 const Text(
-                  'Post a request with your budget. Vendors will bid at least 15% below it.',
+                  'Post your budget. Vendors bid lower.',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 12, color: AppTheme.slate500, height: 1.35),
                 ),
@@ -770,7 +744,7 @@ class HostHomeScreenState extends State<HostHomeScreen> {
                       elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
-                    child: const Text('Post Event Request', style: TextStyle(fontWeight: FontWeight.w800)),
+                    child: const Text('Post Event', style: TextStyle(fontWeight: FontWeight.w800)),
                   ),
                 ),
               ],
@@ -790,6 +764,274 @@ class HostHomeScreenState extends State<HostHomeScreen> {
                 ),
               )),
       ],
+    );
+  }
+
+  Widget _buildLiveBiddingSection(List<RequirementModel> requirements) {
+    final live = requirements.where((r) => r.isOpen).toList()
+      ..sort((a, b) {
+        final bidCmp = b.liveBidsCount.compareTo(a.liveBidsCount);
+        if (bidCmp != 0) return bidCmp;
+        return (b.lowestBid ?? 0).compareTo(a.lowestBid ?? 0);
+      });
+    final show = live.take(3).toList();
+    final liveCount = live.where((r) => r.hasBids).length;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const _LivePulseDot(),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Live Bidding',
+                style: AppTheme.headingFont(fontSize: 17, fontWeight: FontWeight.w800),
+              ),
+            ),
+            if (liveCount > 0)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppTheme.tealLight,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '$liveCount live',
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppTheme.teal),
+                ),
+              ),
+            const SizedBox(width: 10),
+            GestureDetector(
+              onTap: () => widget.onOpenMyEvents?.call(),
+              child: const Text(
+                'View All',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.ink),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (show.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 18),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppTheme.borderSubtle),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppTheme.tealLight,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(LucideIcons.radio, size: 22, color: AppTheme.teal),
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'No live bids yet',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Bids will show here after you post.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, color: AppTheme.slate500, height: 1.35),
+                ),
+              ],
+            ),
+          )
+        else
+          ...show.map((req) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _liveBidCard(req),
+              )),
+      ],
+    );
+  }
+
+  Widget _liveBidCard(RequirementModel req) {
+    final bids = req.liveBidsCount;
+    final lowest = req.lowestBid;
+    final savePct = lowest != null && req.budget > 0
+        ? (((req.budget - lowest) / req.budget) * 100).round()
+        : 0;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => BidsComparisonScreen(requirement: req)),
+          );
+        },
+        borderRadius: BorderRadius.circular(20),
+        child: Ink(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: req.hasBids ? const Color(0xFFBBF0D2) : AppTheme.borderSubtle,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: req.hasBids ? const Color(0xFFE8F8F0) : AppTheme.primaryLight,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          req.hasBids ? LucideIcons.radio : LucideIcons.clock,
+                          size: 11,
+                          color: req.hasBids ? AppTheme.teal : AppTheme.primary,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          req.hasBids ? 'LIVE' : 'WAITING',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.4,
+                            color: req.hasBids ? AppTheme.teal : AppTheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    bids > 0 ? '$bids vendor${bids == 1 ? '' : 's'} bidding' : 'Vendors notified',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.slate600),
+                  ),
+                  const Spacer(),
+                  const Icon(LucideIcons.chevronRight, size: 16, color: AppTheme.slate400),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                req.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.textPrimary,
+                  height: 1.25,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${req.category} · ${req.displayDate} · ${req.displayPlace}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 12, color: AppTheme.slate500, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: AppTheme.slate50,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Your budget',
+                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppTheme.slate500),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            formatCurrency.format(req.budget),
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8F8F0),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFBBF0D2)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Lowest bid',
+                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppTheme.teal),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            lowest != null ? formatCurrency.format(lowest) : 'No bids yet',
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.emerald),
+                          ),
+                          if (lowest != null)
+                            Text(
+                              '$savePct% lower',
+                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppTheme.emerald),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                height: 42,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => BidsComparisonScreen(requirement: req)),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: req.hasBids ? AppTheme.primary : AppTheme.ink,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  child: Text(
+                    req.hasBids ? 'See bids ($bids)' : 'View request',
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -820,7 +1062,7 @@ class HostHomeScreenState extends State<HostHomeScreen> {
                   color: AppTheme.redLight,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(LucideIcons.helpCircle, size: 16, color: AppTheme.primary),
+                child: const Icon(LucideIcons.helpCircle, size: 16, color: AppTheme.ink),
               ),
               const SizedBox(width: 10),
               const Expanded(
@@ -879,7 +1121,7 @@ class HostHomeScreenState extends State<HostHomeScreen> {
               padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 10),
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: const Color(0xFFFFF5F5),
+                color: AppTheme.slate100,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Row(
@@ -887,10 +1129,10 @@ class HostHomeScreenState extends State<HostHomeScreen> {
                 children: [
                   Text(
                     'Learn more about the 15% Discount Rule & Escrow',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.primary),
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.ink),
                   ),
                   SizedBox(width: 4),
-                  Icon(LucideIcons.chevronRight, size: 14, color: AppTheme.primary),
+                  Icon(LucideIcons.chevronRight, size: 14, color: AppTheme.ink),
                 ],
               ),
             ),
@@ -1001,7 +1243,7 @@ class HostHomeScreenState extends State<HostHomeScreen> {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.primary,
+                  color: AppTheme.ink,
                 ),
               ),
             ),
@@ -1094,7 +1336,7 @@ class HostHomeScreenState extends State<HostHomeScreen> {
                             style: const TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
-                              color: AppTheme.primary,
+                              color: AppTheme.teal,
                             ),
                           ),
                         ],
@@ -1112,97 +1354,52 @@ class HostHomeScreenState extends State<HostHomeScreen> {
 
   Widget _buildPromisesSection() {
     const items = [
-      (
-        LucideIcons.indianRupee,
-        'At least 15% below your budget',
-        'You can only pick a vendor whose price is 15% or more below the budget you set.',
-      ),
-      (
-        LucideIcons.shield,
-        'Money held until the event is done',
-        'EzzyGo keeps your payment safe. The vendor gets paid only after you click "Event done".',
-      ),
-      (
-        LucideIcons.rotateCcw,
-        'Full refund if cancelled',
-        'If a paid booking is cancelled, you get back everything you paid, including the EzzyGo fee.',
-      ),
+      (LucideIcons.indianRupee, '15% below your budget'),
+      (LucideIcons.shield, 'Pay held until event done'),
+      (LucideIcons.rotateCcw, 'Full refund if cancelled'),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Why hosts use EzzyGo',
-          style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w800, color: AppTheme.primary, letterSpacing: 0.6),
-        ),
-        const SizedBox(height: 4),
-        Text('Book with no risk', style: AppTheme.headingFont(fontSize: 20, fontWeight: FontWeight.w800)),
-        const SizedBox(height: 4),
-        const Text('Three simple promises on every booking.', style: TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
-        const SizedBox(height: 14),
+        Text('Why EzzyGo', style: AppTheme.headingFont(fontSize: 18, fontWeight: FontWeight.w800)),
+        const SizedBox(height: 12),
         ...items.map((item) => Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: const Color(0xFFFDE68A).withValues(alpha: 0.7)),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppTheme.borderSubtle),
               ),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    width: 40,
-                    height: 40,
-                    decoration: const BoxDecoration(color: AppTheme.primaryLight, shape: BoxShape.circle),
-                    child: Icon(item.$1, size: 18, color: AppTheme.primary),
+                    width: 36,
+                    height: 36,
+                    decoration: const BoxDecoration(color: AppTheme.tealLight, shape: BoxShape.circle),
+                    child: Icon(item.$1, size: 16, color: AppTheme.teal),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(item.$2, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
-                        const SizedBox(height: 4),
-                        Text(item.$3, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary, height: 1.35)),
-                      ],
-                    ),
+                    child: Text(item.$2, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
                   ),
                 ],
               ),
             )),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PostRequirementScreen()));
-            },
-            child: const Text('Post your requirement'),
-          ),
-        ),
       ],
     );
   }
 
   Widget _buildFaqSection() {
     const faqs = [
-      ('How does the 15% rule help me?', 'You set a budget when you post. Vendors can bid any price below it, but you can only pick a bid that is at least 15% below your budget. So every booking saves you at least 15%.'),
-      ('How is my money kept safe?', 'When you pick a vendor, you pay their price plus a 10% EzzyGo fee. EzzyGo holds this money. The vendor is paid only after you click "Event done".'),
-      ('When do I get the vendor\'s phone number?', 'Right after you pay. You can then call or WhatsApp the vendor directly.'),
-      ('What if the booking is cancelled?', 'If a paid booking is cancelled, you get back everything you paid, including the EzzyGo fee. Your request opens again so you can pick another vendor.'),
-      ('Do vendors pay a commission?', 'No. Vendors get 100% of their bid after the event. The only fee is the 10% the host pays on top.'),
+      ('How does the 15% rule work?', 'You can only accept a bid that is at least 15% below your budget.'),
+      ('Is my payment safe?', 'EzzyGo holds the money. The vendor is paid after you tap Event done.'),
+      ('When do I get the vendor number?', 'Right after you pay.'),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('GOT QUESTIONS?', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w800, color: AppTheme.primary, letterSpacing: 0.6)),
-        const SizedBox(height: 4),
-        Text('Frequently Asked Questions', style: AppTheme.headingFont(fontSize: 20, fontWeight: FontWeight.w800)),
-        const SizedBox(height: 4),
-        const Text(
-          'Everything you need to know about the 15% discount rule, escrow safety, and booking flow.',
-          style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
-        ),
+        Text('FAQ', style: AppTheme.headingFont(fontSize: 18, fontWeight: FontWeight.w800)),
         const SizedBox(height: 12),
         ...List.generate(faqs.length, (i) {
           final open = _expandedFaq == i;
@@ -1211,7 +1408,7 @@ class HostHomeScreenState extends State<HostHomeScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: open ? AppTheme.primary.withValues(alpha: 0.4) : AppTheme.borderSubtle),
+              border: Border.all(color: open ? AppTheme.ink.withValues(alpha: 0.35) : AppTheme.borderSubtle),
             ),
             child: InkWell(
               borderRadius: BorderRadius.circular(16),
@@ -1223,7 +1420,7 @@ class HostHomeScreenState extends State<HostHomeScreen> {
                   children: [
                     Row(
                       children: [
-                        Text((i + 1).toString().padLeft(2, '0'), style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w800)),
+                        Text((i + 1).toString().padLeft(2, '0'), style: const TextStyle(color: AppTheme.ink, fontWeight: FontWeight.w800)),
                         const SizedBox(width: 10),
                         Expanded(child: Text(faqs[i].$1, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13))),
                         Icon(open ? LucideIcons.chevronUp : LucideIcons.chevronDown, size: 16, color: AppTheme.slate500),
@@ -1250,20 +1447,51 @@ class HostHomeScreenState extends State<HostHomeScreen> {
         const EzzyGoLogo(size: 28),
         const SizedBox(height: 6),
         const Text(
-          'Celebrate Without Stress',
+          'Celebrate without stress',
           style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
         ),
-        const SizedBox(height: 2),
-        const Text(
-          "India's 1st Event Reverse-Bidding Platform",
-          style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
-        ),
-        const SizedBox(height: 4),
-        const Text(
-          '100% Escrow Protected · Made with ❤️ for Celebrations',
-          style: TextStyle(fontSize: 10, color: AppTheme.slate400),
-        ),
       ],
+    );
+  }
+}
+
+class _LivePulseDot extends StatefulWidget {
+  const _LivePulseDot();
+
+  @override
+  State<_LivePulseDot> createState() => _LivePulseDotState();
+}
+
+class _LivePulseDotState extends State<_LivePulseDot> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100))
+      ..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: Tween<double>(begin: 0.85, end: 1.15).animate(
+        CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+      ),
+      child: Container(
+        width: 9,
+        height: 9,
+        decoration: const BoxDecoration(
+          color: Color(0xFF10B981),
+          shape: BoxShape.circle,
+        ),
+      ),
     );
   }
 }

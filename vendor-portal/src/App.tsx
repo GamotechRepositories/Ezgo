@@ -1,4 +1,4 @@
-import { Search, CalendarCheck, Calendar, Wallet, User as UserIcon } from 'lucide-react';
+import { Search, Briefcase, Calendar, User as UserIcon } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { VendorSidebar } from './components/VendorSidebar';
 import { VendorHeader } from './components/VendorHeader';
@@ -14,15 +14,16 @@ import { RuleExplainer } from './components/RuleExplainer';
 import { ToastContainer } from './components/Toast';
 import type { ToastMessage } from './components/Toast';
 import { LoginPage } from './components/LoginPage';
+import { VendorProfilePage } from './components/VendorProfilePage';
 import { api, getToken, clearToken, getUser, setUser, clearUser } from './services/api';
 import { getSocket } from './services/socket';
 import type { Requirement, Booking, User } from './types';
 
-type VendorTab = 'auctions' | 'orders' | 'availability' | 'wallet' | 'inventory';
+type VendorTab = 'auctions' | 'orders' | 'availability' | 'wallet' | 'inventory' | 'profile';
 
 const tabFromUrl = (): VendorTab => {
   const hash = window.location.hash.replace('#', '');
-  if (['orders', 'availability', 'wallet', 'inventory', 'auctions'].includes(hash)) {
+  if (['orders', 'availability', 'wallet', 'inventory', 'auctions', 'profile'].includes(hash)) {
     return hash as VendorTab;
   }
   return 'auctions';
@@ -90,6 +91,7 @@ function VendorApp({ currentVendor, onUpdateVendor, onLogout }: { currentVendor:
   
   const [requirements, setRequirements] = useState<Requirement[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [marketplaceCity, setMarketplaceCity] = useState('ALL');
   
   const [selectedReqForBid, setSelectedReqForBid] = useState<Requirement | null>(null);
   const [isExplainerOpen, setIsExplainerOpen] = useState(false);
@@ -122,7 +124,13 @@ function VendorApp({ currentVendor, onUpdateVendor, onLogout }: { currentVendor:
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [currentVendor._id]);
+
+  useEffect(() => {
+    if (activeTab === 'orders' || activeTab === 'wallet') {
+      api.getMyBookings(currentVendor._id).then(setBookings).catch(() => {});
+    }
+  }, [activeTab, currentVendor._id]);
 
   // Real-time WebSocket Live Bidding & Auctions
   useEffect(() => {
@@ -305,16 +313,15 @@ function VendorApp({ currentVendor, onUpdateVendor, onLogout }: { currentVendor:
       const newBid = await api.placeBid(reqId, bidData);
       setRequirements((prev) =>
         prev.map((r) => {
-          if (r._id === reqId) {
-            const currentLowest = r.lowestBid || r.budget;
-            return {
-              ...r,
-              bidsCount: (r.bidsCount || 0) + 1,
-              lowestBid: Math.min(currentLowest, bidData.amount),
-              bids: [newBid, ...(r.bids || [])],
-            };
-          }
-          return r;
+          if (r._id !== reqId) return r;
+          const vendorId = String(currentVendor._id);
+          const prior = (r.bids || []).filter((b) => {
+            const pId = typeof b.providerId === 'object' ? (b.providerId as any)?._id : b.providerId;
+            return String(pId) !== vendorId && String(b._id) !== String(newBid._id);
+          });
+          const bids = [newBid, ...prior];
+          const lowest = bids.reduce((min, b) => Math.min(min, b.amount), bidData.amount);
+          return { ...r, bidsCount: bids.length, lowestBid: lowest, bids };
         })
       );
       setSelectedReqForBid(null);
@@ -351,6 +358,8 @@ function VendorApp({ currentVendor, onUpdateVendor, onLogout }: { currentVendor:
         <VendorHeader
           vendor={currentVendor}
           activeTab={activeTab}
+          marketplaceCity={marketplaceCity}
+          onMarketplaceCity={setMarketplaceCity}
           onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
           onTabChange={handleTabChange}
           activeOrdersCount={activeOrdersCount}
@@ -359,7 +368,7 @@ function VendorApp({ currentVendor, onUpdateVendor, onLogout }: { currentVendor:
           onOpenVerificationModal={() => setIsVerificationModalOpen(true)}
         />
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto pb-20 lg:pb-8">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto pb-28 lg:pb-8">
           {loadError && (
             <div className="mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <p className="text-sm">{loadError}</p>
@@ -376,6 +385,8 @@ function VendorApp({ currentVendor, onUpdateVendor, onLogout }: { currentVendor:
             <LiveAuctionDesk
               requirements={requirements}
               currentUser={currentVendor}
+              marketplaceCity={marketplaceCity}
+              onMarketplaceCity={setMarketplaceCity}
               onOpenBidModal={(req) => setSelectedReqForBid(req)}
               onOpenExplainer={() => setIsExplainerOpen(true)}
             />
@@ -403,66 +414,79 @@ function VendorApp({ currentVendor, onUpdateVendor, onLogout }: { currentVendor:
           {activeTab === 'inventory' && (
             <EquipmentInventory vendorId={currentVendor._id} />
           )}
+
+          {activeTab === 'profile' && (
+            <VendorProfilePage
+              vendor={currentVendor}
+              requirements={requirements}
+              bookings={bookings}
+              onEditProfile={() => setIsAccountModalOpen(true)}
+              onOpenLeads={() => handleTabChange('auctions')}
+              onOpenJobs={() => handleTabChange('orders')}
+              onOpenCalendar={() => handleTabChange('availability')}
+              onOpenEarnings={() => handleTabChange('wallet')}
+              onOpenEquipment={() => handleTabChange('inventory')}
+              onOpenExplainer={() => setIsExplainerOpen(true)}
+              onOpenVerification={() => setIsVerificationModalOpen(true)}
+              onLogout={onLogout}
+            />
+          )}
         </main>
 
-        <footer className="py-4 px-6 border-t border-slate-200/80 text-center text-xs text-slate-400 bg-white/50 mb-14 lg:mb-0">
-          EzzyGo for vendors · You get your full bid after every event
+        <footer className="hidden lg:block border-t border-slate-200 bg-white px-6 py-8">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm text-slate-500">
+            <p className="font-semibold text-slate-700">EzzyGo vendors · you receive 100% of your bid</p>
+            <div className="flex flex-wrap gap-4">
+              <button type="button" onClick={() => setIsExplainerOpen(true)} className="font-semibold text-[#f07d4a] cursor-pointer">
+                How bidding works
+              </button>
+              <a href="https://wa.me/919322054199" className="font-semibold hover:text-slate-800">WhatsApp support</a>
+              <a href="mailto:support@ezzygo.in" className="font-semibold hover:text-slate-800">support@ezzygo.in</a>
+            </div>
+          </div>
         </footer>
       </div>
       {/* Mobile Fixed Bottom Navigation Bar for Vendors */}
-      <nav className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 py-1.5 px-3 flex items-center justify-around lg:hidden safe-bottom shadow-lg">
-        <button
-          onClick={() => handleTabChange('auctions')}
-          className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition cursor-pointer ${
-            activeTab === 'auctions' ? 'text-[#f95724] font-bold' : 'text-slate-500 hover:text-slate-900 font-medium'
-          }`}
-        >
-          <Search className="w-5 h-5 mb-0.5" />
-          <span className="text-[10px]">Requests</span>
-        </button>
-
-        <button
-          onClick={() => handleTabChange('orders')}
-          className={`relative flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition cursor-pointer ${
-            activeTab === 'orders' ? 'text-[#f95724] font-bold' : 'text-slate-500 hover:text-slate-900 font-medium'
-          }`}
-        >
-          <CalendarCheck className="w-5 h-5 mb-0.5" />
-          <span className="text-[10px]">Bookings</span>
-          {activeOrdersCount > 0 && (
-            <span className="absolute top-0.5 right-1 w-4 h-4 rounded-full bg-emerald-600 text-white text-[9px] font-black flex items-center justify-center ring-2 ring-white">
-              {activeOrdersCount}
-            </span>
-          )}
-        </button>
-
-        <button
-          onClick={() => handleTabChange('availability')}
-          className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition cursor-pointer ${
-            activeTab === 'availability' ? 'text-[#f95724] font-bold' : 'text-slate-500 hover:text-slate-900 font-medium'
-          }`}
-        >
-          <Calendar className="w-5 h-5 mb-0.5" />
-          <span className="text-[10px]">Calendar</span>
-        </button>
-
-        <button
-          onClick={() => handleTabChange('wallet')}
-          className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition cursor-pointer ${
-            activeTab === 'wallet' ? 'text-[#f95724] font-bold' : 'text-slate-500 hover:text-slate-900 font-medium'
-          }`}
-        >
-          <Wallet className="w-5 h-5 mb-0.5" />
-          <span className="text-[10px]">Earnings</span>
-        </button>
-
-        <button
-          onClick={() => setIsAccountModalOpen(true)}
-          className="flex flex-col items-center justify-center py-1 px-2.5 rounded-xl text-slate-500 hover:text-slate-900 font-medium transition cursor-pointer"
-        >
-          <UserIcon className="w-5 h-5 mb-0.5" />
-          <span className="text-[10px]">Account</span>
-        </button>
+      <nav className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 py-1 px-3 flex items-center justify-around lg:hidden safe-bottom shadow-[0_-8px_24px_rgba(23,35,61,0.06)]">
+        {([
+          { id: 'auctions' as const, label: 'Leads', icon: Search },
+          { id: 'orders' as const, label: 'Jobs', icon: Briefcase, badge: activeOrdersCount },
+          { id: 'availability' as const, label: 'Calendar', icon: Calendar },
+          { id: 'profile' as const, label: 'Profile', icon: UserIcon },
+        ]).map((item) => {
+          const Icon = item.icon;
+          const active = item.id === 'profile'
+            ? ['profile', 'wallet', 'inventory'].includes(activeTab)
+            : activeTab === item.id;
+          const initial = (currentVendor.businessName || currentVendor.name || 'V').trim().charAt(0).toUpperCase();
+          return (
+            <button
+              key={item.id}
+              onClick={() => handleTabChange(item.id)}
+              className={`relative flex flex-col items-center justify-center min-w-[64px] py-1.5 rounded-xl transition cursor-pointer ${
+                active ? 'text-[#f07d4a] font-bold' : 'text-[#5c6573] font-medium'
+              }`}
+            >
+              {item.id === 'profile' ? (
+                currentVendor.avatar ? (
+                  <img src={currentVendor.avatar} alt="" className={`w-6 h-6 rounded-full object-cover mb-0.5 ${active ? 'ring-2 ring-[#f07d4a]' : ''}`} />
+                ) : (
+                  <span className={`w-6 h-6 rounded-full mb-0.5 text-[11px] font-black flex items-center justify-center ${active ? 'bg-[#f07d4a] text-white' : 'bg-slate-200 text-slate-600'}`}>
+                    {initial}
+                  </span>
+                )
+              ) : (
+                <Icon className="w-5 h-5 mb-0.5" strokeWidth={active ? 2.4 : 2} />
+              )}
+              <span className="text-[10px]">{item.label}</span>
+              {item.badge ? (
+                <span className="absolute top-0.5 right-2 min-w-4 h-4 px-1 rounded-full bg-[#f07d4a] text-white text-[9px] font-black flex items-center justify-center ring-2 ring-white">
+                  {item.badge}
+                </span>
+              ) : null}
+            </button>
+          );
+        })}
       </nav>
 
 

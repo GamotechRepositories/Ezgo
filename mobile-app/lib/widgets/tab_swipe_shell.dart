@@ -50,7 +50,7 @@ class _TabSwipeShellState extends State<TabSwipeShell> {
       physics: const NeverScrollableScrollPhysics(),
       itemCount: widget.children.length,
       itemBuilder: (context, index) {
-        return _KeepAlivePage(child: widget.children[index]);
+        return _KeepAlivePage(keep: index == 0, child: widget.children[index]);
       },
     );
   }
@@ -58,7 +58,8 @@ class _TabSwipeShellState extends State<TabSwipeShell> {
 
 class _KeepAlivePage extends StatefulWidget {
   final Widget child;
-  const _KeepAlivePage({required this.child});
+  final bool keep;
+  const _KeepAlivePage({required this.child, this.keep = false});
 
   @override
   State<_KeepAlivePage> createState() => _KeepAlivePageState();
@@ -66,7 +67,7 @@ class _KeepAlivePage extends StatefulWidget {
 
 class _KeepAlivePageState extends State<_KeepAlivePage> with AutomaticKeepAliveClientMixin {
   @override
-  bool get wantKeepAlive => true;
+  bool get wantKeepAlive => widget.keep;
 
   @override
   Widget build(BuildContext context) {

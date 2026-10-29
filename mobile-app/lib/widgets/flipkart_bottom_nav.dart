@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../config/theme.dart';
 import 'shell_bottom_insets.dart';
 
 class FlipkartNavItem {
@@ -40,7 +41,7 @@ class FlipkartBottomNav extends StatefulWidget {
     this.badgeCount = 0,
     this.badgeCounts = const [],
     this.accountInitial,
-    this.activeColor = const Color(0xFFFF7A00),
+    this.activeColor = const Color(0xFFF07D4A),
     this.badgeIconKey,
   });
 
@@ -49,7 +50,7 @@ class FlipkartBottomNav extends StatefulWidget {
 }
 
 class _FlipkartBottomNavState extends State<FlipkartBottomNav> {
-  static const Color _inactive = Color(0xFF878787);
+  static const Color _inactive = Color(0xFF5C6573);
 
   double _indicatorIndex = 0;
   bool _dragging = false;
@@ -82,6 +83,7 @@ class _FlipkartBottomNavState extends State<FlipkartBottomNav> {
 
   void _commit(int index) {
     HapticFeedback.heavyImpact();
+    setState(() => _indicatorIndex = index.toDouble());
     widget.onTap(index);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _dragging) return;
@@ -105,9 +107,14 @@ class _FlipkartBottomNavState extends State<FlipkartBottomNav> {
             borderRadius: BorderRadius.circular(32),
             boxShadow: [
               BoxShadow(
+                color: AppTheme.primary.withValues(alpha: 0.16),
+                blurRadius: 22,
+                offset: const Offset(0, 8),
+              ),
+              BoxShadow(
                 color: Colors.black.withValues(alpha: 0.08),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
+                blurRadius: 12,
+                offset: const Offset(0, 3),
               ),
             ],
           ),
@@ -115,9 +122,9 @@ class _FlipkartBottomNavState extends State<FlipkartBottomNav> {
             borderRadius: BorderRadius.circular(32),
             child: DecoratedBox(
               decoration: BoxDecoration(
-                color: const Color(0xF5FFFFFF),
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(32),
-                border: Border.all(color: const Color(0xFFE5E5E5)),
+                border: Border.all(color: const Color(0xFFFFD8C4)),
               ),
               child: LayoutBuilder(
               builder: (context, constraints) {
@@ -186,15 +193,9 @@ class _FlipkartBottomNavState extends State<FlipkartBottomNav> {
                         child: IgnorePointer(
                           child: DecoratedBox(
                             decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.07),
+                              color: AppTheme.primaryLight,
                               borderRadius: BorderRadius.circular(22),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.06),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
+                              border: Border.all(color: const Color(0xFFFFD8C4)),
                             ),
                           ),
                         ),
@@ -219,7 +220,7 @@ class _FlipkartBottomNavState extends State<FlipkartBottomNav> {
 
   Widget _buildTab(int index) {
     final item = widget.items[index];
-    final selected = !_dragging && widget.currentIndex == index && !item.isAction;
+    final selected = !_dragging && widget.currentIndex == index;
     final hover = _dragging && _indicatorIndex.round() == index;
     final active = selected || hover;
     final color = item.accent
@@ -233,17 +234,17 @@ class _FlipkartBottomNavState extends State<FlipkartBottomNav> {
         height: 28,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: widget.activeColor,
+          gradient: AppTheme.primaryGradient,
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: widget.activeColor.withValues(alpha: 0.38),
-              blurRadius: 7,
+              color: AppTheme.primary.withValues(alpha: 0.32),
+              blurRadius: 8,
               offset: const Offset(0, 2),
             ),
           ],
         ),
-        child: Icon(item.filledIcon, size: 15, color: Colors.white),
+        child: Icon(item.filledIcon, size: 16, color: Colors.white),
       );
     } else if (item.isAccount && widget.accountInitial != null && widget.accountInitial!.isNotEmpty) {
       icon = _AccountAvatar(
@@ -254,7 +255,7 @@ class _FlipkartBottomNavState extends State<FlipkartBottomNav> {
     } else {
       icon = Icon(
         active ? item.filledIcon : item.outlinedIcon,
-        size: 22,
+        size: 24,
         color: color,
       );
     }
@@ -265,7 +266,7 @@ class _FlipkartBottomNavState extends State<FlipkartBottomNav> {
     if (item.showBadge || count > 0) {
       icon = KeyedSubtree(
         key: item.showBadge ? widget.badgeIconKey : null,
-        child: _BadgeIcon(count: count, child: icon),
+        child: _BadgeIcon(count: count, color: color, child: icon),
       );
     }
 
@@ -286,9 +287,9 @@ class _FlipkartBottomNavState extends State<FlipkartBottomNav> {
               overflow: TextOverflow.fade,
               softWrap: false,
               style: TextStyle(
-                fontSize: 9,
+                fontSize: 10,
                 height: 1.1,
-                fontWeight: active || item.accent ? FontWeight.w800 : FontWeight.w600,
+                fontWeight: active || item.accent ? FontWeight.w800 : FontWeight.w700,
                 color: color,
               ),
             ),
@@ -301,9 +302,10 @@ class _FlipkartBottomNavState extends State<FlipkartBottomNav> {
 
 class _BadgeIcon extends StatelessWidget {
   final int count;
+  final Color color;
   final Widget child;
 
-  const _BadgeIcon({required this.count, required this.child});
+  const _BadgeIcon({required this.count, required this.color, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -319,7 +321,7 @@ class _BadgeIcon extends StatelessWidget {
               constraints: const BoxConstraints(minHeight: 16, minWidth: 16),
               padding: const EdgeInsets.symmetric(horizontal: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFFFF4343),
+                color: color,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: Colors.white, width: 1.2),
               ),
@@ -361,8 +363,8 @@ class _AccountAvatar extends StatelessWidget {
         shape: BoxShape.circle,
         color: selected ? activeColor.withValues(alpha: 0.14) : Colors.transparent,
         border: Border.all(
-          color: selected ? activeColor : const Color(0xFF878787),
-          width: selected ? 1.5 : 1,
+          color: selected ? activeColor : const Color(0xFF5C6573),
+          width: selected ? 1.5 : 1.4,
         ),
       ),
       child: Text(
@@ -370,7 +372,7 @@ class _AccountAvatar extends StatelessWidget {
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w800,
-          color: selected ? activeColor : const Color(0xFF878787),
+          color: selected ? activeColor : const Color(0xFF5C6573),
         ),
       ),
     );

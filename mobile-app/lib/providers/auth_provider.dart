@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 import '../models/user_model.dart';
 import '../services/api_service.dart';
+import '../utils/app_bootstrap.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthProvider extends ChangeNotifier {
@@ -25,6 +26,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isVendor => _activeRole == UserRole.vendor;
 
   AuthProvider() {
+    ApiService().onUnauthorized = logout;
     _sessionLoad = _loadSession();
   }
 
@@ -296,6 +298,7 @@ class AuthProvider extends ChangeNotifier {
     String? email,
     String? avatar,
     String? serviceArea,
+    String? businessName,
   }) async {
     if (_user == null) {
       throw ApiException('Please log in again.');
@@ -303,10 +306,11 @@ class AuthProvider extends ChangeNotifier {
 
     final res = await ApiService().put(ApiConfig.profile, {
       'userId': _user!.id,
-      if (name != null) 'name': name,
-      if (email != null) 'email': email,
-      if (avatar != null) 'avatar': avatar,
-      if (serviceArea != null) 'serviceArea': serviceArea,
+      'name': ?name,
+      'email': ?email,
+      'avatar': ?avatar,
+      'serviceArea': ?serviceArea,
+      'businessName': ?businessName,
     });
 
     if (res is! Map || res['data'] is! Map) {
@@ -327,9 +331,36 @@ class AuthProvider extends ChangeNotifier {
     await updateProfile(avatar: url);
   }
 
+  Future<void> blockDate(String date, {String reason = 'Booked / Offline Event'}) async {
+    final res = await ApiService().post(ApiConfig.blockDate, {'date': date, 'reason': reason});
+    if (res is! Map || res['data'] is! Map) {
+      throw ApiException(res is Map ? (res['message'] ?? 'Could not block date').toString() : 'Could not block date');
+    }
+    final data = (res['data'] as Map).cast<String, dynamic>();
+    data['token'] = _user?.token;
+    data['role'] = data['role'] ?? (_user?.role == UserRole.vendor ? 'provider' : 'requester');
+    _user = UserModel.fromJson(data);
+    await _persistSession(_user?.token ?? '');
+    notifyListeners();
+  }
+
+  Future<void> unblockDate(String date) async {
+    final res = await ApiService().delete('${ApiConfig.unblockDate}/$date');
+    if (res is! Map || res['data'] is! Map) {
+      throw ApiException(res is Map ? (res['message'] ?? 'Could not unblock date').toString() : 'Could not unblock date');
+    }
+    final data = (res['data'] as Map).cast<String, dynamic>();
+    data['token'] = _user?.token;
+    data['role'] = data['role'] ?? (_user?.role == UserRole.vendor ? 'provider' : 'requester');
+    _user = UserModel.fromJson(data);
+    await _persistSession(_user?.token ?? '');
+    notifyListeners();
+  }
+
   void logout() async {
     _user = null;
     ApiService().setToken(null);
+    AppBootstrap.reset();
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
     await prefs.remove('active_role');

@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import {
   Plus,
-  Image as ImageIcon,
-  Upload,
   X,
   Check,
   Camera,
@@ -15,6 +13,8 @@ import {
   EyeOff,
   Sparkles,
   Layers,
+  Monitor,
+  Smartphone,
 } from 'lucide-react';
 import type { Banner } from '../types';
 import { api } from '../services/api';
@@ -26,16 +26,6 @@ interface BannerManagerProps {
   onDeleteBanner?: (id: string) => Promise<void> | void;
   onRefresh?: () => void;
 }
-
-const PRESET_AD_IMAGES = [
-  { name: 'Grand Wedding & Concert Stage (Featured)', url: '/promo_banner_grand_event.jpg' },
-  { name: 'DJ & Sound Concert', url: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=1000&auto=format&fit=crop&q=80' },
-  { name: 'Royal Mandap & Floral Decor', url: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1000&auto=format&fit=crop&q=80' },
-  { name: '4K Drone & Candid Wedding', url: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=1000&auto=format&fit=crop&q=80' },
-  { name: 'Catering Buffet & Feast', url: 'https://images.unsplash.com/photo-1555244162-803834f70033?w=1000&auto=format&fit=crop&q=80' },
-  { name: 'Luxury Reception Stage', url: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=1000&auto=format&fit=crop&q=80' },
-  { name: 'Neon Party Lights & Truss', url: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=1000&auto=format&fit=crop&q=80' },
-];
 
 export const BannerManager: React.FC<BannerManagerProps> = ({
   banners,
@@ -52,12 +42,13 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
   const [subtitle, setSubtitle] = useState('');
   const [badge, setBadge] = useState('FEATURED OFFER');
   const [imageUrl, setImageUrl] = useState('');
+  const [desktopImageUrl, setDesktopImageUrl] = useState('');
+  const [uploadSlot, setUploadSlot] = useState<'mobile' | 'desktop'>('mobile');
   const [targetUrl, setTargetUrl] = useState('#services-grid');
   const [ctaText, setCtaText] = useState('Claim Deal');
   const [city, setCity] = useState('ALL');
   const [placement, setPlacement] = useState<'hero_banner' | 'featured_banner' | 'all'>('hero_banner');
   const [discountPercent, setDiscountPercent] = useState<number>(20);
-  const [imageTab, setImageTab] = useState<'upload' | 'preset' | 'url'>('upload');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -73,6 +64,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
     setSubtitle('');
     setBadge('SPONSORED');
     setImageUrl('');
+    setDesktopImageUrl('');
     setTargetUrl('#services-grid');
     setCtaText('Claim Deal');
     setCity('ALL');
@@ -88,6 +80,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
     setSubtitle(b.subtitle || '');
     setBadge(b.badge || 'FEATURED OFFER');
     setImageUrl(b.imageUrl);
+    setDesktopImageUrl(b.desktopImageUrl || '');
     setTargetUrl(b.targetUrl || '');
     setCtaText(b.ctaText || 'Claim Deal');
     setCity(b.city || 'ALL');
@@ -97,14 +90,16 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
     setIsModalOpen(true);
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, slot: 'mobile' | 'desktop') => {
     const file = e.target.files?.[0];
     if (file) {
       try {
         setIsUploading(true);
+        setUploadSlot(slot);
         setUploadError('');
         const cloudUrl = await api.uploadImage(file, 'ezzygo/banners');
-        setImageUrl(cloudUrl);
+        if (slot === 'desktop') setDesktopImageUrl(cloudUrl);
+        else setImageUrl(cloudUrl);
       } catch (err: any) {
         setUploadError(err.message || 'Image upload failed. You can also paste an image URL directly.');
       } finally {
@@ -141,8 +136,8 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !imageUrl.trim()) {
-      alert('Please provide at least a Title and an Image URL/Photo.');
+    if (!title.trim() || (!imageUrl.trim() && !desktopImageUrl.trim())) {
+      alert('Please provide a title and at least one banner image (mobile or desktop).');
       return;
     }
 
@@ -152,7 +147,8 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
         title: title.trim(),
         subtitle: subtitle.trim(),
         badge: badge.trim(),
-        imageUrl: imageUrl.trim(),
+        imageUrl: imageUrl.trim() || desktopImageUrl.trim(),
+        desktopImageUrl: desktopImageUrl.trim() || imageUrl.trim(),
         targetUrl: targetUrl.trim(),
         ctaText: ctaText.trim() || 'Claim Deal',
         city,
@@ -192,18 +188,18 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200/90 shadow-sm">
         <div className="space-y-1">
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-orange-100 text-[#f95724] flex items-center justify-center shadow-xs">
+            <div className="w-10 h-10 rounded-2xl bg-slate-100 text-[#17233d] flex items-center justify-center shadow-xs">
               <Megaphone className="w-5 h-5 stroke-[2.2]" />
             </div>
             <div>
               <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
                 <span>Promotional Banners & Ads</span>
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-orange-50 text-[#f95724] border border-orange-200 font-bold">
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-50 text-[#17233d] border border-slate-200 font-bold">
                   User Side
                 </span>
               </h2>
               <p className="text-xs sm:text-sm text-slate-500 font-medium">
-                Upload promotional graphics and ads to display on the User Portal home hero and mid-page banner zones.
+                Live ads show the image only. Upload two sizes: mobile 1080×540 px and desktop 1920×600 px.
               </p>
             </div>
           </div>
@@ -211,11 +207,28 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
 
         <button
           onClick={handleOpenCreateModal}
-          className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-[#f95724] to-orange-500 hover:from-[#e04818] hover:to-[#f95724] text-white text-xs sm:text-sm font-black shadow-md shadow-orange-500/25 transition active:scale-95 cursor-pointer shrink-0"
+          className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-[#f07d4a] to-orange-500 hover:from-[#de6a3a] hover:to-[#f07d4a] text-white text-xs sm:text-sm font-black shadow-md shadow-slate-900/15 transition active:scale-95 cursor-pointer shrink-0"
         >
           <Plus className="w-4 h-4 stroke-[3]" />
           <span>+ Add New Ad Banner</span>
         </button>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 flex items-start gap-3">
+          <Smartphone className="w-5 h-5 text-[#17233d] shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-black text-slate-900">Mobile app banner</p>
+            <p className="text-xs text-slate-600 mt-0.5">Exact size: <span className="font-bold text-slate-900">1080 × 540 px</span> (2:1) · JPG / PNG / WebP · max 4 MB</p>
+          </div>
+        </div>
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 flex items-start gap-3">
+          <Monitor className="w-5 h-5 text-[#17233d] shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-black text-slate-900">Desktop website banner</p>
+            <p className="text-xs text-slate-600 mt-0.5">Exact size: <span className="font-bold text-slate-900">1920 × 600 px</span> (16:5) · JPG / PNG / WebP · max 4 MB</p>
+          </div>
+        </div>
       </div>
 
       {/* Metrics Strip */}
@@ -229,8 +242,8 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
           <span className="text-2xl font-black text-emerald-600 mt-1 block">{activeCount}</span>
         </div>
         <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
-          <span className="text-[11px] font-bold text-orange-600 uppercase tracking-wider block">Hero Top Space</span>
-          <span className="text-2xl font-black text-orange-600 mt-1 block">{heroCount}</span>
+          <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">Hero Top Space</span>
+          <span className="text-2xl font-black text-slate-700 mt-1 block">{heroCount}</span>
         </div>
         <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
           <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Cities Covered</span>
@@ -242,7 +255,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-2xs">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none text-xs">
           <span className="text-slate-500 font-bold mr-1 flex items-center gap-1">
-            <MapPin className="w-3.5 h-3.5 text-[#f95724]" />
+            <MapPin className="w-3.5 h-3.5 text-[#17233d]" />
             <span>Target City:</span>
           </span>
           {['ALL', 'Pune', 'Mumbai', 'Hyderabad', 'Bengaluru', 'Delhi NCR'].map((c) => (
@@ -251,7 +264,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
               onClick={() => setFilterCity(c)}
               className={`px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer ${
                 filterCity === c
-                  ? 'bg-[#f95724] text-white shadow-xs'
+                  ? 'bg-[#f07d4a] text-white shadow-xs'
                   : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
               }`}
             >
@@ -262,7 +275,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
 
         <div className="flex items-center gap-1.5 text-xs">
           <span className="text-slate-500 font-bold mr-1 flex items-center gap-1">
-            <Layers className="w-3.5 h-3.5 text-[#f95724]" />
+            <Layers className="w-3.5 h-3.5 text-[#17233d]" />
             <span>Placement:</span>
           </span>
           {[
@@ -288,7 +301,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
       {/* Ad Banners Grid */}
       {filteredBanners.length === 0 ? (
         <div className="bg-white rounded-3xl border border-dashed border-slate-300 p-12 text-center space-y-4">
-          <div className="w-16 h-16 rounded-2xl bg-orange-50 text-[#f95724] flex items-center justify-center mx-auto">
+          <div className="w-16 h-16 rounded-2xl bg-slate-50 text-[#17233d] flex items-center justify-center mx-auto">
             <Megaphone className="w-8 h-8" />
           </div>
           <h3 className="text-lg font-bold text-slate-900">No advertisements found</h3>
@@ -297,7 +310,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
           </p>
           <button
             onClick={handleOpenCreateModal}
-            className="px-5 py-2.5 rounded-full bg-[#f95724] hover:bg-[#e04818] text-white text-xs font-bold shadow-sm inline-flex items-center gap-1.5 cursor-pointer"
+            className="px-5 py-2.5 rounded-full bg-[#f07d4a] hover:bg-[#de6a3a] text-white text-xs font-bold shadow-sm inline-flex items-center gap-1.5 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Create New Ad</span>
@@ -332,8 +345,8 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
 
                   {/* Top Badges */}
                   <div className="absolute top-3.5 inset-x-3.5 flex items-center justify-between">
-                    <span className="px-3 py-1 rounded-full bg-white/95 backdrop-blur-md text-[10px] font-black uppercase tracking-wider text-[#f95724] shadow-md flex items-center gap-1">
-                      <Sparkles className="w-3 h-3 text-orange-500" />
+                    <span className="px-3 py-1 rounded-full bg-white/95 backdrop-blur-md text-[10px] font-black uppercase tracking-wider text-[#17233d] shadow-md flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 text-slate-600" />
                       <span>{ad.badge || 'FEATURED'}</span>
                     </span>
 
@@ -400,7 +413,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
                     </p>
                     {ad.targetUrl && (
                       <div className="text-[11px] text-slate-500 font-medium truncate flex items-center gap-1 pt-1">
-                        <ExternalLink className="w-3 h-3 text-[#f95724] shrink-0" />
+                        <ExternalLink className="w-3 h-3 text-[#17233d] shrink-0" />
                         <span className="truncate">Links to: {ad.targetUrl}</span>
                       </div>
                     )}
@@ -462,7 +475,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
             
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-orange-100 text-[#f95724] flex items-center justify-center">
+                <div className="w-10 h-10 rounded-2xl bg-slate-100 text-[#17233d] flex items-center justify-center">
                   <Megaphone className="w-5 h-5" />
                 </div>
                 <div>
@@ -470,7 +483,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
                     {editingBanner ? 'Edit Advertisement' : 'Create New Ad Banner'}
                   </h3>
                   <p className="text-xs text-slate-500 font-medium">
-                    Configure image, headline, CTA and city targeting for the user side.
+                    Upload separate images for mobile (1080×540) and desktop (1920×600). No text overlay on the live ad.
                   </p>
                 </div>
               </div>
@@ -495,7 +508,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
                   placeholder="e.g. Grand Festive & Wedding Sound Setup"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-900 focus:outline-none focus:border-[#f95724] focus:bg-white transition"
+                  className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-900 focus:outline-none focus:border-[#17233d] focus:bg-white transition"
                 />
               </div>
 
@@ -509,109 +522,91 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
                   placeholder="e.g. High-output Line Arrays, JBL Bass & Pioneer Consoles with reverse-bidding savings."
                   value={subtitle}
                   onChange={(e) => setSubtitle(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-[#f95724] focus:bg-white transition"
+                  className="w-full px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-[#17233d] focus:bg-white transition"
                 />
               </div>
 
-              {/* Field 3: Image Upload & Presets */}
-              <div className="space-y-3 p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
-                <div className="flex items-center justify-between">
+              <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4 text-xs text-amber-950 space-y-1.5">
+                <p className="font-black uppercase tracking-wide text-[11px]">Exact banner sizes</p>
+                <p><span className="font-bold">Mobile app:</span> 1080 × 540 px (ratio 2:1) · JPG / PNG / WebP · max 4 MB</p>
+                <p><span className="font-bold">Desktop website:</span> 1920 × 600 px (ratio 16:5) · JPG / PNG / WebP · max 4 MB</p>
+                <p className="text-amber-800">Put all offer text inside the image. The app and website show the photo only — no overlay text.</p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2 p-4 rounded-2xl bg-slate-50 border border-slate-200">
                   <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                    <ImageIcon className="w-4 h-4 text-[#f95724]" />
-                    <span>Ad Graphic / Photo</span> <span className="text-rose-500">*</span>
+                    <Smartphone className="w-4 h-4 text-[#17233d]" />
+                    Mobile banner <span className="text-rose-500">*</span>
                   </label>
-                  <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 text-[11px] font-bold">
-                    <button
-                      type="button"
-                      onClick={() => setImageTab('upload')}
-                      className={`px-2.5 py-1 rounded-lg transition cursor-pointer ${
-                        imageTab === 'upload' ? 'bg-[#f95724] text-white' : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      Upload File
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setImageTab('preset')}
-                      className={`px-2.5 py-1 rounded-lg transition cursor-pointer ${
-                        imageTab === 'preset' ? 'bg-[#f95724] text-white' : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      Presets
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setImageTab('url')}
-                      className={`px-2.5 py-1 rounded-lg transition cursor-pointer ${
-                        imageTab === 'url' ? 'bg-[#f95724] text-white' : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      Image URL
-                    </button>
-                  </div>
-                </div>
-
-                {imageTab === 'upload' && (
-                  <div className="border-2 border-dashed border-orange-200 bg-white rounded-2xl p-6 text-center space-y-2">
-                    <div className="w-12 h-12 rounded-full bg-orange-50 text-[#f95724] flex items-center justify-center mx-auto">
-                      {isUploading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Upload className="w-6 h-6" />}
-                    </div>
-                    <label className="block text-xs font-bold text-slate-700 cursor-pointer">
-                      <span className="text-[#f95724] underline">Click to choose image file</span> or drag & drop
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileUpload}
-                        className="hidden"
-                        disabled={isUploading}
-                      />
-                    </label>
-                    <p className="text-[11px] text-slate-400">PNG, JPG, WebP up to 10MB</p>
-                    {uploadError && <p className="text-xs text-rose-500 font-semibold">{uploadError}</p>}
-                  </div>
-                )}
-
-                {imageTab === 'preset' && (
-                  <div className="grid grid-cols-3 gap-2.5">
-                    {PRESET_AD_IMAGES.map((preset) => (
-                      <div
-                        key={preset.name}
-                        onClick={() => setImageUrl(preset.url)}
-                        className={`relative h-20 rounded-xl overflow-hidden cursor-pointer border-2 transition ${
-                          imageUrl === preset.url ? 'border-[#f95724] scale-98 shadow-sm' : 'border-transparent hover:opacity-90'
-                        }`}
-                      >
-                        <img src={preset.url} alt={preset.name} className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center p-1 text-center">
-                          <span className="text-[10px] font-bold text-white leading-tight">{preset.name}</span>
-                        </div>
+                  <label className="block cursor-pointer">
+                    {imageUrl ? (
+                      <img src={imageUrl} alt="Mobile preview" className="w-full h-[120px] object-cover rounded-xl border border-slate-200" />
+                    ) : (
+                      <div className="w-full h-[120px] rounded-xl border-2 border-dashed border-[#f07d4a]/50 bg-white flex flex-col items-center justify-center gap-1 px-3 text-center">
+                        <span className="text-[11px] font-bold text-slate-500">Click to upload</span>
+                        <span className="text-sm font-black text-slate-900">1080 × 540 px</span>
+                        <span className="text-[10px] text-slate-500">JPG / PNG / WebP · max 4 MB</span>
                       </div>
-                    ))}
-                  </div>
-                )}
-
-                {imageTab === 'url' && (
+                    )}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      disabled={isUploading}
+                      onChange={(e) => handleFileUpload(e, 'mobile')}
+                    />
+                  </label>
+                  <p className="text-[11px] font-bold text-slate-700 text-center">Required size: 1080 × 540 px</p>
+                  {isUploading && uploadSlot === 'mobile' && (
+                    <p className="text-[11px] text-[#f07d4a] font-bold text-center">Uploading…</p>
+                  )}
                   <input
                     type="url"
-                    placeholder="https://images.unsplash.com/photo-..."
+                    placeholder="or paste mobile image URL"
                     value={imageUrl}
                     onChange={(e) => setImageUrl(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-xs font-mono text-slate-800 focus:outline-none focus:border-[#f95724]"
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-[11px] font-mono"
                   />
-                )}
+                </div>
 
-                {imageUrl && (
-                  <div className="flex items-center gap-3 pt-2">
-                    <img src={imageUrl} alt="Ad Preview" className="w-20 h-12 object-cover rounded-xl border border-slate-200" />
-                    <div className="text-xs text-slate-600 flex-1 truncate">
-                      <span className="font-bold text-emerald-600 block flex items-center gap-1">
-                        <Check className="w-3.5 h-3.5" /> Photo Attached
-                      </span>
-                      <span className="text-[11px] text-slate-400 truncate block">{imageUrl}</span>
-                    </div>
-                  </div>
-                )}
+                <div className="space-y-2 p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                  <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <Monitor className="w-4 h-4 text-[#17233d]" />
+                    Desktop banner
+                  </label>
+                  <label className="block cursor-pointer">
+                    {desktopImageUrl ? (
+                      <img src={desktopImageUrl} alt="Desktop preview" className="w-full h-[120px] object-cover rounded-xl border border-slate-200" />
+                    ) : (
+                      <div className="w-full h-[120px] rounded-xl border-2 border-dashed border-[#f07d4a]/50 bg-white flex flex-col items-center justify-center gap-1 px-3 text-center">
+                        <span className="text-[11px] font-bold text-slate-500">Click to upload</span>
+                        <span className="text-sm font-black text-slate-900">1920 × 600 px</span>
+                        <span className="text-[10px] text-slate-500">JPG / PNG / WebP · max 4 MB</span>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      disabled={isUploading}
+                      onChange={(e) => handleFileUpload(e, 'desktop')}
+                    />
+                  </label>
+                  <p className="text-[11px] font-bold text-slate-700 text-center">Required size: 1920 × 600 px</p>
+                  {isUploading && uploadSlot === 'desktop' && (
+                    <p className="text-[11px] text-[#f07d4a] font-bold text-center">Uploading…</p>
+                  )}
+                  <input
+                    type="url"
+                    placeholder="or paste desktop image URL"
+                    value={desktopImageUrl}
+                    onChange={(e) => setDesktopImageUrl(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-[11px] font-mono"
+                  />
+                </div>
               </div>
+              {uploadError && <p className="text-xs text-rose-500 font-semibold">{uploadError}</p>}
 
               {/* Row 4: Badge, Discount %, Placement */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -622,7 +617,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
                     value={badge}
                     onChange={(e) => setBadge(e.target.value)}
                     placeholder="e.g. SPONSORED, LIMITED"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#f95724]"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#17233d]"
                   />
                 </div>
 
@@ -634,7 +629,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
                     max="90"
                     value={discountPercent}
                     onChange={(e) => setDiscountPercent(Number(e.target.value))}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#f95724]"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#17233d]"
                   />
                 </div>
 
@@ -643,7 +638,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
                   <select
                     value={placement}
                     onChange={(e) => setPlacement(e.target.value as any)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#f95724]"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#17233d]"
                   >
                     <option value="hero_banner">Hero Ad (Right Side)</option>
                     <option value="featured_banner">Mid-Page Banner</option>
@@ -659,7 +654,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
                   <select
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#f95724]"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#17233d]"
                   >
                     <option value="ALL">All Cities (Pan-India)</option>
                     <option value="Pune">Pune, MH</option>
@@ -679,7 +674,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
                     value={ctaText}
                     onChange={(e) => setCtaText(e.target.value)}
                     placeholder="e.g. Claim Deal / Book Now"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#f95724]"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#17233d]"
                   />
                 </div>
 
@@ -690,7 +685,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
                     value={targetUrl}
                     onChange={(e) => setTargetUrl(e.target.value)}
                     placeholder="#services-grid or URL"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#f95724]"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#17233d]"
                   />
                 </div>
               </div>
@@ -706,8 +701,8 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
                 </button>
                 <button
                   type="submit"
-                  disabled={saving || !title.trim() || !imageUrl.trim()}
-                  className="px-7 py-2.5 rounded-xl bg-gradient-to-r from-[#f95724] to-orange-500 hover:from-[#e04818] hover:to-[#f95724] text-white text-xs font-bold shadow-md shadow-orange-500/20 transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                  disabled={saving || !title.trim() || (!imageUrl.trim() && !desktopImageUrl.trim())}
+                  className="px-7 py-2.5 rounded-xl bg-gradient-to-r from-[#f07d4a] to-orange-500 hover:from-[#de6a3a] hover:to-[#f07d4a] text-white text-xs font-bold shadow-md shadow-slate-900/12 transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
                 >
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4 stroke-[3]" />}
                   <span>{editingBanner ? 'Save Changes' : 'Publish Ad Banner'}</span>

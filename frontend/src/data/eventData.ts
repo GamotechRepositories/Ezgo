@@ -230,23 +230,15 @@ export const EVENT_CATEGORIES: EventCategoryData[] = [
 
 export const FAQS = [
   {
-    question: 'How does the 15% rule help me?',
-    answer: 'You set a budget when you post. Vendors can bid any price below it, but you can only pick a bid that is at least 15% below your budget. So every booking saves you at least 15%.'
+    question: 'How does the 15% rule work?',
+    answer: 'You can only accept a bid that is at least 15% below your budget.'
   },
   {
-    question: 'How is my money kept safe?',
-    answer: 'When you pick a vendor, you pay their price plus a 10% EzzyGo fee. EzzyGo holds this money. The vendor is paid only after you click "Event done".'
+    question: 'Is my payment safe?',
+    answer: 'EzzyGo holds the money. The vendor is paid after you tap Event done.'
   },
   {
-    question: 'When do I get the vendor\'s phone number?',
-    answer: 'Right after you pay. You can then call or WhatsApp the vendor directly.'
-  },
-  {
-    question: 'What if the booking is cancelled?',
-    answer: 'If a paid booking is cancelled, you get back everything you paid, including the EzzyGo fee. Your request opens again so you can pick another vendor.'
-  },
-  {
-    question: 'Do vendors pay a commission?',
-    answer: 'No. Vendors get 100% of their bid after the event. The only fee is the 10% the host pays on top.'
+    question: 'When do I get the vendor number?',
+    answer: 'Right after you pay.'
   }
 ];

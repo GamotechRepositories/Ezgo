@@ -807,18 +807,7 @@ export const ensureOpenMarketplaceLeads = async () => {
     let created = 0;
     for (const lead of MARKETPLACE_LEADS) {
       const existing = await Requirement.findOne({ title: lead.title });
-      if (existing) {
-        if (existing.status === 'OPEN' && existing.eventDate >= todayStr) continue;
-        if (existing.status === 'OPEN') {
-          existing.eventDate = lead.eventDate;
-          existing.biddingDeadline = new Date(`${lead.eventDate}T18:00:00.000Z`);
-          existing.status = 'OPEN';
-          await existing.save();
-          created += 1;
-        }
-        continue;
-      }
-      await Requirement.create({
+      const payload = {
         requesterId: host._id,
         ...lead,
         eventType: lead.occasion,
@@ -826,7 +815,15 @@ export const ensureOpenMarketplaceLeads = async () => {
         maxAcceptableBid: Math.floor(lead.budget * 0.85),
         biddingDeadline: new Date(`${lead.eventDate}T18:00:00.000Z`),
         status: 'OPEN',
-      });
+      };
+      if (existing) {
+        if (existing.status === 'OPEN' && existing.eventDate >= todayStr) continue;
+        Object.assign(existing, payload);
+        await existing.save();
+        created += 1;
+        continue;
+      }
+      await Requirement.create(payload);
       created += 1;
     }
     const openCount = await Requirement.countDocuments({

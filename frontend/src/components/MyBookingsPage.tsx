@@ -191,11 +191,11 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
     { id: 'to_pay', label: 'Awaiting Payment', count: toPay.length, color: 'text-amber-700' },
     { id: 'finished', label: 'Completed', count: finished.length },
     { id: 'cancelled', label: 'Cancelled', count: cancelled.length },
-    { id: 'payments', label: 'Payment history', count: paymentHistory.length, color: 'text-orange-700' },
+    { id: 'payments', label: 'Payment history', count: paymentHistory.length, color: 'text-slate-700' },
   ];
 
   return (
-    <div className="min-h-screen bg-[#fdfbf7] pt-24 sm:pt-28 pb-20">
+    <div className="min-h-screen bg-[#fdfbf7] pt-4 lg:pt-24 pb-24">
       
       {/* Container */}
       <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 space-y-8">
@@ -203,21 +203,21 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
         {/* ========================================================================= */}
         {/* 1. TOP HEADER & BREADCRUMB NAVIGATION                                    */}
         {/* ========================================================================= */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-5 pb-4 border-b border-orange-100">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-5 pb-4 border-b border-slate-100">
           <div>
             <button
               onClick={onBack}
-              className="group inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-500 hover:text-[#f95724] transition mb-3 cursor-pointer"
+              className="group inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-500 hover:text-[#17233d] transition mb-3 cursor-pointer"
             >
-              <div className="w-7 h-7 rounded-full bg-white border border-slate-200 flex items-center justify-center group-hover:border-[#f95724] group-hover:bg-orange-50 transition">
-                <ArrowLeft className="w-3.5 h-3.5 text-slate-600 group-hover:text-[#f95724]" />
+              <div className="w-7 h-7 rounded-full bg-white border border-slate-200 flex items-center justify-center group-hover:border-[#17233d] group-hover:bg-slate-50 transition">
+                <ArrowLeft className="w-3.5 h-3.5 text-slate-600 group-hover:text-[#17233d]" />
               </div>
               <span>Back to Marketplace</span>
             </button>
 
             <div className="flex items-center gap-2.5">
               <h1 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">
-                My Bookings & <span className="text-[#f95724]">Escrow Vault</span>
+                My Bookings & <span className="text-[#17233d]">Escrow Vault</span>
               </h1>
             </div>
 
@@ -229,7 +229,7 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
           <div className="flex items-center gap-3">
             <button
               onClick={() => onOpenPostModal()}
-              className="px-6 py-3.5 rounded-full bg-gradient-to-r from-[#f95724] to-orange-500 hover:from-[#e04818] hover:to-[#f95724] text-white font-black text-xs sm:text-sm shadow-lg shadow-orange-500/25 flex items-center gap-2 cursor-pointer transition active:scale-95 whitespace-nowrap min-h-[46px]"
+              className="px-6 py-3.5 rounded-full bg-gradient-to-r from-[#f07d4a] to-orange-500 hover:from-[#de6a3a] hover:to-[#f07d4a] text-white font-black text-xs sm:text-sm shadow-lg shadow-slate-900/15 flex items-center gap-2 cursor-pointer transition active:scale-95 whitespace-nowrap min-h-[46px]"
             >
               <Plus className="w-4 h-4 stroke-[3]" />
               <span>Post New Requirement</span>
@@ -289,7 +289,7 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
           </div>
 
           {/* Card 4: Escrow Protection Guarantee */}
-          <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-orange-500 to-[#e04818] text-white shadow-md shadow-orange-500/20 relative overflow-hidden flex flex-col justify-between">
+          <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-orange-500 to-[#de6a3a] text-white shadow-md shadow-slate-900/12 relative overflow-hidden flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <span className="text-xs font-black uppercase tracking-wider text-orange-100 flex items-center gap-1">
                 <Lock className="w-3.5 h-3.5" />
@@ -349,7 +349,7 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by vendor, title or city..."
-              className="w-full pl-9 pr-8 py-2.5 bg-white rounded-full border border-slate-200/90 text-xs sm:text-sm focus:outline-none focus:border-[#f95724] shadow-2xs placeholder:text-slate-400 font-medium"
+              className="w-full pl-9 pr-8 py-2.5 bg-white rounded-full border border-slate-200/90 text-xs sm:text-sm focus:outline-none focus:border-[#17233d] shadow-2xs placeholder:text-slate-400 font-medium"
             />
             {searchQuery && (
               <button
@@ -371,7 +371,7 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
           <div className="space-y-4">
             <div className="rounded-3xl bg-white border border-slate-200/90 p-5 flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-2xl bg-orange-50 text-[#f95724] flex items-center justify-center">
+                <div className="w-11 h-11 rounded-2xl bg-slate-50 text-[#17233d] flex items-center justify-center">
                   <Wallet className="w-5 h-5" />
                 </div>
                 <div>
@@ -421,7 +421,7 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
           </div>
         ) : filteredBookings.length === 0 ? (
           <div className="bg-white rounded-[32px] border border-slate-200/90 p-12 sm:p-16 text-center space-y-4 max-w-2xl mx-auto shadow-xs">
-            <div className="w-16 h-16 rounded-3xl bg-orange-100/70 text-[#f95724] flex items-center justify-center mx-auto shadow-inner">
+            <div className="w-16 h-16 rounded-3xl bg-slate-100/70 text-[#17233d] flex items-center justify-center mx-auto shadow-inner">
               <ShieldCheck className="w-8 h-8" />
             </div>
             <div className="space-y-1">
@@ -436,7 +436,7 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
             </div>
             <button
               onClick={() => onOpenPostModal()}
-              className="mt-2 px-6 py-3 rounded-full bg-[#f95724] hover:bg-[#e04818] text-white text-xs sm:text-sm font-bold shadow-md shadow-orange-500/20 inline-flex items-center gap-2 cursor-pointer transition active:scale-95"
+              className="mt-2 px-6 py-3 rounded-full bg-[#f07d4a] hover:bg-[#de6a3a] text-white text-xs sm:text-sm font-bold shadow-md shadow-slate-900/12 inline-flex items-center gap-2 cursor-pointer transition active:scale-95"
             >
               <Plus className="w-4 h-4" />
               <span>Post Event Requirement</span>
@@ -457,7 +457,7 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
               return (
                 <article
                   key={b._id}
-                  className="bg-white rounded-3xl sm:rounded-[32px] border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-orange-200 transition-all duration-300 overflow-hidden"
+                  className="bg-white rounded-3xl sm:rounded-[32px] border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-slate-200 transition-all duration-300 overflow-hidden"
                 >
                   
                   {/* Card Top Banner Bar */}
@@ -472,7 +472,7 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
                       {/* City Tag */}
                       {req?.location?.city && (
                         <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600">
-                          <MapPin className="w-3.5 h-3.5 text-orange-500" />
+                          <MapPin className="w-3.5 h-3.5 text-slate-600" />
                           <span>{req.location.city}</span>
                         </span>
                       )}
@@ -609,7 +609,7 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
                                 }}
                               />
                             ) : (
-                              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-400 to-[#f95724] text-white font-black text-lg flex items-center justify-center shadow-xs">
+                              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-400 to-[#f07d4a] text-white font-black text-lg flex items-center justify-center shadow-xs">
                                 {vendorName(b).charAt(0)}
                               </div>
                             )
@@ -624,7 +624,7 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
                               <button
                                 type="button"
                                 onClick={() => setProfileBooking(b)}
-                                className="font-bold text-slate-900 text-sm sm:text-base truncate text-left cursor-pointer hover:text-orange-600"
+                                className="font-bold text-slate-900 text-sm sm:text-base truncate text-left cursor-pointer hover:text-slate-700"
                               >
                                 {vendorName(b)}
                               </button>
@@ -659,7 +659,7 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
                               href={`tel:${phone}`}
                               className="py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-95 shadow-xs"
                             >
-                              <Phone className="w-3.5 h-3.5 text-orange-400" />
+                              <Phone className="w-3.5 h-3.5 text-slate-500" />
                               <span>Call Vendor</span>
                             </a>
                             <a
@@ -780,7 +780,7 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
                                   onOpenReviewModal(b);
                                 })
                               }
-                              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#f95724] to-orange-500 hover:from-[#e04818] hover:to-[#f95724] disabled:opacity-60 text-white font-black text-xs sm:text-sm shadow-md shadow-orange-500/30 flex items-center justify-center gap-2 cursor-pointer transition active:scale-95"
+                              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#f07d4a] to-orange-500 hover:from-[#de6a3a] hover:to-[#f07d4a] disabled:opacity-60 text-white font-black text-xs sm:text-sm shadow-md shadow-orange-500/30 flex items-center justify-center gap-2 cursor-pointer transition active:scale-95"
                             >
                               <CheckCircle2 className="w-4 h-4" />
                               <span>Event Done • Release Payout</span>
@@ -900,12 +900,12 @@ export const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
                       <div className="flex items-center gap-2">
                         <div
                           className={`w-5 h-5 rounded-full text-[10px] font-black flex items-center justify-center ${
-                            isDone ? 'bg-emerald-500 text-white' : isPaid ? 'bg-orange-500 text-white' : 'bg-slate-200 text-slate-500'
+                            isDone ? 'bg-emerald-500 text-white' : isPaid ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-500'
                           }`}
                         >
                           {isDone ? '✓' : '3'}
                         </div>
-                        <span className={`font-bold ${isDone ? 'text-slate-900' : isPaid ? 'text-orange-600' : 'text-slate-400'}`}>
+                        <span className={`font-bold ${isDone ? 'text-slate-900' : isPaid ? 'text-slate-700' : 'text-slate-400'}`}>
                           Event Delivery
                         </span>
                       </div>

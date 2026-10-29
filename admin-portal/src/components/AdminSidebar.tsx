@@ -117,12 +117,12 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                 }}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm transition cursor-pointer select-none ${
                   isActive
-                    ? 'bg-orange-50 text-slate-900 font-semibold border border-orange-200/80'
+                    ? 'bg-slate-50 text-slate-900 font-semibold border border-slate-200/80'
                     : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-medium border border-transparent'
                 }`}
               >
                 <span className="flex items-center gap-3">
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-[#f95724]' : 'text-slate-400'}`} />
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-[#17233d]' : 'text-slate-400'}`} />
                   <span>{item.label}</span>
                 </span>
                 <div className="flex items-center gap-1.5">
@@ -132,7 +132,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                     </span>
                   )}
                   {item.count !== null && (
-                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-[#f95724] text-white">
+                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-[#f07d4a] text-white">
                       {item.count}
                     </span>
                   )}
@@ -170,17 +170,17 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
             if (onOpenAccountModal) onOpenAccountModal();
             onClose();
           }}
-          className="p-3 m-3 rounded-2xl bg-slate-50 hover:bg-orange-50/60 border border-slate-200 hover:border-orange-200 flex items-center gap-3 min-w-0 transition cursor-pointer text-left group"
+          className="p-3 m-3 rounded-2xl bg-slate-50 hover:bg-slate-50/60 border border-slate-200 hover:border-slate-200 flex items-center gap-3 min-w-0 transition cursor-pointer text-left group"
         >
           {admin.avatar ? (
             <img src={admin.avatar} alt={admin.name} className="w-9 h-9 rounded-full object-cover shrink-0" referrerPolicy="no-referrer" />
           ) : (
-            <div className="w-9 h-9 rounded-full bg-slate-200 group-hover:bg-[#f95724] text-slate-700 group-hover:text-white font-semibold flex items-center justify-center shrink-0 transition">
+            <div className="w-9 h-9 rounded-full bg-slate-200 group-hover:bg-[#f07d4a] text-slate-700 group-hover:text-white font-semibold flex items-center justify-center shrink-0 transition">
               {(admin.name || 'A').charAt(0).toUpperCase()}
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-semibold text-slate-900 group-hover:text-[#f95724] truncate transition">
+            <div className="text-sm font-semibold text-slate-900 group-hover:text-[#17233d] truncate transition">
               {admin.name || 'Admin'}
             </div>
             <div className="text-xs text-slate-500">Super Administrator</div>

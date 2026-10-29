@@ -10,6 +10,7 @@ class RequirementsProvider extends ChangeNotifier {
   String _selectedCategory = 'All';
   String _searchQuery = '';
   String _selectedCity = 'Pune';
+  String _marketplaceCity = 'ALL';
   bool _hasChosenCity = false;
   bool _isLoading = false;
   String? _error;
@@ -54,14 +55,16 @@ class RequirementsProvider extends ChangeNotifier {
   String get selectedCategory => _selectedCategory;
   String get searchQuery => _searchQuery;
   String get selectedCity => _selectedCity;
+  String get marketplaceCity => _marketplaceCity;
   bool get hasChosenCity => _hasChosenCity;
   bool get isLoading => _isLoading;
   String? get error => _error;
   Future<void>? _cityLoad;
 
+  int _loadSeq = 0;
+
   RequirementsProvider() {
     _cityLoad = _restoreCity();
-    loadData();
   }
 
   Future<void> ensureCityLoaded() async {
@@ -85,6 +88,11 @@ class RequirementsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setMarketplaceCity(String city) {
+    _marketplaceCity = city;
+    notifyListeners();
+  }
+
   void setSelectedCity(String city) {
     _selectedCity = city;
     _hasChosenCity = true;
@@ -102,6 +110,13 @@ class RequirementsProvider extends ChangeNotifier {
       _scopedRequesterId = requesterId;
     }
     final scoped = marketplace ? null : (requesterId ?? _scopedRequesterId);
+    if (ApiService().token == null || ApiService().token!.isEmpty) {
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
+
+    final seq = ++_loadSeq;
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -109,8 +124,11 @@ class RequirementsProvider extends ChangeNotifier {
     try {
       final query = scoped != null && scoped.isNotEmpty
           ? '?requesterId=$scoped&includeDrafts=true'
-          : '';
+          : marketplace
+              ? '?status=OPEN'
+              : '';
       final res = await ApiService().get('${ApiConfig.requirements}$query');
+      if (seq != _loadSeq) return;
       if (res != null && res['success'] == true && res['data'] is List) {
         final list = res['data'] as List<dynamic>;
         _requirements = list.map((item) {
@@ -129,10 +147,12 @@ class RequirementsProvider extends ChangeNotifier {
         _error = res is Map ? (res['message']?.toString()) : 'Could not load your events.';
       }
     } catch (e) {
+      if (seq != _loadSeq) return;
       _requirements = [];
       _error = e.toString();
     }
 
+    if (seq != _loadSeq) return;
     _isLoading = false;
     notifyListeners();
   }
@@ -235,6 +255,9 @@ class RequirementsProvider extends ChangeNotifier {
         images: old.images,
         equipmentNeeded: old.equipmentNeeded,
         bids: bids,
+        timeStart: old.timeStart,
+        timeEnd: old.timeEnd,
+        biddingDeadline: old.biddingDeadline,
       );
       notifyListeners();
     }
@@ -353,6 +376,7 @@ class RequirementsProvider extends ChangeNotifier {
       bids: bids ?? old.bids,
       timeStart: old.timeStart,
       timeEnd: old.timeEnd,
+      biddingDeadline: old.biddingDeadline,
     );
   }
 }

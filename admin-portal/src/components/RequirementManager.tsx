@@ -105,8 +105,8 @@ export const RequirementManager: React.FC<RequirementManagerProps> = ({
           <div className="text-xs text-slate-400">All posted host requirements</div>
         </div>
         <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1">
-          <div className="text-xs font-semibold text-orange-600 uppercase tracking-wider">Open for Bidding</div>
-          <div className="text-2xl font-bold text-[#f95724]">{totalOpen}</div>
+          <div className="text-xs font-semibold text-slate-700 uppercase tracking-wider">Open for Bidding</div>
+          <div className="text-2xl font-bold text-[#17233d]">{totalOpen}</div>
           <div className="text-xs text-slate-400">Actively receiving vendor quotes</div>
         </div>
         <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1">
@@ -130,7 +130,7 @@ export const RequirementManager: React.FC<RequirementManagerProps> = ({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by title, host, venue, or area..."
-            className="w-full h-10 pl-10 pr-4 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#f95724] focus:ring-2 focus:ring-[#f95724]/15"
+            className="w-full h-10 pl-10 pr-4 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#17233d] focus:ring-2 focus:ring-[#17233d]/15"
           />
         </div>
 
@@ -143,7 +143,7 @@ export const RequirementManager: React.FC<RequirementManagerProps> = ({
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#f95724]"
+            className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#17233d]"
           >
             <option value="ALL">All Statuses</option>
             <option value="OPEN">OPEN (Bidding)</option>
@@ -156,7 +156,7 @@ export const RequirementManager: React.FC<RequirementManagerProps> = ({
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#f95724]"
+            className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#17233d]"
           >
             <option value="ALL">All Categories</option>
             {categories.map((cat) => (
@@ -169,7 +169,7 @@ export const RequirementManager: React.FC<RequirementManagerProps> = ({
           <select
             value={cityFilter}
             onChange={(e) => setCityFilter(e.target.value)}
-            className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#f95724]"
+            className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#17233d]"
           >
             <option value="ALL">All Cities ({requirements.length})</option>
             {cities.map((city) => {
@@ -224,7 +224,7 @@ export const RequirementManager: React.FC<RequirementManagerProps> = ({
                         <MapPin className="w-3 h-3" />
                         {req.location?.city || 'Pune'}
                       </span>
-                      <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-50 text-[#ea580c] border border-orange-200/80">
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-50 text-slate-700 border border-slate-200/80">
                         {req.category}
                       </span>
                       <span
@@ -279,7 +279,7 @@ export const RequirementManager: React.FC<RequirementManagerProps> = ({
                     <div className="text-right">
                       <div className="text-xs text-slate-400">Host Budget</div>
                       <div className="text-xl font-bold text-slate-900">₹{budget.toLocaleString()}</div>
-                      <div className="text-[11px] text-[#f95724] font-medium">
+                      <div className="text-[11px] text-[#17233d] font-medium">
                         Max Bid: ₹{maxBid.toLocaleString()} (15% off)
                       </div>
                     </div>
@@ -371,7 +371,7 @@ export const RequirementManager: React.FC<RequirementManagerProps> = ({
                                     </div>
                                   </div>
                                   <div className="text-right">
-                                    <span className="inline-flex items-center gap-0.5 text-xs font-bold text-[#ea580c]">
+                                    <span className="inline-flex items-center gap-0.5 text-xs font-bold text-slate-700">
                                       <TrendingDown className="w-3 h-3" />
                                       {discountPct}% OFF
                                     </span>

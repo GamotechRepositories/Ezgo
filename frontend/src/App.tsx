@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Home, Calendar, Plus, ShieldCheck, User as UserIcon } from 'lucide-react';
+import { Home, CalendarDays, Plus, Receipt, User as UserIcon } from 'lucide-react';
 import { Navbar } from './components/Navbar';
-import { RequesterView } from './components/RequesterView';
+import { HostHomePage } from './components/HostHomePage';
+import { MyEventsPage } from './components/MyEventsPage';
+import { OccasionCatalogScreen, ServiceCatalogScreen, ServiceDetailScreen } from './components/CatalogScreens';
+import { getEventService } from './data/appCatalog';
 import { RuleExplainer } from './components/RuleExplainer';
 import { PostRequirementModal } from './components/PostRequirementModal';
 import { PaymentModal } from './components/PaymentModal';
@@ -15,24 +18,33 @@ import { LoginPage } from './components/LoginPage';
 import { MyBookingsPage } from './components/MyBookingsPage';
 import { RoleSelectionPage } from './components/RoleSelectionPage';
 import { LocationSelectionPage } from './components/LocationSelectionPage';
+import { EzzyGoLogo } from './components/EzzyGoLogo';
 import { api, getToken, clearToken, getUser, setUser, clearUser } from './services/api';
 import { getSocket } from './services/socket';
 import { getVendorPortalUrl } from './utils/portalUrls';
 import type { User, Requirement, Booking, Category, Occasion, Banner } from './types';
 
-type Page = 'home' | 'bookings' | 'profile';
+type Page = 'home' | 'events' | 'bookings' | 'profile' | 'occasions' | 'services' | 'detail';
 type AppStep = 'role' | 'login' | 'location' | 'app';
-const pageFromUrl = (): Page => {
-  if (window.location.hash === '#bookings') return 'bookings';
-  if (window.location.hash === '#profile') return 'profile';
-  return 'home';
+const CITY_KEY = 'eg_selected_city';
+const pageFromUrl = (): { page: Page; serviceId?: string } => {
+  const hash = window.location.hash;
+  if (hash === '#bookings') return { page: 'bookings' };
+  if (hash === '#profile') return { page: 'profile' };
+  if (hash === '#events') return { page: 'events' };
+  if (hash === '#occasions') return { page: 'occasions' };
+  if (hash === '#services') return { page: 'services' };
+  if (hash.startsWith('#service/')) {
+    return { page: 'detail', serviceId: decodeURIComponent(hash.slice('#service/'.length)) };
+  }
+  return { page: 'home' };
 };
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(() => getUser());
   const [ready, setReady] = useState(() => Boolean(getUser() && getToken()));
   const [step, setStep] = useState<AppStep>(() => (getUser() && getToken() ? 'app' : 'role'));
-  const [selectedCity, setSelectedCityOnboard] = useState('Pune, MH');
+  const [selectedCity, setSelectedCityOnboard] = useState(() => localStorage.getItem(CITY_KEY) || 'Pune, MH');
 
   useEffect(() => {
     const token = getToken();
@@ -59,7 +71,12 @@ export default function App() {
   }, []);
 
   if (!ready) {
-    return <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center text-slate-600">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-[#f5f6f8] flex flex-col items-center justify-center gap-3 text-[#17233d]">
+        <EzzyGoLogo size="lg" showBadge={false} />
+        <p className="text-xs text-slate-500 font-semibold">Loading your events…</p>
+      </div>
+    );
   }
 
   // Step 1: Role Selection
@@ -86,7 +103,13 @@ export default function App() {
         onSuccess={(user) => {
           setCurrentUser(user);
           setUser(user);
-          setStep('location');
+          const savedCity = localStorage.getItem(CITY_KEY);
+          if (savedCity) {
+            setSelectedCityOnboard(savedCity);
+            setStep('app');
+          } else {
+            setStep('location');
+          }
         }}
       />
     );
@@ -98,7 +121,9 @@ export default function App() {
       <LocationSelectionPage
         onBack={() => setStep('login')}
         onSelect={(city) => {
-          setSelectedCityOnboard(city + ', IN');
+          const value = city.includes(',') ? city : `${city}, IN`;
+          localStorage.setItem(CITY_KEY, value);
+          setSelectedCityOnboard(value);
           setStep('app');
         }}
       />
@@ -114,7 +139,13 @@ export default function App() {
         onSuccess={(user) => {
           setCurrentUser(user);
           setUser(user);
-          setStep('location');
+          const savedCity = localStorage.getItem(CITY_KEY);
+          if (savedCity) {
+            setSelectedCityOnboard(savedCity);
+            setStep('app');
+          } else {
+            setStep('location');
+          }
         }}
       />
     );
@@ -150,7 +181,11 @@ function HostApp({
   initialCity?: string;
 }) {
   const [loadError, setLoadError] = useState('');
-  const [selectedCity, setSelectedCity] = useState(initialCity || 'Pune, MH');
+  const [selectedCity, setSelectedCity] = useState(() => localStorage.getItem(CITY_KEY) || initialCity || 'Pune, MH');
+
+  useEffect(() => {
+    if (selectedCity) localStorage.setItem(CITY_KEY, selectedCity);
+  }, [selectedCity]);
 
   // Data State
   const [categories, setCategories] = useState<Category[]>([]);
@@ -513,7 +548,15 @@ function HostApp({
     }
   };
 
-  const [page, setPage] = useState<Page>(pageFromUrl);
+  const parsedUrl = pageFromUrl();
+  const [page, setPage] = useState<Page>(parsedUrl.page);
+  const [serviceId, setServiceId] = useState(parsedUrl.serviceId);
+
+  const applyUrlPage = useCallback(() => {
+    const parsed = pageFromUrl();
+    setPage(parsed.page);
+    setServiceId(parsed.serviceId);
+  }, []);
 
   useEffect(() => {
     const onPopState = () => {
@@ -521,39 +564,65 @@ function HostApp({
       if (anyModalOpen) {
         closeAllModals();
       }
-      setPage(pageFromUrl());
+      applyUrlPage();
     };
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
-  }, [anyModalOpen, closeAllModals]);
+  }, [anyModalOpen, closeAllModals, applyUrlPage]);
 
   const goTo = (next: Page) => {
     closeAllModals();
-    if (next === page) {
+    if (next === page && next !== 'detail') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
     const homeUrl = `${window.location.pathname}${window.location.search}`;
-    const hash = next === 'bookings' ? '#bookings' : next === 'profile' ? '#profile' : homeUrl;
+    const hash =
+      next === 'bookings'
+        ? '#bookings'
+        : next === 'profile'
+          ? '#profile'
+          : next === 'events'
+            ? '#events'
+            : next === 'occasions'
+              ? '#occasions'
+              : next === 'services'
+                ? '#services'
+                : homeUrl;
 
     if (next === 'home') {
-      if (window.location.hash === '#bookings' || window.location.hash === '#profile') {
-        window.history.back();
-        return;
-      }
       window.history.replaceState(null, '', homeUrl);
       setPage('home');
+      setServiceId(undefined);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
-    if (page === 'home') {
-      window.history.pushState(null, '', hash);
+    const fromHome = page === 'home' || page === 'occasions' || page === 'services' || page === 'detail';
+    if (fromHome && (next === 'events' || next === 'bookings' || next === 'profile')) {
+      window.history.pushState({ ezgo: true }, '', hash);
     } else {
-      window.history.replaceState(null, '', hash);
+      window.history.replaceState({ ezgo: true }, '', hash);
     }
     setPage(next);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const pushCatalog = (next: 'occasions' | 'services' | 'detail', id?: string) => {
+    closeAllModals();
+    const hash = next === 'detail' && id ? `#service/${encodeURIComponent(id)}` : next === 'occasions' ? '#occasions' : '#services';
+    window.history.pushState({ ezgo: true, from: page }, '', hash);
+    setPage(next);
+    setServiceId(id);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCatalogBack = () => {
+    if (window.history.state?.ezgo) {
+      window.history.back();
+      return;
+    }
+    goTo('home');
   };
 
   const handleOpenBookings = () => {
@@ -561,8 +630,16 @@ function HostApp({
     refreshMine();
   };
 
+  const handleOpenMyEvents = () => {
+    goTo('events');
+    refreshMine();
+  };
+
   const activeBookingsCount = bookings.filter(
     (b) => b.status === 'ACTIVE' || b.status === 'AWAITING_PAYMENT'
+  ).length;
+  const liveEventsCount = requirements.filter(
+    (r) => r.status === 'OPEN' && ((r.bidsCount || 0) > 0 || (r.bids || []).length > 0)
   ).length;
 
   return (
@@ -571,7 +648,8 @@ function HostApp({
       {/* Toast Notifications */}
       <ToastContainer toasts={toasts} onDismiss={removeToast} />
 
-      {/* Top Navbar */}
+      {/* Desktop top navbar — mobile uses the in-page hero/app bars like the app */}
+      <div className="hidden lg:block">
       <Navbar
         currentUser={currentUser}
         onLogout={onLogout}
@@ -581,23 +659,19 @@ function HostApp({
         onGoHome={() => goTo('home')}
         onOpenAccountModal={handleOpenAccountModal}
         onOpenProfilePage={() => goTo('profile')}
-        onOpenMyEvents={() => {
-          goTo('home');
-          setTimeout(() => {
-            const el = document.getElementById('requirements-hub');
-            if (el) el.scrollIntoView({ behavior: 'smooth' });
-          }, 100);
-        }}
+        onOpenMyEvents={handleOpenMyEvents}
         isBookingsPage={page === 'bookings'}
         isProfilePage={page === 'profile'}
+        isEventsPage={page === 'events'}
         activeBookingsCount={activeBookingsCount}
         requirementsCount={requirements.length}
         selectedCity={selectedCity}
         onSelectCity={setSelectedCity}
       />
+      </div>
 
       {loadError && (
-        <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 pt-24">
+        <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 pt-4 lg:pt-24">
           <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <p className="text-sm">{loadError}</p>
             <button
@@ -611,7 +685,7 @@ function HostApp({
       )}
 
       {/* Main Workspace Body */}
-      <main className="w-full flex-1 pb-20 lg:pb-0">
+      <main className={`w-full flex-1 ${page === 'occasions' || page === 'services' || page === 'detail' ? 'pb-0' : 'pb-28 lg:pb-0'}`}>
         {page === 'profile' ? (
           <MyProfilePage
             currentUser={currentUser}
@@ -621,13 +695,7 @@ function HostApp({
             onLogout={onLogout}
             onBack={() => goTo('home')}
             onOpenBookings={handleOpenBookings}
-            onOpenMyEvents={() => {
-              goTo('home');
-              setTimeout(() => {
-                const el = document.getElementById('requirements-hub');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }, 100);
-            }}
+            onOpenMyEvents={handleOpenMyEvents}
             onOpenExplainer={handleOpenExplainer}
             onOpenPostModal={handleOpenPostModal}
             requirements={requirements}
@@ -649,20 +717,59 @@ function HostApp({
             onOpenReviewModal={handleOpenReviewModal}
             onRaiseDispute={handleRaiseDispute}
           />
+        ) : page === 'events' ? (
+          <div className="lg:max-w-3xl lg:mx-auto lg:pt-6">
+            <MyEventsPage
+              requirements={requirements}
+              onOpenPostModal={() => handleOpenPostModal()}
+              onAcceptBid={handleAcceptBid}
+              onOpenBookings={handleOpenBookings}
+              onRefresh={refreshMine}
+            />
+          </div>
+        ) : page === 'occasions' ? (
+          <OccasionCatalogScreen
+            onBack={handleCatalogBack}
+            onOpenPost={handleOpenPostModal}
+            city={(selectedCity || 'Pune').split(',')[0].trim()}
+          />
+        ) : page === 'services' ? (
+          <ServiceCatalogScreen
+            onBack={handleCatalogBack}
+            onOpenDetail={(service) => pushCatalog('detail', service.id)}
+            onOpenPost={handleOpenPostModal}
+          />
+        ) : page === 'detail' ? (
+          (() => {
+            const service = getEventService(serviceId);
+            if (!service) {
+              return (
+                <ServiceCatalogScreen
+                  onBack={handleCatalogBack}
+                  onOpenDetail={(s) => pushCatalog('detail', s.id)}
+                  onOpenPost={handleOpenPostModal}
+                />
+              );
+            }
+            return (
+              <ServiceDetailScreen
+                service={service}
+                onBack={handleCatalogBack}
+                onOpenPost={handleOpenPostModal}
+              />
+            );
+          })()
         ) : (
-          <RequesterView
+          <HostHomePage
             requirements={requirements}
-            bookings={bookings}
-            categories={categories}
-            occasions={occasions}
             banners={banners}
-            currentUser={currentUser}
             selectedCity={selectedCity}
             onSelectCity={setSelectedCity}
             onOpenPostModal={handleOpenPostModal}
-            onAcceptBid={handleAcceptBid}
-            onOpenBookings={handleOpenBookings}
-            onOpenExplainer={handleOpenExplainer}
+            onOpenMyEvents={handleOpenMyEvents}
+            onOpenOccasions={() => pushCatalog('occasions')}
+            onOpenServices={() => pushCatalog('services')}
+            onOpenServiceDetail={(service) => pushCatalog('detail', service.id)}
           />
         )}
       </main>
@@ -693,77 +800,91 @@ function HostApp({
       />
 
 
-      {/* Mobile Bottom Navigation Bar (Visible on Mobile/Tablet) */}
+      {/* Mobile pill nav — same tabs as the app; hidden on full-screen catalog/detail */}
       <nav
         aria-label="Mobile Bottom Navigation"
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-lg px-2 py-1 safe-bottom"
+        className={`lg:hidden fixed bottom-3 left-4 right-4 z-40 ${
+          page === 'occasions' || page === 'services' || page === 'detail' ? 'hidden' : ''
+        }`}
       >
-        <div className="max-w-md mx-auto grid grid-cols-5 items-center text-center">
-          {/* Home */}
+        <div className="relative max-w-md mx-auto h-[62px] rounded-[32px] bg-white border border-[#ffd8c4] shadow-[0_8px_22px_rgba(240,125,74,0.16),0_3px_12px_rgba(0,0,0,0.08)] grid grid-cols-5 items-center px-1">
+          {(() => {
+            const tabIndex = page === 'events' ? 1 : page === 'bookings' ? 3 : page === 'profile' ? 4 : 0;
+            return (
+              <span
+                className="pointer-events-none absolute top-1 bottom-1 rounded-[28px] bg-[#fff1ea] transition-all duration-200"
+                style={{
+                  width: 'calc(20% - 4px)',
+                  left: `calc(${tabIndex * 20}% + 2px)`,
+                }}
+              />
+            );
+          })()}
           <button
             onClick={() => goTo('home')}
-            className={`flex flex-col items-center justify-center py-1 transition cursor-pointer ${
-              page === 'home' ? 'text-[#f95724] font-bold' : 'text-slate-500 hover:text-slate-800'
+            className={`relative z-10 flex flex-col items-center justify-center gap-0.5 py-1 transition cursor-pointer ${
+              page === 'home' || page === 'occasions' || page === 'services' || page === 'detail'
+                ? 'text-[#f07d4a] font-bold'
+                : 'text-[#5c6573] hover:text-slate-800'
             }`}
           >
-            <Home className="w-5 h-5" />
-            <span className="text-[10px] mt-0.5">Home</span>
+            <Home className="w-5 h-5" strokeWidth={page === 'home' || page === 'occasions' || page === 'services' || page === 'detail' ? 2.4 : 2} />
+            <span className="text-[9px] font-extrabold">Home</span>
           </button>
 
-          {/* My Events */}
           <button
-            onClick={() => {
-              goTo('home');
-              setTimeout(() => {
-                const el = document.getElementById('requirements-hub');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }, 100);
-            }}
-            className="flex flex-col items-center justify-center py-1 text-slate-500 hover:text-slate-800 transition cursor-pointer"
+            onClick={handleOpenMyEvents}
+            className={`relative z-10 flex flex-col items-center justify-center gap-0.5 py-1 transition cursor-pointer ${
+              page === 'events' ? 'text-[#f07d4a] font-bold' : 'text-[#5c6573] hover:text-slate-800'
+            }`}
           >
-            <Calendar className="w-5 h-5" />
-            <span className="text-[10px] mt-0.5">My Events</span>
+            <div className="relative">
+              <CalendarDays className="w-5 h-5" strokeWidth={page === 'events' ? 2.4 : 2} />
+              {liveEventsCount > 0 && page !== 'events' && (
+                <span className="absolute -top-1.5 -right-2 min-w-[14px] h-3.5 px-1 rounded-full bg-[#f07d4a] text-white text-[9px] font-bold flex items-center justify-center">
+                  {liveEventsCount > 9 ? '9+' : liveEventsCount}
+                </span>
+              )}
+            </div>
+            <span className="text-[9px] font-extrabold">My Events</span>
           </button>
 
-          {/* Center Action: Plan Event */}
-          <div className="flex items-center justify-center">
+          <div className="relative z-10 flex items-center justify-center">
             <button
               onClick={() => handleOpenPostModal()}
               aria-label="Post Requirement"
-              className="w-11 h-11 -mt-4 rounded-full bg-gradient-to-tr from-[#f95724] to-[#ff7443] text-white shadow-lg shadow-[#f95724]/35 flex items-center justify-center active:scale-90 transition cursor-pointer border-2 border-white"
+              className="w-12 h-12 -mt-5 rounded-full bg-gradient-to-tr from-[#f07d4a] to-[#f4a06c] text-white shadow-lg shadow-[#f07d4a]/35 flex items-center justify-center active:scale-90 transition cursor-pointer border-[3px] border-white"
             >
               <Plus className="w-5 h-5 stroke-[2.5]" />
             </button>
           </div>
 
-          {/* Bookings */}
           <button
             onClick={handleOpenBookings}
-            className={`flex flex-col items-center justify-center py-1 transition cursor-pointer relative ${
-              page === 'bookings' ? 'text-emerald-700 font-bold' : 'text-slate-500 hover:text-slate-800'
+            className={`relative z-10 flex flex-col items-center justify-center gap-0.5 py-1 transition cursor-pointer ${
+              page === 'bookings' ? 'text-[#f07d4a] font-bold' : 'text-[#5c6573] hover:text-slate-800'
             }`}
           >
             <div className="relative">
-              <ShieldCheck className="w-5 h-5" />
+              <Receipt className="w-5 h-5" strokeWidth={page === 'bookings' ? 2.4 : 2} />
               {activeBookingsCount > 0 && (
-                <span className="absolute -top-1 -right-1.5 w-3.5 h-3.5 rounded-full bg-emerald-600 text-white text-[9px] font-bold flex items-center justify-center">
-                  {activeBookingsCount}
+                <span className="absolute -top-1.5 -right-2 min-w-[14px] h-3.5 px-1 rounded-full bg-[#f07d4a] text-white text-[9px] font-bold flex items-center justify-center">
+                  {activeBookingsCount > 9 ? '9+' : activeBookingsCount}
                 </span>
               )}
             </div>
-            <span className="text-[10px] mt-0.5">Bookings</span>
+            <span className="text-[9px] font-extrabold">Bookings</span>
           </button>
 
-          {/* Profile */}
           <button
             onClick={() => goTo('profile')}
             aria-label="My Profile"
-            className={`flex flex-col items-center justify-center py-1 transition cursor-pointer ${
-              page === 'profile' ? 'text-[#f95724] font-bold' : 'text-slate-500 hover:text-slate-800'
+            className={`relative z-10 flex flex-col items-center justify-center gap-0.5 py-1 transition cursor-pointer ${
+              page === 'profile' ? 'text-[#f07d4a] font-bold' : 'text-[#5c6573] hover:text-slate-800'
             }`}
           >
-            <UserIcon className="w-5 h-5" />
-            <span className="text-[10px] mt-0.5">Profile</span>
+            <UserIcon className="w-5 h-5" strokeWidth={page === 'profile' ? 2.4 : 2} />
+            <span className="text-[9px] font-extrabold">Profile</span>
           </button>
         </div>
       </nav>
@@ -785,13 +906,7 @@ function HostApp({
         }}
         onLogout={onLogout}
         onOpenBookings={handleOpenBookings}
-        onOpenMyEvents={() => {
-          goTo('home');
-          setTimeout(() => {
-            const el = document.getElementById('requirements-hub');
-            if (el) el.scrollIntoView({ behavior: 'smooth' });
-          }, 100);
-        }}
+        onOpenMyEvents={handleOpenMyEvents}
         onOpenExplainer={handleOpenExplainer}
         onOpenPostModal={handleOpenPostModal}
         requirementsCount={requirements.length}
@@ -802,11 +917,20 @@ function HostApp({
         onShowToast={addToast}
       />
 
-      {/* Exact Matching Light Aesthetic Premium Footer */}
-      <Footer 
-        onOpenExplainer={handleOpenExplainer}
-        onOpenPostModal={handleOpenPostModal}
-      />
+      <div
+        className={
+          page === 'home'
+            ? 'pb-24 lg:pb-0'
+            : page === 'occasions' || page === 'services' || page === 'detail'
+              ? 'hidden lg:block'
+              : 'hidden lg:block'
+        }
+      >
+        <Footer
+          onOpenExplainer={handleOpenExplainer}
+          onOpenPostModal={handleOpenPostModal}
+        />
+      </div>
 
     </div>
   );

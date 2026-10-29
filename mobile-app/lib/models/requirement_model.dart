@@ -24,6 +24,7 @@ class RequirementModel {
   final List<BidModel> bids;
   final String timeStart;
   final String timeEnd;
+  final String? biddingDeadline;
 
   const RequirementModel({
     required this.id,
@@ -48,6 +49,7 @@ class RequirementModel {
     this.bids = const [],
     this.timeStart = '18:00',
     this.timeEnd = '23:00',
+    this.biddingDeadline,
   });
 
   factory RequirementModel.fromJson(Map<String, dynamic> json) {
@@ -104,10 +106,42 @@ class RequirementModel {
       bids: bidsList,
       timeStart: (time['start'] ?? '18:00').toString(),
       timeEnd: (time['end'] ?? '23:00').toString(),
+      biddingDeadline: json['biddingDeadline']?.toString(),
     );
   }
 
   int get liveBidsCount => bids.isNotEmpty ? bids.length : bidsCount;
+
+  DateTime? get parsedEventDate {
+    final raw = eventDate.trim();
+    if (raw.isEmpty) return null;
+    return DateTime.tryParse(raw) ?? DateTime.tryParse(raw.length >= 10 ? raw.substring(0, 10) : raw);
+  }
+
+  String get eventSoonLabel {
+    final parsed = parsedEventDate;
+    if (parsed == null) return displayDate;
+    final day = DateTime(parsed.year, parsed.month, parsed.day);
+    final today = DateTime.now();
+    final start = DateTime(today.year, today.month, today.day);
+    final diff = day.difference(start).inDays;
+    if (diff == 0) return 'Today';
+    if (diff == 1) return 'Tomorrow';
+    if (diff > 1 && diff < 14) return 'In $diff days';
+    return displayDate;
+  }
+
+  String get bidCountdown {
+    final raw = (biddingDeadline ?? eventDate).trim();
+    final parsed = DateTime.tryParse(raw) ??
+        DateTime.tryParse(raw.length >= 10 ? raw.substring(0, 10) : raw);
+    if (parsed == null) return 'Open';
+    final diff = parsed.toLocal().difference(DateTime.now());
+    if (diff.isNegative) return 'Closing';
+    if (diff.inDays >= 1) return '${diff.inDays}d left';
+    if (diff.inHours >= 1) return '${diff.inHours}h left';
+    return '${diff.inMinutes.clamp(1, 59)}m left';
+  }
 
   String get displayDate {
     final raw = eventDate.trim();

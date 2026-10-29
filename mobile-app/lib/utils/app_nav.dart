@@ -6,7 +6,21 @@ class AppNav {
 
   static void openRoot(BuildContext context, Widget page) {
     Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => page),
+      PageRouteBuilder(
+        pageBuilder: (_, _, _) => page,
+        transitionDuration: const Duration(milliseconds: 320),
+        reverseTransitionDuration: const Duration(milliseconds: 220),
+        transitionsBuilder: (_, animation, _, child) {
+          final curved = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+          return FadeTransition(
+            opacity: curved,
+            child: SlideTransition(
+              position: Tween<Offset>(begin: const Offset(0.04, 0), end: Offset.zero).animate(curved),
+              child: child,
+            ),
+          );
+        },
+      ),
       (route) => false,
     );
   }

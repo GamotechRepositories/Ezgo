@@ -59,7 +59,7 @@ export const PlatformMetricsView: React.FC<PlatformMetricsViewProps> = ({
     <div className="space-y-8 animate-in fade-in duration-300">
       {/* 1. Executive Welcome Header Banner */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 text-white p-6 sm:p-8 border border-slate-800 shadow-xl">
-        <div className="absolute right-0 top-0 -mt-12 -mr-12 w-96 h-96 rounded-full bg-gradient-to-br from-[#f95724]/20 via-orange-500/10 to-transparent blur-3xl pointer-events-none" />
+        <div className="absolute right-0 top-0 -mt-12 -mr-12 w-96 h-96 rounded-full bg-gradient-to-br from-[#f07d4a]/20 via-orange-500/10 to-transparent blur-3xl pointer-events-none" />
         <div className="absolute left-1/3 bottom-0 -mb-12 w-64 h-64 rounded-full bg-blue-500/10 blur-2xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -82,9 +82,9 @@ export const PlatformMetricsView: React.FC<PlatformMetricsViewProps> = ({
             {pendingKyc > 0 && (
               <button
                 onClick={() => navigate('kyc')}
-                className="px-4 py-2.5 rounded-xl bg-orange-500/20 hover:bg-orange-500/30 border border-orange-400/40 text-orange-200 text-sm font-semibold transition cursor-pointer flex items-center gap-2"
+                className="px-4 py-2.5 rounded-xl bg-slate-500/20 hover:bg-slate-500/30 border border-orange-400/40 text-orange-200 text-sm font-semibold transition cursor-pointer flex items-center gap-2"
               >
-                <UserCheck className="w-4 h-4 text-orange-400" />
+                <UserCheck className="w-4 h-4 text-slate-500" />
                 <span>{pendingKyc} KYC to Check</span>
               </button>
             )}
@@ -92,7 +92,7 @@ export const PlatformMetricsView: React.FC<PlatformMetricsViewProps> = ({
               onClick={() => navigate('escrow')}
               className="px-4 py-2.5 rounded-xl bg-white text-slate-900 hover:bg-slate-100 text-sm font-bold shadow-md transition cursor-pointer flex items-center gap-2"
             >
-              <Wallet className="w-4 h-4 text-[#f95724]" />
+              <Wallet className="w-4 h-4 text-[#17233d]" />
               <span>Manage Escrows</span>
             </button>
           </div>
@@ -102,10 +102,10 @@ export const PlatformMetricsView: React.FC<PlatformMetricsViewProps> = ({
       {/* 2. Primary Financial & Operational KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {/* GMV Card */}
-        <div className="group relative overflow-hidden rounded-3xl bg-white border border-slate-200/90 p-6 shadow-xs hover:shadow-md hover:border-orange-200 transition-all duration-200">
+        <div className="group relative overflow-hidden rounded-3xl bg-white border border-slate-200/90 p-6 shadow-xs hover:shadow-md hover:border-slate-200 transition-all duration-200">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Gross Merchandise Value</span>
-            <div className="w-10 h-10 rounded-2xl bg-orange-50 text-[#f95724] flex items-center justify-center border border-orange-200/60 group-hover:scale-105 transition-transform">
+            <div className="w-10 h-10 rounded-2xl bg-slate-50 text-[#17233d] flex items-center justify-center border border-slate-200/60 group-hover:scale-105 transition-transform">
               <Banknote className="w-5 h-5" />
             </div>
           </div>
@@ -177,7 +177,7 @@ export const PlatformMetricsView: React.FC<PlatformMetricsViewProps> = ({
           </div>
           <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
             <span className="text-slate-400">Pending Review</span>
-            <span className={`font-semibold ${pendingKyc > 0 ? 'text-[#f95724]' : 'text-slate-600'}`}>
+            <span className={`font-semibold ${pendingKyc > 0 ? 'text-[#17233d]' : 'text-slate-600'}`}>
               {pendingKyc > 0 ? `${pendingKyc} to verify` : 'All approved'}
             </span>
           </div>
@@ -188,9 +188,9 @@ export const PlatformMetricsView: React.FC<PlatformMetricsViewProps> = ({
       {(pendingKyc > 0 || disputedBookings > 0) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {pendingKyc > 0 && (
-            <div className="p-4 rounded-2xl bg-gradient-to-r from-orange-50 to-amber-50/60 border border-orange-200 flex items-center justify-between gap-4 shadow-2xs">
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-orange-50 to-amber-50/60 border border-slate-200 flex items-center justify-between gap-4 shadow-2xs">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-xl bg-orange-100 text-[#ea580c] flex items-center justify-center shrink-0">
+                <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
                   <UserCheck className="w-5 h-5" />
                 </div>
                 <div className="min-w-0">
@@ -202,7 +202,7 @@ export const PlatformMetricsView: React.FC<PlatformMetricsViewProps> = ({
               </div>
               <button
                 onClick={() => navigate('kyc')}
-                className="px-3.5 py-1.5 rounded-xl bg-[#f95724] hover:bg-[#e04818] text-white text-xs font-bold shrink-0 transition cursor-pointer"
+                className="px-3.5 py-1.5 rounded-xl bg-[#f07d4a] hover:bg-[#de6a3a] text-white text-xs font-bold shrink-0 transition cursor-pointer"
               >
                 Review Now
               </button>
@@ -262,19 +262,19 @@ export const PlatformMetricsView: React.FC<PlatformMetricsViewProps> = ({
                 Host sets event details, city venue, date, and baseline budget.
               </p>
             </div>
-            <div className="pt-2 text-[11px] font-semibold text-[#f95724] flex items-center gap-1">
+            <div className="pt-2 text-[11px] font-semibold text-[#17233d] flex items-center gap-1">
               <span>Reverse Bidding Active</span>
               <ArrowRight className="w-3 h-3" />
             </div>
           </div>
 
           {/* Step 2 */}
-          <div className="relative p-5 rounded-2xl bg-gradient-to-b from-orange-50/40 to-white border border-orange-200/80 space-y-3">
+          <div className="relative p-5 rounded-2xl bg-gradient-to-b from-orange-50/40 to-white border border-slate-200/80 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="w-7 h-7 rounded-xl bg-[#f95724] text-white text-xs font-bold flex items-center justify-center">
+              <span className="w-7 h-7 rounded-xl bg-[#f07d4a] text-white text-xs font-bold flex items-center justify-center">
                 2
               </span>
-              <span className="text-xs font-bold text-[#ea580c]">&ge; 15% OFF</span>
+              <span className="text-xs font-bold text-slate-700">&ge; 15% OFF</span>
             </div>
             <div>
               <h3 className="text-sm font-bold text-slate-900">Vendors Place Bids</h3>
@@ -282,7 +282,7 @@ export const PlatformMetricsView: React.FC<PlatformMetricsViewProps> = ({
                 Vendors compete with bids at &le; 85% of host budget. Bids above 85% are blocked.
               </p>
             </div>
-            <div className="pt-2 text-[11px] font-semibold text-[#f95724] flex items-center gap-1">
+            <div className="pt-2 text-[11px] font-semibold text-[#17233d] flex items-center gap-1">
               <span>Host Selects Best Offer</span>
               <ArrowRight className="w-3 h-3" />
             </div>
@@ -335,7 +335,7 @@ export const PlatformMetricsView: React.FC<PlatformMetricsViewProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="w-8 h-8 rounded-xl bg-orange-100 text-[#ea580c] flex items-center justify-center">
+              <span className="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
                 <MapPin className="w-4 h-4" />
               </span>
               <h2 className="text-lg sm:text-xl font-bold text-slate-900">City-Wise Platform Operations & Analytics</h2>
@@ -367,14 +367,14 @@ export const PlatformMetricsView: React.FC<PlatformMetricsViewProps> = ({
               {(metrics.cityBreakdown || []).map((c) => (
                 <tr key={c.city} className="hover:bg-slate-50/80 transition-colors">
                   <td className="py-4 px-4 font-bold text-slate-900 flex items-center gap-2">
-                    <span className="w-7 h-7 rounded-lg bg-orange-50 text-[#ea580c] flex items-center justify-center">
+                    <span className="w-7 h-7 rounded-lg bg-slate-50 text-slate-700 flex items-center justify-center">
                       <MapPin className="w-3.5 h-3.5" />
                     </span>
                     <span>{c.city}</span>
                   </td>
                   <td className="py-4 px-4">
                     <div className="font-semibold text-slate-900">{c.totalRequirements} total</div>
-                    <div className="text-xs text-orange-600 font-medium">{c.openRequirements} open for bids</div>
+                    <div className="text-xs text-slate-700 font-medium">{c.openRequirements} open for bids</div>
                   </td>
                   <td className="py-4 px-4">
                     <div className="font-semibold text-slate-900">{c.totalBookings} booked</div>
@@ -393,7 +393,7 @@ export const PlatformMetricsView: React.FC<PlatformMetricsViewProps> = ({
                   <td className="py-4 px-4 text-right">
                     <button
                       onClick={() => navigate('requirements')}
-                      className="px-3 py-1.5 rounded-lg bg-white hover:bg-orange-50 text-slate-700 hover:text-[#ea580c] border border-slate-200 hover:border-orange-200 text-xs font-semibold transition cursor-pointer active:scale-95 shadow-2xs"
+                      className="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-700 border border-slate-200 hover:border-slate-200 text-xs font-semibold transition cursor-pointer active:scale-95 shadow-2xs"
                     >
                       View City
                     </button>
@@ -409,16 +409,16 @@ export const PlatformMetricsView: React.FC<PlatformMetricsViewProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         <div
           onClick={() => navigate('requirements')}
-          className="group p-5 rounded-2xl bg-white border border-slate-200 hover:border-orange-300 hover:shadow-md transition-all cursor-pointer space-y-3"
+          className="group p-5 rounded-2xl bg-white border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all cursor-pointer space-y-3"
         >
           <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-xl bg-orange-50 text-[#f95724] flex items-center justify-center group-hover:scale-105 transition-transform">
+            <div className="w-10 h-10 rounded-xl bg-slate-50 text-[#17233d] flex items-center justify-center group-hover:scale-105 transition-transform">
               <Sparkles className="w-5 h-5" />
             </div>
-            <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-[#f95724] transition-colors" />
+            <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-[#17233d] transition-colors" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-slate-900 group-hover:text-[#f95724] transition-colors">
+            <h3 className="text-base font-bold text-slate-900 group-hover:text-[#17233d] transition-colors">
               Live Requests & Bidding
             </h3>
             <p className="text-xs text-slate-500 mt-1">

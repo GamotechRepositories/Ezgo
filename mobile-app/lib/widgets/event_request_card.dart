@@ -262,6 +262,8 @@ class EventRequestCard extends StatelessWidget {
             width: width,
             height: height,
             fit: BoxFit.cover,
+            cacheWidth: ((width ?? 400) * 2).round().clamp(200, 800),
+            filterQuality: FilterQuality.medium,
             errorBuilder: (_, _, _) => Image.asset(
               requirement.coverAsset,
               width: width,

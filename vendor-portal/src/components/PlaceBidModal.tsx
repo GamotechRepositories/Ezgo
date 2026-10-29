@@ -32,16 +32,15 @@ const PlaceBidForm: React.FC<PlaceBidFormProps> = ({
   const currentLowest = requirement.lowestBid || ceiling;
   const [bidAmount, setBidAmount] = useState<number | ''>(
     existingBid
-      ? Math.max(1000, existingBid.amount - 500)
+      ? existingBid.amount
       : Math.min(ceiling, currentLowest > 1000 ? currentLowest - 1000 : ceiling)
   );
-  const [proposalNotes, setProposalNotes] = useState('');
+  const [proposalNotes, setProposalNotes] = useState(existingBid?.proposalNotes || '');
   const [includeOperator, setIncludeOperator] = useState(true);
   const [selectedGear, setSelectedGear] = useState<string[]>(requirement.equipmentNeeded || []);
 
   const numericBid = typeof bidAmount === 'number' ? bidAmount : 0;
-  const isLowerThanExisting = !existingBid || (typeof bidAmount === 'number' && bidAmount < existingBid.amount);
-  const isValidBid = typeof bidAmount === 'number' && bidAmount > 0 && bidAmount <= ceiling && isLowerThanExisting && requirement.status !== 'EXPIRED';
+  const isValidBid = typeof bidAmount === 'number' && bidAmount > 1000 && bidAmount <= ceiling && requirement.status !== 'EXPIRED';
   const discountPercent = typeof bidAmount === 'number' && bidAmount > 0
     ? Math.round(((requirement.budget - bidAmount) / requirement.budget) * 100)
     : 0;
@@ -75,7 +74,7 @@ const PlaceBidForm: React.FC<PlaceBidFormProps> = ({
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <p className="text-sm font-medium text-[#f95724]">{existingBid ? 'Revise Your Bid' : 'Place a bid'}</p>
+              <p className="text-sm font-medium text-[#17233d]">{existingBid ? 'Revise Your Bid' : 'Place a bid'}</p>
               {existingBid && (
                 <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-semibold">
                   Current: ₹{existingBid.amount.toLocaleString()}
@@ -102,10 +101,10 @@ const PlaceBidForm: React.FC<PlaceBidFormProps> = ({
             <div className="text-base font-bold text-slate-800 mt-0.5">₹{requirement.budget.toLocaleString()}</div>
             <div className="text-[11px] text-slate-400">Target posted</div>
           </div>
-          <div className="bg-orange-50/60 p-2 -my-2 rounded-xl border border-orange-200/60">
-            <div className="text-xs text-orange-700 font-bold">Max Eligible Bid</div>
-            <div className="text-base font-extrabold text-orange-600 mt-0.5">₹{ceiling.toLocaleString()}</div>
-            <div className="text-[11px] text-orange-700">Min 15% discount</div>
+          <div className="bg-slate-50/60 p-2 -my-2 rounded-xl border border-slate-200/60">
+            <div className="text-xs text-slate-700 font-bold">Max Eligible Bid</div>
+            <div className="text-base font-extrabold text-slate-700 mt-0.5">₹{ceiling.toLocaleString()}</div>
+            <div className="text-[11px] text-slate-700">Min 15% discount</div>
           </div>
           <div>
             <div className="text-xs text-emerald-700 font-bold">Current Best Bid</div>
@@ -121,7 +120,7 @@ const PlaceBidForm: React.FC<PlaceBidFormProps> = ({
             <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
             <div>
               <span className="font-bold">Bid Revision Rule: </span>
-              Your current bid is <strong>₹{existingBid.amount.toLocaleString()}</strong>. To remain competitive, your revised bid must be strictly lower than your current bid.
+              Your current bid is <strong>₹{existingBid.amount.toLocaleString()}</strong>. You can update notes, or bid lower to stay competitive.
             </div>
           </div>
         )}
@@ -214,13 +213,13 @@ const PlaceBidForm: React.FC<PlaceBidFormProps> = ({
                 {requirement.equipmentNeeded.map((eq) => (
                   <label
                     key={eq}
-                    className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-800 cursor-pointer hover:border-orange-300"
+                    className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-800 cursor-pointer hover:border-slate-300"
                   >
                     <input
                       type="checkbox"
                       checked={selectedGear.includes(eq)}
                       onChange={() => handleToggleGear(eq)}
-                      className="rounded accent-[#f95724] w-4 h-4"
+                      className="rounded accent-[#f07d4a] w-4 h-4"
                     />
                     <span>{eq}</span>
                   </label>
@@ -238,7 +237,7 @@ const PlaceBidForm: React.FC<PlaceBidFormProps> = ({
               type="checkbox"
               checked={includeOperator}
               onChange={(e) => setIncludeOperator(e.target.checked)}
-              className="w-4 h-4 accent-[#f95724]"
+              className="w-4 h-4 accent-[#f07d4a]"
             />
           </label>
 
@@ -252,7 +251,7 @@ const PlaceBidForm: React.FC<PlaceBidFormProps> = ({
               onChange={(e) => setProposalNotes(e.target.value)}
               placeholder="e.g. JBL speakers, setup ready 2 hours before the event."
               rows={2}
-              className="w-full px-3.5 py-2.5 rounded-2xl bg-white border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#f95724]"
+              className="w-full px-3.5 py-2.5 rounded-2xl bg-white border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#17233d]"
             />
           </div>
 
@@ -281,9 +280,9 @@ const PlaceBidForm: React.FC<PlaceBidFormProps> = ({
             <button
               type="submit"
               disabled={!isValidBid}
-              className="w-full sm:w-auto px-7 py-3 min-h-[44px] rounded-full bg-[#f95724] hover:bg-[#e04818] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm transition active:scale-95 cursor-pointer shadow-md shadow-orange-500/20 text-center"
+              className="w-full sm:w-auto px-7 py-3 min-h-[44px] rounded-full bg-[#f07d4a] hover:bg-[#de6a3a] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm transition active:scale-95 cursor-pointer shadow-md shadow-slate-900/12 text-center"
             >
-              Send bid
+              {existingBid ? 'Update reverse bid' : 'Submit reverse bid'}
             </button>
           </div>
 

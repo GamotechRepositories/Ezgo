@@ -23,7 +23,7 @@ interface LoginPageProps {
 }
 
 const fieldClass =
-  'mt-1.5 w-full h-12 px-4 rounded-xl border border-slate-200 bg-white text-base text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#f95724] focus:ring-2 focus:ring-[#f95724]/15 transition';
+  'mt-1.5 w-full h-12 px-4 rounded-xl border border-slate-200 bg-white text-base text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#17233d] focus:ring-2 focus:ring-[#17233d]/15 transition';
 
 const trustBadges = [
   {
@@ -92,25 +92,25 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBack }) => {
   return (
     <div className="min-h-dvh flex flex-col lg:grid lg:grid-cols-12 bg-[#f8fafc]">
       {/* LEFT COLUMN: Hero Brand Experience (Visible on Laptop / Desktop) */}
-      <aside className="hidden lg:flex lg:col-span-7 flex-col justify-between bg-gradient-to-br from-[#fff3eb] via-[#fff8f4] to-[#fef6f0] border-r border-orange-100/80 p-10 xl:p-14 relative overflow-hidden">
+      <aside className="hidden lg:flex lg:col-span-7 flex-col justify-between bg-gradient-to-br from-[#fff3eb] via-[#fff8f4] to-[#fef6f0] border-r border-slate-100/80 p-10 xl:p-14 relative overflow-hidden">
         {/* Ambient subtle glow background shapes */}
         <div className="absolute -top-24 -left-24 w-96 h-96 bg-orange-200/40 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-amber-200/30 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex items-center justify-between">
           <EzzyGoLogo variant="host" size="lg" />
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/90 border border-orange-200/70 text-xs font-semibold text-[#f95724] shadow-xs">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/90 border border-slate-200/70 text-xs font-semibold text-[#17233d] shadow-xs">
             India's 1st Event Escrow Marketplace
           </span>
         </div>
 
         <div className="relative z-10 my-auto py-8 max-w-xl">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-orange-50 border border-orange-200/80 text-xs font-bold text-[#f95724] uppercase tracking-wider mb-5">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-50 border border-slate-200/80 text-xs font-bold text-[#17233d] uppercase tracking-wider mb-5">
             Host Event Console
           </div>
           <h2 className="text-3xl xl:text-4xl font-extrabold text-slate-900 tracking-tight leading-[1.2]">
             Your Event, Your Budget.{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#f95724] to-[#ea3a06]">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#f07d4a] to-[#ea3a06]">
               Top Vendors Compete Under Your Price.
             </span>
           </h2>
@@ -124,9 +124,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBack }) => {
               return (
                 <div
                   key={badge.title}
-                  className="flex items-start gap-4 p-3.5 rounded-2xl bg-white/80 backdrop-blur-sm border border-orange-100 shadow-xs hover:shadow-sm transition"
+                  className="flex items-start gap-4 p-3.5 rounded-2xl bg-white/80 backdrop-blur-sm border border-slate-100 shadow-xs hover:shadow-sm transition"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-orange-50 border border-orange-200/60 flex items-center justify-center shrink-0 text-[#f95724]">
+                  <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-center shrink-0 text-[#17233d]">
                     <Icon className="w-5 h-5" />
                   </div>
                   <div>
@@ -139,7 +139,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBack }) => {
           </div>
 
           {/* Social Proof & Rating Strip */}
-          <div className="mt-8 pt-6 border-t border-orange-200/50 flex items-center justify-between text-xs text-slate-600">
+          <div className="mt-8 pt-6 border-t border-slate-200/50 flex items-center justify-between text-xs text-slate-600">
             <div className="flex items-center gap-2">
               <div className="flex -space-x-2 overflow-hidden">
                 <img
@@ -167,11 +167,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBack }) => {
           </div>
         </div>
 
-        <div className="relative z-10 flex items-center justify-between text-xs text-slate-500 pt-4 border-t border-orange-100">
+        <div className="relative z-10 flex items-center justify-between text-xs text-slate-500 pt-4 border-t border-slate-100">
           <span>&copy; {new Date().getFullYear()} EzzyGo Events Marketplace</span>
           <a
             href={getVendorPortalUrl()}
-            className="text-[#f95724] font-semibold hover:underline flex items-center gap-1 cursor-pointer"
+            className="text-[#17233d] font-semibold hover:underline flex items-center gap-1 cursor-pointer"
           >
             Looking to bid as a vendor? Open Vendor Portal <ArrowRight className="w-3.5 h-3.5" />
           </a>
@@ -197,7 +197,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBack }) => {
           {/* Mobile Top Brand Bar (Visible only on Mobile & Tablets) */}
           <div className="lg:hidden flex items-center justify-between mb-6">
             <EzzyGoLogo variant="host" size="md" />
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-orange-50 border border-orange-200 text-xs font-semibold text-[#f95724]">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200 text-xs font-semibold text-[#17233d]">
               Host Portal
             </span>
           </div>
@@ -243,7 +243,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBack }) => {
               )}
 
               {busy && (
-                <p className="text-center text-xs sm:text-sm text-[#f95724] animate-pulse font-semibold">
+                <p className="text-center text-xs sm:text-sm text-[#17233d] animate-pulse font-semibold">
                   Signing you in, please wait...
                 </p>
               )}
@@ -320,7 +320,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBack }) => {
               <button
                 type="submit"
                 disabled={busy}
-                className="w-full h-12 rounded-full bg-[#f95724] hover:bg-[#e04818] text-white font-semibold text-base disabled:opacity-50 cursor-pointer shadow-sm transition"
+                className="w-full h-12 rounded-full bg-[#f07d4a] hover:bg-[#de6a3a] text-white font-semibold text-base disabled:opacity-50 cursor-pointer shadow-sm transition"
               >
                 {busy ? (mode === 'register' ? 'Creating account...' : 'Signing in...') : mode === 'register' ? 'Create account' : 'Log in'}
               </button>
@@ -334,7 +334,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBack }) => {
                         setMode('login');
                         setError('');
                       }}
-                      className="text-[#f95724] font-semibold hover:underline cursor-pointer"
+                      className="text-[#17233d] font-semibold hover:underline cursor-pointer"
                     >
                       Log in
                     </button>
@@ -348,7 +348,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBack }) => {
                         setMode('register');
                         setError('');
                       }}
-                      className="text-[#f95724] font-semibold hover:underline cursor-pointer"
+                      className="text-[#17233d] font-semibold hover:underline cursor-pointer"
                     >
                       Create an account
                     </button>
@@ -361,8 +361,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBack }) => {
             <div className="grid grid-cols-3 gap-2.5 sm:gap-3 mt-6">
               {/* 1-Click */}
               <div className="flex flex-col items-center justify-center text-center py-4 px-2 rounded-2xl bg-[#fffcf9] border border-[#ffedd5]/80 shadow-2xs">
-                <div className="w-10 h-10 rounded-full bg-[#ffedd5]/60 flex items-center justify-center text-[#f95724] mb-2.5">
-                  <Zap className="w-5 h-5 fill-orange-500 text-orange-500" />
+                <div className="w-10 h-10 rounded-full bg-[#ffedd5]/60 flex items-center justify-center text-[#17233d] mb-2.5">
+                  <Zap className="w-5 h-5 fill-orange-500 text-slate-600" />
                 </div>
                 <div className="text-sm sm:text-[15px] font-bold text-slate-900 leading-tight">1-Click</div>
                 <div className="text-xs text-slate-500 mt-1 font-normal">Sign-in</div>
@@ -370,8 +370,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBack }) => {
 
               {/* 100% Escrow Safe */}
               <div className="flex flex-col items-center justify-center text-center py-4 px-2 rounded-2xl bg-[#fffcf9] border border-[#ffedd5]/80 shadow-2xs">
-                <div className="w-10 h-10 rounded-full bg-[#ffedd5]/60 flex items-center justify-center text-[#f95724] mb-2.5">
-                  <ShieldCheck className="w-5 h-5 text-orange-500 stroke-[2.2]" />
+                <div className="w-10 h-10 rounded-full bg-[#ffedd5]/60 flex items-center justify-center text-[#17233d] mb-2.5">
+                  <ShieldCheck className="w-5 h-5 text-slate-600 stroke-[2.2]" />
                 </div>
                 <div className="text-sm sm:text-[15px] font-bold text-slate-900 leading-tight">100%</div>
                 <div className="text-xs text-slate-500 mt-1 font-normal">Escrow Safe</div>
@@ -379,8 +379,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBack }) => {
 
               {/* Min. 15% Savings */}
               <div className="flex flex-col items-center justify-center text-center py-4 px-2 rounded-2xl bg-[#fffcf9] border border-[#ffedd5]/80 shadow-2xs">
-                <div className="w-10 h-10 rounded-full bg-[#ffedd5]/60 flex items-center justify-center text-[#f95724] mb-2.5">
-                  <TrendingUp className="w-5 h-5 text-orange-500 stroke-[2.2]" />
+                <div className="w-10 h-10 rounded-full bg-[#ffedd5]/60 flex items-center justify-center text-[#17233d] mb-2.5">
+                  <TrendingUp className="w-5 h-5 text-slate-600 stroke-[2.2]" />
                 </div>
                 <div className="text-sm sm:text-[15px] font-bold text-slate-900 leading-tight">Min. 15%</div>
                 <div className="text-xs text-slate-500 mt-1 font-normal">Savings</div>
@@ -400,7 +400,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onBack }) => {
               Are you an event vendor or performer?{' '}
               <a
                 href={getVendorPortalUrl()}
-                className="text-[#f95724] font-semibold hover:underline inline-flex items-center gap-1 ml-0.5 cursor-pointer"
+                className="text-[#17233d] font-semibold hover:underline inline-flex items-center gap-1 ml-0.5 cursor-pointer"
               >
                 Go to Vendor Portal <ArrowRight className="w-3.5 h-3.5" />
               </a>

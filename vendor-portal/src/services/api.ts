@@ -244,7 +244,7 @@ export const api = {
   },
 
   getRequirements(): Promise<Requirement[]> {
-    return request<Requirement[]>('/requirements', {}, 'Could not load open requests');
+    return request<Requirement[]>('/requirements?status=OPEN', {}, 'Could not load open requests');
   },
 
   placeBid(reqId: string, bidData: { amount: number; proposalNotes: string; equipmentDetails?: string; providerId: string }): Promise<Bid> {

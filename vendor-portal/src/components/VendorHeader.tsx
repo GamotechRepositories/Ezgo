@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  Menu,
   User as UserIcon,
   ShieldCheck,
   CalendarCheck,
@@ -15,35 +14,43 @@ import {
 } from 'lucide-react';
 import type { User } from '../types';
 import { getUserPortalUrl, getAdminPortalUrl } from '../utils/portalUrls';
+import { EzzyGoLogo } from './EzzyGoLogo';
 
 interface VendorHeaderProps {
   vendor: User;
-  activeTab: 'auctions' | 'orders' | 'availability' | 'wallet' | 'inventory';
+  activeTab: 'auctions' | 'orders' | 'availability' | 'wallet' | 'inventory' | 'profile';
   onToggleSidebar: () => void;
-  onTabChange: (tab: 'auctions' | 'orders' | 'availability' | 'wallet' | 'inventory') => void;
+  onTabChange: (tab: 'auctions' | 'orders' | 'availability' | 'wallet' | 'inventory' | 'profile') => void;
   activeOrdersCount: number;
   onLogout: () => void;
   onOpenAccountModal: () => void;
   onOpenVerificationModal?: () => void;
+  marketplaceCity?: string;
+  onMarketplaceCity?: (city: string) => void;
 }
 
 const tabTitles: Record<string, { title: string; subtitle: string }> = {
-  auctions: { title: 'Open requests', subtitle: 'Events where hosts are waiting for bids' },
-  orders: { title: 'My bookings', subtitle: 'Jobs a host picked you for' },
-  availability: { title: 'Availability calendar', subtitle: 'Block offline dates and prevent double bookings' },
-  wallet: { title: 'Earnings', subtitle: 'Money paid to you and money coming next' },
-  inventory: { title: 'My equipment', subtitle: 'What you can bring to events' },
+  auctions: { title: 'Live leads', subtitle: 'Bid at least 15% below the host budget' },
+  orders: { title: 'My jobs', subtitle: 'Host contact unlocks after they pay escrow' },
+  availability: { title: 'Availability', subtitle: 'Block dates with offline gigs' },
+  wallet: { title: 'Earnings', subtitle: 'You receive 100% of your accepted bid' },
+  inventory: { title: 'Equipment', subtitle: 'Gear you can bring to events' },
+  profile: { title: 'My Account', subtitle: 'Your jobs, bids and payouts' },
 };
+
+const HEADER_CITIES = ['ALL', 'Pune', 'Mumbai', 'Hyderabad', 'Bengaluru', 'Delhi NCR', 'Nagpur', 'Goa', 'Jaipur'];
 
 export const VendorHeader: React.FC<VendorHeaderProps> = ({
   vendor,
   activeTab,
-  onToggleSidebar,
+  onToggleSidebar: _onToggleSidebar,
   onTabChange,
   activeOrdersCount,
   onLogout,
   onOpenAccountModal,
   onOpenVerificationModal,
+  marketplaceCity = 'ALL',
+  onMarketplaceCity,
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -73,30 +80,47 @@ export const VendorHeader: React.FC<VendorHeaderProps> = ({
   return (
     <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80">
       <div className="px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3 min-w-0">
-          <button
-            onClick={onToggleSidebar}
-            aria-label="Open menu"
-            className="p-2 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 lg:hidden cursor-pointer min-w-[42px] min-h-[42px] flex items-center justify-center"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-          <div className="min-w-0">
-            <h1 className="text-lg font-bold text-slate-900 leading-tight">{currentTabInfo.title}</h1>
-            <p className="text-sm text-slate-500 hidden sm:block truncate">{currentTabInfo.subtitle}</p>
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="lg:hidden shrink-0">
+            <EzzyGoLogo size="sm" showBadge={false} />
           </div>
+          <div className="hidden lg:block min-w-0">
+            <h1 className="text-lg font-bold text-slate-900 leading-tight">{currentTabInfo.title}</h1>
+            <p className="text-sm text-slate-500 truncate">{currentTabInfo.subtitle}</p>
+          </div>
+          {onMarketplaceCity && (
+            <label className="lg:hidden inline-flex items-center gap-1 px-2 py-1 rounded-[10px] text-xs font-semibold bg-slate-50 text-slate-800 border border-[#e8edf2]">
+              <MapPin className="w-3 h-3 text-[#f07d4a]" />
+              <select
+                value={marketplaceCity}
+                onChange={(e) => onMarketplaceCity(e.target.value)}
+                className="bg-transparent font-bold text-[#17233d] outline-none cursor-pointer max-w-[110px]"
+              >
+                {HEADER_CITIES.map((c) => (
+                  <option key={c} value={c}>{c === 'ALL' ? 'All Cities' : c}</option>
+                ))}
+              </select>
+            </label>
+          )}
         </div>
 
         {/* Right Section: My Account Dropdown & Verification */}
         <div className="flex items-center gap-3 shrink-0">
-          {/* Operating City Badge */}
-          <div
-            title={`Primary Service Area / City: ${vendor.serviceArea || 'Pune'}`}
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200/90 shadow-2xs"
-          >
-            <MapPin className="w-3.5 h-3.5 text-[#f95724]" />
-            <span className="font-bold text-slate-800">{vendor.serviceArea || 'Pune, MH'}</span>
-          </div>
+          {onMarketplaceCity && (
+            <label className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#fff1ea] text-[#de6a3a] border border-[#ffd7c2]">
+              <MapPin className="w-3.5 h-3.5" />
+              <select
+                value={marketplaceCity}
+                onChange={(e) => onMarketplaceCity(e.target.value)}
+                className="bg-transparent font-bold text-[#17233d] outline-none cursor-pointer max-w-[140px]"
+                title="Filter leads by city"
+              >
+                {HEADER_CITIES.map((c) => (
+                  <option key={c} value={c}>{c === 'ALL' ? 'All Cities' : c}</option>
+                ))}
+              </select>
+            </label>
+          )}
 
           {/* Interactive Verification Badge */}
           <button
@@ -129,7 +153,7 @@ export const VendorHeader: React.FC<VendorHeaderProps> = ({
           </button>
 
           {/* User Profile Avatar with Dropdown */}
-          <div className="relative" ref={dropdownRef}>
+          <div className="relative hidden lg:block" ref={dropdownRef}>
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               aria-label="My Account"
@@ -219,9 +243,9 @@ export const VendorHeader: React.FC<VendorHeaderProps> = ({
                       setIsDropdownOpen(false);
                       onOpenAccountModal();
                     }}
-                    className="w-full text-left px-3 py-2 rounded-xl font-bold text-slate-800 hover:bg-[#f95724]/10 hover:text-[#f95724] transition flex items-center gap-2.5 cursor-pointer"
+                    className="w-full text-left px-3 py-2 rounded-xl font-bold text-slate-800 hover:bg-[#f07d4a]/10 hover:text-[#17233d] transition flex items-center gap-2.5 cursor-pointer"
                   >
-                    <UserIcon className="w-4 h-4 text-[#f95724]" />
+                    <UserIcon className="w-4 h-4 text-[#17233d]" />
                     <span>My Account & Business Profile</span>
                   </button>
 

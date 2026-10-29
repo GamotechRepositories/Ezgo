@@ -21,17 +21,34 @@ const steps = ['Host picked you', 'Host paid EzzyGo', 'Event day', 'You get paid
 
 export const ActiveOrdersDesk: React.FC<ActiveOrdersDeskProps> = ({ bookings, onRaiseDispute }) => {
   const [cityFilter, setCityFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'PAY' | 'ACTIVE' | 'DONE'>('ALL');
   const [disputeBookingModal, setDisputeBookingModal] = useState<Booking | null>(null);
   const [disputeReasonText, setDisputeReasonText] = useState('');
   const [submittingDispute, setSubmittingDispute] = useState(false);
 
   const availableCities = Array.from(new Set(bookings.map((b) => b.requirementId?.location?.city).filter(Boolean)));
 
+  const formatDate = (value?: string) => {
+    if (!value) return 'Date TBA';
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return value;
+    return d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  };
+
   const filteredBookings = bookings.filter((b) => {
-    if (cityFilter === 'ALL') return true;
-    const reqCity = b.requirementId?.location?.city || '';
-    return reqCity.toLowerCase().includes(cityFilter.toLowerCase().split(' ')[0]);
+    if (cityFilter !== 'ALL') {
+      const reqCity = b.requirementId?.location?.city || '';
+      if (!reqCity.toLowerCase().includes(cityFilter.toLowerCase().split(' ')[0])) return false;
+    }
+    const s = (b.status || '').toUpperCase();
+    if (statusFilter === 'PAY') return s === 'AWAITING_PAYMENT';
+    if (statusFilter === 'ACTIVE') return s === 'ACTIVE';
+    if (statusFilter === 'DONE') return s === 'COMPLETED' || s === 'PAYOUT_RELEASED';
+    return true;
   });
+  const waiting = bookings.filter((b) => b.status === 'AWAITING_PAYMENT').length;
+  const confirmed = bookings.filter((b) => b.status === 'ACTIVE').length;
+  const done = bookings.filter((b) => b.status === 'COMPLETED' || b.status === 'PAYOUT_RELEASED').length;
 
   const vendorDisputePresets = [
     'Host unreachable / venue closed on event day',
@@ -61,17 +78,36 @@ export const ActiveOrdersDesk: React.FC<ActiveOrdersDeskProps> = ({ bookings, on
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       <div>
-        <h2 className="text-2xl font-bold text-slate-900">My bookings</h2>
+        <h2 className="text-2xl font-bold text-slate-900">My jobs</h2>
         <p className="text-base text-slate-600 mt-1">
-          Jobs where a host picked your bid. You see the host's phone number once they pay.
+          After the host pays, their name, phone, WhatsApp and email unlock here.
         </p>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {([
+          { id: 'ALL' as const, label: 'All', count: bookings.length },
+          { id: 'PAY' as const, label: 'Waiting pay', count: waiting },
+          { id: 'ACTIVE' as const, label: 'Confirmed', count: confirmed },
+          { id: 'DONE' as const, label: 'Done', count: done },
+        ]).map((chip) => (
+          <button
+            key={chip.id}
+            type="button"
+            onClick={() => setStatusFilter(chip.id)}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-bold cursor-pointer ${
+              statusFilter === chip.id ? 'bg-[#17233d] text-white' : 'bg-white text-slate-700 border border-slate-200'
+            }`}
+          >
+            {chip.label} {chip.count}
+          </button>
+        ))}
       </div>
 
       {/* City Filter Pills */}
       {availableCities.length > 1 && (
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
           <span className="text-slate-500 font-bold flex items-center gap-1 shrink-0 mr-1">
-            <MapPin className="w-3.5 h-3.5 text-[#f95724]" />
+            <MapPin className="w-3.5 h-3.5 text-[#17233d]" />
             <span>Operating City:</span>
           </span>
           {['ALL', ...availableCities].map((c) => (
@@ -81,7 +117,7 @@ export const ActiveOrdersDesk: React.FC<ActiveOrdersDeskProps> = ({ bookings, on
               onClick={() => setCityFilter(c)}
               className={`px-3 py-1 rounded-full text-xs font-bold transition whitespace-nowrap cursor-pointer flex items-center gap-1 active:scale-95 ${
                 cityFilter === c
-                  ? 'bg-[#f95724] text-white shadow-xs'
+                  ? 'bg-[#f07d4a] text-white shadow-xs'
                   : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200'
               }`}
             >
@@ -94,9 +130,11 @@ export const ActiveOrdersDesk: React.FC<ActiveOrdersDeskProps> = ({ bookings, on
 
       {filteredBookings.length === 0 ? (
         <div className="text-center py-16 px-4 rounded-3xl bg-white border border-slate-200 space-y-2">
-          <h3 className="text-base font-semibold text-slate-800">No bookings in selected city</h3>
+          <h3 className="text-base font-semibold text-slate-800">{bookings.length === 0 ? 'No accepted jobs yet' : 'No jobs in this filter'}</h3>
           <p className="text-sm text-slate-500 max-w-sm mx-auto">
-            {cityFilter !== 'ALL' ? `No bookings found for ${cityFilter}. Switch to All Cities.` : 'Bid on open requests. When a host picks your bid, the booking shows up here.'}
+            {bookings.length === 0
+              ? 'When a host selects your bid, it shows here instantly.'
+              : cityFilter !== 'ALL' ? `No jobs in ${cityFilter}. Switch to All Cities.` : 'Try another status chip.'}
           </p>
         </div>
       ) : (
@@ -143,7 +181,7 @@ export const ActiveOrdersDesk: React.FC<ActiveOrdersDeskProps> = ({ bookings, on
                   <div>
                     <h3 className="text-lg font-bold text-slate-900">{req?.title}</h3>
                     <p className="text-sm text-slate-500 mt-1">
-                      {req?.eventDate}
+                      {formatDate(req?.eventDate)}
                       {req?.timeWindow?.start && ` · ${req.timeWindow.start}–${req.timeWindow.end}`}
                     </p>
                   </div>
@@ -253,7 +291,7 @@ export const ActiveOrdersDesk: React.FC<ActiveOrdersDeskProps> = ({ bookings, on
                         Reason: {booking.disputeReason || booking.disputeDetails?.reason || 'Service dispute under mediation.'}
                       </p>
                       <p className="text-[11px] text-rose-600/90 pt-1 border-t border-rose-200">
-                        EzzyGo support is reviewing this booking. Escrow funds (?{booking.bidAmount.toLocaleString()}) remain safely held until resolution.
+                        EzzyGo support is reviewing this booking. Escrow funds (₹{booking.bidAmount.toLocaleString()}) remain safely held until resolution.
                       </p>
                     </div>
                   </div>
@@ -262,7 +300,7 @@ export const ActiveOrdersDesk: React.FC<ActiveOrdersDeskProps> = ({ bookings, on
                 {booking.status === 'ACTIVE' && (
                   <div className="pt-4 border-t border-slate-100 space-y-2.5">
                     <p className="text-sm text-slate-600">
-                      After the event, the host confirms it is done. Then EzzyGo sends you ?{booking.bidAmount.toLocaleString()}.
+                      After the event, the host confirms it is done. Then EzzyGo sends you ₹{booking.bidAmount.toLocaleString()}.
                     </p>
                     {onRaiseDispute && (
                       <button

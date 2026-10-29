@@ -32,7 +32,7 @@ export const EzzyGoLogo: React.FC<EzzyGoLogoProps> = ({
       />
 
       {showBadge && (
-        <span className={`font-black rounded-full uppercase tracking-wider bg-orange-500/10 text-[#f95724] border border-[#f95724]/20 ${currentSize.badge}`}>
+        <span className={`font-black rounded-full uppercase tracking-wider bg-slate-500/10 text-[#17233d] border border-[#17233d]/20 ${currentSize.badge}`}>
           PRO VENDOR
         </span>
       )}

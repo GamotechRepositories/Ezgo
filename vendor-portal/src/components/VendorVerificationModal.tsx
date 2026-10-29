@@ -296,7 +296,7 @@ export const VendorVerificationModal: React.FC<VendorVerificationModalProps> = (
                   type="button"
                   disabled={isReminding}
                   onClick={handleSendReminder}
-                  className="px-4 py-2 rounded-full bg-[#f95724] hover:bg-[#e04818] text-white font-bold text-xs shadow-xs transition flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                  className="px-4 py-2 rounded-full bg-[#f07d4a] hover:bg-[#de6a3a] text-white font-bold text-xs shadow-xs transition flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
                 >
                   <Zap className="w-3.5 h-3.5" />
                   <span>{isReminding ? 'Sending Request...' : 'Send Review Reminder to Admin'}</span>
@@ -321,7 +321,7 @@ export const VendorVerificationModal: React.FC<VendorVerificationModalProps> = (
             <form onSubmit={handleSubmitReapply} className="space-y-5 animate-in fade-in duration-200">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <Edit3 className="w-4 h-4 text-[#f95724]" />
+                  <Edit3 className="w-4 h-4 text-[#17233d]" />
                   <span>Update & Re-apply KYC Documents</span>
                 </h3>
                 <button
@@ -344,7 +344,7 @@ export const VendorVerificationModal: React.FC<VendorVerificationModalProps> = (
                       required
                       maxLength={12}
                       placeholder="12-digit Aadhaar"
-                      className="mt-1.5 w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:border-[#f95724] focus:ring-2 focus:ring-[#f95724]/10"
+                      className="mt-1.5 w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:border-[#17233d] focus:ring-2 focus:ring-[#17233d]/10"
                     />
                   </label>
 
@@ -356,7 +356,7 @@ export const VendorVerificationModal: React.FC<VendorVerificationModalProps> = (
                       required
                       maxLength={10}
                       placeholder="10-digit PAN (e.g. ABCDE1234F)"
-                      className="mt-1.5 w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm font-mono uppercase focus:outline-none focus:border-[#f95724] focus:ring-2 focus:ring-[#f95724]/10"
+                      className="mt-1.5 w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm font-mono uppercase focus:outline-none focus:border-[#17233d] focus:ring-2 focus:ring-[#17233d]/10"
                     />
                   </label>
                 </div>
@@ -369,7 +369,7 @@ export const VendorVerificationModal: React.FC<VendorVerificationModalProps> = (
                       onChange={(e) => setGstNumber(e.target.value.toUpperCase().slice(0, 15))}
                       maxLength={15}
                       placeholder="15-digit GSTIN"
-                      className="mt-1.5 w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm font-mono uppercase focus:outline-none focus:border-[#f95724] focus:ring-2 focus:ring-[#f95724]/10"
+                      className="mt-1.5 w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm font-mono uppercase focus:outline-none focus:border-[#17233d] focus:ring-2 focus:ring-[#17233d]/10"
                     />
                   </label>
 
@@ -380,7 +380,7 @@ export const VendorVerificationModal: React.FC<VendorVerificationModalProps> = (
                       onChange={(e) => setBusinessAddress(e.target.value)}
                       required
                       placeholder="Full operating business address"
-                      className="mt-1.5 w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:border-[#f95724] focus:ring-2 focus:ring-[#f95724]/10"
+                      className="mt-1.5 w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:border-[#17233d] focus:ring-2 focus:ring-[#17233d]/10"
                     />
                   </label>
                 </div>
@@ -413,7 +413,7 @@ export const VendorVerificationModal: React.FC<VendorVerificationModalProps> = (
                       type="button"
                       disabled={uploadingDoc === 'aadhaarFront'}
                       onClick={() => triggerUpload('aadhaarFront')}
-                      className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-orange-300 text-xs font-semibold text-slate-700 transition cursor-pointer shrink-0"
+                      className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-slate-300 text-xs font-semibold text-slate-700 transition cursor-pointer shrink-0"
                     >
                       {uploadingDoc === 'aadhaarFront' ? 'Uploading...' : aadhaarFront ? 'Replace' : 'Upload'}
                     </button>
@@ -445,7 +445,7 @@ export const VendorVerificationModal: React.FC<VendorVerificationModalProps> = (
                       type="button"
                       disabled={uploadingDoc === 'aadhaarBack'}
                       onClick={() => triggerUpload('aadhaarBack')}
-                      className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-orange-300 text-xs font-semibold text-slate-700 transition cursor-pointer shrink-0"
+                      className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-slate-300 text-xs font-semibold text-slate-700 transition cursor-pointer shrink-0"
                     >
                       {uploadingDoc === 'aadhaarBack' ? 'Uploading...' : aadhaarBack ? 'Replace' : 'Upload'}
                     </button>
@@ -477,7 +477,7 @@ export const VendorVerificationModal: React.FC<VendorVerificationModalProps> = (
                       type="button"
                       disabled={uploadingDoc === 'panCard'}
                       onClick={() => triggerUpload('panCard')}
-                      className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-orange-300 text-xs font-semibold text-slate-700 transition cursor-pointer shrink-0"
+                      className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-slate-300 text-xs font-semibold text-slate-700 transition cursor-pointer shrink-0"
                     >
                       {uploadingDoc === 'panCard' ? 'Uploading...' : panCard ? 'Replace' : 'Upload'}
                     </button>
@@ -509,7 +509,7 @@ export const VendorVerificationModal: React.FC<VendorVerificationModalProps> = (
                       type="button"
                       disabled={uploadingDoc === 'gstDoc'}
                       onClick={() => triggerUpload('gstDoc')}
-                      className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-orange-300 text-xs font-semibold text-slate-700 transition cursor-pointer shrink-0"
+                      className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-slate-300 text-xs font-semibold text-slate-700 transition cursor-pointer shrink-0"
                     >
                       {uploadingDoc === 'gstDoc' ? 'Uploading...' : gstDoc ? 'Replace' : 'Upload'}
                     </button>
@@ -520,7 +520,7 @@ export const VendorVerificationModal: React.FC<VendorVerificationModalProps> = (
               {/* Bank Details section */}
               <div className="space-y-3 pt-2 border-t border-slate-100">
                 <span className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                  <CreditCard className="w-3.5 h-3.5 text-[#f95724]" />
+                  <CreditCard className="w-3.5 h-3.5 text-[#17233d]" />
                   <span>Payout Bank Account Details</span>
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -530,7 +530,7 @@ export const VendorVerificationModal: React.FC<VendorVerificationModalProps> = (
                       value={accountHolder}
                       onChange={(e) => setAccountHolder(e.target.value)}
                       placeholder="As per bank passbook"
-                      className="mt-1 w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:border-[#f95724]"
+                      className="mt-1 w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:border-[#17233d]"
                     />
                   </label>
                   <label className="block">
@@ -539,7 +539,7 @@ export const VendorVerificationModal: React.FC<VendorVerificationModalProps> = (
                       value={ifscCode}
                       onChange={(e) => setIfscCode(e.target.value.toUpperCase().slice(0, 11))}
                       placeholder="11-digit IFSC (e.g. HDFC0001234)"
-                      className="mt-1 w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm font-mono uppercase focus:outline-none focus:border-[#f95724]"
+                      className="mt-1 w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm font-mono uppercase focus:outline-none focus:border-[#17233d]"
                     />
                   </label>
                 </div>
@@ -550,7 +550,7 @@ export const VendorVerificationModal: React.FC<VendorVerificationModalProps> = (
                       value={accountNumber}
                       onChange={(e) => setAccountNumber(e.target.value.trim())}
                       placeholder="Account number"
-                      className="mt-1 w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm font-mono focus:outline-none focus:border-[#f95724]"
+                      className="mt-1 w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm font-mono focus:outline-none focus:border-[#17233d]"
                     />
                   </label>
                   <label className="block">
@@ -559,7 +559,7 @@ export const VendorVerificationModal: React.FC<VendorVerificationModalProps> = (
                       value={confirmAccountNumber}
                       onChange={(e) => setConfirmAccountNumber(e.target.value.trim())}
                       placeholder="Re-enter account number"
-                      className="mt-1 w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm font-mono focus:outline-none focus:border-[#f95724]"
+                      className="mt-1 w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm font-mono focus:outline-none focus:border-[#17233d]"
                     />
                   </label>
                   <label className="block">
@@ -568,7 +568,7 @@ export const VendorVerificationModal: React.FC<VendorVerificationModalProps> = (
                       value={upiId}
                       onChange={(e) => setUpiId(e.target.value.trim())}
                       placeholder="e.g. name@okhdfcbank"
-                      className="mt-1 w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm font-mono focus:outline-none focus:border-[#f95724]"
+                      className="mt-1 w-full p-2.5 rounded-xl border border-slate-200 bg-white text-sm font-mono focus:outline-none focus:border-[#17233d]"
                     />
                   </label>
                 </div>
@@ -586,7 +586,7 @@ export const VendorVerificationModal: React.FC<VendorVerificationModalProps> = (
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-6 py-2.5 rounded-full bg-[#f95724] hover:bg-[#e04818] text-white font-bold text-xs shadow-sm transition flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+                  className="px-6 py-2.5 rounded-full bg-[#f07d4a] hover:bg-[#de6a3a] text-white font-bold text-xs shadow-sm transition flex items-center gap-2 disabled:opacity-50 cursor-pointer"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span>{isSubmitting ? 'Submitting Updated Documents...' : 'Submit Updated KYC for Review'}</span>
@@ -655,7 +655,7 @@ export const VendorVerificationModal: React.FC<VendorVerificationModalProps> = (
                             url: vendor.kycDocuments!.aadhaarFront!,
                           })
                         }
-                        className="group relative p-2.5 rounded-2xl bg-slate-50 border border-slate-200 hover:border-orange-400 hover:bg-orange-50/50 transition cursor-pointer text-center overflow-hidden"
+                        className="group relative p-2.5 rounded-2xl bg-slate-50 border border-slate-200 hover:border-orange-400 hover:bg-slate-50/50 transition cursor-pointer text-center overflow-hidden"
                       >
                         <div className="w-full h-20 mb-1.5 rounded-xl bg-white border border-slate-100 overflow-hidden relative flex items-center justify-center">
                           <img
@@ -685,7 +685,7 @@ export const VendorVerificationModal: React.FC<VendorVerificationModalProps> = (
                             url: vendor.kycDocuments!.aadhaarBack!,
                           })
                         }
-                        className="group relative p-2.5 rounded-2xl bg-slate-50 border border-slate-200 hover:border-orange-400 hover:bg-orange-50/50 transition cursor-pointer text-center overflow-hidden"
+                        className="group relative p-2.5 rounded-2xl bg-slate-50 border border-slate-200 hover:border-orange-400 hover:bg-slate-50/50 transition cursor-pointer text-center overflow-hidden"
                       >
                         <div className="w-full h-20 mb-1.5 rounded-xl bg-white border border-slate-100 overflow-hidden relative flex items-center justify-center">
                           <img
@@ -715,7 +715,7 @@ export const VendorVerificationModal: React.FC<VendorVerificationModalProps> = (
                             url: vendor.kycDocuments!.panCard!,
                           })
                         }
-                        className="group relative p-2.5 rounded-2xl bg-slate-50 border border-slate-200 hover:border-orange-400 hover:bg-orange-50/50 transition cursor-pointer text-center overflow-hidden"
+                        className="group relative p-2.5 rounded-2xl bg-slate-50 border border-slate-200 hover:border-orange-400 hover:bg-slate-50/50 transition cursor-pointer text-center overflow-hidden"
                       >
                         <div className="w-full h-20 mb-1.5 rounded-xl bg-white border border-slate-100 overflow-hidden relative flex items-center justify-center">
                           <img
@@ -745,7 +745,7 @@ export const VendorVerificationModal: React.FC<VendorVerificationModalProps> = (
                             url: vendor.kycDocuments!.gstDoc!,
                           })
                         }
-                        className="group relative p-2.5 rounded-2xl bg-slate-50 border border-slate-200 hover:border-orange-400 hover:bg-orange-50/50 transition cursor-pointer text-center overflow-hidden"
+                        className="group relative p-2.5 rounded-2xl bg-slate-50 border border-slate-200 hover:border-orange-400 hover:bg-slate-50/50 transition cursor-pointer text-center overflow-hidden"
                       >
                         <div className="w-full h-20 mb-1.5 rounded-xl bg-white border border-slate-100 overflow-hidden relative flex items-center justify-center">
                           <img
@@ -802,7 +802,7 @@ export const VendorVerificationModal: React.FC<VendorVerificationModalProps> = (
           >
             <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-[#f95724]" />
+                <FileText className="w-5 h-5 text-[#17233d]" />
                 <h4 className="font-bold text-slate-900 text-base">{previewDoc.title}</h4>
               </div>
               <div className="flex items-center gap-2">

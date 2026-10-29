@@ -33,7 +33,7 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onDismis
             {toast.type === 'success' && <CheckCircle2 className="w-5 h-5 text-emerald-600" />}
             {toast.type === 'error' && <AlertCircle className="w-5 h-5 text-rose-600" />}
             {toast.type === 'warning' && <AlertCircle className="w-5 h-5 text-amber-600" />}
-            {toast.type === 'info' && <Info className="w-5 h-5 text-[#f95724]" />}
+            {toast.type === 'info' && <Info className="w-5 h-5 text-[#17233d]" />}
           </div>
           <div className="flex-1">
             <h4 className="text-sm font-bold">{toast.title}</h4>

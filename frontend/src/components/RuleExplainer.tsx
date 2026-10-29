@@ -45,11 +45,11 @@ export const RuleExplainer: React.FC<RuleExplainerProps> = ({ isOpen, onClose })
 
         {/* Header Title */}
         <div className="flex items-start gap-4 mb-6 pr-10">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#f95724] to-amber-500 flex items-center justify-center shadow-lg shadow-[#f95724]/20 shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#f07d4a] to-amber-500 flex items-center justify-center shadow-lg shadow-slate-900/12 shrink-0">
             <ShieldCheck className="w-6 h-6 text-white" />
           </div>
           <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-orange-50 border border-orange-200 text-[#f95724] text-[11px] font-black tracking-wide uppercase mb-1">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-50 border border-slate-200 text-[#17233d] text-[11px] font-black tracking-wide uppercase mb-1">
               How EzzyGo Works • Platform Guide
             </div>
             <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
@@ -71,7 +71,7 @@ export const RuleExplainer: React.FC<RuleExplainerProps> = ({ isOpen, onClose })
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <Shield className="w-3.5 h-3.5 text-[#f95724]" />
+            <Shield className="w-3.5 h-3.5 text-[#17233d]" />
             <span>Complete Overview</span>
           </button>
 
@@ -79,11 +79,11 @@ export const RuleExplainer: React.FC<RuleExplainerProps> = ({ isOpen, onClose })
             onClick={() => setActiveTab('user')}
             className={`px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer flex-1 sm:flex-initial justify-center ${
               activeTab === 'user'
-                ? 'bg-white text-orange-600 shadow-xs font-black'
+                ? 'bg-white text-slate-700 shadow-xs font-black'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <Users className="w-3.5 h-3.5 text-[#f95724]" />
+            <Users className="w-3.5 h-3.5 text-[#17233d]" />
             <span>1. For Event Hosts</span>
           </button>
 
@@ -131,11 +131,11 @@ export const RuleExplainer: React.FC<RuleExplainerProps> = ({ isOpen, onClose })
             <div className="grid sm:grid-cols-3 gap-4">
               
               {/* Step 1 */}
-              <div className="p-5 rounded-2xl bg-gradient-to-b from-orange-50/70 to-amber-50/40 border border-orange-200 relative">
-                <div className="w-8 h-8 rounded-full bg-[#f95724] text-white flex items-center justify-center font-black text-xs shadow-md mb-3">
+              <div className="p-5 rounded-2xl bg-gradient-to-b from-orange-50/70 to-amber-50/40 border border-slate-200 relative">
+                <div className="w-8 h-8 rounded-full bg-[#f07d4a] text-white flex items-center justify-center font-black text-xs shadow-md mb-3">
                   1
                 </div>
-                <div className="text-xs font-extrabold uppercase tracking-wide text-[#f95724] mb-1">
+                <div className="text-xs font-extrabold uppercase tracking-wide text-[#17233d] mb-1">
                   Step 1: Host Posts Need
                 </div>
                 <h4 className="text-sm font-bold text-slate-900 mb-1">
@@ -144,8 +144,8 @@ export const RuleExplainer: React.FC<RuleExplainerProps> = ({ isOpen, onClose })
                 <p className="text-xs text-slate-600 leading-relaxed">
                   Enter your event date, city, guest count, and maximum budget ceiling (e.g. ₹40,000 for Sound & DJ).
                 </p>
-                <div className="mt-3 pt-2.5 border-t border-orange-200/60 text-[11px] font-bold text-orange-900 flex items-center gap-1">
-                  <BadgeCheck className="w-3.5 h-3.5 text-[#f95724]" />
+                <div className="mt-3 pt-2.5 border-t border-slate-200/60 text-[11px] font-bold text-orange-900 flex items-center gap-1">
+                  <BadgeCheck className="w-3.5 h-3.5 text-[#17233d]" />
                   <span>15% minimum discount rule applies automatically!</span>
                 </div>
               </div>
@@ -210,7 +210,7 @@ export const RuleExplainer: React.FC<RuleExplainerProps> = ({ isOpen, onClose })
 
               <button
                 onClick={() => setActiveTab('calc')}
-                className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#f95724] to-amber-500 hover:opacity-95 text-white font-bold text-xs shadow-md shrink-0 cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#f07d4a] to-amber-500 hover:opacity-95 text-white font-bold text-xs shadow-md shrink-0 cursor-pointer"
               >
                 View Savings Calculator ➔
               </button>
@@ -221,15 +221,15 @@ export const RuleExplainer: React.FC<RuleExplainerProps> = ({ isOpen, onClose })
         {/* TAB 2: FOR USER / HOST */}
         {activeTab === 'user' && (
           <div className="space-y-4 animate-in fade-in">
-            <div className="p-5 rounded-2xl bg-orange-50 border border-orange-200">
+            <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200">
               <h3 className="text-base font-bold text-orange-950 flex items-center gap-2 mb-3">
-                <Users className="w-5 h-5 text-[#f95724]" />
+                <Users className="w-5 h-5 text-[#17233d]" />
                 <span>Event Host Workflow (3 Simple Steps)</span>
               </h3>
 
               <div className="space-y-3 text-xs">
-                <div className="flex items-start gap-3 p-3 bg-white rounded-xl border border-orange-100 shadow-2xs">
-                  <span className="w-6 h-6 rounded-full bg-[#f95724] text-white flex items-center justify-center font-bold shrink-0">1</span>
+                <div className="flex items-start gap-3 p-3 bg-white rounded-xl border border-slate-100 shadow-2xs">
+                  <span className="w-6 h-6 rounded-full bg-[#f07d4a] text-white flex items-center justify-center font-bold shrink-0">1</span>
                   <div>
                     <strong className="text-slate-900 font-bold block text-sm">Post Requirement with Budget:</strong>
                     <p className="text-slate-600 mt-0.5">
@@ -238,8 +238,8 @@ export const RuleExplainer: React.FC<RuleExplainerProps> = ({ isOpen, onClose })
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-3 bg-white rounded-xl border border-orange-100 shadow-2xs">
-                  <span className="w-6 h-6 rounded-full bg-[#f95724] text-white flex items-center justify-center font-bold shrink-0">2</span>
+                <div className="flex items-start gap-3 p-3 bg-white rounded-xl border border-slate-100 shadow-2xs">
+                  <span className="w-6 h-6 rounded-full bg-[#f07d4a] text-white flex items-center justify-center font-bold shrink-0">2</span>
                   <div>
                     <strong className="text-slate-900 font-bold block text-sm">Receive Discounted Bids (Min 15% Off):</strong>
                     <p className="text-slate-600 mt-0.5">
@@ -248,8 +248,8 @@ export const RuleExplainer: React.FC<RuleExplainerProps> = ({ isOpen, onClose })
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-3 bg-white rounded-xl border border-orange-100 shadow-2xs">
-                  <span className="w-6 h-6 rounded-full bg-[#f95724] text-white flex items-center justify-center font-bold shrink-0">3</span>
+                <div className="flex items-start gap-3 p-3 bg-white rounded-xl border border-slate-100 shadow-2xs">
+                  <span className="w-6 h-6 rounded-full bg-[#f07d4a] text-white flex items-center justify-center font-bold shrink-0">3</span>
                   <div>
                     <strong className="text-slate-900 font-bold block text-sm">Pay now, vendor gets paid after the event:</strong>
                     <p className="text-slate-600 mt-0.5">
@@ -426,10 +426,10 @@ export const RuleExplainer: React.FC<RuleExplainerProps> = ({ isOpen, onClose })
                     <td className="py-3 px-4 text-emerald-800 font-sans hidden sm:table-cell">100% Payout (0% Commission Cut)</td>
                     <td className="py-3 px-4 text-right text-emerald-800 font-bold text-sm">₹{testBid.toLocaleString()}</td>
                   </tr>
-                  <tr className="bg-orange-50/50">
+                  <tr className="bg-slate-50/50">
                     <td className="py-2.5 px-4 text-orange-950 font-sans font-bold">Net Host Savings</td>
                     <td className="py-2.5 px-4 text-slate-500 font-sans hidden sm:table-cell">Original Budget - Total Paid</td>
-                    <td className="py-2.5 px-4 text-right text-[#f95724] font-bold">
+                    <td className="py-2.5 px-4 text-right text-[#17233d] font-bold">
                       ₹{netSavings.toLocaleString()} ({Math.round((netSavings / testBudget) * 100)}% Net Savings)
                     </td>
                   </tr>

@@ -41,7 +41,9 @@ import {
   Briefcase,
   MoreHorizontal,
   Trash2,
-  FileText
+  FileText,
+  Radio,
+  ClipboardList,
 } from 'lucide-react';
 import type { Requirement, Booking, User, Category, Occasion, PostRequirementInitialData, Banner } from '../types';
 import { EVENT_CATEGORIES, FAQS, OCCASION_CARDS } from '../data/eventData';
@@ -156,6 +158,7 @@ const formatEventDate = (value?: string) => {
 };
 
 interface RequesterViewProps {
+  screen?: 'home' | 'events';
   requirements: Requirement[];
   bookings: Booking[];
   categories: Category[];
@@ -167,11 +170,13 @@ interface RequesterViewProps {
   onOpenPostModal: (initial?: string | PostRequirementInitialData) => void;
   onAcceptBid: (requirementId: string, bidId: string) => Promise<void>;
   onOpenBookings: () => void;
+  onOpenMyEvents?: () => void;
   onOpenExplainer: () => void;
   onRefresh?: () => void;
 }
 
 export const RequesterView: React.FC<RequesterViewProps> = ({
+  screen = 'home',
   requirements,
   bookings,
   categories = [],
@@ -183,6 +188,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
   onOpenPostModal,
   onAcceptBid,
   onOpenBookings,
+  onOpenMyEvents,
   onOpenExplainer: _onOpenExplainer,
   onRefresh,
 }) => {
@@ -192,6 +198,8 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
   const [requirementsTab, setRequirementsTab] = useState<'open' | 'drafts'>('open');
   const [expandedReqId, setExpandedReqId] = useState<string | null>(null);
   const [expandedFaqIndex, setExpandedFaqIndex] = useState<number | null>(0);
+  const [eventFilter, setEventFilter] = useState(0);
+  const eventFilterLabels = ['All', 'Open', 'With bids', 'Booked', 'Closed'];
 
   // Dynamic Occasions passed from Admin
   const displayOccasions: (Occasion | typeof OCCASION_CARDS[0])[] = (occasions && occasions.length > 0) ? occasions : OCCASION_CARDS;
@@ -200,14 +208,14 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
     switch (iconType) {
       case 'rings':
         return (
-          <svg className="w-5 h-5 text-[#f95724]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+          <svg className="w-5 h-5 text-[#17233d]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
             <circle cx="9" cy="12" r="4.5" />
             <circle cx="15" cy="12" r="4.5" />
           </svg>
         );
       case 'lotus':
         return (
-          <svg className="w-5 h-5 text-[#f95724]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg className="w-5 h-5 text-[#17233d]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M12 3C12 3 10 7.5 10 11C10 13.5 12 15 12 15C12 15 14 13.5 14 11C14 7.5 12 3 12 3Z" />
             <path d="M12 15C9.5 15 5 12 4 8C7 8 10 10.5 12 15Z" />
             <path d="M12 15C14.5 15 19 12 20 8C17 8 14 10.5 12 15Z" />
@@ -216,7 +224,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
         );
       case 'corporate':
         return (
-          <svg className="w-5 h-5 text-[#f95724]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg className="w-5 h-5 text-[#17233d]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
             <circle cx="9" cy="7" r="4" />
             <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
@@ -225,7 +233,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
         );
       case 'party':
         return (
-          <svg className="w-5 h-5 text-[#f95724]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg className="w-5 h-5 text-[#17233d]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M8 21h8" />
             <path d="M12 15v6" />
             <path d="M5 4l7 7 7-7H5z" />
@@ -234,7 +242,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
         );
       case 'birthday':
         return (
-          <svg className="w-5 h-5 text-[#f95724]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg className="w-5 h-5 text-[#17233d]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8" />
             <path d="M4 16s4-1 8-1 8 1 8 1" />
             <path d="M12 7V3" />
@@ -242,13 +250,13 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
           </svg>
         );
       case 'music':
-        return <Music className="w-5 h-5 text-[#f95724]" />;
+        return <Music className="w-5 h-5 text-[#17233d]" />;
       case 'camera':
-        return <Camera className="w-5 h-5 text-[#f95724]" />;
+        return <Camera className="w-5 h-5 text-[#17233d]" />;
       case 'food':
-        return <Utensils className="w-5 h-5 text-[#f95724]" />;
+        return <Utensils className="w-5 h-5 text-[#17233d]" />;
       default:
-        return <Calendar className="w-5 h-5 text-[#f95724]" />;
+        return <Calendar className="w-5 h-5 text-[#17233d]" />;
     }
   };
 
@@ -307,6 +315,39 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
   }, [openReqs]);
 
   // Filtered requirements
+  const compactReqs = requirements.filter((r) => r.status !== 'DRAFT').slice(0, 3);
+  const liveReqs = [...openReqs.filter((r) => r.status === 'OPEN')]
+    .sort((a, b) => {
+      const bidCmp = (b.bidsCount || b.bids?.length || 0) - (a.bidsCount || a.bids?.length || 0);
+      if (bidCmp !== 0) return bidCmp;
+      return (b.lowestBid || 0) - (a.lowestBid || 0);
+    })
+    .slice(0, 3);
+  const liveCount = openReqs.filter(
+    (r) => r.status === 'OPEN' && ((r.bidsCount || 0) > 0 || (r.bids || []).length > 0)
+  ).length;
+
+  const openEventFromHome = (reqId: string) => {
+    setExpandedReqId(reqId);
+    onOpenMyEvents?.();
+  };
+
+  const countForEventFilter = (index: number) => {
+    if (index === 1) return requirements.filter((r) => r.status === 'OPEN').length;
+    if (index === 2) return requirements.filter((r) => r.status === 'OPEN' && ((r.bidsCount || 0) > 0 || (r.bids || []).length > 0)).length;
+    if (index === 3) return requirements.filter((r) => r.status === 'ACCEPTED' || r.status === 'ACTIVE').length;
+    if (index === 4) return requirements.filter((r) => r.status === 'COMPLETED' || r.status === 'EXPIRED' || r.status === 'CANCELLED').length;
+    return requirements.length;
+  };
+
+  const mobileFilteredReqs = requirements.filter((r) => {
+    if (eventFilter === 1) return r.status === 'OPEN';
+    if (eventFilter === 2) return r.status === 'OPEN' && ((r.bidsCount || 0) > 0 || (r.bids || []).length > 0);
+    if (eventFilter === 3) return r.status === 'ACCEPTED' || r.status === 'ACTIVE';
+    if (eventFilter === 4) return r.status === 'COMPLETED' || r.status === 'EXPIRED' || r.status === 'CANCELLED';
+    return true;
+  });
+
   const filteredOpenReqs = openReqs.filter((r) => {
     const matchesSearch = r.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           r.location.area.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -325,7 +366,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
     if (categoryName.includes('Decor')) return <Palette className="w-4 h-4 text-pink-500" />;
     if (categoryName.includes('Photo')) return <Camera className="w-4 h-4 text-indigo-500" />;
     if (categoryName.includes('Cater')) return <Utensils className="w-4 h-4 text-emerald-500" />;
-    if (categoryName.includes('Purohit') || categoryName.includes('Priest')) return <Flame className="w-4 h-4 text-orange-500" />;
+    if (categoryName.includes('Purohit') || categoryName.includes('Priest')) return <Flame className="w-4 h-4 text-slate-600" />;
     if (categoryName.includes('Mehendi')) return <Heart className="w-4 h-4 text-rose-500" />;
     if (categoryName.includes('Lighting')) return <Lightbulb className="w-4 h-4 text-yellow-500" />;
     if (categoryName.includes('Tent') || categoryName.includes('Stage')) return <Tent className="w-4 h-4 text-cyan-500" />;
@@ -341,14 +382,15 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
 
   return (
     <div className="w-full overflow-x-hidden bg-[#fdfbf7]">
-      
+      {screen !== 'events' && (
+      <>
       <section className="relative w-full overflow-hidden bg-[#fdfbf7] pt-20 sm:pt-32 lg:pt-36 pb-10 sm:pb-14 lg:pb-16">
         
         <div 
           className="absolute inset-0 w-full h-full bg-cover bg-[center_right] lg:bg-right bg-no-repeat pointer-events-none opacity-80 sm:opacity-100"
           style={{ backgroundImage: `url('/hero_wedding_bg.jpg')` }}
         >
-          <div className="w-full h-full bg-gradient-to-r from-[#fdfbf7] via-[#fdfbf7]/98 sm:via-[#fdfbf7]/95 md:via-[#fdfbf7]/80 lg:via-[#fdfbf7]/45 to-transparent" />
+          <div className="w-full h-full bg-gradient-to-r from-[#f8fafc] via-[#f8fafc]/98 sm:via-[#f8fafc]/95 md:via-[#f8fafc]/80 lg:via-[#f8fafc]/45 to-transparent" />
         </div>
 
         <div className="absolute top-10 left-1/4 w-96 h-96 bg-amber-200/20 rounded-full blur-3xl pointer-events-none" />
@@ -359,17 +401,17 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
             <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl xl:text-[68px] font-extrabold text-[#0f172a] leading-[1.12] tracking-tight">
               Post your budget.<br />
               Vendors bid lower.<br />
-              <span className="text-[#FF5722] font-extrabold">You pick the best one.</span>
+              <span className="text-[#f07d4a] font-extrabold">You pick the best one.</span>
             </h1>
 
-            <p className="text-slate-700 text-base sm:text-lg leading-relaxed max-w-xl font-medium">
-              You set the most you will pay. A vendor can win only by bidding at least 15% below that. You pay the bid plus a 10% fee, and EzzyGo holds the money until the event is done.
+            <p className="text-slate-600 text-sm sm:text-base leading-relaxed max-w-xl font-medium">
+              You set the max. Vendors bid under it. You pick the best one.
             </p>
 
             <div className="w-full max-w-4xl bg-white rounded-2xl lg:rounded-full p-2 lg:p-2 lg:pl-6 lg:pr-2.5 shadow-xl shadow-slate-900/5 border border-slate-200/90 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2 lg:gap-2">
               
               <div className="flex-1 bg-slate-50/60 lg:bg-transparent rounded-xl lg:rounded-none px-3.5 py-2.5 lg:p-0 lg:py-1.5 lg:px-2 flex items-center gap-3 min-w-0 border border-slate-100 lg:border-none">
-                <div className="w-7 h-7 rounded-lg lg:rounded-none bg-orange-100/70 lg:bg-transparent flex items-center justify-center text-[#FF5722] shrink-0">
+                <div className="w-7 h-7 rounded-lg lg:rounded-none bg-slate-100/70 lg:bg-transparent flex items-center justify-center text-[#17233d] shrink-0">
                   <Search className="w-4 h-4" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -391,7 +433,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
               <div className="grid grid-cols-2 lg:flex lg:items-center gap-2 lg:gap-2 flex-[1.4] min-w-0">
                 
                 <div className="flex-1 bg-slate-50/60 lg:bg-transparent rounded-xl lg:rounded-none px-3 py-2.5 lg:p-0 lg:py-1.5 lg:px-3 flex items-center gap-2.5 min-w-0 border border-slate-100 lg:border-none">
-                  <div className="w-6 h-6 rounded-md lg:rounded-none bg-orange-100/70 lg:bg-transparent flex items-center justify-center text-[#FF5722] shrink-0">
+                  <div className="w-6 h-6 rounded-md lg:rounded-none bg-slate-100/70 lg:bg-transparent flex items-center justify-center text-[#17233d] shrink-0">
                     <MapPin className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -417,7 +459,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                 <div className="hidden lg:block h-8 w-[1px] bg-slate-200/90 shrink-0 mx-1" />
 
                 <div className="flex-1 bg-slate-50/60 lg:bg-transparent rounded-xl lg:rounded-none px-3 py-2.5 lg:p-0 lg:py-1.5 lg:px-3 flex items-center gap-2.5 min-w-0 relative border border-slate-100 lg:border-none">
-                  <div className="w-6 h-6 rounded-md lg:rounded-none bg-orange-100/70 lg:bg-transparent flex items-center justify-center text-[#FF5722] shrink-0">
+                  <div className="w-6 h-6 rounded-md lg:rounded-none bg-slate-100/70 lg:bg-transparent flex items-center justify-center text-[#17233d] shrink-0">
                     <Calendar className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -443,7 +485,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
 
               <button
                 onClick={() => onOpenPostModal(heroService)}
-                className="w-full lg:w-auto px-6 py-3.5 rounded-xl lg:rounded-full bg-[#FF5722] hover:bg-[#E64A19] text-white font-bold text-xs sm:text-sm shadow-md shadow-orange-500/20 flex items-center justify-center gap-2 transition active:scale-95 shrink-0 cursor-pointer whitespace-nowrap"
+                className="w-full lg:w-auto px-6 py-3.5 rounded-xl lg:rounded-full bg-[#f07d4a] hover:bg-[#de6a3a] text-white font-bold text-xs sm:text-sm shadow-md shadow-slate-900/12 flex items-center justify-center gap-2 transition active:scale-95 shrink-0 cursor-pointer whitespace-nowrap"
               >
                 <span>Post Requirement</span>
                 <ArrowRight className="w-4 h-4" />
@@ -531,16 +573,16 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
               
               {/* Eyebrow with horizontal line */}
               <div className="flex items-center gap-3">
-                <span className="text-xs font-black uppercase tracking-[0.2em] text-[#f95724]">
+                <span className="text-xs font-black uppercase tracking-[0.2em] text-[#17233d]">
                   FOR EVERY OCCASION
                 </span>
-                <div className="w-12 h-[2.5px] bg-[#f95724] rounded-full" />
+                <div className="w-12 h-[2.5px] bg-[#f07d4a] rounded-full" />
               </div>
 
               {/* Headline in Editorial Serif */}
               <h2 className="font-editorial text-4xl sm:text-5xl lg:text-[56px] font-black text-[#0f172a] leading-[1.06] tracking-tight">
                 Find the Right <br />
-                <span className="text-[#f95724]">Professionals</span>
+                <span className="text-[#17233d]">Professionals</span>
               </h2>
 
               {/* Subtitle */}
@@ -552,7 +594,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
               <div className="pt-2">
                 <button
                   onClick={() => onOpenPostModal()}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 sm:px-8 sm:py-4 rounded-full bg-gradient-to-r from-[#f95724] to-[#ff6b3d] hover:from-[#e04818] hover:to-[#f95724] text-white font-bold text-sm shadow-xl shadow-orange-500/30 transition-all duration-300 hover:shadow-orange-500/50 hover:scale-[1.03] active:scale-95 cursor-pointer whitespace-nowrap min-h-[46px]"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 sm:px-8 sm:py-4 rounded-full bg-gradient-to-r from-[#f07d4a] to-[#f4a06c] hover:from-[#de6a3a] hover:to-[#f07d4a] text-white font-bold text-sm shadow-xl shadow-orange-500/30 transition-all duration-300 hover:shadow-orange-500/50 hover:scale-[1.03] active:scale-95 cursor-pointer whitespace-nowrap min-h-[46px]"
                 >
                   <span>Explore All Services</span>
                   <ArrowRight className="w-4 h-4" />
@@ -571,7 +613,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                   if (track) track.scrollBy({ left: -280, behavior: 'smooth' });
                 }}
                 aria-label="Previous occasions"
-                className="hidden md:flex absolute -left-3 sm:-left-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white shadow-2xl shadow-slate-900/25 border border-amber-100 items-center justify-center text-[#f95724] hover:bg-orange-50 hover:scale-110 active:scale-95 transition-all duration-200 cursor-pointer"
+                className="hidden md:flex absolute -left-3 sm:-left-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white shadow-2xl shadow-slate-900/25 border border-amber-100 items-center justify-center text-[#17233d] hover:bg-slate-50 hover:scale-110 active:scale-95 transition-all duration-200 cursor-pointer"
               >
                 <ChevronLeft className="w-6 h-6 stroke-[2.5]" />
               </button>
@@ -583,7 +625,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                   if (track) track.scrollBy({ left: 280, behavior: 'smooth' });
                 }}
                 aria-label="Next occasions"
-                className="hidden md:flex absolute -right-3 sm:-right-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white shadow-2xl shadow-slate-900/25 border border-amber-100 items-center justify-center text-[#f95724] hover:bg-orange-50 hover:scale-110 active:scale-95 transition-all duration-200 cursor-pointer"
+                className="hidden md:flex absolute -right-3 sm:-right-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white shadow-2xl shadow-slate-900/25 border border-amber-100 items-center justify-center text-[#17233d] hover:bg-slate-50 hover:scale-110 active:scale-95 transition-all duration-200 cursor-pointer"
               >
                 <ChevronRight className="w-6 h-6 stroke-[2.5]" />
               </button>
@@ -633,7 +675,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                         
                         {/* Left side: Circular White Icon Badge + Occasion Name */}
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white/95 backdrop-blur-md flex items-center justify-center text-[#f95724] shadow-lg shadow-black/30 shrink-0 group-hover:scale-105 transition-transform">
+                          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white/95 backdrop-blur-md flex items-center justify-center text-[#17233d] shadow-lg shadow-black/30 shrink-0 group-hover:scale-105 transition-transform">
                             {renderOccasionIcon(occ.iconType)}
                           </div>
                           <span className="font-editorial text-base sm:text-lg font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] tracking-tight truncate">
@@ -642,7 +684,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                         </div>
 
                         {/* Right side: Circular Action Arrow */}
-                        <div className="w-8 h-8 rounded-full border border-white/70 bg-black/35 backdrop-blur-md flex items-center justify-center text-white shrink-0 group-hover:bg-[#f95724] group-hover:border-[#f95724] group-hover:scale-110 shadow-md transition-all duration-300">
+                        <div className="w-8 h-8 rounded-full border border-white/70 bg-black/35 backdrop-blur-md flex items-center justify-center text-white shrink-0 group-hover:bg-[#f07d4a] group-hover:border-[#17233d] group-hover:scale-110 shadow-md transition-all duration-300">
                           <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                         </div>
 
@@ -670,7 +712,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-6">
             <div>
               <div className="flex flex-wrap items-center gap-2.5 mb-2">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-100 text-[#f95724] text-[11px] font-black uppercase tracking-wider">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-[#17233d] text-[11px] font-black uppercase tracking-wider">
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>SERVICES & PRICE GUIDE</span>
                 </span>
@@ -679,7 +721,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                 </span>
               </div>
               <h2 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-black text-[#0f172a] tracking-tight">
-                Explore Event Services & <span className="text-[#f95724]">Estimated Rates</span>
+                Explore Event Services & <span className="text-[#17233d]">Estimated Rates</span>
               </h2>
               <p className="text-slate-600 text-xs sm:text-sm lg:text-base mt-2 max-w-2xl leading-relaxed font-medium">
                 Know typical market costs for your event. Select any service to post your need in 30 seconds — verified local vendors will compete with <strong>lower reverse-bids</strong> to give you the best deal!
@@ -688,7 +730,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
 
             <button
               onClick={() => onOpenPostModal()}
-              className="w-full sm:w-auto px-7 py-3.5 rounded-full bg-gradient-to-r from-[#f95724] to-orange-500 hover:from-[#e04818] hover:to-[#f95724] text-white text-xs sm:text-sm font-black shadow-lg shadow-orange-500/30 flex items-center justify-center gap-2 self-stretch lg:self-auto cursor-pointer transition active:scale-95 whitespace-nowrap min-h-[46px]"
+              className="w-full sm:w-auto px-7 py-3.5 rounded-full bg-gradient-to-r from-[#f07d4a] to-orange-500 hover:from-[#de6a3a] hover:to-[#f07d4a] text-white text-xs sm:text-sm font-black shadow-lg shadow-orange-500/30 flex items-center justify-center gap-2 self-stretch lg:self-auto cursor-pointer transition active:scale-95 whitespace-nowrap min-h-[46px]"
             >
               <Plus className="w-4 h-4 stroke-[3]" />
               <span>Post Custom Requirement</span>
@@ -697,10 +739,10 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
           </div>
 
           {/* 3-Step "How It Works" Guide Bar for New Users */}
-          <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-3.5 bg-gradient-to-r from-orange-50/90 via-amber-50/70 to-orange-50/90 p-3.5 sm:p-4 rounded-3xl border border-orange-200/80 shadow-xs">
+          <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-3.5 bg-gradient-to-r from-orange-50/90 via-amber-50/70 to-orange-50/90 p-3.5 sm:p-4 rounded-3xl border border-slate-200/80 shadow-xs">
             
-            <div className="flex items-start gap-3 bg-white/90 backdrop-blur-xs p-3.5 rounded-2xl border border-orange-100/90 shadow-2xs">
-              <div className="w-8 h-8 rounded-xl bg-orange-500 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs">
+            <div className="flex items-start gap-3 bg-white/90 backdrop-blur-xs p-3.5 rounded-2xl border border-slate-100/90 shadow-2xs">
+              <div className="w-8 h-8 rounded-xl bg-slate-900 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs">
                 1
               </div>
               <div>
@@ -713,8 +755,8 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
               </div>
             </div>
 
-            <div className="flex items-start gap-3 bg-white/90 backdrop-blur-xs p-3.5 rounded-2xl border border-orange-100/90 shadow-2xs">
-              <div className="w-8 h-8 rounded-xl bg-orange-500 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs">
+            <div className="flex items-start gap-3 bg-white/90 backdrop-blur-xs p-3.5 rounded-2xl border border-slate-100/90 shadow-2xs">
+              <div className="w-8 h-8 rounded-xl bg-slate-900 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs">
                 2
               </div>
               <div>
@@ -727,7 +769,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
               </div>
             </div>
 
-            <div className="flex items-start gap-3 bg-white/90 backdrop-blur-xs p-3.5 rounded-2xl border border-orange-100/90 shadow-2xs">
+            <div className="flex items-start gap-3 bg-white/90 backdrop-blur-xs p-3.5 rounded-2xl border border-slate-100/90 shadow-2xs">
               <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs">
                 3
               </div>
@@ -755,7 +797,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search services (e.g. DJ, Mandap, Photography, Catering)..."
-                className="w-full pl-9 pr-8 py-2.5 bg-white rounded-full border border-slate-200/90 text-xs sm:text-sm focus:outline-none focus:border-[#f95724] shadow-xs placeholder:text-slate-400"
+                className="w-full pl-9 pr-8 py-2.5 bg-white rounded-full border border-slate-200/90 text-xs sm:text-sm focus:outline-none focus:border-[#17233d] shadow-xs placeholder:text-slate-400"
               />
               {searchQuery && (
                 <button
@@ -777,7 +819,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                   onClick={() => setSelectedCategoryFilter(pill)}
                   className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition cursor-pointer ${
                     selectedCategoryFilter === pill
-                      ? 'bg-[#f95724] text-white shadow-sm'
+                      ? 'bg-[#f07d4a] text-white shadow-sm'
                       : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200/80'
                   }`}
                 >
@@ -842,7 +884,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                     
                     {/* Top Badges */}
                     <div className="absolute top-3 inset-x-3 flex items-center justify-between">
-                      <span className="px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-md text-[10px] font-black text-[#f95724] shadow-md flex items-center gap-1.5">
+                      <span className="px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-md text-[10px] font-black text-[#17233d] shadow-md flex items-center gap-1.5">
                         {getCategoryIcon(cat.name)}
                         <span>{cat.name}</span>
                       </span>
@@ -873,7 +915,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                   {/* Card Content & Action Button */}
                   <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3">
                     <div>
-                      <h3 className="text-base font-bold text-slate-900 group-hover:text-[#f95724] transition-colors leading-snug">
+                      <h3 className="text-base font-bold text-slate-900 group-hover:text-[#17233d] transition-colors leading-snug">
                         {cat.name}
                       </h3>
                       <p className="text-xs text-slate-500 line-clamp-2 mt-1 leading-relaxed">
@@ -890,7 +932,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                         </span>
                         <span className="text-slate-400">•</span>
                         <span className="flex items-center gap-1 text-slate-700">
-                          <ShieldCheck className="w-3.5 h-3.5 text-orange-500" />
+                          <ShieldCheck className="w-3.5 h-3.5 text-slate-600" />
                           <span>Escrow Safe</span>
                         </span>
                       </div>
@@ -902,7 +944,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                           e.stopPropagation();
                           onOpenPostModal(cat.name);
                         }}
-                        className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#f95724] to-orange-500 hover:from-[#e04818] hover:to-[#f95724] text-white text-xs font-bold shadow-md shadow-orange-500/20 flex items-center justify-center gap-2 group-hover:shadow-lg group-hover:shadow-orange-500/30 transition-all cursor-pointer"
+                        className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#f07d4a] to-orange-500 hover:from-[#de6a3a] hover:to-[#f07d4a] text-white text-xs font-bold shadow-md shadow-slate-900/12 flex items-center justify-center gap-2 group-hover:shadow-lg group-hover:shadow-orange-500/30 transition-all cursor-pointer"
                       >
                         <span>Get Free Bids for {cat.name}</span>
                         <ArrowRight className="w-3.5 h-3.5 stroke-[2.5] group-hover:translate-x-1 transition-transform" />
@@ -962,8 +1004,8 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
             {/* Left Header Title & Subtitle */}
             <div className="space-y-1.5">
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-100/90 border border-orange-200/80 text-[#f95724] text-xs font-black tracking-wider uppercase">
-                  <Package className="w-3.5 h-3.5 text-[#f95724]" />
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100/90 border border-slate-200/80 text-[#17233d] text-xs font-black tracking-wider uppercase">
+                  <Package className="w-3.5 h-3.5 text-[#17233d]" />
                   <span>PACKAGE BUILDER</span>
                 </span>
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-700 text-xs font-bold">
@@ -972,7 +1014,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                 </span>
               </div>
               <h2 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-black text-[#0f172a] tracking-tight leading-tight">
-                Plan Your Event, <span className="text-[#f95724]">Your Way</span>
+                Plan Your Event, <span className="text-[#17233d]">Your Way</span>
               </h2>
               <p className="text-sm sm:text-base text-slate-600 max-w-2xl font-medium">
                 Select your occasion, choose the services you need, and get the best quotes through reverse bidding.
@@ -981,8 +1023,8 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
 
             {/* Right Side 3-Step Process Flow Pill */}
             <div className="flex items-center gap-2 bg-white/95 backdrop-blur-md px-4 py-2 rounded-full border border-amber-200/70 shadow-sm text-xs font-bold shrink-0 self-start lg:self-center">
-              <span className="text-[#f95724] flex items-center gap-1.5">
-                <span className="w-5 h-5 rounded-full bg-[#f95724] text-white flex items-center justify-center text-[11px] font-black shadow-xs">1</span>
+              <span className="text-[#17233d] flex items-center gap-1.5">
+                <span className="w-5 h-5 rounded-full bg-[#f07d4a] text-white flex items-center justify-center text-[11px] font-black shadow-xs">1</span>
                 <span>Select Services</span>
               </span>
               <span className="text-slate-300 font-normal">→</span>
@@ -1009,7 +1051,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="w-6 h-6 rounded-full bg-[#f95724] text-white flex items-center justify-center font-black text-xs shadow-xs">
+                    <span className="w-6 h-6 rounded-full bg-[#f07d4a] text-white flex items-center justify-center font-black text-xs shadow-xs">
                       1
                     </span>
                     <div>
@@ -1026,7 +1068,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                       <button
                         type="button"
                         onClick={() => scrollOccasions('left')}
-                        className="w-8 h-8 rounded-full bg-slate-100 hover:bg-orange-100 hover:text-[#f95724] text-slate-600 flex items-center justify-center transition border border-slate-200/80 cursor-pointer shadow-2xs active:scale-95"
+                        className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-100 hover:text-[#17233d] text-slate-600 flex items-center justify-center transition border border-slate-200/80 cursor-pointer shadow-2xs active:scale-95"
                         title="Scroll Left"
                       >
                         <ChevronLeft className="w-4 h-4" />
@@ -1034,7 +1076,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                       <button
                         type="button"
                         onClick={() => scrollOccasions('right')}
-                        className="w-8 h-8 rounded-full bg-slate-100 hover:bg-orange-100 hover:text-[#f95724] text-slate-600 flex items-center justify-center transition border border-slate-200/80 cursor-pointer shadow-2xs active:scale-95"
+                        className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-100 hover:text-[#17233d] text-slate-600 flex items-center justify-center transition border border-slate-200/80 cursor-pointer shadow-2xs active:scale-95"
                         title="Scroll Right"
                       >
                         <ChevronRight className="w-4 h-4" />
@@ -1042,7 +1084,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                     </div>
                     <button
                       type="button"
-                      className="px-4 py-2 sm:py-1.5 rounded-full bg-amber-50 hover:bg-amber-100 text-[#f95724] text-xs sm:text-sm font-bold border border-amber-200/80 transition flex items-center gap-1.5 cursor-pointer min-h-[36px] active:scale-95"
+                      className="px-4 py-2 sm:py-1.5 rounded-full bg-amber-50 hover:bg-amber-100 text-[#17233d] text-xs sm:text-sm font-bold border border-amber-200/80 transition flex items-center gap-1.5 cursor-pointer min-h-[36px] active:scale-95"
                     >
                       <span>View All Events</span>
                       <span>→</span>
@@ -1061,12 +1103,12 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                         onClick={() => setPackageEventType(evt.id)}
                         className={`group relative min-w-[120px] sm:min-w-[135px] flex-1 shrink-0 snap-start rounded-2xl p-1.5 border transition-all duration-200 cursor-pointer flex flex-col items-center text-center bg-white ${
                           isSelected
-                            ? 'border-2 border-[#f95724] shadow-md shadow-orange-500/10'
+                            ? 'border-2 border-[#17233d] shadow-md shadow-orange-500/10'
                             : 'border-slate-200/90 hover:border-slate-300 hover:shadow-sm'
                         }`}
                       >
                         {isSelected && (
-                          <div className="absolute top-1.5 right-1.5 z-10 w-4 h-4 rounded-full bg-[#f95724] text-white flex items-center justify-center shadow-xs">
+                          <div className="absolute top-1.5 right-1.5 z-10 w-4 h-4 rounded-full bg-[#f07d4a] text-white flex items-center justify-center shadow-xs">
                             <Check className="w-2.5 h-2.5 stroke-[3]" />
                           </div>
                         )}
@@ -1078,9 +1120,9 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                           />
                           {/* Centered circular icon overlapping the bottom */}
                           <div className={`absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-white shadow-sm border flex items-center justify-center ${
-                            isSelected ? 'border-orange-300 text-[#f95724]' : 'border-slate-200 text-slate-600'
+                            isSelected ? 'border-orange-300 text-[#17233d]' : 'border-slate-200 text-slate-600'
                           }`}>
-                            {evt.id === 'Wedding' && <Heart className="w-3 h-3 text-[#f95724] fill-orange-100" />}
+                            {evt.id === 'Wedding' && <Heart className="w-3 h-3 text-[#17233d] fill-orange-100" />}
                             {evt.id === 'Sangeet & Haldi' && <Music className="w-3 h-3 text-pink-500" />}
                             {evt.id === 'Reception' && <PartyPopper className="w-3 h-3 text-amber-500" />}
                             {evt.id === 'Birthday Bash' && <Cake className="w-3 h-3 text-indigo-500" />}
@@ -1089,7 +1131,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                           </div>
                         </div>
                         <span className={`text-xs font-bold truncate w-full pt-1 pb-1 ${
-                          isSelected ? 'text-[#f95724]' : 'text-slate-800'
+                          isSelected ? 'text-[#17233d]' : 'text-slate-800'
                         }`}>
                           {evt.name}
                         </span>
@@ -1103,7 +1145,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
               <div className="space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                   <div className="flex items-center gap-3">
-                    <span className="w-6 h-6 rounded-full bg-[#f95724] text-white flex items-center justify-center font-black text-xs shadow-xs">
+                    <span className="w-6 h-6 rounded-full bg-[#f07d4a] text-white flex items-center justify-center font-black text-xs shadow-xs">
                       2
                     </span>
                     <div>
@@ -1134,7 +1176,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                           onClick={() => setServiceFilterTab(tab.id as any)}
                           className={`px-3.5 py-2 sm:py-1.5 rounded-full text-xs font-bold transition whitespace-nowrap cursor-pointer min-h-[36px] flex items-center justify-center active:scale-95 ${
                             isActive
-                              ? 'bg-[#f95724] text-white shadow-xs'
+                              ? 'bg-[#f07d4a] text-white shadow-xs'
                               : 'bg-slate-100/90 text-slate-600 hover:bg-slate-200/80 border border-slate-200/60'
                           }`}
                         >
@@ -1168,7 +1210,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                         onClick={() => togglePackageService(srv.id)}
                         className={`p-2.5 rounded-2xl border transition-all duration-150 cursor-pointer flex items-center justify-between gap-3 text-left group bg-white ${
                           isSelected
-                            ? 'border-2 border-[#f95724] shadow-xs'
+                            ? 'border-2 border-[#17233d] shadow-xs'
                             : 'border-slate-200/90 hover:border-slate-300'
                         }`}
                       >
@@ -1191,7 +1233,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                         {/* Checkbox */}
                         <div className={`w-5 h-5 rounded-lg flex items-center justify-center shrink-0 transition-all ${
                           isSelected 
-                            ? 'bg-[#f95724] text-white' 
+                            ? 'bg-[#f07d4a] text-white' 
                             : 'border-2 border-slate-300 bg-white'
                         }`}>
                           {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
@@ -1205,7 +1247,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
               {/* Step 3: Estimated Guests (Stepper + Slider + Quick Pills) */}
               <div className="pt-3.5 border-t border-slate-100 flex flex-col xl:flex-row xl:items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5 sm:gap-3">
-                  <span className="w-6 h-6 rounded-full bg-[#f95724] text-white flex items-center justify-center font-black text-xs shadow-xs shrink-0">
+                  <span className="w-6 h-6 rounded-full bg-[#f07d4a] text-white flex items-center justify-center font-black text-xs shadow-xs shrink-0">
                     3
                   </span>
                   <div>
@@ -1222,7 +1264,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                 <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-2.5 w-full xl:w-auto">
                   {/* Stepper with Users Icon */}
                   <div className="flex items-center gap-1.5 bg-slate-50 p-1.5 rounded-xl border border-slate-200/80 shrink-0">
-                    <div className="w-9 h-9 sm:w-8 sm:h-8 rounded-lg bg-orange-50 border border-orange-200 text-[#f95724] flex items-center justify-center shrink-0">
+                    <div className="w-9 h-9 sm:w-8 sm:h-8 rounded-lg bg-slate-50 border border-slate-200 text-[#17233d] flex items-center justify-center shrink-0">
                       <Users className="w-4 h-4" />
                     </div>
                     <button
@@ -1239,7 +1281,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                     <button
                       type="button"
                       onClick={() => setPackageGuests((prev) => Math.min(2000, prev + 50))}
-                      className="w-9 h-9 sm:w-8 sm:h-8 rounded-lg bg-[#f95724] hover:bg-[#e04818] text-white font-black text-sm flex items-center justify-center cursor-pointer shadow-xs active:scale-90 transition"
+                      className="w-9 h-9 sm:w-8 sm:h-8 rounded-lg bg-[#f07d4a] hover:bg-[#de6a3a] text-white font-black text-sm flex items-center justify-center cursor-pointer shadow-xs active:scale-90 transition"
                       aria-label="Increase guest count"
                     >
                       <Plus className="w-4 h-4" />
@@ -1255,7 +1297,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                       step="50"
                       value={packageGuests}
                       onChange={(e) => setPackageGuests(Number(e.target.value))}
-                      className="w-full h-2 rounded-full appearance-none cursor-pointer accent-[#f95724] bg-slate-200"
+                      className="w-full h-2 rounded-full appearance-none cursor-pointer accent-[#f07d4a] bg-slate-200"
                       aria-label="Guest count slider"
                     />
                   </div>
@@ -1271,7 +1313,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                           onClick={() => setPackageGuests(num)}
                           className={`px-3 py-2 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-black cursor-pointer transition min-h-[36px] min-w-[40px] flex items-center justify-center active:scale-95 ${
                             isMatch
-                              ? "bg-[#f95724] text-white shadow-sm ring-2 ring-orange-500/30"
+                              ? "bg-[#f07d4a] text-white shadow-sm ring-2 ring-orange-500/30"
                               : "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200"
                           }`}
                         >
@@ -1294,8 +1336,8 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                   <h3 className="font-editorial text-2xl font-black text-[#0f172a] tracking-tight">
                     Your Event Package
                   </h3>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-orange-50 border border-orange-200 text-[#f95724] text-[11px] font-black">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#f95724] animate-pulse"></span>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-50 border border-slate-200 text-[#17233d] text-[11px] font-black">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#f07d4a] animate-pulse"></span>
                     <span>LIVE ESTIMATE</span>
                   </span>
                 </div>
@@ -1358,7 +1400,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                       Reverse-Bid Estimate
                     </span>
                   </div>
-                  <span className="text-2xl font-black text-[#f95724] font-mono">
+                  <span className="text-2xl font-black text-[#17233d] font-mono">
                     ₹{estimatedWinningBid.toLocaleString()}
                   </span>
                 </div>
@@ -1413,7 +1455,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                     },
                   });
                 }}
-                className="w-full py-4 sm:py-3.5 min-h-[48px] rounded-2xl bg-gradient-to-r from-[#f95724] to-[#ff6b3d] hover:from-[#e04818] hover:to-[#f95724] text-white font-black text-sm shadow-md shadow-orange-500/20 flex items-center justify-center gap-2 cursor-pointer transition active:scale-95"
+                className="w-full py-4 sm:py-3.5 min-h-[48px] rounded-2xl bg-gradient-to-r from-[#f07d4a] to-[#f4a06c] hover:from-[#de6a3a] hover:to-[#f07d4a] text-white font-black text-sm shadow-md shadow-slate-900/12 flex items-center justify-center gap-2 cursor-pointer transition active:scale-95"
               >
                 <span>Get Competitive Quotes Now</span>
                 <ArrowRight className="w-4 h-4" />
@@ -1422,15 +1464,15 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
               {/* 3 Micro Trust Badges */}
               <div className="grid grid-cols-3 gap-2 pt-1 text-center">
                 <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-slate-600">
-                  <Shield className="w-4 h-4 text-[#f95724] shrink-0" />
+                  <Shield className="w-4 h-4 text-[#17233d] shrink-0" />
                   <span>Verified Vendors</span>
                 </div>
                 <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-slate-600">
-                  <IndianRupee className="w-4 h-4 text-[#f95724] shrink-0" />
+                  <IndianRupee className="w-4 h-4 text-[#17233d] shrink-0" />
                   <span>Best Bids</span>
                 </div>
                 <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-slate-600">
-                  <Lock className="w-4 h-4 text-[#f95724] shrink-0" />
+                  <Lock className="w-4 h-4 text-[#17233d] shrink-0" />
                   <span>Escrow Safe</span>
                 </div>
               </div>
@@ -1443,49 +1485,233 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
 
       </section>
 
-      {/* ========================================================================= */}
-      {/* 4. EXACT LIVE REVERSE-BIDDING AUCTIONS HUB (MATCHING SCREENSHOT)          */}
-      {/* ========================================================================= */}
-      <section id="requirements-hub" className="relative w-full bg-[#f8fafc] py-12 sm:py-16">
-        <div className="relative z-10 w-full max-w-[1520px] mx-auto px-4 sm:px-6 lg:px-10 space-y-7">
-          <div className="max-w-3xl space-y-2">
-            <h2 className="font-heading text-3xl sm:text-4xl font-bold text-[#0f172a] tracking-tight">
-              How a booking works
-            </h2>
-            <p className="text-slate-600 text-base leading-relaxed">
-              Vendors do not set the price. You do. They bid under your budget, and you choose one.
-            </p>
-          </div>
+      </>
+      )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-2">
-              <span className="text-sm font-semibold text-[#f95724]">1</span>
-              <h3 className="text-base font-semibold text-slate-900">Post what you need</h3>
-              <p className="text-sm text-slate-600 leading-relaxed">
-                Add the service, place, date, and the most you will pay.
-              </p>
+      {screen !== 'events' && (
+        <section className="relative w-full bg-[#f5f6f8] py-8 sm:py-10">
+          <div className="w-full max-w-[1520px] mx-auto px-4 sm:px-6 lg:px-10 space-y-8">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="font-heading text-lg sm:text-xl font-extrabold text-[#0f172a]">My Events</h2>
+                <div className="flex items-center gap-3">
+                  {requirements.filter((r) => r.status !== 'DRAFT').length > 0 && (
+                    <button type="button" onClick={() => onOpenMyEvents?.()} className="text-sm font-bold text-[#17233d] cursor-pointer">
+                      View All
+                    </button>
+                  )}
+                  <button type="button" onClick={() => onOpenPostModal()} className="text-sm font-bold text-[#17233d] cursor-pointer">
+                    + New
+                  </button>
+                </div>
+              </div>
+              {compactReqs.length === 0 ? (
+                <div className="bg-white rounded-[20px] border border-slate-200 px-4 py-6 text-center space-y-3">
+                  <ClipboardList className="w-8 h-8 text-[#17233d] mx-auto" />
+                  <p className="text-[15px] font-extrabold text-slate-900">No events yet</p>
+                  <p className="text-xs text-slate-500">Post your budget. Vendors bid lower.</p>
+                  <button
+                    type="button"
+                    onClick={() => onOpenPostModal()}
+                    className="w-full h-11 rounded-[14px] bg-[#f07d4a] hover:bg-[#de6a3a] text-white font-extrabold text-sm cursor-pointer"
+                  >
+                    Post Event
+                  </button>
+                </div>
+              ) : (
+                compactReqs.map((req) => {
+                  const bids = req.bidsCount || req.bids?.length || 0;
+                  return (
+                    <button
+                      key={req._id}
+                      type="button"
+                      onClick={() => openEventFromHome(req._id)}
+                      className="w-full text-left bg-white rounded-[20px] border border-slate-200 p-4 shadow-sm hover:shadow-md transition cursor-pointer"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-[15px] font-extrabold text-slate-900 truncate">{req.title}</p>
+                          <p className="text-xs text-slate-500 mt-1">
+                            {req.location?.city || 'City TBA'} · {formatEventDate(req.eventDate)}
+                          </p>
+                        </div>
+                        <span className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
+                          req.status === 'OPEN' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'
+                        }`}>
+                          {req.status}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between mt-3 text-xs font-bold">
+                        <span className="text-slate-500">Budget ₹{req.budget.toLocaleString()}</span>
+                        <span className="text-[#0f766e]">{bids > 0 ? `${bids} bid${bids === 1 ? '' : 's'}` : 'Waiting for bids'}</span>
+                      </div>
+                    </button>
+                  );
+                })
+              )}
             </div>
-            <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-2">
-              <span className="text-sm font-semibold text-[#f95724]">2</span>
-              <h3 className="text-base font-semibold text-slate-900">Vendors bid lower</h3>
-              <p className="text-sm text-slate-600 leading-relaxed">
-                A bid can be accepted only if it is at least 15% below your budget.
-              </p>
+
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0f766e] opacity-60" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#0f766e]" />
+                </span>
+                <h2 className="font-heading text-lg sm:text-xl font-extrabold text-[#0f172a] flex-1">Live Bidding</h2>
+                {liveCount > 0 && (
+                  <span className="px-2 py-0.5 rounded-full bg-[#e6f6f1] text-[#0f766e] text-[11px] font-extrabold">
+                    {liveCount} live
+                  </span>
+                )}
+                <button type="button" onClick={() => onOpenMyEvents?.()} className="text-sm font-bold text-[#17233d] cursor-pointer">
+                  View All
+                </button>
+              </div>
+              {liveReqs.length === 0 ? (
+                <div className="bg-white rounded-[20px] border border-slate-200 px-4 py-6 text-center space-y-2">
+                  <div className="w-11 h-11 rounded-[14px] bg-[#e6f6f1] text-[#0f766e] flex items-center justify-center mx-auto">
+                    <Radio className="w-5 h-5" />
+                  </div>
+                  <p className="text-[15px] font-extrabold text-slate-900">No live bids yet</p>
+                  <p className="text-xs text-slate-500">Bids will show here after you post.</p>
+                </div>
+              ) : (
+                liveReqs.map((req) => {
+                  const bids = req.bidsCount || req.bids?.length || 0;
+                  const hasBids = bids > 0;
+                  const savePct = req.lowestBid && req.budget > 0
+                    ? Math.round(((req.budget - req.lowestBid) / req.budget) * 100)
+                    : 0;
+                  return (
+                    <button
+                      key={req._id}
+                      type="button"
+                      onClick={() => openEventFromHome(req._id)}
+                      className={`w-full text-left bg-white rounded-[20px] p-3.5 shadow-sm border transition cursor-pointer ${
+                        hasBids ? 'border-emerald-200' : 'border-slate-200'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold tracking-wide ${
+                          hasBids ? 'bg-[#e8f8f0] text-[#0f766e]' : 'bg-[#fff1ea] text-[#f07d4a]'
+                        }`}>
+                          {hasBids ? <Radio className="w-2.5 h-2.5" /> : null}
+                          {hasBids ? 'LIVE' : 'WAITING'}
+                        </span>
+                        <span className="text-xs font-bold text-slate-500">
+                          {hasBids ? `${bids} vendor${bids === 1 ? '' : 's'} bidding` : 'Vendors notified'}
+                        </span>
+                      </div>
+                      <p className="text-[15px] font-extrabold text-slate-900 mt-2 line-clamp-2">{req.title}</p>
+                      <div className="flex items-center justify-between mt-2 text-xs font-bold">
+                        <span className="text-slate-500">Budget ₹{req.budget.toLocaleString()}</span>
+                        {req.lowestBid ? (
+                          <span className="text-[#0f766e]">
+                            Lowest ₹{req.lowestBid.toLocaleString()}{savePct > 0 ? ` · ${savePct}% below` : ''}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400">No bids yet</span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })
+              )}
             </div>
-            <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-2">
-              <span className="text-sm font-semibold text-[#f95724]">3</span>
-              <h3 className="text-base font-semibold text-slate-900">Choose and pay</h3>
-              <p className="text-sm text-slate-600 leading-relaxed">
-                You pay the bid plus a 10% fee. EzzyGo holds that money.
+          </div>
+        </section>
+      )}
+
+      {screen === 'events' && (
+      <section id="requirements-hub" className="relative w-full bg-[#f5f6f8] pt-0 lg:pt-24 pb-12 sm:pb-16">
+        <div className="lg:hidden bg-white px-4 pt-3 pb-2.5">
+          <div className="flex items-center">
+            <h1 className="flex-1 text-[17px] font-extrabold text-[#17233d]">My Events</h1>
+            <button type="button" onClick={() => onOpenPostModal()} className="w-10 h-10 flex items-center justify-center cursor-pointer">
+              <Plus className="w-5 h-5" />
+            </button>
+          </div>
+          <p className="text-xs text-slate-500 font-semibold">
+            {requirements.length === 0
+              ? 'Posted requests and vendor bids'
+              : `${requirements.length} event${requirements.length === 1 ? '' : 's'} posted`}
+          </p>
+          <div className="mt-2.5 flex gap-2 overflow-x-auto no-scrollbar pb-1">
+            {eventFilterLabels.map((label, index) => {
+              const selected = eventFilter === index;
+              const count = countForEventFilter(index);
+              return (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => setEventFilter(index)}
+                  className={`shrink-0 px-3.5 py-2 rounded-full text-xs border cursor-pointer ${
+                    selected
+                      ? 'bg-[#f07d4a] text-white border-[#f07d4a] font-bold'
+                      : 'bg-[#f8fafc] text-slate-800 border-[#e8edf2] font-medium'
+                  }`}
+                >
+                  {label} ({count})
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="lg:hidden px-4 py-3 space-y-3.5">
+          {mobileFilteredReqs.length === 0 ? (
+            <div className="pt-16 text-center space-y-3">
+              <ClipboardList className="w-11 h-11 text-[#f07d4a] mx-auto" />
+              <p className="text-base font-extrabold">{requirements.length === 0 ? 'No events posted yet' : 'No events in this tab'}</p>
+              <p className="text-xs text-slate-500 max-w-xs mx-auto">
+                {requirements.length === 0
+                  ? 'Post a request with your budget. Verified vendors bid at least 15% below it.'
+                  : 'Try another filter, or post a new event request.'}
               </p>
+              <button
+                type="button"
+                onClick={() => onOpenPostModal()}
+                className="inline-flex items-center gap-1.5 px-4 h-11 rounded-xl bg-[#f07d4a] text-white font-extrabold text-sm cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                Post Event Request
+              </button>
             </div>
-            <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-2">
-              <span className="text-sm font-semibold text-[#f95724]">4</span>
-              <h3 className="text-base font-semibold text-slate-900">Release after the event</h3>
-              <p className="text-sm text-slate-600 leading-relaxed">
-                When the work is done, you release the vendor's price. EzzyGo keeps the fee.
-              </p>
-            </div>
+          ) : (
+            mobileFilteredReqs.map((req) => {
+              const bids = req.bidsCount || req.bids?.length || 0;
+              return (
+                <button
+                  key={req._id}
+                  type="button"
+                  onClick={() => setExpandedReqId(expandedReqId === req._id ? null : req._id)}
+                  className="w-full text-left bg-white rounded-[20px] border border-[#e8edf2] p-3.5 cursor-pointer"
+                >
+                  <div className="flex justify-between gap-2">
+                    <p className="text-[15px] font-extrabold text-slate-900 truncate">{req.title}</p>
+                    <span className="text-[10px] font-extrabold text-[#f07d4a] bg-[#fff7ed] border border-[#ffd7c2] px-2 py-0.5 rounded-full shrink-0">{req.status}</span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">{req.location?.city} · {formatEventDate(req.eventDate)}</p>
+                  <div className="flex justify-between mt-2 text-xs font-extrabold">
+                    <span>₹{req.budget.toLocaleString()}</span>
+                    <span className="text-[#0f766e]">{bids > 0 ? `${bids} bid${bids === 1 ? '' : 's'}` : 'Waiting'}</span>
+                  </div>
+                </button>
+              );
+            })
+          )}
+        </div>
+
+        <div className="hidden lg:block relative z-10 w-full max-w-[1520px] mx-auto px-4 sm:px-6 lg:px-10 space-y-7">
+          <div className="max-w-3xl space-y-1">
+            <h2 className="font-heading text-3xl sm:text-4xl font-bold text-[#0f172a] tracking-tight">
+              My Events
+            </h2>
+            <p className="text-slate-500 text-sm font-semibold">
+              {requirements.length === 0
+                ? 'Posted requests and vendor bids'
+                : `${requirements.length} event${requirements.length === 1 ? '' : 's'} posted`}
+            </p>
           </div>
 
           {/* Navigation Tabs and New Post Button */}
@@ -1496,7 +1722,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                 onClick={() => setRequirementsTab('open')}
                 className={`px-4 py-2.5 min-h-[40px] rounded-2xl text-sm font-semibold flex items-center gap-2 whitespace-nowrap cursor-pointer transition active:scale-95 ${
                   requirementsTab === 'open'
-                    ? 'bg-gradient-to-r from-orange-500 to-[#f95724] text-white shadow-md shadow-orange-500/25'
+                    ? 'bg-gradient-to-r from-orange-500 to-[#f07d4a] text-white shadow-md shadow-slate-900/15'
                     : 'text-slate-700 hover:text-slate-900 bg-white/90 border border-slate-200/90'
                 }`}
               >
@@ -1538,7 +1764,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
             <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={() => onOpenPostModal()}
-                className="w-full sm:w-auto px-5 py-3 sm:py-2.5 min-h-[44px] rounded-2xl bg-gradient-to-r from-orange-500 to-[#f95724] hover:from-orange-600 hover:to-[#f95724] text-white font-extrabold text-sm shadow-md shadow-orange-500/20 flex items-center justify-center gap-1.5 cursor-pointer transition active:scale-95"
+                className="w-full sm:w-auto px-5 py-3 sm:py-2.5 min-h-[44px] rounded-2xl bg-gradient-to-r from-orange-500 to-[#f07d4a] hover:from-orange-600 hover:to-[#f07d4a] text-white font-extrabold text-sm shadow-md shadow-slate-900/12 flex items-center justify-center gap-1.5 cursor-pointer transition active:scale-95"
               >
                 <Plus className="w-4 h-4" />
                 <span>New Post</span>
@@ -1557,7 +1783,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                   placeholder="Search by title, category, or location..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-[#f95724] focus:bg-white transition"
+                  className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-[#17233d] focus:bg-white transition"
                 />
               </div>
 
@@ -1571,7 +1797,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                       onClick={() => setSelectedCategoryFilter(catLabel)}
                       className={`px-4 py-2 sm:py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer min-h-[38px] flex items-center active:scale-95 ${
                         isMatch
-                          ? 'bg-orange-50 text-orange-600 border border-orange-200 shadow-2xs'
+                          ? 'bg-slate-50 text-slate-700 border border-slate-200 shadow-2xs'
                           : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
                       }`}
                     >
@@ -1586,7 +1812,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
             <div className="flex items-center justify-between gap-3 bg-white/80 backdrop-blur-md px-3.5 py-2.5 rounded-2xl border border-slate-200/80 shadow-2xs">
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none text-xs w-full">
                 <span className="text-slate-500 font-bold flex items-center gap-1 shrink-0 mr-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-[#f95724]" />
+                  <MapPin className="w-3.5 h-3.5 text-[#17233d]" />
                   <span>City:</span>
                 </span>
                 {availableCities.map((cityName) => {
@@ -1603,7 +1829,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                       }}
                       className={`px-3 py-1 rounded-full text-xs font-bold transition whitespace-nowrap cursor-pointer flex items-center gap-1 active:scale-95 ${
                         isCityActive
-                          ? 'bg-[#f95724] text-white shadow-xs'
+                          ? 'bg-[#f07d4a] text-white shadow-xs'
                           : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80'
                       }`}
                     >
@@ -1673,7 +1899,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                                 alert(err.message || 'Failed to publish draft');
                               }
                             }}
-                            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-[#f95724] hover:from-orange-600 hover:to-[#ea4a17] text-white text-xs sm:text-sm font-bold shadow-md shadow-orange-500/20 flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
+                            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-[#f07d4a] hover:from-orange-600 hover:to-[#ea4a17] text-white text-xs sm:text-sm font-bold shadow-md shadow-slate-900/12 flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
                           >
                             <ArrowRight className="w-4 h-4" />
                             <span>Publish Auction Now</span>
@@ -1710,7 +1936,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                         </div>
                         <div>
                           <span className="text-slate-400">Eligible Bid Cap:</span>
-                          <p className="font-bold text-[#f95724] text-sm">₹{draft.maxAcceptableBid.toLocaleString()}</p>
+                          <p className="font-bold text-[#17233d] text-sm">₹{draft.maxAcceptableBid.toLocaleString()}</p>
                         </div>
                       </div>
                     </div>
@@ -1722,7 +1948,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
               <div className="space-y-4 sm:space-y-5">
               {filteredOpenReqs.length === 0 ? (
                 <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center space-y-4">
-                  <div className="w-16 h-16 rounded-2xl bg-orange-50 text-[#f95724] flex items-center justify-center mx-auto">
+                  <div className="w-16 h-16 rounded-2xl bg-slate-50 text-[#17233d] flex items-center justify-center mx-auto">
                     <Calendar className="w-8 h-8" />
                   </div>
                   <h3 className="text-lg font-semibold text-slate-800">No open requests</h3>
@@ -1731,7 +1957,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                   </p>
                   <button
                     onClick={() => onOpenPostModal()}
-                    className="px-6 py-3 rounded-xl bg-[#f95724] hover:bg-[#e04818] text-white font-bold text-xs shadow-md shadow-[#f95724]/20 inline-flex items-center gap-2 cursor-pointer"
+                    className="px-6 py-3 rounded-xl bg-[#f07d4a] hover:bg-[#de6a3a] text-white font-bold text-xs shadow-md shadow-slate-900/12 inline-flex items-center gap-2 cursor-pointer"
                   >
                     <Plus className="w-4 h-4" />
                     <span>Post Event Need Now</span>
@@ -1826,7 +2052,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                               <span className="text-sm sm:text-base font-semibold text-slate-800">
                                 ₹{req.budget.toLocaleString()}
                               </span>
-                              <span className="text-xs text-[#f95724] font-medium block mt-1">
+                              <span className="text-xs text-[#17233d] font-medium block mt-1">
                                 Accept ₹{req.maxAcceptableBid.toLocaleString()} or less
                               </span>
                             </div>
@@ -1851,7 +2077,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                             <div className="col-span-2 sm:col-span-1 flex flex-col items-center justify-center sm:min-w-[115px] pt-1 sm:pt-0">
                               <button
                                 onClick={() => setExpandedReqId(isExpanded ? null : req._id)}
-                                className="w-full py-3 sm:py-2.5 px-4 rounded-xl bg-gradient-to-r from-orange-500 to-[#f95724] hover:from-orange-600 hover:to-[#f95724] text-white font-bold text-xs sm:text-sm shadow-md shadow-orange-500/20 flex items-center justify-center gap-1.5 cursor-pointer transition active:scale-95 min-h-[44px]"
+                                className="w-full py-3 sm:py-2.5 px-4 rounded-xl bg-gradient-to-r from-orange-500 to-[#f07d4a] hover:from-orange-600 hover:to-[#f07d4a] text-white font-bold text-xs sm:text-sm shadow-md shadow-slate-900/12 flex items-center justify-center gap-1.5 cursor-pointer transition active:scale-95 min-h-[44px]"
                               >
                                 <span>{isExpanded ? 'Hide bids' : 'See bids'}</span>
                                 <ArrowRight className="w-3.5 h-3.5" />
@@ -2015,7 +2241,10 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
 
         </div>
       </section>
+      )}
 
+      {screen !== 'events' && (
+      <>
       {/* ========================================================================= */}
       {/* 5. VERIFIED HOST REVIEWS & TESTIMONIALS (MATCHING SCREENSHOT)             */}
       {/* ========================================================================= */}
@@ -2043,61 +2272,21 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
 
         <div className="relative z-10 w-full max-w-[1520px] mx-auto px-4 sm:px-6 lg:px-10 space-y-9">
           
-          {/* Section Header */}
-          <div className="text-center max-w-2xl mx-auto space-y-3">
-            <div className="inline-flex items-center gap-1.5 px-4 py-1 rounded-full bg-white/90 border border-orange-200/90 shadow-2xs">
-              <ArrowUpRight className="w-3.5 h-3.5 text-[#f95724] stroke-[2.5]" />
-              <span className="text-xs font-semibold uppercase tracking-wider text-[#f95724]">
-                Why hosts use EzzyGo
-              </span>
-            </div>
+          <h2 className="font-heading text-lg sm:text-xl font-extrabold text-[#0f172a]">Why EzzyGo</h2>
 
-            <h2 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-black text-[#0f172a] tracking-tight leading-[1.12]">
-              Book with <span className="text-[#f95724]">no risk</span>
-            </h2>
-
-            <p className="text-slate-600 text-base leading-relaxed">
-              Three simple promises on every booking.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 max-w-5xl mx-auto">
+          <div className="space-y-2 max-w-2xl">
             {[
-              {
-                Icon: IndianRupee,
-                title: 'At least 15% below your budget',
-                text: 'You can only pick a vendor whose price is 15% or more below the budget you set.',
-              },
-              {
-                Icon: Shield,
-                title: 'Money held until the event is done',
-                text: 'EzzyGo keeps your payment safe. The vendor gets paid only after you click "Event done".',
-              },
-              {
-                Icon: CheckCircle2,
-                title: 'Full refund if cancelled',
-                text: 'If a paid booking is cancelled, you get back everything you paid, including the EzzyGo fee.',
-              },
-            ].map(({ Icon, title, text }) => (
-              <div key={title} className="bg-white/95 rounded-3xl p-6 border border-amber-200/80 shadow-sm space-y-3">
-                <div className="w-11 h-11 rounded-full bg-orange-100 text-[#f95724] flex items-center justify-center">
-                  <Icon className="w-5 h-5" />
+              { Icon: IndianRupee, title: '15% below your budget' },
+              { Icon: Shield, title: 'Pay held until event done' },
+              { Icon: CheckCircle2, title: 'Full refund if cancelled' },
+            ].map(({ Icon, title }) => (
+              <div key={title} className="bg-white rounded-2xl px-3.5 py-3 border border-slate-200 flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-[#e6f6f1] text-[#0f766e] flex items-center justify-center shrink-0">
+                  <Icon className="w-4 h-4" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-900">{title}</h3>
-                <p className="text-sm text-slate-600 leading-relaxed">{text}</p>
+                <p className="text-sm font-extrabold text-slate-900">{title}</p>
               </div>
             ))}
-          </div>
-
-          {/* Bottom CTA Button */}
-          <div className="text-center pt-1">
-            <button
-              onClick={() => onOpenPostModal()}
-              className="inline-flex items-center justify-center gap-2 px-7 py-3 rounded-full bg-gradient-to-r from-orange-500 to-[#f95724] hover:from-orange-600 hover:to-[#f95724] text-white font-black text-xs sm:text-sm shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer"
-            >
-              <span>Post your requirement</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
           </div>
 
         </div>
@@ -2133,19 +2322,15 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
           
           {/* Section Header */}
           <div className="text-center max-w-2xl mx-auto space-y-3">
-            <div className="inline-flex items-center gap-1.5 px-4 py-1 rounded-full bg-white/90 border border-orange-200/90 shadow-2xs">
-              <span className="text-[11px] font-black uppercase tracking-wider text-[#f95724]">
+            <div className="inline-flex items-center gap-1.5 px-4 py-1 rounded-full bg-white/90 border border-slate-200/90 shadow-2xs">
+              <span className="text-[11px] font-black uppercase tracking-wider text-[#17233d]">
                 GOT QUESTIONS?
               </span>
             </div>
 
-            <h2 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-black text-[#0f172a] tracking-tight leading-[1.12]">
-              Frequently Asked <span className="text-[#f95724]">Questions</span>
+            <h2 className="font-heading text-lg sm:text-xl font-extrabold text-[#0f172a] tracking-tight">
+              FAQ
             </h2>
-
-            <p className="text-slate-600 text-xs sm:text-sm font-medium leading-relaxed">
-              Everything you need to know about the 15% discount rule, escrow safety, and booking flow.
-            </p>
           </div>
 
           {/* Two-Column Grid: FAQ Accordion (Left) + Trust Badges & Help Box (Right) */}
@@ -2163,7 +2348,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                     className={`transition-all duration-300 overflow-hidden ${
                       isExpanded
                         ? 'bg-white/95 backdrop-blur-md rounded-2xl sm:rounded-3xl border-2 border-orange-300 shadow-md p-4 sm:p-5 space-y-3.5'
-                        : 'bg-white/90 backdrop-blur-md rounded-2xl sm:rounded-3xl border border-amber-200/80 shadow-2xs p-4 sm:p-5 hover:border-orange-200 hover:shadow-xs'
+                        : 'bg-white/90 backdrop-blur-md rounded-2xl sm:rounded-3xl border border-amber-200/80 shadow-2xs p-4 sm:p-5 hover:border-slate-200 hover:shadow-xs'
                     }`}
                   >
                     <button
@@ -2174,14 +2359,14 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                         {/* Number Badge */}
                         <span className={`w-8 h-8 rounded-full font-black text-xs flex items-center justify-center shrink-0 transition-colors ${
                           isExpanded 
-                            ? 'bg-[#f95724] text-white shadow-xs' 
-                            : 'bg-orange-100 text-[#f95724]'
+                            ? 'bg-[#f07d4a] text-white shadow-xs' 
+                            : 'bg-slate-100 text-[#17233d]'
                         }`}>
                           {numStr}
                         </span>
 
                         {/* Question Text */}
-                        <span className="text-xs sm:text-sm font-bold text-slate-900 leading-snug group-hover:text-[#f95724] transition-colors">
+                        <span className="text-xs sm:text-sm font-bold text-slate-900 leading-snug group-hover:text-[#17233d] transition-colors">
                           {faq.question}
                         </span>
                       </div>
@@ -2189,7 +2374,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                       {/* Expand / Collapse Icon */}
                       <div className="shrink-0">
                         {isExpanded ? (
-                          <div className="w-7 h-7 rounded-full bg-[#f95724] text-white flex items-center justify-center shadow-xs">
+                          <div className="w-7 h-7 rounded-full bg-[#f07d4a] text-white flex items-center justify-center shadow-xs">
                             <ChevronUp className="w-4 h-4 stroke-[3]" />
                           </div>
                         ) : (
@@ -2202,8 +2387,8 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
 
                     {/* Answer Area (Styled Box with % Icon for Item 1) */}
                     {isExpanded && (
-                      <div className="flex items-start gap-3.5 p-3.5 sm:p-4 rounded-xl bg-orange-50/50 border border-orange-200/60 transition-all">
-                        <div className="w-9 h-9 rounded-xl bg-orange-100 text-[#f95724] font-black text-sm flex items-center justify-center shrink-0">
+                      <div className="flex items-start gap-3.5 p-3.5 sm:p-4 rounded-xl bg-slate-50/50 border border-slate-200/60 transition-all">
+                        <div className="w-9 h-9 rounded-xl bg-slate-100 text-[#17233d] font-black text-sm flex items-center justify-center shrink-0">
                           <Percent className="w-4 h-4 stroke-[2.5]" />
                         </div>
                         <p className="text-xs text-slate-600 leading-relaxed font-medium">
@@ -2224,7 +2409,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                 
                 {/* Feature 1: Safe & Secure */}
                 <div className="p-3 rounded-2xl bg-slate-50/60 border border-slate-100 flex flex-col items-center">
-                  <div className="w-11 h-11 rounded-full bg-orange-100 text-[#f95724] flex items-center justify-center mb-2 shadow-2xs">
+                  <div className="w-11 h-11 rounded-full bg-slate-100 text-[#17233d] flex items-center justify-center mb-2 shadow-2xs">
                     <ShieldCheck className="w-5 h-5" />
                   </div>
                   <h4 className="text-xs font-black text-slate-900 leading-tight">Safe & Secure</h4>
@@ -2235,7 +2420,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
 
                 {/* Feature 2: Guaranteed Savings */}
                 <div className="p-3 rounded-2xl bg-slate-50/60 border border-slate-100 flex flex-col items-center">
-                  <div className="w-11 h-11 rounded-full bg-orange-100 text-[#f95724] flex items-center justify-center mb-2 shadow-2xs">
+                  <div className="w-11 h-11 rounded-full bg-slate-100 text-[#17233d] flex items-center justify-center mb-2 shadow-2xs">
                     <Percent className="w-5 h-5 stroke-[2.5]" />
                   </div>
                   <h4 className="text-xs font-black text-slate-900 leading-tight">Guaranteed Savings</h4>
@@ -2246,7 +2431,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
 
                 {/* Feature 3: Direct Communication */}
                 <div className="p-3 rounded-2xl bg-slate-50/60 border border-slate-100 flex flex-col items-center">
-                  <div className="w-11 h-11 rounded-full bg-orange-100 text-[#f95724] flex items-center justify-center mb-2 shadow-2xs">
+                  <div className="w-11 h-11 rounded-full bg-slate-100 text-[#17233d] flex items-center justify-center mb-2 shadow-2xs">
                     <Phone className="w-5 h-5" />
                   </div>
                   <h4 className="text-xs font-black text-slate-900 leading-tight">Direct Communication</h4>
@@ -2257,7 +2442,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
 
                 {/* Feature 4: Hassle-Free Booking */}
                 <div className="p-3 rounded-2xl bg-slate-50/60 border border-slate-100 flex flex-col items-center">
-                  <div className="w-11 h-11 rounded-full bg-orange-100 text-[#f95724] flex items-center justify-center mb-2 shadow-2xs">
+                  <div className="w-11 h-11 rounded-full bg-slate-100 text-[#17233d] flex items-center justify-center mb-2 shadow-2xs">
                     <Calendar className="w-5 h-5" />
                   </div>
                   <h4 className="text-xs font-black text-slate-900 leading-tight">Hassle-Free Booking</h4>
@@ -2269,13 +2454,13 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
               </div>
 
               {/* Bottom "Still Have Questions? We're Here to Help!" Card */}
-              <div className="bg-gradient-to-br from-orange-100/70 via-[#fdf5ec] to-orange-100/60 rounded-2xl p-5 border border-orange-200/80 space-y-4">
+              <div className="bg-gradient-to-br from-orange-100/70 via-[#fdf5ec] to-orange-100/60 rounded-2xl p-5 border border-slate-200/80 space-y-4">
                 <div className="flex items-center gap-3.5">
-                  <div className="w-12 h-12 rounded-full bg-orange-200/80 text-[#f95724] flex items-center justify-center shrink-0 shadow-2xs">
+                  <div className="w-12 h-12 rounded-full bg-orange-200/80 text-[#17233d] flex items-center justify-center shrink-0 shadow-2xs">
                     <Headphones className="w-6 h-6" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-[#f95724] block">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-[#17233d] block">
                       STILL HAVE QUESTIONS?
                     </span>
                     <h4 className="font-editorial text-base sm:text-lg font-black text-[#0f172a] leading-tight">
@@ -2289,7 +2474,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
 
                 <button
                   onClick={() => alert('Support team is available 24/7 at support@ezzygo.in')}
-                  className="w-full py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-orange-500 to-[#f95724] hover:from-orange-600 hover:to-[#f95724] text-white font-extrabold text-xs sm:text-sm shadow-md shadow-orange-500/25 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-all"
+                  className="w-full py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-orange-500 to-[#f07d4a] hover:from-orange-600 hover:to-[#f07d4a] text-white font-extrabold text-xs sm:text-sm shadow-md shadow-slate-900/15 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-all"
                 >
                   <span>Contact Support</span>
                   <ArrowRight className="w-4 h-4" />
@@ -2303,6 +2488,8 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
         </div>
 
       </section>
+      </>
+      )}
 
     </div>
   );

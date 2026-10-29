@@ -3,12 +3,11 @@ import {
   Search,
   CalendarCheck,
   Calendar,
-  Wallet,
-  Package,
   HelpCircle,
   ExternalLink,
   X,
   Star,
+  User as UserIcon,
 } from 'lucide-react';
 import { EzzyGoLogo } from './EzzyGoLogo';
 import { getUserPortalUrl } from '../utils/portalUrls';
@@ -16,8 +15,8 @@ import type { User } from '../types';
 
 interface VendorSidebarProps {
   vendor: User;
-  activeTab: 'auctions' | 'orders' | 'availability' | 'wallet' | 'inventory';
-  onTabChange: (tab: 'auctions' | 'orders' | 'availability' | 'wallet' | 'inventory') => void;
+  activeTab: 'auctions' | 'orders' | 'availability' | 'wallet' | 'inventory' | 'profile';
+  onTabChange: (tab: 'auctions' | 'orders' | 'availability' | 'wallet' | 'inventory' | 'profile') => void;
   onOpenExplainer: () => void;
   onOpenAccountModal?: () => void;
   activeOrdersCount: number;
@@ -36,11 +35,10 @@ export const VendorSidebar: React.FC<VendorSidebarProps> = ({
   onClose,
 }) => {
   const navItems = [
-    { id: 'auctions' as const, label: 'Open requests', icon: Search, count: null },
-    { id: 'orders' as const, label: 'My bookings', icon: CalendarCheck, count: activeOrdersCount > 0 ? activeOrdersCount : null },
-    { id: 'availability' as const, label: 'Availability calendar', icon: Calendar, count: null },
-    { id: 'wallet' as const, label: 'Earnings', icon: Wallet, count: null },
-    { id: 'inventory' as const, label: 'My equipment', icon: Package, count: null },
+    { id: 'auctions' as const, label: 'Live leads', icon: Search, count: null },
+    { id: 'orders' as const, label: 'My jobs', icon: CalendarCheck, count: activeOrdersCount > 0 ? activeOrdersCount : null },
+    { id: 'availability' as const, label: 'Availability', icon: Calendar, count: null },
+    { id: 'profile' as const, label: 'Profile', icon: UserIcon, count: null },
   ];
 
   return (
@@ -75,7 +73,9 @@ export const VendorSidebar: React.FC<VendorSidebarProps> = ({
         <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = activeTab === item.id;
+            const isActive = item.id === 'profile'
+              ? ['profile', 'wallet', 'inventory'].includes(activeTab)
+              : activeTab === item.id;
             return (
               <button
                 key={item.id}
@@ -85,16 +85,16 @@ export const VendorSidebar: React.FC<VendorSidebarProps> = ({
                 }}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm transition cursor-pointer select-none ${
                   isActive
-                    ? 'bg-orange-50 text-slate-900 font-semibold border border-orange-200/80'
+                    ? 'bg-[#fff1ea] text-[#de6a3a] font-semibold border border-[#ffd7c2]'
                     : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-medium border border-transparent'
                 }`}
               >
                 <span className="flex items-center gap-3">
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-[#f95724]' : 'text-slate-400'}`} />
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-[#f07d4a]' : 'text-slate-400'}`} />
                   <span>{item.label}</span>
                 </span>
                 {item.count !== null && (
-                  <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-[#f95724] text-white">
+                  <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-[#f07d4a] text-white">
                     {item.count}
                   </span>
                 )}
@@ -133,17 +133,17 @@ export const VendorSidebar: React.FC<VendorSidebarProps> = ({
             if (onOpenAccountModal) onOpenAccountModal();
             onClose();
           }}
-          className="p-3 m-3 rounded-2xl bg-slate-50 hover:bg-orange-50/60 border border-slate-200 hover:border-orange-200 flex items-center gap-3 min-w-0 transition cursor-pointer text-left group"
+          className="p-3 m-3 rounded-2xl bg-slate-50 hover:bg-slate-50/60 border border-slate-200 hover:border-slate-200 flex items-center gap-3 min-w-0 transition cursor-pointer text-left group"
         >
           {vendor.avatar ? (
             <img src={vendor.avatar} alt={vendor.name} className="w-9 h-9 rounded-full object-cover shrink-0" referrerPolicy="no-referrer" />
           ) : (
-            <div className="w-9 h-9 rounded-full bg-orange-100 text-[#f95724] font-semibold flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 rounded-full bg-slate-100 text-[#17233d] font-semibold flex items-center justify-center shrink-0">
               {(vendor.businessName || vendor.name || 'V').charAt(0)}
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-semibold text-slate-900 group-hover:text-[#f95724] truncate transition">
+            <div className="text-sm font-semibold text-slate-900 group-hover:text-[#17233d] truncate transition">
               {vendor.businessName || vendor.name}
             </div>
             <div className="text-xs text-slate-500 flex items-center gap-1">

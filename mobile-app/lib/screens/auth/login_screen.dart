@@ -5,9 +5,7 @@ import '../../config/theme.dart';
 import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/requirements_provider.dart';
-import '../../providers/bookings_provider.dart';
-import '../../providers/banners_provider.dart';
-import '../../providers/notifications_provider.dart';
+import '../../utils/app_bootstrap.dart';
 import '../../utils/app_nav.dart';
 import '../../widgets/ezzygo_logo.dart';
 import '../main_navigation_screen.dart';
@@ -57,7 +55,21 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _openAfterAuth() {
+  Future<void> _openAfterAuth() async {
+    AppBootstrap.reset();
+    try {
+      await AppBootstrap.start(context).timeout(const Duration(seconds: 5));
+    } catch (_) {}
+    if (!mounted) return;
+    final auth = context.read<AuthProvider>();
+    if (auth.isVendor) {
+      final city = (auth.user?.serviceArea ?? '').split(',').first.trim();
+      if (city.isNotEmpty) {
+        context.read<RequirementsProvider>().setMarketplaceCity(city);
+      }
+      AppNav.openRoot(context, const MainNavigationScreen());
+      return;
+    }
     final alreadyChoseCity = context.read<RequirementsProvider>().hasChosenCity;
     final goToLocation = widget.navigateToLocation && !alreadyChoseCity;
     if (goToLocation) {
@@ -67,20 +79,6 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
     AppNav.openRoot(context, const MainNavigationScreen());
-  }
-
-  void _loadAccountData() {
-    final auth = context.read<AuthProvider>();
-    context.read<RequirementsProvider>().loadData(
-      requesterId: auth.isHost ? auth.user?.id : null,
-      marketplace: !auth.isHost,
-    );
-    context.read<BookingsProvider>().loadData();
-    context.read<NotificationsProvider>().load();
-    context.read<BannersProvider>().loadForCity(
-      context.read<RequirementsProvider>().selectedCity,
-      force: true,
-    );
   }
 
   Future<void> _handleAuth() async {
@@ -130,9 +128,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (success) {
-      _loadAccountData();
-
-      _openAfterAuth();
+      await _openAfterAuth();
     } else {
       setState(() {
         _errorMessage = auth.errorMessage ?? 'Authentication failed. Please check your credentials.';
@@ -149,8 +145,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (success) {
-      _loadAccountData();
-      _openAfterAuth();
+      await _openAfterAuth();
     } else {
       if (auth.errorMessage != null) {
         setState(() {
@@ -181,7 +176,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         child: Column(
           children: [
-            Icon(icon, size: 18, color: AppTheme.primary),
+            Icon(icon, size: 18, color: AppTheme.ink),
             const SizedBox(height: 6),
             Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppTheme.slate900)),
             Text(subtitle, style: const TextStyle(fontSize: 10, color: AppTheme.slate500)),
@@ -233,23 +228,24 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const EzzyGoLogo(size: 32),
-                  if (isHost)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primaryLight,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.25)),
-                      ),
-                      child: const Text(
-                        'Host Portal',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: AppTheme.primary,
-                        ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: isHost ? AppTheme.primaryLight : AppTheme.ink,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isHost ? AppTheme.primary.withValues(alpha: 0.25) : AppTheme.ink,
                       ),
                     ),
+                    child: Text(
+                      isHost ? 'Host Portal' : 'Partner Portal',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: isHost ? AppTheme.primary : Colors.white,
+                      ),
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -266,11 +262,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 )
               else
                 const Text(
-                  'Reverse-Bidding Event Marketplace',
+                  'Win event jobs by bidding 15% below the host budget. You keep 100% of your bid.',
+                  textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: AppTheme.slate500,
+                    height: 1.35,
                   ),
                 ),
 
@@ -373,8 +371,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       _isLogin
                           ? (isHost ? 'Log in to EzzyGo' : 'Log in as Service Provider')
                           : (isHost ? 'Create a customer account' : 'Create a vendor account'),
-                      style: TextStyle(
-                        fontSize: isHost ? 22 : 18,
+                      style: const TextStyle(
+                        fontSize: 22,
                         fontWeight: FontWeight.w800,
                         color: AppTheme.slate900,
                       ),
@@ -383,7 +381,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Text(
                       isHost
                           ? 'Continue with Google or your mobile number. Post events and get reverse-bids.'
-                          : 'Find event leads and send your price.',
+                          : 'See live event leads and send a reverse bid under the host budget.',
                       style: const TextStyle(
                         fontSize: 13,
                         color: AppTheme.slate600,
@@ -493,7 +491,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ElevatedButton(
                       onPressed: auth.isLoading ? null : _handleAuth,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isHost ? AppTheme.primary : AppTheme.slate900,
+                        backgroundColor: AppTheme.primary,
                         foregroundColor: Colors.white,
                         minimumSize: const Size.fromHeight(50),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -506,8 +504,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             )
                           : Text(
                               _isLogin
-                                  ? (isHost ? 'Sign in' : 'Sign in as Service Provider')
-                                  : (isHost ? 'Create customer account' : 'Create vendor account'),
+                                  ? (isHost ? 'Sign in' : 'Sign in as partner')
+                                  : (isHost ? 'Create customer account' : 'Create partner account'),
                               style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
                             ),
                     ),
@@ -561,30 +559,36 @@ class _LoginScreenState extends State<LoginScreen> {
                         ],
                       ),
                     ),
-                    if (isHost) ...[
-                      const SizedBox(height: 18),
-                      Row(
-                        children: [
-                          _loginBenefitChip(LucideIcons.zap, '1-Click', 'Sign-in'),
-                          const SizedBox(width: 8),
-                          _loginBenefitChip(LucideIcons.shieldCheck, '100%', 'Escrow Safe'),
-                          const SizedBox(width: 8),
-                          _loginBenefitChip(LucideIcons.trendingUp, 'Min. 15%', 'Savings'),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-                      const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(LucideIcons.shieldCheck, size: 14, color: AppTheme.emerald),
-                          SizedBox(width: 6),
-                          Text(
-                            'Official Google Auth · 256-bit SSL encrypted',
-                            style: TextStyle(fontSize: 11, color: AppTheme.slate500),
-                          ),
-                        ],
-                      ),
-                    ],
+                    const SizedBox(height: 18),
+                    Row(
+                      children: isHost
+                          ? [
+                              _loginBenefitChip(LucideIcons.zap, '1-Click', 'Sign-in'),
+                              const SizedBox(width: 8),
+                              _loginBenefitChip(LucideIcons.shieldCheck, '100%', 'Escrow Safe'),
+                              const SizedBox(width: 8),
+                              _loginBenefitChip(LucideIcons.trendingUp, 'Min. 15%', 'Savings'),
+                            ]
+                          : [
+                              _loginBenefitChip(LucideIcons.flame, 'Live', 'Leads'),
+                              const SizedBox(width: 8),
+                              _loginBenefitChip(LucideIcons.banknote, 'Keep', '100% bid'),
+                              const SizedBox(width: 8),
+                              _loginBenefitChip(LucideIcons.shieldCheck, 'Escrow', 'Unlock'),
+                            ],
+                    ),
+                    const SizedBox(height: 14),
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(LucideIcons.shieldCheck, size: 14, color: AppTheme.emerald),
+                        SizedBox(width: 6),
+                        Text(
+                          'Official Google Auth · 256-bit SSL encrypted',
+                          style: TextStyle(fontSize: 11, color: AppTheme.slate500),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),

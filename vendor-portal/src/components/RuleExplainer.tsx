@@ -41,7 +41,7 @@ export const RuleExplainer: React.FC<RuleExplainerProps> = ({ isOpen, onClose })
         <ol className="mt-6 space-y-3">
           {steps.map((step, i) => (
             <li key={step.title} className="flex gap-4 p-4 rounded-2xl border border-slate-200">
-              <span className="w-7 h-7 rounded-full bg-orange-50 text-[#f95724] text-sm font-semibold flex items-center justify-center shrink-0">
+              <span className="w-7 h-7 rounded-full bg-slate-50 text-[#17233d] text-sm font-semibold flex items-center justify-center shrink-0">
                 {i + 1}
               </span>
               <div>
@@ -62,7 +62,7 @@ export const RuleExplainer: React.FC<RuleExplainerProps> = ({ isOpen, onClose })
                 step="1000"
                 value={testBudget}
                 onChange={(e) => setTestBudget(Number(e.target.value))}
-                className="mt-1 w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-slate-900 font-semibold text-base focus:outline-none focus:border-[#f95724]"
+                className="mt-1 w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-slate-900 font-semibold text-base focus:outline-none focus:border-[#17233d]"
               />
               <span className="text-slate-500 mt-1 block">You can bid up to ₹{maxAcceptableBid.toLocaleString()}</span>
             </label>
@@ -73,7 +73,7 @@ export const RuleExplainer: React.FC<RuleExplainerProps> = ({ isOpen, onClose })
                 step="500"
                 value={testBid}
                 onChange={(e) => setTestBid(Number(e.target.value))}
-                className="mt-1 w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-slate-900 font-semibold text-base focus:outline-none focus:border-[#f95724]"
+                className="mt-1 w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-slate-900 font-semibold text-base focus:outline-none focus:border-[#17233d]"
               />
               <span className={`mt-1 block font-medium ${isEligible ? 'text-emerald-700' : 'text-rose-700'}`}>
                 {isEligible

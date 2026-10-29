@@ -54,16 +54,16 @@ export const Footer: React.FC<FooterProps> = ({ onOpenExplainer, onOpenPostModal
             
             {/* Left Header info */}
             <div className="flex items-center gap-4 sm:gap-5 text-center sm:text-left flex-col sm:flex-row">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-orange-100/90 text-[#f95724] border border-orange-200/70 flex items-center justify-center shrink-0 shadow-2xs">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-slate-100/90 text-[#17233d] border border-slate-200/70 flex items-center justify-center shrink-0 shadow-2xs">
                 <Mail className="w-7 h-7" />
               </div>
 
               <div className="space-y-1">
-                <span className="text-[11px] font-black uppercase tracking-wider text-[#f95724] block">
+                <span className="text-[11px] font-black uppercase tracking-wider text-[#17233d] block">
                   Stay Updated
                 </span>
                 <h3 className="font-editorial text-2xl sm:text-3xl lg:text-4xl font-black text-[#0f172a] leading-tight">
-                  Get Event Deals & Tips <span className="text-[#f95724]">Straight to Your Inbox</span>
+                  Get Event Deals & Tips <span className="text-[#17233d]">Straight to Your Inbox</span>
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-500 font-medium">
                   Be the first to know about new vendors, exciting offers, and event planning tips.
@@ -81,7 +81,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenExplainer, onOpenPostModal
               ) : (
                 <div className="flex items-center gap-6 w-full sm:w-auto">
                   <form onSubmit={handleSubscribe} className="w-full sm:w-[380px] space-y-1.5">
-                    <div className="flex items-center bg-white rounded-2xl p-1.5 border border-amber-200/90 shadow-xs focus-within:border-[#f95724] focus-within:ring-2 focus-within:ring-orange-200 transition-all">
+                    <div className="flex items-center bg-white rounded-2xl p-1.5 border border-amber-200/90 shadow-xs focus-within:border-[#17233d] focus-within:ring-2 focus-within:ring-slate-200 transition-all">
                       <div className="pl-3.5 pr-2 text-slate-400">
                         <Mail className="w-4 h-4" />
                       </div>
@@ -95,7 +95,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenExplainer, onOpenPostModal
                       />
                       <button
                         type="submit"
-                        className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-orange-500 to-[#f95724] hover:from-orange-600 hover:to-[#f95724] text-white font-black text-xs shadow-md shadow-orange-500/25 flex items-center justify-center gap-1.5 shrink-0 cursor-pointer active:scale-95 transition-all"
+                        className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-orange-500 to-[#f07d4a] hover:from-orange-600 hover:to-[#f07d4a] text-white font-black text-xs shadow-md shadow-slate-900/15 flex items-center justify-center gap-1.5 shrink-0 cursor-pointer active:scale-95 transition-all"
                       >
                         <span>Subscribe</span>
                         <ArrowRight className="w-3.5 h-3.5" />
@@ -210,12 +210,12 @@ export const Footer: React.FC<FooterProps> = ({ onOpenExplainer, onOpenPostModal
               Quick Links
             </h4>
             <ul className="space-y-2 text-xs text-slate-600 font-medium">
-              <li><a href="#" className="hover:text-[#f95724] transition-colors">Home</a></li>
-              <li><button onClick={onOpenExplainer} className="hover:text-[#f95724] transition-colors cursor-pointer">How It Works</button></li>
-              <li><a href="#services-grid" className="hover:text-[#f95724] transition-colors">Browse Services</a></li>
-              <li><a href="#requirements-hub" className="hover:text-[#f95724] transition-colors">Live Bidding</a></li>
-              <li><button onClick={onOpenPostModal} className="hover:text-[#f95724] transition-colors cursor-pointer">For Providers</button></li>
-              <li><a href="#" className="hover:text-[#f95724] transition-colors">About Us</a></li>
+              <li><a href="#" className="hover:text-[#17233d] transition-colors">Home</a></li>
+              <li><button onClick={onOpenExplainer} className="hover:text-[#17233d] transition-colors cursor-pointer">How It Works</button></li>
+              <li><a href="#services-grid" className="hover:text-[#17233d] transition-colors">Browse Services</a></li>
+              <li><a href="#requirements-hub" className="hover:text-[#17233d] transition-colors">Live Bidding</a></li>
+              <li><button onClick={onOpenPostModal} className="hover:text-[#17233d] transition-colors cursor-pointer">For Providers</button></li>
+              <li><a href="#" className="hover:text-[#17233d] transition-colors">About Us</a></li>
             </ul>
           </div>
 
@@ -225,12 +225,12 @@ export const Footer: React.FC<FooterProps> = ({ onOpenExplainer, onOpenPostModal
               Event Categories
             </h4>
             <ul className="space-y-2 text-xs text-slate-600 font-medium">
-              <li><a href="#services-grid" className="hover:text-[#f95724] transition-colors">Wedding</a></li>
-              <li><a href="#services-grid" className="hover:text-[#f95724] transition-colors">Sangeet & Haldi</a></li>
-              <li><a href="#services-grid" className="hover:text-[#f95724] transition-colors">Reception</a></li>
-              <li><a href="#services-grid" className="hover:text-[#f95724] transition-colors">Birthday Party</a></li>
-              <li><a href="#services-grid" className="hover:text-[#f95724] transition-colors">Corporate Events</a></li>
-              <li><a href="#services-grid" className="hover:text-[#f95724] font-bold text-[#f95724] transition-colors">View All Categories</a></li>
+              <li><a href="#services-grid" className="hover:text-[#17233d] transition-colors">Wedding</a></li>
+              <li><a href="#services-grid" className="hover:text-[#17233d] transition-colors">Sangeet & Haldi</a></li>
+              <li><a href="#services-grid" className="hover:text-[#17233d] transition-colors">Reception</a></li>
+              <li><a href="#services-grid" className="hover:text-[#17233d] transition-colors">Birthday Party</a></li>
+              <li><a href="#services-grid" className="hover:text-[#17233d] transition-colors">Corporate Events</a></li>
+              <li><a href="#services-grid" className="hover:text-[#17233d] font-bold text-[#17233d] transition-colors">View All Categories</a></li>
             </ul>
           </div>
 
@@ -241,38 +241,38 @@ export const Footer: React.FC<FooterProps> = ({ onOpenExplainer, onOpenPostModal
             </h4>
             <ul className="space-y-2 text-xs text-slate-600 font-medium">
               <li>
-                <a href="#" className="flex items-center gap-1.5 hover:text-[#f95724] transition-colors">
-                  <HelpCircle className="w-3.5 h-3.5 text-[#f95724]" />
+                <a href="#" className="flex items-center gap-1.5 hover:text-[#17233d] transition-colors">
+                  <HelpCircle className="w-3.5 h-3.5 text-[#17233d]" />
                   <span>Help Center</span>
                 </a>
               </li>
               <li>
-                <a href="#faqs" className="flex items-center gap-1.5 hover:text-[#f95724] transition-colors">
-                  <MessageSquare className="w-3.5 h-3.5 text-[#f95724]" />
+                <a href="#faqs" className="flex items-center gap-1.5 hover:text-[#17233d] transition-colors">
+                  <MessageSquare className="w-3.5 h-3.5 text-[#17233d]" />
                   <span>FAQs</span>
                 </a>
               </li>
               <li>
-                <button onClick={onOpenExplainer} className="flex items-center gap-1.5 hover:text-[#f95724] transition-colors cursor-pointer">
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#f95724]" />
+                <button onClick={onOpenExplainer} className="flex items-center gap-1.5 hover:text-[#17233d] transition-colors cursor-pointer">
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#17233d]" />
                   <span>Escrow Safety</span>
                 </button>
               </li>
               <li>
-                <a href="#" className="flex items-center gap-1.5 hover:text-[#f95724] transition-colors">
-                  <FileText className="w-3.5 h-3.5 text-[#f95724]" />
+                <a href="#" className="flex items-center gap-1.5 hover:text-[#17233d] transition-colors">
+                  <FileText className="w-3.5 h-3.5 text-[#17233d]" />
                   <span>Terms & Conditions</span>
                 </a>
               </li>
               <li>
-                <a href="#" className="flex items-center gap-1.5 hover:text-[#f95724] transition-colors">
-                  <Lock className="w-3.5 h-3.5 text-[#f95724]" />
+                <a href="#" className="flex items-center gap-1.5 hover:text-[#17233d] transition-colors">
+                  <Lock className="w-3.5 h-3.5 text-[#17233d]" />
                   <span>Privacy Policy</span>
                 </a>
               </li>
               <li>
-                <a href="#" className="flex items-center gap-1.5 hover:text-[#f95724] transition-colors">
-                  <PhoneCall className="w-3.5 h-3.5 text-[#f95724]" />
+                <a href="#" className="flex items-center gap-1.5 hover:text-[#17233d] transition-colors">
+                  <PhoneCall className="w-3.5 h-3.5 text-[#17233d]" />
                   <span>Contact Support</span>
                 </a>
               </li>
@@ -332,7 +332,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenExplainer, onOpenPostModal
             
             {/* Value 1: 15% Minimum Savings */}
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-full bg-orange-100/90 text-[#f95724] border border-orange-200/80 flex items-center justify-center shrink-0 shadow-2xs">
+              <div className="w-11 h-11 rounded-full bg-slate-100/90 text-[#17233d] border border-slate-200/80 flex items-center justify-center shrink-0 shadow-2xs">
                 <Percent className="w-5 h-5 stroke-[2.5]" />
               </div>
               <div>
@@ -413,7 +413,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenExplainer, onOpenPostModal
 
               {/* RuPay */}
               <span className="font-black text-xs px-2 py-0.5 rounded bg-white border border-slate-200 text-blue-800 tracking-tight">
-                RuPay<span className="text-orange-500">▶</span>
+                RuPay<span className="text-slate-600">▶</span>
               </span>
             </div>
 

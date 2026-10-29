@@ -177,7 +177,7 @@ export const MyProfilePage: React.FC<MyProfilePageProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 pb-24 pt-20">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 pb-24 pt-4 lg:pt-20">
       {/* Top Header Navigation */}
       <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 mb-6">
         <div className="flex items-center justify-between gap-4">
