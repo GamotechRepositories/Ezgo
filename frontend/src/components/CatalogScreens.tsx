@@ -4,7 +4,6 @@ import {
   Briefcase,
   Cake,
   Camera,
-  CheckCircle2,
   ChevronLeft,
   Flame,
   Flower2,
@@ -17,6 +16,12 @@ import {
   Utensils,
   Volume2,
   Lightbulb,
+  Star,
+  ShieldCheck,
+  Clock,
+  Check,
+  MessageSquare,
+  Info,
 } from 'lucide-react';
 import {
   APP_OCCASIONS,
@@ -63,11 +68,18 @@ function CatalogShell({
 }) {
   return (
     <div className="min-h-screen bg-[#f5f6f8] pb-8 lg:pt-20">
-      <div className="sticky top-0 lg:top-20 z-20 bg-white border-b border-slate-100 px-2 h-14 flex items-center gap-1">
-        <button type="button" onClick={onBack} aria-label="Back" className="w-10 h-10 flex items-center justify-center cursor-pointer">
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-        <h1 className="text-[17px] font-extrabold text-[#17233d]">{title}</h1>
+      <div className="sticky top-0 lg:top-20 z-20 bg-white/95 backdrop-blur-md border-b border-slate-200/80">
+        <div className={`h-14 px-4 flex items-center gap-2 mx-auto ${wide ? 'lg:max-w-[1600px] lg:px-14' : 'lg:max-w-[1200px] lg:px-8'}`}>
+          <button
+            type="button"
+            onClick={onBack}
+            aria-label="Back"
+            className="w-10 h-10 -ml-2 rounded-xl flex items-center justify-center text-slate-700 hover:bg-slate-100 cursor-pointer transition-colors"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-[17px] font-extrabold text-[#17233d]">{title}</h1>
+        </div>
       </div>
       <div className={`p-4 pb-10 ${wide ? 'lg:max-w-[1600px] lg:px-14' : 'lg:max-w-[1200px] lg:px-8'} lg:mx-auto lg:pt-8`}>
         {children}
@@ -247,19 +259,96 @@ export function ServiceCatalogScreen({
   );
 }
 
-function DetailStep({ n, title, subtitle }: { n: number; title: string; subtitle: string }) {
-  return (
-    <div className="flex items-start gap-2.5 mb-2.5">
-      <span className="w-[26px] h-[26px] rounded-full bg-[#fde7d8] text-[#f07d4a] text-xs font-extrabold flex items-center justify-center shrink-0">
-        {n}
-      </span>
-      <div>
-        <p className="text-sm font-extrabold text-[#17233d]">{title}</p>
-        <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>
-      </div>
-    </div>
-  );
+interface ServiceTheme {
+  id: string;
+  title: string;
+  subtitle: string;
+  image: string;
+  tag: string;
+  priceNote: string;
 }
+
+const DECORATION_THEMES: ServiceTheme[] = [
+  {
+    id: 'royal-mandap',
+    title: 'Royal Mandap & Floral Arch',
+    subtitle: 'Traditional wooden/carved pillars, fresh red & yellow roses, marigold chandeliers, holy fire havan canopy & brass samai lamps.',
+    image: '/occasion_weddings.jpg',
+    tag: 'Weddings & Vivah',
+    priceNote: 'Starts ~₹35,000',
+  },
+  {
+    id: 'sangeet-fairy-lights',
+    title: 'Sangeet & Cocktail Fairy Canopy',
+    subtitle: 'Over 10,000 warm-white micro fairy lights, black box trussing, LED profile stage washes, disco effects & acrylic dance floor.',
+    image: '/occasion_parties.jpg',
+    tag: 'Sangeet & Receptions',
+    priceNote: 'Starts ~₹25,000',
+  },
+  {
+    id: 'haldi-mehendi',
+    title: 'Haldi & Mehendi Yellow Fiesta',
+    subtitle: 'Vibrant marigold curtains, traditional decorated wooden swing (jhula), colorful umbrella ceilings & Instagrammable photo booths.',
+    image: '/occasion_festivals.jpg',
+    tag: 'Pre-Wedding Rituals',
+    priceNote: 'Starts ~₹15,000',
+  },
+  {
+    id: 'pastel-geometric',
+    title: 'Pastel Garden & Geometric Backdrop',
+    subtitle: 'Modern circular/hexagonal golden arches, pampas grass, custom neon name signs, blush pink & ivory silk drape backdrops.',
+    image: '/occasion_birthdays.jpg',
+    tag: 'Engagements & Birthdays',
+    priceNote: 'Starts ~₹18,000',
+  },
+];
+
+const getServiceThemes = (filterKey: string): ServiceTheme[] => {
+  if (filterKey === 'decor') {
+    return DECORATION_THEMES;
+  }
+  if (filterKey === 'dj') {
+    return [
+      {
+        id: 'sangeet-dj',
+        title: 'Bollywood & Punjabi Sangeet DJ',
+        subtitle: 'High-energy live Bollywood, Punjabi, and commercial dance sets with interactive MC hosting and wireless crowd mics.',
+        image: '/occasion_parties.jpg',
+        tag: 'Sangeet & Receptions',
+        priceNote: 'Starts ~₹15,000',
+      },
+      {
+        id: 'concert-line-array',
+        title: 'Concert Line Array & Bass Bins',
+        subtitle: 'Dual 18" subwoofers, active line array speakers, digital mixer, and stage monitor setup for 500+ guests.',
+        image: '/occasion_festivals.jpg',
+        tag: 'College & Corporate Fests',
+        priceNote: 'Starts ~₹25,000',
+      },
+    ];
+  }
+  if (filterKey === 'photography') {
+    return [
+      {
+        id: 'cinematic-wedding',
+        title: 'Cinematic Wedding & Drone 4K',
+        subtitle: 'Candid portraits, 4K gimbal drone sweeps, cinematic highlight teaser, and luxury leather-bound hardbound album.',
+        image: '/occasion_weddings.jpg',
+        tag: 'Weddings',
+        priceNote: 'Starts ~₹35,000',
+      },
+      {
+        id: 'event-traditional',
+        title: 'Traditional Stage & Guest Photo',
+        subtitle: 'Coverage of rituals, stage guest portraits, high-speed instant photo prints, and fast digital gallery delivery.',
+        image: '/occasion_parties.jpg',
+        tag: 'Parties & Corporate',
+        priceNote: 'Starts ~₹15,000',
+      },
+    ];
+  }
+  return [];
+};
 
 export function ServiceDetailScreen({
   service,
@@ -276,69 +365,473 @@ export function ServiceDetailScreen({
     'Payment held until the event is done',
   ];
 
-  return (
-    <div className="min-h-screen bg-[#f5f6f8] flex flex-col pb-28 lg:pb-10 lg:pt-20">
-      <div className="relative h-[220px] lg:h-[360px] lg:rounded-b-[28px] overflow-hidden">
-        <img src={service.image} alt="" className="absolute inset-0 w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-        <button
-          type="button"
-          onClick={onBack}
-          className="absolute top-4 left-4 w-10 h-10 rounded-full bg-white flex items-center justify-center cursor-pointer"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-        <div className="absolute bottom-4 left-4 right-4 text-white">
-          <p className="text-[11px] font-extrabold tracking-wide uppercase opacity-80">{service.shortName}</p>
-          <h1 className="text-[22px] lg:text-4xl font-black leading-tight">{service.title}</h1>
-        </div>
-      </div>
+  const themes = getServiceThemes(service.filterKey);
+  const isDecor = service.filterKey === 'decor' || service.id === 'decoration';
 
-      <div className="px-4 py-4 lg:max-w-[960px] lg:mx-auto lg:w-full lg:px-8 space-y-4 flex-1">
-        <p className="text-sm leading-relaxed text-slate-600">{service.description}</p>
-        <div className="bg-white rounded-[18px] border border-[#e8edf2] p-4">
-          <p className="text-xs font-semibold text-slate-500">Typical market price</p>
-          <p className="text-[22px] font-extrabold text-[#17233d] mt-1">{service.priceRange}</p>
-          <p className="text-[13px] text-slate-600 font-medium mt-1.5 leading-relaxed">
-            This is not a fixed price. You set a budget. Vendors must bid at least 15% below it.
-          </p>
+  return (
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 pb-28 lg:pb-16 lg:pt-24">
+      {/* Container for Desktop Breadcrumb and Top Nav */}
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* Desktop Breadcrumb Bar */}
+        <div className="hidden lg:flex items-center justify-between pb-4 pt-2 border-b border-slate-200/80 mb-6">
+          <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-500">
+            <button
+              type="button"
+              onClick={onBack}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200 text-slate-700 font-bold hover:bg-slate-50 hover:border-slate-300 transition cursor-pointer shadow-xs"
+            >
+              <ChevronLeft className="w-4 h-4 text-[#f07d4a]" />
+              <span>Back to Services</span>
+            </button>
+            <span className="text-slate-300">/</span>
+            <span className="text-slate-500 font-medium">Event Services</span>
+            <span className="text-slate-300">/</span>
+            <span className="text-slate-900 font-bold">{service.title}</span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-extrabold">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              Verified Local Vendors
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 border border-orange-200 text-[#f07d4a] text-xs font-extrabold">
+              <Sparkles className="w-3.5 h-3.5 text-[#f07d4a]" />
+              Save 15%+ via Reverse Bidding
+            </span>
+          </div>
         </div>
-        <div>
-          <h2 className="text-base font-extrabold text-[#17233d] mb-2.5">How this works</h2>
-          <DetailStep n={1} title="Post your date, city and max budget" subtitle="Free. Takes about 1 minute." />
-          <DetailStep n={2} title="Vendors send lower bids" subtitle="You only see prices at least 15% below your budget." />
-          <DetailStep n={3} title="Pick one and pay to EzzyGo" subtitle="We hold the money. Vendor is paid after you mark the event done." />
-        </div>
-        <div>
-          <h2 className="text-base font-extrabold text-[#17233d] mb-2.5">Usually includes</h2>
-          {covers.map((line) => (
-            <p key={line} className="text-sm font-medium text-slate-700 flex gap-2 mb-2">
-              <CheckCircle2 className="w-4 h-4 text-[#0f766e] shrink-0 mt-0.5" />
-              {line}
-            </p>
-          ))}
-        </div>
-        <div className="hidden lg:block pt-2">
+
+        {/* Hero Banner Section */}
+        {/* Desktop: Centered card with rounded 3xl corners, deep gradient, stats pill */}
+        {/* Mobile: Edge-to-edge cover with floating back button */}
+        <div className="relative -mx-4 sm:mx-0 h-[240px] sm:h-[300px] lg:h-[380px] rounded-none sm:rounded-2xl lg:rounded-3xl overflow-hidden shadow-none lg:shadow-xl border-b lg:border border-slate-200/80 mb-6 lg:mb-8">
+          <img
+            src={service.image}
+            alt={service.title}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/20" />
+
+          {/* Mobile Back Button */}
           <button
             type="button"
-            onClick={() => onOpenPost(service.title)}
-            className="w-full h-12 rounded-2xl bg-[#f07d4a] text-white font-extrabold text-[15px] cursor-pointer"
+            onClick={onBack}
+            aria-label="Go back"
+            className="lg:hidden absolute top-4 left-4 w-10 h-10 rounded-full bg-white/90 backdrop-blur-md text-slate-800 flex items-center justify-center cursor-pointer shadow-md z-10"
           >
-            Get bids for {service.shortName}
+            <ChevronLeft className="w-5 h-5" />
           </button>
-          <p className="text-center text-xs text-slate-500 font-semibold mt-2">Free to post. Pay only after you choose a vendor.</p>
+
+          {/* Hero Content Overlay */}
+          <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6 lg:p-8 text-white flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+            <div className="max-w-2xl">
+              <div className="flex items-center gap-2 mb-2.5 flex-wrap">
+                <span className="px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-white text-[10.5px] font-extrabold uppercase tracking-wider">
+                  {service.shortName}
+                </span>
+                <span className="px-2.5 py-0.5 rounded-full bg-[#e4f7ea] text-[#18794e] text-[10.5px] font-extrabold flex items-center gap-1">
+                  <Sparkles className="w-3 h-3" /> Min 15% Savings Guaranteed
+                </span>
+                <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-amber-300">
+                  <Star className="w-3.5 h-3.5 fill-amber-300 text-amber-300" /> 4.9 (420+ Events)
+                </span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black leading-tight text-white drop-shadow-sm">
+                {service.title}
+              </h1>
+              <p className="mt-2 text-xs sm:text-sm lg:text-base text-slate-200 font-medium leading-relaxed max-w-xl">
+                {service.description}
+              </p>
+            </div>
+
+            {/* Quick Desktop Stats Pill */}
+            <div className="hidden lg:flex items-center gap-4 shrink-0 bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 shadow-lg">
+              <div className="text-right">
+                <p className="text-[10px] uppercase font-bold text-slate-300 tracking-wider">Typical Price</p>
+                <p className="text-xl font-black text-white">{service.priceRange}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => onOpenPost(service.title)}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#f07d4a] to-[#e66c35] hover:opacity-95 text-white font-extrabold text-xs shadow-md transition cursor-pointer flex items-center gap-1.5"
+              >
+                <span>Get Bids</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
         </div>
+
+        {/* 2-Column Desktop Grid Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* Left Column (8 cols): Highlights, Themes, Inclusions, How It Works, Host FAQs */}
+          <div className="lg:col-span-8 space-y-6">
+            
+            {/* 4 Feature Pillars Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="bg-white rounded-2xl p-3.5 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+                <span className="w-8 h-8 rounded-xl bg-orange-50 text-[#f07d4a] flex items-center justify-center font-bold mb-2">
+                  <Flower2 className="w-4 h-4" />
+                </span>
+                <div>
+                  <p className="text-xs font-extrabold text-[#17233d]">Farm-Fresh Florals</p>
+                  <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">Same-day fresh flowers for maximum fragrance & elegance.</p>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl p-3.5 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+                <span className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold mb-2">
+                  <Clock className="w-4 h-4" />
+                </span>
+                <div>
+                  <p className="text-xs font-extrabold text-[#17233d]">On-Time Guarantee</p>
+                  <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">Setup ready 2 hours before the first guest walks in.</p>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl p-3.5 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+                <span className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold mb-2">
+                  <Palette className="w-4 h-4" />
+                </span>
+                <div>
+                  <p className="text-xs font-extrabold text-[#17233d]">Custom References</p>
+                  <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">Share Pinterest or Instagram photos for exact styling.</p>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl p-3.5 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+                <span className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold mb-2">
+                  <ShieldCheck className="w-4 h-4" />
+                </span>
+                <div>
+                  <p className="text-xs font-extrabold text-[#17233d]">Escrow Protection</p>
+                  <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">Money released only after you inspect and approve.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Popular Themes & Styles (Especially for Decoration!) */}
+            {themes.length > 0 && (
+              <div className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-xs">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-lg font-extrabold text-[#17233d]">
+                      {isDecor ? 'Popular Decoration Themes & Setups' : `Popular ${service.shortName} Packages`}
+                    </h2>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Select a setup style to request tailored bids from verified decorators
+                    </p>
+                  </div>
+                  <span className="hidden sm:inline-flex px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-bold">
+                    {themes.length} Styles Available
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {themes.map((theme) => (
+                    <div
+                      key={theme.id}
+                      className="group relative rounded-2xl border border-slate-200/90 overflow-hidden bg-slate-50/50 hover:bg-white hover:border-[#f07d4a]/40 hover:shadow-md transition-all duration-200 flex flex-col"
+                    >
+                      <div className="relative h-44 overflow-hidden">
+                        <img
+                          src={theme.image}
+                          alt={theme.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <span className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-bold">
+                          {theme.tag}
+                        </span>
+                        <span className="absolute bottom-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-white/95 text-[#17233d] text-[10.5px] font-black shadow-xs">
+                          {theme.priceNote}
+                        </span>
+                      </div>
+                      <div className="p-4 flex-1 flex flex-col justify-between">
+                        <div>
+                          <h3 className="font-extrabold text-[15px] text-[#17233d] group-hover:text-[#f07d4a] transition">
+                            {theme.title}
+                          </h3>
+                          <p className="text-xs text-slate-600 mt-1.5 leading-relaxed line-clamp-3">
+                            {theme.subtitle}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onOpenPost({
+                              category: service.title,
+                              title: `${theme.title} Setup`,
+                              description: `Looking for ${theme.title} theme: ${theme.subtitle}`,
+                            })
+                          }
+                          className="mt-3.5 w-full py-2 rounded-xl bg-white border border-[#f07d4a]/40 hover:bg-[#fff6f1] text-[#f07d4a] font-extrabold text-xs transition cursor-pointer flex items-center justify-center gap-1.5"
+                        >
+                          <span>Request this Theme</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* What's Usually Included Card */}
+            <div className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-xs">
+              <h2 className="text-lg font-extrabold text-[#17233d] mb-1">
+                What's Usually Included in {service.shortName}
+              </h2>
+              <p className="text-xs text-slate-500 mb-4">
+                Every verified quote includes full service execution, labor, and teardown
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {covers.map((line, idx) => (
+                  <div
+                    key={line}
+                    className="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-50/70 border border-slate-100"
+                  >
+                    <span className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
+                      <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                    </span>
+                    <div>
+                      <p className="text-xs font-extrabold text-[#17233d]">{line}</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        {idx === 0
+                          ? 'Complete structural truss, backdrops, and safety rigging included.'
+                          : idx === 1
+                            ? 'Color-coordinated fresh florals and accent stage lighting.'
+                            : 'On-time venue setup and complete post-event removal.'}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4 p-3 rounded-2xl bg-amber-50/70 border border-amber-200/70 flex items-center gap-2.5">
+                <Info className="w-4 h-4 text-amber-700 shrink-0" />
+                <p className="text-xs text-amber-900 font-medium">
+                  Have unique needs? You can specify custom flowers, stage dimensions, and special lighting directly in your request.
+                </p>
+              </div>
+            </div>
+
+            {/* How Reverse Bidding Works */}
+            <div className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-xs">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-lg font-extrabold text-[#17233d]">
+                    How EzzyGo Reverse Bidding Works
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Never overpay again. Verified vendors bid downwards to win your gig.
+                  </p>
+                </div>
+                <span className="hidden sm:inline-flex px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-200">
+                  Save 15%+ Enforced
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col justify-between">
+                  <div>
+                    <span className="w-7 h-7 rounded-full bg-[#fde7d8] text-[#f07d4a] text-xs font-black flex items-center justify-center mb-3">
+                      1
+                    </span>
+                    <p className="text-sm font-extrabold text-[#17233d]">Post Your Budget</p>
+                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                      Enter your event date, city, area, and max budget. Free. Takes 1 minute.
+                    </p>
+                  </div>
+                  <p className="mt-3 text-[11px] font-bold text-[#f07d4a]">Zero upfront fees</p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col justify-between">
+                  <div>
+                    <span className="w-7 h-7 rounded-full bg-[#fde7d8] text-[#f07d4a] text-xs font-black flex items-center justify-center mb-3">
+                      2
+                    </span>
+                    <p className="text-sm font-extrabold text-[#17233d]">Vendors Bid Lower</p>
+                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                      Local decorators compete. Every bid must be at least 15% below your budget.
+                    </p>
+                  </div>
+                  <p className="mt-3 text-[11px] font-bold text-emerald-700">Guaranteed savings</p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col justify-between">
+                  <div>
+                    <span className="w-7 h-7 rounded-full bg-[#fde7d8] text-[#f07d4a] text-xs font-black flex items-center justify-center mb-3">
+                      3
+                    </span>
+                    <p className="text-sm font-extrabold text-[#17233d]">Pay via Escrow</p>
+                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                      Pick your favorite portfolio. EzzyGo holds the money until event inspection.
+                    </p>
+                  </div>
+                  <p className="mt-3 text-[11px] font-bold text-blue-700">100% Risk-free</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Host FAQs & Tips for Decoration */}
+            <div className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-xs">
+              <h2 className="text-lg font-extrabold text-[#17233d] mb-4">
+                Tips for Booking {service.shortName}
+              </h2>
+              <div className="space-y-3">
+                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
+                  <p className="text-xs font-extrabold text-[#17233d]">
+                    How early should I book stage decoration?
+                  </p>
+                  <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                    We recommend posting your requirement at least 3 to 14 days prior to ensure vendors can reserve specific fresh flower varieties and lighting trusses.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
+                  <p className="text-xs font-extrabold text-[#17233d]">
+                    Can I provide reference photos from Instagram or Pinterest?
+                  </p>
+                  <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                    Absolutely! Once you post, you can share reference pictures. Verified decorators will tailor their proposal to replicate your exact colors and props.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
+                  <p className="text-xs font-extrabold text-[#17233d]">
+                    What if the decorator is delayed or fails to deliver?
+                  </p>
+                  <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                    With EzzyGo Escrow, your payment is held safely until you confirm setup completion. If a vendor breaches agreement, our admin dispute desk issues an instant full refund.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Right Column (4 cols): Sticky Price, Savings Calculator & Booking CTA */}
+          <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-5">
+            
+            {/* Elevated Price & CTA Card */}
+            <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xl p-6 lg:p-7 space-y-5">
+              <div>
+                <p className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
+                  Typical Market Rate
+                </p>
+                <div className="flex items-baseline gap-2 mt-1">
+                  <p className="text-3xl font-black text-[#17233d]">{service.priceRange}</p>
+                </div>
+                <p className="text-xs text-slate-500 mt-1 font-medium">
+                  Actual price depends on stage dimensions, floral density & lighting.
+                </p>
+              </div>
+
+              {/* 15% Rule Callout Box */}
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-[#fff6f1] to-[#fde7d8]/60 border border-[#f07d4a]/30">
+                <div className="flex items-center gap-1.5 text-[#f07d4a] font-black text-xs">
+                  <Sparkles className="w-4 h-4 shrink-0" />
+                  <span>The EzzyGo Advantage</span>
+                </div>
+                <p className="text-xs text-slate-700 mt-1.5 leading-relaxed font-medium">
+                  You set the budget. Verified local vendors must bid <strong className="text-[#17233d]">at least 15% lower</strong> to compete for your event.
+                </p>
+                <div className="mt-2.5 pt-2 border-t border-[#f07d4a]/20 flex items-center justify-between text-[11px] font-extrabold text-[#17233d]">
+                  <span>On a ₹30,000 budget:</span>
+                  <span className="text-emerald-700 font-black">Save min ₹4,500</span>
+                </div>
+              </div>
+
+              {/* Primary Action Button */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => onOpenPost(service.title)}
+                  className="w-full h-14 rounded-2xl bg-gradient-to-r from-[#f07d4a] to-[#e66c35] hover:opacity-95 text-white font-black text-base shadow-lg shadow-[#f07d4a]/25 hover:shadow-[#f07d4a]/40 hover:scale-[1.01] active:scale-[0.99] transition flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <span>Get Bids for {service.shortName}</span>
+                  <ArrowRight className="w-5 h-5" />
+                </button>
+                <p className="text-center text-xs text-slate-500 font-semibold mt-2">
+                  100% Free to post • No obligation to accept
+                </p>
+              </div>
+
+              {/* What Happens Next Checklist */}
+              <div className="pt-2 border-t border-slate-100 space-y-2.5 text-xs text-slate-700">
+                <p className="font-extrabold text-[#17233d] text-xs">Why hosts book through EzzyGo:</p>
+                <div className="flex items-center gap-2.5">
+                  <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                    <Check className="w-3 h-3 stroke-[2.5]" />
+                  </span>
+                  <span>Multiple competing quotes in ~30 mins</span>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                    <Check className="w-3 h-3 stroke-[2.5]" />
+                  </span>
+                  <span>100% Escrow Protection via Razorpay</span>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                    <Check className="w-3 h-3 stroke-[2.5]" />
+                  </span>
+                  <span>Direct phone & address unlocked upon payment</span>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                    <Check className="w-3 h-3 stroke-[2.5]" />
+                  </span>
+                  <span>Free cancellation before vendor dispatch</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Concierge Help Callout */}
+            <div className="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="w-10 h-10 rounded-2xl bg-orange-50 text-[#f07d4a] flex items-center justify-center shrink-0">
+                  <MessageSquare className="w-5 h-5" />
+                </span>
+                <div>
+                  <p className="text-xs font-extrabold text-[#17233d]">Need Planning Help?</p>
+                  <p className="text-[11px] text-slate-500">Free advice on decor themes & budgets</p>
+                </div>
+              </div>
+              <a
+                href={`https://wa.me/919322054199?text=${encodeURIComponent(
+                  `Hello EzzyGo Team, I need help planning ${service.title} for my upcoming event.`
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+                className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shrink-0 transition"
+              >
+                Chat
+              </a>
+            </div>
+
+          </div>
+
+        </div>
+
       </div>
 
-      <div className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-[#e8edf2] px-4 pt-2.5 pb-[calc(env(safe-area-inset-bottom)+12px)]">
+      {/* Mobile Fixed Bottom CTA Bar */}
+      <div className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-[#e8edf2] px-4 pt-2.5 pb-[calc(env(safe-area-inset-bottom)+12px)] shadow-xl">
         <button
           type="button"
           onClick={() => onOpenPost(service.title)}
-          className="w-full h-[50px] rounded-2xl bg-[#f07d4a] text-white font-extrabold text-[15px] cursor-pointer"
+          className="w-full h-[50px] rounded-2xl bg-gradient-to-r from-[#f07d4a] to-[#e66c35] text-white font-extrabold text-[15px] cursor-pointer flex items-center justify-center gap-2 shadow-md shadow-[#f07d4a]/20"
         >
-          Get bids for {service.shortName}
+          <span>Get bids for {service.shortName}</span>
+          <ArrowRight className="w-4 h-4" />
         </button>
-        <p className="text-center text-xs text-slate-500 font-semibold mt-1.5">Free to post. Pay only after you choose a vendor.</p>
+        <p className="text-center text-[11px] text-slate-500 font-semibold mt-1.5">
+          Free to post • Save min 15% • Escrow protected
+        </p>
       </div>
     </div>
   );

@@ -152,5 +152,8 @@ export const SERVICE_COVERS: Record<string, string[]> = {
 
 export function getEventService(id?: string | null) {
   if (!id) return undefined;
-  return APP_EVENT_SERVICES.find((s) => s.id === id);
+  const target = id.toLowerCase().trim();
+  return APP_EVENT_SERVICES.find(
+    (s) => s.id === target || s.filterKey === target || s.id.startsWith(target) || target.startsWith(s.filterKey)
+  );
 }

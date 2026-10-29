@@ -1,5 +1,17 @@
 import React, { useMemo, useState } from 'react';
-import { Calendar, ClipboardList, MapPin, Plus, ShieldCheck, Users, WifiOff } from 'lucide-react';
+import {
+  ArrowLeft,
+  Calendar,
+  ChevronDown,
+  ChevronUp,
+  ClipboardList,
+  MapPin,
+  Plus,
+  ShieldCheck,
+  Sparkles,
+  Users,
+  WifiOff,
+} from 'lucide-react';
 import type { Requirement } from '../types';
 
 const FILTERS = ['All', 'Open', 'With bids', 'Booked', 'Closed'] as const;
@@ -10,6 +22,7 @@ interface MyEventsPageProps {
   onAcceptBid: (requirementId: string, bidId: string) => Promise<void>;
   onOpenBookings: () => void;
   onRefresh?: () => void;
+  onBack?: () => void;
 }
 
 const formatDate = (value?: string) => {
@@ -25,179 +38,425 @@ export const MyEventsPage: React.FC<MyEventsPageProps> = ({
   onAcceptBid,
   onOpenBookings,
   onRefresh,
+  onBack,
 }) => {
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>('All');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const counts = useMemo(() => ({
-    All: requirements.length,
-    Open: requirements.filter((r) => r.status === 'OPEN').length,
-    'With bids': requirements.filter((r) => r.status === 'OPEN' && ((r.bidsCount || 0) > 0 || (r.bids || []).length > 0)).length,
-    Booked: requirements.filter((r) => r.status === 'ACCEPTED' || r.status === 'ACTIVE').length,
-    Closed: requirements.filter((r) => r.status === 'COMPLETED' || r.status === 'CANCELLED' || r.status === 'EXPIRED').length,
-  }), [requirements]);
+  const counts = useMemo(
+    () => ({
+      All: requirements.length,
+      Open: requirements.filter((r) => r.status === 'OPEN').length,
+      'With bids': requirements.filter(
+        (r) => r.status === 'OPEN' && ((r.bidsCount || 0) > 0 || (r.bids || []).length > 0)
+      ).length,
+      Booked: requirements.filter((r) => r.status === 'ACCEPTED' || r.status === 'ACTIVE').length,
+      Closed: requirements.filter(
+        (r) => r.status === 'COMPLETED' || r.status === 'CANCELLED' || r.status === 'EXPIRED'
+      ).length,
+    }),
+    [requirements]
+  );
 
   const filtered = useMemo(() => {
     if (filter === 'Open') return requirements.filter((r) => r.status === 'OPEN');
-    if (filter === 'With bids') return requirements.filter((r) => r.status === 'OPEN' && ((r.bidsCount || 0) > 0 || (r.bids || []).length > 0));
-    if (filter === 'Booked') return requirements.filter((r) => r.status === 'ACCEPTED' || r.status === 'ACTIVE');
-    if (filter === 'Closed') return requirements.filter((r) => r.status === 'COMPLETED' || r.status === 'CANCELLED' || r.status === 'EXPIRED');
+    if (filter === 'With bids')
+      return requirements.filter(
+        (r) => r.status === 'OPEN' && ((r.bidsCount || 0) > 0 || (r.bids || []).length > 0)
+      );
+    if (filter === 'Booked')
+      return requirements.filter((r) => r.status === 'ACCEPTED' || r.status === 'ACTIVE');
+    if (filter === 'Closed')
+      return requirements.filter(
+        (r) => r.status === 'COMPLETED' || r.status === 'CANCELLED' || r.status === 'EXPIRED'
+      );
     return requirements;
   }, [filter, requirements]);
 
   return (
-    <div className="min-h-screen bg-[#f5f6f8]">
-      <div className="sticky top-0 z-20 bg-white">
-        <div className="h-14 px-4 flex items-center justify-between">
-          <h1 className="text-[17px] font-extrabold">My Events</h1>
-          <button type="button" onClick={onOpenPostModal} className="w-10 h-10 flex items-center justify-center cursor-pointer">
-            <Plus className="w-5 h-5" />
-          </button>
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 pb-24 pt-0 lg:pt-20">
+      {/* Desktop Top Breadcrumbs & Header Section */}
+      <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-4 lg:pt-6">
+        <div className="hidden lg:flex items-center justify-between pb-4 pt-2 border-b border-slate-200/80 mb-6">
+          <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-500">
+            {onBack && (
+              <button
+                type="button"
+                onClick={onBack}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200 text-slate-700 font-bold hover:bg-slate-50 hover:border-slate-300 transition cursor-pointer shadow-2xs"
+              >
+                <ArrowLeft className="w-4 h-4 text-[#f07d4a]" />
+                <span>Back to Marketplace</span>
+              </button>
+            )}
+            <span className="text-slate-300">/</span>
+            <span className="text-slate-900 font-bold">My Events & Requirements</span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-extrabold">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              15% Min. Reverse Bidding Savings
+            </span>
+            <button
+              type="button"
+              onClick={onOpenPostModal}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#f07d4a] hover:bg-[#e06b37] text-white text-xs font-extrabold shadow-md shadow-orange-500/20 transition cursor-pointer active:scale-95"
+            >
+              <Plus className="w-4 h-4 stroke-[3]" />
+              <span>Post New Requirement</span>
+            </button>
+          </div>
         </div>
-        <div className="px-4 pb-2.5">
-          <p className="text-xs font-semibold text-slate-500">
-            {requirements.length === 0
-              ? 'Posted requests and vendor bids'
-              : `${requirements.length} event${requirements.length === 1 ? '' : 's'} posted`}
+
+        {/* Desktop Page Title Banner */}
+        <div className="hidden lg:block mb-6">
+          <h1 className="text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">
+            My Events & <span className="text-[#f07d4a]">Reverse Bidding</span>
+          </h1>
+          <p className="mt-1.5 text-sm text-slate-600 max-w-2xl font-medium">
+            Track your posted requirements, watch verified local vendors compete, and accept bids that save at least 15% below your budget.
           </p>
-          <div className="mt-2.5 flex gap-2 overflow-x-auto scrollbar-none">
-            {FILTERS.map((name) => {
-              const active = filter === name;
-              return (
+        </div>
+      </div>
+
+      {/* Sticky Tab & Filter Bar (Desktop & Mobile) */}
+      <div className="sticky top-0 lg:top-20 z-20 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-2xs">
+        <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10">
+          {/* Mobile Header Bar */}
+          <div className="lg:hidden h-14 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {onBack && (
                 <button
-                  key={name}
                   type="button"
-                  onClick={() => setFilter(name)}
-                  className={`shrink-0 h-[38px] px-3.5 rounded-full text-xs border cursor-pointer ${
-                    active ? 'bg-[#f07d4a] text-white border-[#f07d4a] font-bold' : 'bg-[#f8fafc] text-slate-800 border-[#e8edf2] font-medium'
-                  }`}
+                  onClick={onBack}
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-slate-600 -ml-1 cursor-pointer"
+                  aria-label="Back"
                 >
-                  {name} ({counts[name]})
+                  <ArrowLeft className="w-5 h-5" />
                 </button>
-              );
-            })}
+              )}
+              <h1 className="text-[17px] font-extrabold">My Events</h1>
+            </div>
+            <button
+              type="button"
+              onClick={onOpenPostModal}
+              className="w-10 h-10 rounded-full bg-[#f07d4a] text-white flex items-center justify-center cursor-pointer shadow-sm active:scale-95"
+              aria-label="Post Requirement"
+            >
+              <Plus className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Filter Tabs Row */}
+          <div className="pb-3 pt-1 lg:pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-0.5">
+              {FILTERS.map((name) => {
+                const active = filter === name;
+                return (
+                  <button
+                    key={name}
+                    type="button"
+                    onClick={() => setFilter(name)}
+                    className={`shrink-0 h-[36px] lg:h-[38px] px-4 rounded-full text-xs border cursor-pointer transition-all ${
+                      active
+                        ? 'bg-[#f07d4a] text-white border-[#f07d4a] font-bold shadow-xs'
+                        : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 font-medium'
+                    }`}
+                  >
+                    <span>{name}</span>
+                    <span
+                      className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-black ${
+                        active ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
+                      }`}
+                    >
+                      {counts[name]}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <p className="text-xs font-semibold text-slate-500 hidden sm:block shrink-0">
+              {requirements.length === 0
+                ? 'No requests posted'
+                : `${requirements.length} event${requirements.length === 1 ? '' : 's'} posted`}
+            </p>
           </div>
         </div>
       </div>
 
-      <div className="px-4 py-3 pb-8 space-y-3.5">
+      {/* Main Events Grid / Empty State */}
+      <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-6">
         {filtered.length === 0 ? (
-          <div className="pt-20 text-center">
+          <div className="py-20 text-center bg-white rounded-3xl border border-slate-200/80 p-8 shadow-xs max-w-lg mx-auto">
             {requirements.length === 0 ? (
-              <ClipboardList className="w-11 h-11 text-[#f07d4a] mx-auto" />
+              <div className="w-16 h-16 rounded-full bg-orange-50 text-[#f07d4a] flex items-center justify-center mx-auto mb-4">
+                <ClipboardList className="w-8 h-8" />
+              </div>
             ) : (
-              <WifiOff className="w-11 h-11 text-slate-400 mx-auto" />
+              <div className="w-16 h-16 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-4">
+                <WifiOff className="w-8 h-8" />
+              </div>
             )}
-            <p className="mt-3 text-base font-extrabold">
+            <p className="text-lg font-extrabold text-slate-900">
               {requirements.length === 0 ? 'No events posted yet' : 'No events in this tab'}
             </p>
-            <p className="mt-1.5 text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
+            <p className="mt-2 text-xs sm:text-sm text-slate-500 max-w-sm mx-auto leading-relaxed">
               {requirements.length === 0
-                ? 'Post a request with your budget. Verified vendors bid at least 15% below it.'
-                : 'Try another filter, or post a new event request.'}
+                ? 'Post an event request with your maximum budget. Verified local vendors will submit competitive bids with guaranteed 15% savings.'
+                : 'Try switching to another tab, or post a new event request.'}
             </p>
             <button
               type="button"
               onClick={onOpenPostModal}
-              className="mt-4 inline-flex items-center gap-1.5 h-11 px-4 rounded-xl bg-[#f07d4a] text-white text-sm font-extrabold cursor-pointer"
+              className="mt-6 inline-flex items-center gap-2 h-11 px-6 rounded-full bg-[#f07d4a] hover:bg-[#e06b37] text-white text-xs sm:text-sm font-extrabold shadow-md shadow-orange-500/20 transition cursor-pointer active:scale-95"
             >
-              <Plus className="w-4 h-4" /> Post Event Request
+              <Plus className="w-4 h-4" />
+              <span>Post Event Request</span>
             </button>
             {onRefresh && (
-              <button type="button" onClick={onRefresh} className="block mx-auto mt-3 text-xs font-bold text-slate-500 cursor-pointer">
-                Pull to retry
+              <button
+                type="button"
+                onClick={onRefresh}
+                className="block mx-auto mt-4 text-xs font-bold text-slate-400 hover:text-slate-600 cursor-pointer transition"
+              >
+                Pull to refresh
               </button>
             )}
           </div>
         ) : (
-          filtered.map((req) => {
-            const bids = req.bids || [];
-            const bidCount = req.bidsCount || bids.length;
-            const open = req.status === 'OPEN';
-            const expanded = expandedId === req._id;
-            const cover = req.imageUrl || req.images?.[0];
-            return (
-              <div key={req._id} className="bg-white rounded-[22px] border border-[#e8edf2] overflow-hidden shadow-[0_3px_10px_rgba(0,0,0,0.03)]">
-                <button type="button" onClick={() => setExpandedId(expanded ? null : req._id)} className="w-full text-left cursor-pointer">
-                  <div className="relative h-[148px] bg-slate-100">
-                    {cover ? <img src={cover} alt="" className="w-full h-full object-cover" /> : (
-                      <div className="w-full h-full flex items-center justify-center"><Calendar className="w-8 h-8 text-slate-400" /></div>
-                    )}
-                    <span className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-[11px] font-extrabold ${
-                      open ? 'bg-[#fff7ed] text-[#f07d4a] border border-[#ffd7c2]' : 'bg-white text-slate-700 border border-slate-200'
-                    }`}>
-                      {req.status}
-                    </span>
-                  </div>
-                  <div className="p-3.5">
-                    <div className="flex flex-wrap gap-1.5">
-                      <span className="px-2 py-0.5 rounded-full bg-slate-100 text-[10px] font-bold text-slate-700">{req.category}</span>
-                      {req.eventType && <span className="px-2 py-0.5 rounded-full bg-slate-100 text-[10px] font-bold text-slate-700">{req.eventType}</span>}
-                    </div>
-                    <p className="mt-2 text-base font-extrabold leading-snug">{req.title}</p>
-                    <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1 text-[12px] font-semibold text-slate-500">
-                      <span className="inline-flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{req.location?.area || req.location?.city}</span>
-                      <span className="inline-flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{formatDate(req.eventDate)}</span>
-                      <span className="inline-flex items-center gap-1"><Users className="w-3.5 h-3.5" />{req.guestCount} guests</span>
-                    </div>
-                    <div className="mt-3 flex items-center justify-between">
-                      <p className="text-[13px] font-extrabold">₹{req.budget.toLocaleString()}</p>
-                      <p className="text-[11px] font-extrabold text-emerald-600">
-                        {req.lowestBid ? `Low ₹${req.lowestBid.toLocaleString()}` : `${bidCount} bid${bidCount === 1 ? '' : 's'}`}
-                      </p>
-                    </div>
-                    <p className="mt-2 text-[12px] font-extrabold text-[#f07d4a]">
-                      {req.status === 'ACCEPTED' ? 'Pay to confirm' : bidCount > 0 ? `See bids (${bidCount})` : 'View request'}
-                    </p>
-                  </div>
-                </button>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
+            {filtered.map((req) => {
+              const bids = req.bids || [];
+              const bidCount = req.bidsCount || bids.length;
+              const open = req.status === 'OPEN';
+              const expanded = expandedId === req._id;
+              const cover = req.imageUrl || req.images?.[0];
 
-                {expanded && (
-                  <div className="px-3.5 pb-3.5 space-y-2 border-t border-slate-100 pt-3">
-                    {req.status === 'ACCEPTED' || req.status === 'ACTIVE' ? (
-                      <button type="button" onClick={onOpenBookings} className="w-full h-11 rounded-xl bg-[#f07d4a] text-white text-sm font-extrabold cursor-pointer">
-                        View booking
-                      </button>
-                    ) : bids.length === 0 ? (
-                      <p className="text-xs text-slate-500 text-center py-2">Vendors will bid here. Eligible bids stay 15% below your budget.</p>
-                    ) : (
-                      bids.map((bid) => {
-                        const fee = Math.round(bid.amount * 0.1);
-                        const total = bid.amount + fee;
-                        return (
-                          <div key={bid._id} className="rounded-2xl border border-slate-200 p-3 space-y-2">
-                            <div className="flex justify-between gap-2">
-                              <p className="text-sm font-extrabold">{bid.providerId?.businessName || bid.providerId?.name || 'Vendor'}</p>
-                              <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${bid.isEligibleForAccept ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
-                                {bid.discountPercent}% OFF
-                              </span>
-                            </div>
-                            {bid.proposalNotes && <p className="text-xs text-slate-600">“{bid.proposalNotes}”</p>}
-                            <div className="text-xs space-y-0.5">
-                              <div className="flex justify-between"><span>Vendor bid</span><span className="font-bold">₹{bid.amount.toLocaleString()}</span></div>
-                              <div className="flex justify-between text-slate-500"><span>EzzyGo fee (10%)</span><span>+₹{fee.toLocaleString()}</span></div>
-                              <div className="flex justify-between font-extrabold pt-1 border-t border-slate-100"><span>You pay</span><span className="text-emerald-700">₹{total.toLocaleString()}</span></div>
-                            </div>
-                            {bid.isEligibleForAccept ? (
-                              <button
-                                type="button"
-                                onClick={() => onAcceptBid(req._id, bid._id)}
-                                className="w-full h-11 rounded-xl bg-emerald-600 text-white text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer"
-                              >
-                                <ShieldCheck className="w-4 h-4" /> Choose this vendor · Pay ₹{total.toLocaleString()}
-                              </button>
+              return (
+                <div
+                  key={req._id}
+                  className="bg-white rounded-3xl border border-slate-200/90 overflow-hidden shadow-xs hover:shadow-md transition-all duration-200 flex flex-col"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setExpandedId(expanded ? null : req._id)}
+                    className="w-full text-left cursor-pointer group"
+                  >
+                    {/* Card Cover Image */}
+                    <div className="relative h-[160px] sm:h-[180px] bg-slate-100 overflow-hidden">
+                      {cover ? (
+                        <img
+                          src={cover}
+                          alt={req.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-400">
+                          <Calendar className="w-10 h-10" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
+
+                      {/* Status Badge */}
+                      <span
+                        className={`absolute top-3 left-3 px-3 py-1 rounded-full text-[11px] font-black tracking-wide shadow-xs ${
+                          open
+                            ? 'bg-[#fff7ed] text-[#f07d4a] border border-[#ffd7c2]'
+                            : req.status === 'ACCEPTED' || req.status === 'ACTIVE'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : 'bg-white text-slate-700 border border-slate-200'
+                        }`}
+                      >
+                        {req.status}
+                      </span>
+
+                      {/* Category Tag on Image */}
+                      <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md text-white text-[10px] font-bold">
+                        {req.category}
+                      </span>
+
+                      {/* Bottom Info on Image */}
+                      <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white text-xs font-bold">
+                        <span className="inline-flex items-center gap-1 drop-shadow-sm">
+                          <MapPin className="w-3.5 h-3.5 text-amber-300" />
+                          {req.location?.area || req.location?.city || 'Location TBA'}
+                        </span>
+                        <span className="inline-flex items-center gap-1 drop-shadow-sm">
+                          <Users className="w-3.5 h-3.5 text-amber-300" />
+                          {req.guestCount || 50} guests
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Card Body */}
+                    <div className="p-4 sm:p-5">
+                      <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                        {req.eventType && (
+                          <span className="px-2 py-0.5 rounded-full bg-slate-100 text-[10.5px] font-bold text-slate-700">
+                            {req.eventType}
+                          </span>
+                        )}
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500">
+                          <Calendar className="w-3 h-3" />
+                          {formatDate(req.eventDate)}
+                        </span>
+                      </div>
+
+                      <h3 className="text-base sm:text-[17px] font-extrabold text-slate-900 leading-snug line-clamp-2">
+                        {req.title}
+                      </h3>
+
+                      {/* Budget vs Lowest Bid Block */}
+                      <div className="mt-4 p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                        <div>
+                          <p className="text-[10.5px] font-bold text-slate-500 uppercase tracking-wider">
+                            Max Budget
+                          </p>
+                          <p className="text-sm sm:text-base font-black text-slate-900">
+                            ₹{req.budget.toLocaleString()}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10.5px] font-bold text-slate-500 uppercase tracking-wider">
+                            {req.lowestBid ? 'Lowest Bid' : 'Bids'}
+                          </p>
+                          <p className="text-sm sm:text-base font-black text-emerald-600">
+                            {req.lowestBid ? (
+                              `₹${req.lowestBid.toLocaleString()}`
                             ) : (
-                              <p className="text-[10px] font-bold text-rose-700 text-center">Too high to accept. Bid must be ₹{req.maxAcceptableBid.toLocaleString()} or less.</p>
+                              <span className="text-slate-600 text-xs font-bold">
+                                {bidCount > 0 ? `${bidCount} bids` : 'Awaiting bids'}
+                              </span>
                             )}
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Expand Action Footer */}
+                      <div className="mt-3.5 flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
+                        <span className="font-extrabold text-[#f07d4a] flex items-center gap-1">
+                          {req.status === 'ACCEPTED'
+                            ? 'Pay to confirm'
+                            : bidCount > 0
+                              ? `See bids (${bidCount})`
+                              : 'View request details'}
+                        </span>
+                        <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-[#f07d4a] group-hover:text-white transition">
+                          {expanded ? (
+                            <ChevronUp className="w-3.5 h-3.5" />
+                          ) : (
+                            <ChevronDown className="w-3.5 h-3.5" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Expanded Bids Section */}
+                  {expanded && (
+                    <div className="px-4 pb-4 sm:px-5 sm:pb-5 space-y-3 border-t border-slate-100 pt-4 bg-[#fafbfc]">
+                      {req.status === 'ACCEPTED' || req.status === 'ACTIVE' ? (
+                        <button
+                          type="button"
+                          onClick={onOpenBookings}
+                          className="w-full h-11 rounded-xl bg-[#f07d4a] hover:bg-[#de6a3a] text-white text-xs sm:text-sm font-extrabold cursor-pointer transition flex items-center justify-center gap-2 shadow-sm"
+                        >
+                          <ShieldCheck className="w-4 h-4" />
+                          <span>View Confirmed Booking in Escrow</span>
+                        </button>
+                      ) : bids.length === 0 ? (
+                        <div className="p-4 rounded-2xl bg-white border border-slate-200/80 text-center">
+                          <Sparkles className="w-5 h-5 text-[#f07d4a] mx-auto mb-1.5" />
+                          <p className="text-xs text-slate-600 font-semibold">
+                            Local vendors are reviewing your requirement.
+                          </p>
+                          <p className="text-[11px] text-slate-400 mt-0.5">
+                            Eligible bids must be at least 15% below ₹{req.budget.toLocaleString()}.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2.5">
+                          <p className="text-xs font-bold text-slate-700">
+                            Competing Vendor Bids ({bids.length})
+                          </p>
+                          {bids.map((bid) => {
+                            const fee = Math.round(bid.amount * 0.1);
+                            const total = bid.amount + fee;
+
+                            return (
+                              <div
+                                key={bid._id}
+                                className="rounded-2xl border border-slate-200 bg-white p-3.5 space-y-2.5 shadow-2xs"
+                              >
+                                <div className="flex items-center justify-between gap-2">
+                                  <p className="text-sm font-extrabold text-slate-900 truncate">
+                                    {bid.providerId?.businessName ||
+                                      bid.providerId?.name ||
+                                      'Verified Vendor'}
+                                  </p>
+                                  <span
+                                    className={`text-[10px] font-black px-2 py-0.5 rounded-full shrink-0 ${
+                                      bid.isEligibleForAccept
+                                        ? 'bg-emerald-100 text-emerald-800'
+                                        : 'bg-rose-100 text-rose-800'
+                                    }`}
+                                  >
+                                    {bid.discountPercent}% OFF
+                                  </span>
+                                </div>
+
+                                {bid.proposalNotes && (
+                                  <p className="text-xs text-slate-600 italic bg-slate-50 p-2 rounded-xl border border-slate-100">
+                                    “{bid.proposalNotes}”
+                                  </p>
+                                )}
+
+                                <div className="text-xs space-y-1 bg-slate-50/70 p-2.5 rounded-xl border border-slate-100">
+                                  <div className="flex justify-between text-slate-600">
+                                    <span>Vendor bid</span>
+                                    <span className="font-bold text-slate-900">
+                                      ₹{bid.amount.toLocaleString()}
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between text-slate-500 text-[11px]">
+                                    <span>EzzyGo fee (10%)</span>
+                                    <span>+₹{fee.toLocaleString()}</span>
+                                  </div>
+                                  <div className="flex justify-between font-extrabold pt-1.5 border-t border-slate-200 text-slate-900">
+                                    <span>You pay</span>
+                                    <span className="text-emerald-700 font-black">
+                                      ₹{total.toLocaleString()}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {bid.isEligibleForAccept ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => onAcceptBid(req._id, bid._id)}
+                                    className="w-full h-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer shadow-sm transition active:scale-95"
+                                  >
+                                    <ShieldCheck className="w-4 h-4" />
+                                    <span>Choose this vendor · Pay ₹{total.toLocaleString()}</span>
+                                  </button>
+                                ) : (
+                                  <p className="text-[11px] font-bold text-rose-700 text-center bg-rose-50 p-2 rounded-xl border border-rose-200">
+                                    Too high to accept. Bid must be ₹{req.maxAcceptableBid.toLocaleString()} or less.
+                                  </p>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>

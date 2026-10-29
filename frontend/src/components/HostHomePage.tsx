@@ -148,9 +148,9 @@ export const HostHomePage: React.FC<HostHomePageProps> = ({
     <div className="bg-[#f5f6f8] min-h-screen pb-4 lg:pb-12">
       {/* Mobile hero — app layout */}
       <section className="lg:hidden relative h-[50vh] min-h-[340px] max-h-[460px] rounded-b-[28px] overflow-hidden shadow-[0_6px_18px_rgba(0,0,0,0.12)]">
-        <img src="/hero_wedding_bg.jpg" alt="" className="absolute inset-0 w-full h-full object-cover object-right" />
-        <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/85 to-transparent" />
-        <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white/85 to-transparent" />
+        <img src="/hero_wedding_4k.jpg" alt="4K Indian Wedding Setup" className="absolute inset-0 w-full h-full object-cover object-[center_35%]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/45 to-black/20" />
+        <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/60 to-transparent" />
 
         <div className="relative z-10 flex items-center gap-2 px-4 pt-3">
           <EzzyGoLogo size="sm" showBadge={false} />
@@ -187,14 +187,14 @@ export const HostHomePage: React.FC<HostHomePageProps> = ({
           </span>
         </div>
 
-        <div className="absolute left-5 right-5 bottom-5">
-          <span className="inline-block px-2 py-[3px] rounded-md bg-[#17233d] text-white text-[9px] font-black tracking-[0.7px]">
+        <div className="absolute left-5 right-5 bottom-5 z-10 text-white">
+          <span className="inline-block px-2.5 py-1 rounded-md bg-[#f07d4a] text-white text-[9.5px] font-black tracking-wider uppercase shadow-xs">
             REVERSE BIDDING
           </span>
-          <h1 className="mt-2 text-[22.5px] font-black text-[#111827] leading-[1.15] tracking-tight">
+          <h1 className="mt-2 text-[23px] font-black text-white leading-[1.15] tracking-tight drop-shadow-md">
             Post your budget.<br />Vendors bid lower.
           </h1>
-          <p className="mt-1 text-lg font-extrabold text-[#f07d4a]">You pick the best one.</p>
+          <p className="mt-1 text-lg font-extrabold text-amber-300 drop-shadow-sm">You pick the best one.</p>
           <div className="mt-3 flex items-end justify-between">
             <button
               type="button"
@@ -204,7 +204,7 @@ export const HostHomePage: React.FC<HostHomePageProps> = ({
               Post Requirement
               <ArrowRight className="w-4 h-4" />
             </button>
-            <span className="px-2.5 py-1 rounded-xl bg-white/92 border border-gray-200 text-[11px] font-extrabold text-gray-800">1/3</span>
+            <span className="px-2.5 py-1 rounded-xl bg-black/40 backdrop-blur-md border border-white/20 text-[11px] font-extrabold text-white">4K Ultra HD</span>
           </div>
         </div>
       </section>
@@ -212,13 +212,21 @@ export const HostHomePage: React.FC<HostHomePageProps> = ({
       {/* Desktop hero — original website layout */}
       <section className="hidden lg:block relative w-full overflow-hidden bg-[#fdfbf7] pt-32 xl:pt-36 pb-14 xl:pb-16">
         <div
-          className="absolute inset-0 w-full h-full bg-cover bg-right bg-no-repeat pointer-events-none"
-          style={{ backgroundImage: `url('/hero_wedding_bg.jpg')` }}
+          className="absolute inset-0 w-full h-full bg-cover bg-[center_35%] bg-no-repeat pointer-events-none"
+          style={{ backgroundImage: `url('/hero_wedding_4k.jpg')` }}
         >
-          <div className="w-full h-full bg-gradient-to-r from-[#f8fafc] via-[#f8fafc]/80 lg:via-[#f8fafc]/45 to-transparent" />
+          <div className="w-full h-full bg-gradient-to-r from-[#fffdfa]/95 via-[#fffdfa]/80 lg:via-[#fffdfa]/35 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#fdfbf7] to-transparent" />
         </div>
         <div className="relative z-10 w-full max-w-[1600px] mx-auto px-8 lg:px-14">
-          <div className="max-w-3xl space-y-5">
+          <div className="grid grid-cols-12 gap-8 items-center">
+            <div className="col-span-12 xl:col-span-8 space-y-5">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/95 backdrop-blur-md border border-amber-200/80 shadow-xs text-xs font-black text-[#17233d]">
+                <Sparkles className="w-3.5 h-3.5 text-[#f07d4a]" />
+                <span>India&#39;s #1 Event Marketplace</span>
+                <span className="text-slate-300">•</span>
+                <span className="text-emerald-700 font-extrabold">Min. 15% Savings Guaranteed</span>
+              </div>
             <h1 className="font-display text-5xl xl:text-[68px] font-extrabold text-[#0f172a] leading-[1.12] tracking-tight">
               Post your budget.<br />
               Vendors bid lower.<br />
@@ -282,6 +290,28 @@ export const HostHomePage: React.FC<HostHomePageProps> = ({
                 <span>Post Requirement</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
+            </div>
+          </div>
+
+          {/* Right side floating 4K Spotlight Pill Card */}
+            <div className="hidden xl:flex flex-col items-end justify-center col-span-4">
+              <div className="bg-white/90 backdrop-blur-md border border-white/70 p-4 rounded-3xl shadow-xl shadow-slate-950/10 max-w-xs space-y-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-[#f07d4a]" /> 4K Ultra HD Decor
+                  </span>
+                  <span className="text-[11px] font-black text-emerald-600 flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Live Bidding
+                  </span>
+                </div>
+                <p className="text-xs font-extrabold text-slate-900 leading-snug">
+                  Heritage Royal Mandap & Palace Courtyard Decor
+                </p>
+                <div className="flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-100">
+                  <span className="font-bold text-slate-700">★ 4.9 (420+ Events)</span>
+                  <span className="text-[#f07d4a] font-extrabold">Save 15%+</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

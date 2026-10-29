@@ -189,7 +189,7 @@ function HostApp({
 
   // Data State
   const [categories, setCategories] = useState<Category[]>([]);
-  const [occasions, setOccasions] = useState<Occasion[]>([]);
+  const [, setOccasions] = useState<Occasion[]>([]);
   const [banners, setBanners] = useState<Banner[]>([]);
   const [requirements, setRequirements] = useState<Requirement[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -718,15 +718,14 @@ function HostApp({
             onRaiseDispute={handleRaiseDispute}
           />
         ) : page === 'events' ? (
-          <div className="lg:max-w-3xl lg:mx-auto lg:pt-6">
-            <MyEventsPage
-              requirements={requirements}
-              onOpenPostModal={() => handleOpenPostModal()}
-              onAcceptBid={handleAcceptBid}
-              onOpenBookings={handleOpenBookings}
-              onRefresh={refreshMine}
-            />
-          </div>
+          <MyEventsPage
+            requirements={requirements}
+            onOpenPostModal={() => handleOpenPostModal()}
+            onAcceptBid={handleAcceptBid}
+            onOpenBookings={handleOpenBookings}
+            onRefresh={refreshMine}
+            onBack={() => goTo('home')}
+          />
         ) : page === 'occasions' ? (
           <OccasionCatalogScreen
             onBack={handleCatalogBack}

@@ -76,6 +76,7 @@ export interface Banner {
   subtitle?: string;
   badge?: string;
   imageUrl: string;
+  desktopImageUrl?: string;
   targetUrl?: string;
   ctaText?: string;
   city?: string;

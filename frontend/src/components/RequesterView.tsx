@@ -31,7 +31,6 @@ import {
   X,
   Headphones,
   ArrowDown,
-  ArrowUpRight,
   Percent,
   Package,
   Minus,
@@ -388,7 +387,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
         
         <div 
           className="absolute inset-0 w-full h-full bg-cover bg-[center_right] lg:bg-right bg-no-repeat pointer-events-none opacity-80 sm:opacity-100"
-          style={{ backgroundImage: `url('/hero_wedding_bg.jpg')` }}
+          style={{ backgroundImage: `url('/hero_wedding_4k.jpg')` }}
         >
           <div className="w-full h-full bg-gradient-to-r from-[#f8fafc] via-[#f8fafc]/98 sm:via-[#f8fafc]/95 md:via-[#f8fafc]/80 lg:via-[#f8fafc]/45 to-transparent" />
         </div>
@@ -985,7 +984,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
           {/* Right Seamless Gazebo Backdrop with Luxury Radial Alpha Mask */}
           <div className="absolute top-0 right-0 w-full lg:w-3/5 h-full opacity-40 lg:opacity-55 [mask-image:radial-gradient(ellipse_at_top_right,black_30%,transparent_75%)]">
             <img 
-              src="/hero_wedding_bg.jpg" 
+              src="/hero_wedding_4k.jpg" 
               alt="Luxury Floral Mandap Gazebo" 
               className="w-full h-full object-cover object-right-top filter saturate-110"
             />
