@@ -171,31 +171,79 @@ class RequirementDetailSheet extends StatelessWidget {
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [AppTheme.primaryLight, Colors.orange.shade50],
+                        colors: [
+                          hasBids ? AppTheme.emeraldLight : AppTheme.primaryLight,
+                          hasBids ? Colors.teal.shade50 : Colors.orange.shade50,
+                        ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: hasBids
+                            ? AppTheme.emerald.withValues(alpha: 0.3)
+                            : AppTheme.primary.withValues(alpha: 0.3),
+                      ),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Column(
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Your Budget Ceiling', style: TextStyle(fontSize: 11, color: AppTheme.slate600, fontWeight: FontWeight.w600)),
-                            Text('₹${req.budget}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.slate900)),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Your Budget Ceiling', style: TextStyle(fontSize: 11, color: AppTheme.slate600, fontWeight: FontWeight.w600)),
+                                Text('₹${req.budget}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.slate900)),
+                              ],
+                            ),
+                            Container(width: 1, height: 32, color: (hasBids ? AppTheme.emerald : AppTheme.primary).withValues(alpha: 0.3)),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  hasBids ? 'Lowest Active Bid' : 'Guaranteed Max Bid (15% OFF)',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: hasBids ? AppTheme.emerald : AppTheme.primaryDark,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                Text(
+                                  hasBids
+                                      ? '₹${req.lowestBid ?? (req.bids.isNotEmpty ? req.bids.map((b) => b.amount).reduce((a, b) => a < b ? a : b) : req.maxAcceptableBid)}'
+                                      : '₹${req.maxAcceptableBid}',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w900,
+                                    color: hasBids ? AppTheme.emerald : AppTheme.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ],
                         ),
-                        Container(width: 1, height: 32, color: AppTheme.primary.withValues(alpha: 0.3)),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            const Text('Guaranteed Max Bid (15% OFF)', style: TextStyle(fontSize: 11, color: AppTheme.primaryDark, fontWeight: FontWeight.w700)),
-                            Text('₹${req.maxAcceptableBid}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.primary)),
-                          ],
-                        ),
+                        if (hasBids) ...[
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.8),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(LucideIcons.sparkles, size: 13, color: AppTheme.emerald),
+                                const SizedBox(width: 5),
+                                Text(
+                                  'Live Savings: ₹${req.budget - (req.lowestBid ?? req.bids.map((b) => b.amount).reduce((a, b) => a < b ? a : b))} (${req.budget > 0 ? (((req.budget - (req.lowestBid ?? req.bids.map((b) => b.amount).reduce((a, b) => a < b ? a : b))) / req.budget) * 100).round() : 0}% OFF)',
+                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppTheme.emerald),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),

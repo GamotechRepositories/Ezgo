@@ -156,11 +156,20 @@ export const updateRequirement = async (req, res, next) => {
       requirement.maxAcceptableBid = Math.floor(numBudget * 0.85);
     }
 
+    const allBids = await Bid.find({ requirementId: requirement._id }).sort({ amount: 1 });
+    if (allBids.length > 0) {
+      requirement.lowestBid = Math.min(...allBids.map((b) => b.amount));
+      requirement.bidsCount = allBids.length;
+    }
     await requirement.save();
 
     const populated = await Requirement.findById(requirement._id).populate('requesterId', 'name phone rating avatar');
-    broadcastRequirementUpdated(populated);
-    res.json({ success: true, message: 'Request updated successfully.', data: populated });
+    const populatedObj = populated.toObject();
+    populatedObj.bids = allBids;
+    populatedObj.lowestBid = requirement.lowestBid;
+    populatedObj.bidsCount = requirement.bidsCount;
+    broadcastRequirementUpdated(populatedObj);
+    res.json({ success: true, message: 'Request updated successfully.', data: populatedObj });
   } catch (error) {
     next(error);
   }
@@ -273,10 +282,16 @@ export const getRequirements = async (req, res, next) => {
       .populate('providerId', 'name businessName phone rating reviewCount completedJobs isVerified avatar bankDetails')
       .lean();
 
-    const reqsWithBids = requirements.map((r) => ({
-      ...r,
-      bids: allBids.filter((b) => b.requirementId.toString() === r._id.toString()),
-    }));
+    const reqsWithBids = requirements.map((r) => {
+      const bids = allBids.filter((b) => b.requirementId.toString() === r._id.toString());
+      const lowestBid = bids.length > 0 ? Math.min(...bids.map((b) => b.amount)) : (r.lowestBid || null);
+      return {
+        ...r,
+        bids,
+        lowestBid,
+        bidsCount: bids.length,
+      };
+    });
 
     res.json({ success: true, count: reqsWithBids.length, data: reqsWithBids });
   } catch (error) {

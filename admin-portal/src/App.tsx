@@ -202,7 +202,18 @@ function AdminApp({
 
     const handleReqUpdated = (updatedReq: any) => {
       setRequirements((prev) =>
-        prev.map((r) => (String(r._id) === String(updatedReq._id) ? { ...r, ...updatedReq } : r))
+        prev.map((r) => {
+          if (String(r._id) === String(updatedReq._id)) {
+            return {
+              ...r,
+              ...updatedReq,
+              bids: updatedReq.bids ?? r.bids,
+              lowestBid: updatedReq.lowestBid !== undefined ? updatedReq.lowestBid : r.lowestBid,
+              bidsCount: updatedReq.bidsCount !== undefined ? updatedReq.bidsCount : r.bidsCount,
+            };
+          }
+          return r;
+        })
       );
     };
 
@@ -212,11 +223,13 @@ function AdminApp({
           if (String(req._id) === String(data.requirementId)) {
             const existingBids = req.bids || [];
             const filteredBids = existingBids.filter((b: any) => String(b._id) !== String(data.bid?._id));
+            const newBids = data.bid ? [data.bid, ...filteredBids] : existingBids;
+            const computedLowest = data.lowestBid ?? (newBids.length > 0 ? Math.min(...newBids.map((b: any) => b.amount)) : req.lowestBid);
             return {
               ...req,
-              lowestBid: data.lowestBid,
-              bidsCount: data.bidsCount,
-              bids: data.bid ? [data.bid, ...filteredBids] : existingBids,
+              lowestBid: computedLowest,
+              bidsCount: data.bidsCount ?? newBids.length,
+              bids: newBids,
             };
           }
           return req;
@@ -510,6 +523,20 @@ function AdminApp({
     }
   };
 
+  const handleUpdateRequirement = async (id: string, data: Partial<any>) => {
+    try {
+      const res = await api.updateRequirement(id, data);
+      const updated = res.data || res;
+      setRequirements((prev) =>
+        prev.map((r) => (r._id === id ? { ...r, ...updated, bids: updated.bids ?? r.bids } : r))
+      );
+      addToast('success', 'Price Updated', 'Requirement budget and ceiling updated successfully.');
+    } catch (err: any) {
+      addToast('error', 'Could not update requirement', err.message);
+      throw err;
+    }
+  };
+
   const handleUpdateUserRole = async (userId: string, newRole: string) => {
     try {
       const updated = await api.updateUserRole(userId, newRole);
@@ -594,6 +621,7 @@ function AdminApp({
             <RequirementManager
               requirements={requirements}
               onDeleteRequirement={handleDeleteRequirement}
+              onUpdateRequirement={handleUpdateRequirement}
               onRefresh={loadData}
             />
           )}

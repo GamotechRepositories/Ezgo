@@ -209,6 +209,9 @@ export const api = {
   deleteRequirement: (id: string) =>
     request<{ success: boolean; message: string }>(`/requirements/${id}`, { method: 'DELETE' }, 'Could not delete requirement'),
 
+  updateRequirement: (id: string, data: Partial<any>) =>
+    request<any>(`/requirements/${id}`, json('PUT', data), 'Could not update requirement'),
+
   getAllUsers: (params?: { search?: string; role?: string; city?: string }) => {
     const query = new URLSearchParams();
     if (params?.search) query.set('search', params.search);
