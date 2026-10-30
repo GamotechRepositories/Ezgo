@@ -119,7 +119,7 @@ export const CardImageGallery: React.FC<CardImageGalleryProps> = ({
               className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-black/60 hover:bg-[#ff5c28] text-white backdrop-blur-md flex items-center justify-center opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 cursor-pointer shadow-md active:scale-90"
             >
               <ChevronLeft className="w-4 h-4" />
-            </button>
+             </button>
 
             <button
               type="button"
