@@ -8,6 +8,7 @@ import '../../data/event_services.dart';
 import '../../models/requirement_model.dart';
 import '../../providers/requirements_provider.dart';
 import '../../utils/app_nav.dart';
+import '../../widgets/app_cached_image.dart';
 import '../../widgets/shell_bottom_insets.dart';
 
 class PostRequirementScreen extends StatefulWidget {
@@ -510,24 +511,12 @@ class _PostRequirementScreenState extends State<PostRequirementScreen> {
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(10),
-                      child: Image.asset(
-                        service['asset'] as String,
+                      child: AppCachedImage(
+                        imageUrl: service['image'] as String?,
+                        fallbackAsset: service['asset'] as String?,
                         width: 56,
                         height: 56,
                         fit: BoxFit.cover,
-                        filterQuality: FilterQuality.high,
-                        errorBuilder: (_, _, _) => Image.network(
-                          service['image'] as String,
-                          width: 56,
-                          height: 56,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => Container(
-                            width: 56,
-                            height: 56,
-                            color: AppTheme.slate100,
-                            child: const Icon(LucideIcons.image, size: 20, color: AppTheme.slate400),
-                          ),
-                        ),
                       ),
                     ),
                     const SizedBox(width: 14),

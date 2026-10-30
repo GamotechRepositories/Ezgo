@@ -82,7 +82,7 @@ class _FlipkartBottomNavState extends State<FlipkartBottomNav> {
   }
 
   void _commit(int index) {
-    HapticFeedback.heavyImpact();
+    HapticFeedback.lightImpact();
     setState(() => _indicatorIndex = index.toDouble());
     widget.onTap(index);
     WidgetsBinding.instance.addPostFrameCallback((_) {

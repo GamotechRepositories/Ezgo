@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../config/theme.dart';
 import '../data/event_services.dart';
+import 'app_cached_image.dart';
 
 class EventServiceCard extends StatelessWidget {
   final EventService service;
@@ -52,16 +53,13 @@ class EventServiceCard extends StatelessWidget {
       child: SizedBox(
         width: double.infinity,
         height: height,
-        child: Image.asset(
-          service.asset,
+        child: AppCachedImage(
+          imageUrl: service.image,
+          fallbackAsset: service.asset,
           fit: BoxFit.cover,
-          errorBuilder: (_, _, _) => Image.network(
-            service.image,
-            fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => ColoredBox(
-              color: accent.withValues(alpha: 0.12),
-              child: Icon(service.icon, color: accent, size: 28),
-            ),
+          errorWidget: ColoredBox(
+            color: accent.withValues(alpha: 0.12),
+            child: Icon(service.icon, color: accent, size: 28),
           ),
         ),
       ),

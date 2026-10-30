@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../config/theme.dart';
 
 /// Pull-down refresh, plus a refresh when the user overscrolls at the bottom.
@@ -23,6 +24,7 @@ class _PullRefreshState extends State<PullRefresh> {
   Future<void> _run() async {
     if (_busy) return;
     _busy = true;
+    HapticFeedback.lightImpact();
     try {
       await widget.onRefresh();
     } finally {

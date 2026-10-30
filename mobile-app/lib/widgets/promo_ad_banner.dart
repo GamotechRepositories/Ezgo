@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../config/theme.dart';
 import '../models/banner_model.dart';
+import 'app_cached_image.dart';
 
 class PromoAdBanner extends StatefulWidget {
   final List<BannerModel> banners;
@@ -300,10 +301,6 @@ class _AdPhoto extends StatelessWidget {
   final BannerModel banner;
   const _AdPhoto({required this.banner});
 
-  static const _headers = {
-    'User-Agent': 'Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
-  };
-
   @override
   Widget build(BuildContext context) {
     final url = banner.resolvedImageUrl;
@@ -318,15 +315,11 @@ class _AdPhoto extends StatelessWidget {
 
     if (!url.startsWith('http')) return fallback();
 
-    return Image.network(
-      url,
+    return AppCachedImage(
+      imageUrl: url,
+      fallbackAsset: banner.assetFallback,
       fit: BoxFit.cover,
-      alignment: Alignment.centerRight,
-      gaplessPlayback: true,
-      filterQuality: FilterQuality.high,
-      cacheWidth: cacheWidth,
-      headers: _headers,
-      errorBuilder: (_, _, _) => fallback(),
+      memCacheWidth: cacheWidth,
     );
   }
 }

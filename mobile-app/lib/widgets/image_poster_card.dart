@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../config/theme.dart';
+import 'app_cached_image.dart';
 
 class ImagePosterCard extends StatelessWidget {
   final String title;
@@ -43,12 +44,10 @@ class ImagePosterCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Image.asset(
-              asset,
+            AppCachedImage(
+              imageUrl: networkImage,
+              fallbackAsset: asset,
               fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => networkImage != null
-                  ? Image.network(networkImage!, fit: BoxFit.cover)
-                  : Container(color: AppTheme.primaryLight),
             ),
             const DecoratedBox(
               decoration: BoxDecoration(

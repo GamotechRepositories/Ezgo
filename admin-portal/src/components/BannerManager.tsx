@@ -188,13 +188,13 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200/90 shadow-sm">
         <div className="space-y-1">
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-slate-100 text-[#17233d] flex items-center justify-center shadow-xs">
+            <div className="w-10 h-10 rounded-2xl bg-slate-100 text-[#ff5c28] flex items-center justify-center shadow-xs">
               <Megaphone className="w-5 h-5 stroke-[2.2]" />
             </div>
             <div>
               <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
                 <span>Promotional Banners & Ads</span>
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-50 text-[#17233d] border border-slate-200 font-bold">
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-50 text-[#ff5c28] border border-slate-200 font-bold">
                   User Side
                 </span>
               </h2>
@@ -207,7 +207,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
 
         <button
           onClick={handleOpenCreateModal}
-          className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-[#f07d4a] to-orange-500 hover:from-[#de6a3a] hover:to-[#f07d4a] text-white text-xs sm:text-sm font-black shadow-md shadow-slate-900/15 transition active:scale-95 cursor-pointer shrink-0"
+          className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-[#ff5c28] to-orange-500 hover:from-[#e64814] hover:to-[#ff5c28] text-white text-xs sm:text-sm font-black shadow-md shadow-slate-900/15 transition active:scale-95 cursor-pointer shrink-0"
         >
           <Plus className="w-4 h-4 stroke-[3]" />
           <span>+ Add New Ad Banner</span>
@@ -216,14 +216,14 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="bg-white p-4 rounded-2xl border border-slate-200 flex items-start gap-3">
-          <Smartphone className="w-5 h-5 text-[#17233d] shrink-0 mt-0.5" />
+          <Smartphone className="w-5 h-5 text-[#ff5c28] shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-black text-slate-900">Mobile app banner</p>
             <p className="text-xs text-slate-600 mt-0.5">Exact size: <span className="font-bold text-slate-900">1080 × 540 px</span> (2:1) · JPG / PNG / WebP · max 4 MB</p>
           </div>
         </div>
         <div className="bg-white p-4 rounded-2xl border border-slate-200 flex items-start gap-3">
-          <Monitor className="w-5 h-5 text-[#17233d] shrink-0 mt-0.5" />
+          <Monitor className="w-5 h-5 text-[#ff5c28] shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-black text-slate-900">Desktop website banner</p>
             <p className="text-xs text-slate-600 mt-0.5">Exact size: <span className="font-bold text-slate-900">1920 × 600 px</span> (16:5) · JPG / PNG / WebP · max 4 MB</p>
@@ -255,7 +255,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-2xs">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none text-xs">
           <span className="text-slate-500 font-bold mr-1 flex items-center gap-1">
-            <MapPin className="w-3.5 h-3.5 text-[#17233d]" />
+            <MapPin className="w-3.5 h-3.5 text-[#ff5c28]" />
             <span>Target City:</span>
           </span>
           {['ALL', 'Pune', 'Mumbai', 'Hyderabad', 'Bengaluru', 'Delhi NCR'].map((c) => (
@@ -264,7 +264,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
               onClick={() => setFilterCity(c)}
               className={`px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer ${
                 filterCity === c
-                  ? 'bg-[#f07d4a] text-white shadow-xs'
+                  ? 'bg-[#ff5c28] text-white shadow-xs'
                   : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
               }`}
             >
@@ -275,7 +275,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
 
         <div className="flex items-center gap-1.5 text-xs">
           <span className="text-slate-500 font-bold mr-1 flex items-center gap-1">
-            <Layers className="w-3.5 h-3.5 text-[#17233d]" />
+            <Layers className="w-3.5 h-3.5 text-[#ff5c28]" />
             <span>Placement:</span>
           </span>
           {[
@@ -301,7 +301,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
       {/* Ad Banners Grid */}
       {filteredBanners.length === 0 ? (
         <div className="bg-white rounded-3xl border border-dashed border-slate-300 p-12 text-center space-y-4">
-          <div className="w-16 h-16 rounded-2xl bg-slate-50 text-[#17233d] flex items-center justify-center mx-auto">
+          <div className="w-16 h-16 rounded-2xl bg-slate-50 text-[#ff5c28] flex items-center justify-center mx-auto">
             <Megaphone className="w-8 h-8" />
           </div>
           <h3 className="text-lg font-bold text-slate-900">No advertisements found</h3>
@@ -310,7 +310,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
           </p>
           <button
             onClick={handleOpenCreateModal}
-            className="px-5 py-2.5 rounded-full bg-[#f07d4a] hover:bg-[#de6a3a] text-white text-xs font-bold shadow-sm inline-flex items-center gap-1.5 cursor-pointer"
+            className="px-5 py-2.5 rounded-full bg-[#ff5c28] hover:bg-[#e64814] text-white text-xs font-bold shadow-sm inline-flex items-center gap-1.5 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Create New Ad</span>
@@ -345,7 +345,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
 
                   {/* Top Badges */}
                   <div className="absolute top-3.5 inset-x-3.5 flex items-center justify-between">
-                    <span className="px-3 py-1 rounded-full bg-white/95 backdrop-blur-md text-[10px] font-black uppercase tracking-wider text-[#17233d] shadow-md flex items-center gap-1">
+                    <span className="px-3 py-1 rounded-full bg-white/95 backdrop-blur-md text-[10px] font-black uppercase tracking-wider text-[#ff5c28] shadow-md flex items-center gap-1">
                       <Sparkles className="w-3 h-3 text-slate-600" />
                       <span>{ad.badge || 'FEATURED'}</span>
                     </span>
@@ -413,7 +413,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
                     </p>
                     {ad.targetUrl && (
                       <div className="text-[11px] text-slate-500 font-medium truncate flex items-center gap-1 pt-1">
-                        <ExternalLink className="w-3 h-3 text-[#17233d] shrink-0" />
+                        <ExternalLink className="w-3 h-3 text-[#ff5c28] shrink-0" />
                         <span className="truncate">Links to: {ad.targetUrl}</span>
                       </div>
                     )}
@@ -475,7 +475,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
             
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-slate-100 text-[#17233d] flex items-center justify-center">
+                <div className="w-10 h-10 rounded-2xl bg-slate-100 text-[#ff5c28] flex items-center justify-center">
                   <Megaphone className="w-5 h-5" />
                 </div>
                 <div>
@@ -508,7 +508,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
                   placeholder="e.g. Grand Festive & Wedding Sound Setup"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-900 focus:outline-none focus:border-[#17233d] focus:bg-white transition"
+                  className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-900 focus:outline-none focus:border-[#ff5c28] focus:bg-white transition"
                 />
               </div>
 
@@ -522,7 +522,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
                   placeholder="e.g. High-output Line Arrays, JBL Bass & Pioneer Consoles with reverse-bidding savings."
                   value={subtitle}
                   onChange={(e) => setSubtitle(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-[#17233d] focus:bg-white transition"
+                  className="w-full px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-[#ff5c28] focus:bg-white transition"
                 />
               </div>
 
@@ -536,14 +536,14 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2 p-4 rounded-2xl bg-slate-50 border border-slate-200">
                   <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                    <Smartphone className="w-4 h-4 text-[#17233d]" />
+                    <Smartphone className="w-4 h-4 text-[#ff5c28]" />
                     Mobile banner <span className="text-rose-500">*</span>
                   </label>
                   <label className="block cursor-pointer">
                     {imageUrl ? (
                       <img src={imageUrl} alt="Mobile preview" className="w-full h-[120px] object-cover rounded-xl border border-slate-200" />
                     ) : (
-                      <div className="w-full h-[120px] rounded-xl border-2 border-dashed border-[#f07d4a]/50 bg-white flex flex-col items-center justify-center gap-1 px-3 text-center">
+                      <div className="w-full h-[120px] rounded-xl border-2 border-dashed border-[#ff5c28]/50 bg-white flex flex-col items-center justify-center gap-1 px-3 text-center">
                         <span className="text-[11px] font-bold text-slate-500">Click to upload</span>
                         <span className="text-sm font-black text-slate-900">1080 × 540 px</span>
                         <span className="text-[10px] text-slate-500">JPG / PNG / WebP · max 4 MB</span>
@@ -559,7 +559,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
                   </label>
                   <p className="text-[11px] font-bold text-slate-700 text-center">Required size: 1080 × 540 px</p>
                   {isUploading && uploadSlot === 'mobile' && (
-                    <p className="text-[11px] text-[#f07d4a] font-bold text-center">Uploading…</p>
+                    <p className="text-[11px] text-[#ff5c28] font-bold text-center">Uploading…</p>
                   )}
                   <input
                     type="url"
@@ -572,14 +572,14 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
 
                 <div className="space-y-2 p-4 rounded-2xl bg-slate-50 border border-slate-200">
                   <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                    <Monitor className="w-4 h-4 text-[#17233d]" />
+                    <Monitor className="w-4 h-4 text-[#ff5c28]" />
                     Desktop banner
                   </label>
                   <label className="block cursor-pointer">
                     {desktopImageUrl ? (
                       <img src={desktopImageUrl} alt="Desktop preview" className="w-full h-[120px] object-cover rounded-xl border border-slate-200" />
                     ) : (
-                      <div className="w-full h-[120px] rounded-xl border-2 border-dashed border-[#f07d4a]/50 bg-white flex flex-col items-center justify-center gap-1 px-3 text-center">
+                      <div className="w-full h-[120px] rounded-xl border-2 border-dashed border-[#ff5c28]/50 bg-white flex flex-col items-center justify-center gap-1 px-3 text-center">
                         <span className="text-[11px] font-bold text-slate-500">Click to upload</span>
                         <span className="text-sm font-black text-slate-900">1920 × 600 px</span>
                         <span className="text-[10px] text-slate-500">JPG / PNG / WebP · max 4 MB</span>
@@ -595,7 +595,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
                   </label>
                   <p className="text-[11px] font-bold text-slate-700 text-center">Required size: 1920 × 600 px</p>
                   {isUploading && uploadSlot === 'desktop' && (
-                    <p className="text-[11px] text-[#f07d4a] font-bold text-center">Uploading…</p>
+                    <p className="text-[11px] text-[#ff5c28] font-bold text-center">Uploading…</p>
                   )}
                   <input
                     type="url"
@@ -617,7 +617,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
                     value={badge}
                     onChange={(e) => setBadge(e.target.value)}
                     placeholder="e.g. SPONSORED, LIMITED"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#17233d]"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#ff5c28]"
                   />
                 </div>
 
@@ -629,7 +629,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
                     max="90"
                     value={discountPercent}
                     onChange={(e) => setDiscountPercent(Number(e.target.value))}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#17233d]"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#ff5c28]"
                   />
                 </div>
 
@@ -638,7 +638,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
                   <select
                     value={placement}
                     onChange={(e) => setPlacement(e.target.value as any)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#17233d]"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#ff5c28]"
                   >
                     <option value="hero_banner">Hero Ad (Right Side)</option>
                     <option value="featured_banner">Mid-Page Banner</option>
@@ -654,7 +654,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
                   <select
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#17233d]"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#ff5c28]"
                   >
                     <option value="ALL">All Cities (Pan-India)</option>
                     <option value="Pune">Pune, MH</option>
@@ -674,7 +674,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
                     value={ctaText}
                     onChange={(e) => setCtaText(e.target.value)}
                     placeholder="e.g. Claim Deal / Book Now"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#17233d]"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#ff5c28]"
                   />
                 </div>
 
@@ -685,7 +685,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
                     value={targetUrl}
                     onChange={(e) => setTargetUrl(e.target.value)}
                     placeholder="#services-grid or URL"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#17233d]"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#ff5c28]"
                   />
                 </div>
               </div>
@@ -702,7 +702,7 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
                 <button
                   type="submit"
                   disabled={saving || !title.trim() || (!imageUrl.trim() && !desktopImageUrl.trim())}
-                  className="px-7 py-2.5 rounded-xl bg-gradient-to-r from-[#f07d4a] to-orange-500 hover:from-[#de6a3a] hover:to-[#f07d4a] text-white text-xs font-bold shadow-md shadow-slate-900/12 transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                  className="px-7 py-2.5 rounded-xl bg-gradient-to-r from-[#ff5c28] to-orange-500 hover:from-[#e64814] hover:to-[#ff5c28] text-white text-xs font-bold shadow-md shadow-slate-900/12 transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
                 >
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4 stroke-[3]" />}
                   <span>{editingBanner ? 'Save Changes' : 'Publish Ad Banner'}</span>

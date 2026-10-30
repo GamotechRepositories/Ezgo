@@ -5,6 +5,7 @@ import '../../config/theme.dart';
 import '../../models/requirement_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/requirements_provider.dart';
+import '../../widgets/app_shimmer.dart';
 import '../../widgets/pull_refresh.dart';
 import '../../widgets/requirement_card.dart';
 import '../../widgets/shell_bottom_insets.dart';
@@ -19,7 +20,9 @@ class LiveAuctionsScreen extends StatefulWidget {
   State<LiveAuctionsScreen> createState() => _LiveAuctionsScreenState();
 }
 
-class _LiveAuctionsScreenState extends State<LiveAuctionsScreen> {
+class _LiveAuctionsScreenState extends State<LiveAuctionsScreen> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
   final _search = TextEditingController();
   final _scroll = ScrollController();
   String _tab = 'MY_CITY';
@@ -120,6 +123,7 @@ class _LiveAuctionsScreenState extends State<LiveAuctionsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final auth = context.watch<AuthProvider>();
     final reqProvider = context.watch<RequirementsProvider>();
     final vendorCity = _vendorCity(auth);
@@ -266,9 +270,12 @@ class _LiveAuctionsScreenState extends State<LiveAuctionsScreen> {
           ),
           const SizedBox(height: 12),
           if (reqProvider.isLoading && openReqs.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 48),
-              child: Center(child: CircularProgressIndicator(color: AppTheme.primary)),
+            Column(
+              children: [
+                AppSkeletons.requirementCard(),
+                const SizedBox(height: 12),
+                AppSkeletons.requirementCard(),
+              ],
             )
           else if (filtered.isEmpty)
             VendorEmptyState(

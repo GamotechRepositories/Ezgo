@@ -160,4 +160,37 @@ class BookingModel {
       isContactRevealed: paid,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'requirementId': requirementId,
+      'bidId': bidId,
+      'requirementTitle': requirementTitle,
+      'category': category,
+      'eventDate': eventDate,
+      'locationText': locationText,
+      'bidAmount': bidAmount,
+      'platformFee': platformFee,
+      'totalPaid': totalPaid,
+      'status': status,
+      'hostName': hostName,
+      'hostPhone': hostPhone,
+      'hostEmail': hostEmail,
+      'hostAvatar': hostAvatar,
+      'vendorId': vendorId,
+      'vendorName': vendorName,
+      'vendorBusinessName': vendorBusinessName,
+      'vendorPhone': vendorPhone,
+      'vendorEmail': vendorEmail,
+      'vendorAvatar': vendorAvatar,
+      'vendorServiceArea': vendorServiceArea,
+      'vendorCategories': vendorCategories,
+      'vendorRating': vendorRating,
+      'vendorReviewCount': vendorReviewCount,
+      'vendorCompletedJobs': vendorCompletedJobs,
+      'vendorVerified': vendorVerified,
+      'isContactRevealed': isContactRevealed,
+    };
+  }
 }

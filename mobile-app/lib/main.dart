@@ -13,10 +13,15 @@ import 'providers/notifications_provider.dart';
 import 'providers/payments_provider.dart';
 import 'screens/splash_screen.dart';
 import 'widgets/live_updates_binder.dart';
+import 'services/cache_service.dart';
+import 'services/connectivity_service.dart';
+import 'widgets/offline_banner.dart';
 
 Future<void> main() async {
   await runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
+    await CacheService().init();
+    await ConnectivityService().init();
     _tuneForLowRam();
     _installErrorGuards();
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
@@ -119,7 +124,12 @@ class _TopSafeView extends StatelessWidget {
               padding: mq.padding.copyWith(top: 0),
               viewPadding: mq.viewPadding.copyWith(top: 0),
             ),
-            child: child,
+            child: Column(
+              children: [
+                const OfflineBanner(),
+                Expanded(child: child),
+              ],
+            ),
           ),
         ),
       ),

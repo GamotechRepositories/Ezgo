@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../config/theme.dart';
@@ -6,6 +7,7 @@ import '../../models/requirement_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/bookings_provider.dart';
 import '../../providers/requirements_provider.dart';
+import '../../widgets/app_shimmer.dart';
 import '../../widgets/event_request_card.dart';
 import '../../widgets/pull_refresh.dart';
 import '../../widgets/shell_bottom_insets.dart';
@@ -20,7 +22,9 @@ class MyEventsScreen extends StatefulWidget {
   State<MyEventsScreen> createState() => _MyEventsScreenState();
 }
 
-class _MyEventsScreenState extends State<MyEventsScreen> {
+class _MyEventsScreenState extends State<MyEventsScreen> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
   int _selectedFilterIndex = 0;
   final List<String> _filters = ['All', 'Open', 'With bids', 'Booked', 'Closed'];
   final ScrollController _scrollController = ScrollController();
@@ -97,6 +101,7 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final reqProvider = context.watch<RequirementsProvider>();
     final auth = context.watch<AuthProvider>();
     final allReqs = reqProvider.mine(auth.user?.id);
@@ -144,7 +149,10 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
                       final isSelected = _selectedFilterIndex == index;
                       final count = _countFor(index, allReqs);
                       return GestureDetector(
-                        onTap: () => setState(() => _selectedFilterIndex = index),
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          setState(() => _selectedFilterIndex = index);
+                        },
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
@@ -177,9 +185,13 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
                   ? ListView(
                       controller: _scrollController,
                       physics: const AlwaysScrollableScrollPhysics(),
-                      children: const [
-                        SizedBox(height: 120),
-                        Center(child: CircularProgressIndicator(color: AppTheme.primary)),
+                      padding: const EdgeInsets.all(16),
+                      children: [
+                        AppSkeletons.requirementCard(),
+                        const SizedBox(height: 12),
+                        AppSkeletons.requirementCard(),
+                        const SizedBox(height: 12),
+                        AppSkeletons.requirementCard(),
                       ],
                     )
                   : failed

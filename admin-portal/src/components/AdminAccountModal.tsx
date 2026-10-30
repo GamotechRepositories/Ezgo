@@ -179,7 +179,7 @@ export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({
                   {admin.name || 'Platform Administrator'}
                 </h2>
                 <span className="px-2.5 py-0.5 rounded-full bg-slate-500/15 text-orange-300 text-[11px] font-bold backdrop-blur-xs flex items-center gap-1 border border-orange-500/30">
-                  <ShieldCheck className="w-3 h-3 text-[#17233d]" />
+                  <ShieldCheck className="w-3 h-3 text-[#ff5c28]" />
                   Super Admin
                 </span>
               </div>
@@ -208,7 +208,7 @@ export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({
             onClick={() => setActiveTab('profile')}
             className={`py-3 px-3.5 font-bold text-xs sm:text-sm border-b-2 transition whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'profile'
-                ? 'border-[#17233d] text-[#17233d]'
+                ? 'border-[#ff5c28] text-[#ff5c28]'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
@@ -220,7 +220,7 @@ export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({
             onClick={() => setActiveTab('security')}
             className={`py-3 px-3.5 font-bold text-xs sm:text-sm border-b-2 transition whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'security'
-                ? 'border-[#17233d] text-[#17233d]'
+                ? 'border-[#ff5c28] text-[#ff5c28]'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
@@ -232,7 +232,7 @@ export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({
             onClick={() => setActiveTab('portals')}
             className={`py-3 px-3.5 font-bold text-xs sm:text-sm border-b-2 transition whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'portals'
-                ? 'border-[#17233d] text-[#17233d]'
+                ? 'border-[#ff5c28] text-[#ff5c28]'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
@@ -257,7 +257,7 @@ export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. Roshan Chaudhari"
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-hidden focus:border-[#17233d] focus:ring-2 focus:ring-[#17233d]/10 transition"
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-hidden focus:border-[#ff5c28] focus:ring-2 focus:ring-[#ff5c28]/10 transition"
                     required
                   />
                 </div>
@@ -274,7 +274,7 @@ export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="admin@ezzygo.in"
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-hidden focus:border-[#17233d] focus:ring-2 focus:ring-[#17233d]/10 transition"
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-hidden focus:border-[#ff5c28] focus:ring-2 focus:ring-[#ff5c28]/10 transition"
                   />
                 </div>
                 <p className="text-[11px] text-slate-400 mt-1">
@@ -294,7 +294,7 @@ export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="10-digit mobile number"
                     maxLength={10}
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-hidden focus:border-[#17233d] focus:ring-2 focus:ring-[#17233d]/10 transition"
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-hidden focus:border-[#ff5c28] focus:ring-2 focus:ring-[#ff5c28]/10 transition"
                   />
                 </div>
               </div>
@@ -303,7 +303,7 @@ export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-6 py-2.5 rounded-xl bg-[#f07d4a] hover:bg-[#de6a3a] active:scale-95 text-white font-bold text-sm shadow-md shadow-slate-900/12 transition flex items-center gap-2 cursor-pointer disabled:opacity-60"
+                  className="px-6 py-2.5 rounded-xl bg-[#ff5c28] hover:bg-[#e64814] active:scale-95 text-white font-bold text-sm shadow-md shadow-slate-900/12 transition flex items-center gap-2 cursor-pointer disabled:opacity-60"
                 >
                   {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                   <span>Save Administrator Details</span>
@@ -317,7 +317,7 @@ export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({
             <div className="space-y-4">
               <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-slate-100 text-[#17233d] flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-slate-100 text-[#ff5c28] flex items-center justify-center">
                     <ShieldCheck className="w-5 h-5" />
                   </div>
                   <div>
@@ -361,27 +361,27 @@ export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({
                     href={getUserPortalUrl()}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center justify-between p-3.5 rounded-xl bg-white border border-slate-200 hover:border-[#17233d] hover:shadow-sm transition group cursor-pointer"
+                    className="flex items-center justify-between p-3.5 rounded-xl bg-white border border-slate-200 hover:border-[#ff5c28] hover:shadow-sm transition group cursor-pointer"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-slate-50 text-[#17233d] flex items-center justify-center font-bold">
+                      <div className="w-9 h-9 rounded-xl bg-slate-50 text-[#ff5c28] flex items-center justify-center font-bold">
                         H
                       </div>
                       <div>
-                        <div className="text-sm font-bold text-slate-900 group-hover:text-[#17233d] transition">
+                        <div className="text-sm font-bold text-slate-900 group-hover:text-[#ff5c28] transition">
                           Host / Customer Portal
                         </div>
                         <div className="text-xs text-slate-500">Post event requirements & book vendors</div>
                       </div>
                     </div>
-                    <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-[#17233d]" />
+                    <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-[#ff5c28]" />
                   </a>
 
                   <a
                     href={getVendorPortalUrl()}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center justify-between p-3.5 rounded-xl bg-white border border-slate-200 hover:border-[#17233d] hover:shadow-sm transition group cursor-pointer"
+                    className="flex items-center justify-between p-3.5 rounded-xl bg-white border border-slate-200 hover:border-[#ff5c28] hover:shadow-sm transition group cursor-pointer"
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">

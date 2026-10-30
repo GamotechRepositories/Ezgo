@@ -14,6 +14,7 @@ import '../../providers/banners_provider.dart';
 import '../../providers/bookings_provider.dart';
 import '../../providers/notifications_provider.dart';
 import '../../providers/requirements_provider.dart';
+import '../../widgets/app_cached_image.dart';
 import '../../widgets/event_service_card.dart';
 import '../../widgets/ezzygo_logo.dart';
 import '../../widgets/image_poster_card.dart';
@@ -47,7 +48,9 @@ class HostHomeScreen extends StatefulWidget {
   State<HostHomeScreen> createState() => HostHomeScreenState();
 }
 
-class HostHomeScreenState extends State<HostHomeScreen> {
+class HostHomeScreenState extends State<HostHomeScreen> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
   final TextEditingController _searchController = TextEditingController();
   final formatCurrency = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
   final GlobalKey _servicesKey = GlobalKey();
@@ -131,6 +134,7 @@ class HostHomeScreenState extends State<HostHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final reqProvider = context.watch<RequirementsProvider>();
     final bannersProvider = context.watch<BannersProvider>();
     final auth = context.watch<AuthProvider>();
@@ -257,15 +261,10 @@ class HostHomeScreenState extends State<HostHomeScreen> {
         child: Stack(
           children: [
             Positioned.fill(
-              child: Image.asset(
-                'assets/images/hero_wedding_bg.jpg',
+              child: AppCachedImage(
+                imageUrl: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&auto=format&fit=crop&q=80',
+                fallbackAsset: 'assets/images/hero_wedding_bg.jpg',
                 fit: BoxFit.cover,
-                alignment: Alignment.centerRight,
-                filterQuality: FilterQuality.high,
-                errorBuilder: (_, _, _) => Image.network(
-                  'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&auto=format&fit=crop&q=80',
-                  fit: BoxFit.cover,
-                ),
               ),
             ),
             Positioned.fill(

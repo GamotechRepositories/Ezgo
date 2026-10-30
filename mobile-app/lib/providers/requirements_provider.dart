@@ -4,6 +4,7 @@ import '../config/api_config.dart';
 import '../models/bid_model.dart';
 import '../models/requirement_model.dart';
 import '../services/api_service.dart';
+import '../services/cache_service.dart';
 
 class RequirementsProvider extends ChangeNotifier {
   List<RequirementModel> _requirements = [];
@@ -103,6 +104,29 @@ class RequirementsProvider extends ChangeNotifier {
     });
   }
 
+  String _cacheKey(String? scoped, bool marketplace) =>
+      'reqs_${scoped ?? "all"}_$marketplace';
+
+  Future<void> _hydrateCache(String? scoped, bool marketplace) async {
+    final key = _cacheKey(scoped, marketplace);
+    final cached = await CacheService().get(key);
+    if (cached is List && _requirements.isEmpty) {
+      _requirements = cached.map((item) {
+        final map = Map<String, dynamic>.from(item as Map);
+        final parsedOwner = _idFrom(map['requesterId']);
+        if (parsedOwner.isEmpty && scoped != null && scoped.isNotEmpty) {
+          map['requesterId'] = scoped;
+        } else if (parsedOwner.isNotEmpty) {
+          map['requesterId'] = parsedOwner;
+        }
+        return RequirementModel.fromJson(map);
+      }).toList();
+      if (_requirements.isNotEmpty) {
+        notifyListeners();
+      }
+    }
+  }
+
   Future<void> loadData({String? requesterId, bool marketplace = false}) async {
     if (marketplace) {
       _scopedRequesterId = null;
@@ -116,10 +140,17 @@ class RequirementsProvider extends ChangeNotifier {
       return;
     }
 
+    final key = _cacheKey(scoped, marketplace);
+    if (_requirements.isEmpty) {
+      await _hydrateCache(scoped, marketplace);
+    }
+
     final seq = ++_loadSeq;
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
+    if (_requirements.isEmpty) {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+    }
 
     try {
       final query = scoped != null && scoped.isNotEmpty
@@ -142,14 +173,19 @@ class RequirementsProvider extends ChangeNotifier {
           return RequirementModel.fromJson(map);
         }).toList();
         _error = null;
+        await CacheService().set(key, list);
       } else {
-        _requirements = [];
-        _error = res is Map ? (res['message']?.toString()) : 'Could not load your events.';
+        if (_requirements.isEmpty) {
+          _error = res is Map ? (res['message']?.toString()) : 'Could not load your events.';
+        }
       }
     } catch (e) {
       if (seq != _loadSeq) return;
-      _requirements = [];
-      _error = e.toString();
+      if (_requirements.isEmpty) {
+        _error = e.toString();
+      } else {
+        debugPrint('Requirements load failed (retaining cache): $e');
+      }
     }
 
     if (seq != _loadSeq) return;
@@ -197,6 +233,7 @@ class RequirementsProvider extends ChangeNotifier {
     _requirements.removeWhere((r) => r.id == created.id);
     _requirements.insert(0, created);
     notifyListeners();
+    CacheService().set(_cacheKey(_scopedRequesterId, false), _requirements.map((r) => r.toJson()).toList());
     if (_scopedRequesterId != null && _scopedRequesterId!.isNotEmpty) {
       loadData(requesterId: _scopedRequesterId);
     }

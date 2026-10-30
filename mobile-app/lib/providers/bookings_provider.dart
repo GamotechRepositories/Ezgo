@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 import '../models/booking_model.dart';
 import '../services/api_service.dart';
+import '../services/cache_service.dart';
 import '../services/razorpay_checkout.dart';
 
 class BookingsProvider extends ChangeNotifier {
@@ -41,6 +42,20 @@ class BookingsProvider extends ChangeNotifier {
 
   BookingsProvider() {
     _ensureSeenLoaded();
+    _hydrateCache();
+  }
+
+  Future<void> _hydrateCache() async {
+    final cached = await CacheService().get('bookings_cache');
+    if (cached is List && _bookings.isEmpty) {
+      _bookings = cached
+          .whereType<Map>()
+          .map((item) => BookingModel.fromJson(Map<String, dynamic>.from(item)))
+          .toList();
+      if (_bookings.isNotEmpty) {
+        notifyListeners();
+      }
+    }
   }
 
   Future<void> _ensureSeenLoaded() async {
@@ -96,12 +111,11 @@ class BookingsProvider extends ChangeNotifier {
         _bookings = list
             .map((item) => BookingModel.fromJson(item as Map<String, dynamic>))
             .toList();
-      } else {
-        _bookings = [];
+        await CacheService().set('bookings_cache', list);
       }
-    } catch (_) {
+    } catch (e) {
       if (seq != _loadSeq) return;
-      _bookings = [];
+      debugPrint('Bookings load failed (retaining cache): $e');
     }
 
     if (seq != _loadSeq) return;

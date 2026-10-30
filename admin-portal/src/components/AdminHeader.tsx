@@ -181,9 +181,9 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                       setIsDropdownOpen(false);
                       onOpenAccountModal();
                     }}
-                    className="w-full text-left px-3 py-2 rounded-xl font-bold text-slate-800 hover:bg-[#f07d4a]/10 hover:text-[#17233d] transition flex items-center gap-2.5 cursor-pointer"
+                    className="w-full text-left px-3 py-2 rounded-xl font-bold text-slate-800 hover:bg-[#ff5c28]/10 hover:text-[#ff5c28] transition flex items-center gap-2.5 cursor-pointer"
                   >
-                    <UserIcon className="w-4 h-4 text-[#17233d]" />
+                    <UserIcon className="w-4 h-4 text-[#ff5c28]" />
                     <span>My Account & Admin Profile</span>
                   </button>
 

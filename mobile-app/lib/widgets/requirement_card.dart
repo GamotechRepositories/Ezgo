@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../config/theme.dart';
 import '../models/requirement_model.dart';
+import 'app_cached_image.dart';
 import 'vendor_ui.dart';
 
 class RequirementCard extends StatelessWidget {
@@ -60,18 +61,11 @@ class RequirementCard extends StatelessWidget {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      if (cover != null && cover.isNotEmpty)
-                        Image.network(
-                          cover,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => Image.asset(req.coverAsset, fit: BoxFit.cover),
-                        )
-                      else
-                        Image.asset(
-                          req.coverAsset,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => Container(color: AppTheme.slate100),
-                        ),
+                      AppCachedImage(
+                        imageUrl: cover,
+                        fallbackAsset: req.coverAsset,
+                        fit: BoxFit.cover,
+                      ),
                       const DecoratedBox(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(

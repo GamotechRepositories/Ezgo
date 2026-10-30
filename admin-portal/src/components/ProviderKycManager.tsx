@@ -131,7 +131,7 @@ export const ProviderKycManager: React.FC<ProviderKycManagerProps> = ({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by name, business, phone, or category"
-          className="w-full pl-10 pr-10 py-2.5 rounded-full bg-white border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#17233d]"
+          className="w-full pl-10 pr-10 py-2.5 rounded-full bg-white border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#ff5c28] focus:ring-2 focus:ring-[#ff5c28]/15"
         />
         {search && (
           <button
@@ -430,7 +430,7 @@ export const ProviderKycManager: React.FC<ProviderKycManagerProps> = ({
                             </div>
                           </div>
                           <span className="text-xs font-semibold text-slate-800">Aadhaar Front</span>
-                          <span className="text-xs text-[#17233d] font-medium mt-0.5 flex items-center gap-1">
+                          <span className="text-xs text-[#ff5c28] font-medium mt-0.5 flex items-center gap-1">
                             <Eye className="w-3 h-3" /> View Preview
                           </span>
                         </div>
@@ -472,7 +472,7 @@ export const ProviderKycManager: React.FC<ProviderKycManagerProps> = ({
                             </div>
                           </div>
                           <span className="text-xs font-semibold text-slate-800">Aadhaar Back</span>
-                          <span className="text-xs text-[#17233d] font-medium mt-0.5 flex items-center gap-1">
+                          <span className="text-xs text-[#ff5c28] font-medium mt-0.5 flex items-center gap-1">
                             <Eye className="w-3 h-3" /> View Preview
                           </span>
                         </div>
@@ -514,7 +514,7 @@ export const ProviderKycManager: React.FC<ProviderKycManagerProps> = ({
                             </div>
                           </div>
                           <span className="text-xs font-semibold text-slate-800">PAN Card</span>
-                          <span className="text-xs text-[#17233d] font-medium mt-0.5 flex items-center gap-1">
+                          <span className="text-xs text-[#ff5c28] font-medium mt-0.5 flex items-center gap-1">
                             <Eye className="w-3 h-3" /> View Preview
                           </span>
                         </div>
@@ -556,7 +556,7 @@ export const ProviderKycManager: React.FC<ProviderKycManagerProps> = ({
                             </div>
                           </div>
                           <span className="text-xs font-semibold text-slate-800">GST Certificate</span>
-                          <span className="text-xs text-[#17233d] font-medium mt-0.5 flex items-center gap-1">
+                          <span className="text-xs text-[#ff5c28] font-medium mt-0.5 flex items-center gap-1">
                             <Eye className="w-3 h-3" /> View Preview
                           </span>
                         </div>
@@ -677,7 +677,7 @@ export const ProviderKycManager: React.FC<ProviderKycManagerProps> = ({
             {/* Header */}
             <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
               <div className="flex items-center gap-2.5">
-                <FileText className="w-5 h-5 text-[#17233d]" />
+                <FileText className="w-5 h-5 text-[#ff5c28]" />
                 <div>
                   <h4 className="font-bold text-slate-900 text-base sm:text-lg">{previewDoc.title}</h4>
                   {isPdfDocument(previewDoc.url) && (
@@ -728,7 +728,7 @@ export const ProviderKycManager: React.FC<ProviderKycManagerProps> = ({
                   href={previewDoc.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#f07d4a] text-white text-xs font-bold"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#ff5c28] text-white text-xs font-bold"
                 >
                   <Download className="w-4 h-4" /> Download / Open Document
                 </a>

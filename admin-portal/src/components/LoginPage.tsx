@@ -218,11 +218,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-2 bg-[#f8fafc] lg:bg-white text-slate-900">
       {/* Brand Hero Sidebar */}
-      <aside className="hidden lg:flex flex-col justify-between bg-[#fff6f1] border-r border-slate-100 px-12 xl:px-16 py-10 select-none">
+      <aside className="hidden lg:flex flex-col justify-between bg-[#fff2ed] border-r border-slate-100 px-12 xl:px-16 py-10 select-none">
         <EzzyGoLogo variant="admin" size="lg" />
         <div className="max-w-md">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-bold uppercase tracking-wider mb-4">
-            <ShieldCheck className="w-4 h-4 text-slate-700" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-orange-100/70 border border-orange-200/80 text-[#e64814] text-xs font-bold uppercase tracking-wider mb-4">
+            <ShieldCheck className="w-4 h-4 text-[#ff5c28]" />
             Secure Admin Access
           </div>
           <h2 className="text-4xl font-extrabold text-slate-900 leading-tight">
@@ -235,7 +235,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
           <ol className="mt-8 space-y-3.5">
             {points.map((point, index) => (
               <li key={point} className="flex items-start gap-3">
-                <span className="w-6 h-6 rounded-full bg-white border border-slate-200 text-[#17233d] text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                <span className="w-6 h-6 rounded-full bg-white border border-slate-200 text-[#ff5c28] text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
                   {index + 1}
                 </span>
                 <span className="text-sm text-slate-700 leading-relaxed">{point}</span>
@@ -256,7 +256,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
           {/* Mobile Logo */}
           <div className="lg:hidden mb-6 flex justify-between items-center">
             <EzzyGoLogo variant="admin" size="md" />
-            <span className="text-xs px-2.5 py-1 rounded-full bg-slate-50 text-[#17233d] font-semibold border border-slate-200">
+            <span className="text-xs px-2.5 py-1 rounded-full bg-slate-50 text-[#ff5c28] font-semibold border border-slate-200">
               Admin Gateway
             </span>
           </div>
@@ -267,7 +267,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
           {step === 'email' && !showLegacyLogin && (
             <div className="space-y-6">
               <div>
-                <div className="w-12 h-12 rounded-2xl bg-slate-50 text-[#17233d] flex items-center justify-center mb-4 border border-slate-200">
+                <div className="w-12 h-12 rounded-2xl bg-slate-50 text-[#ff5c28] flex items-center justify-center mb-4 border border-slate-200">
                   <KeyRound className="w-6 h-6" />
                 </div>
                 <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
@@ -307,7 +307,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                       autoFocus
                       autoComplete="email"
                       placeholder="e.g. admin@ezzygo.com"
-                      className="w-full h-12 pl-11 pr-4 rounded-xl border border-slate-200 bg-white text-base text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#17233d] focus:ring-2 focus:ring-[#17233d]/15 transition"
+                      className="w-full h-12 pl-11 pr-4 rounded-xl border border-slate-200 bg-white text-base text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#ff5c28] focus:ring-2 focus:ring-[#ff5c28]/15 transition"
                     />
                   </div>
                   <p className="mt-1.5 text-xs text-slate-500">
@@ -318,7 +318,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                 <button
                   type="submit"
                   disabled={isSending || !email.trim()}
-                  className="w-full h-12 rounded-xl bg-[#f07d4a] hover:bg-[#de6a3a] active:bg-[#c83b0f] text-white font-semibold text-base shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full h-12 rounded-xl bg-[#ff5c28] hover:bg-[#e64814] active:bg-[#d03d0d] text-white font-semibold text-base shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {isSending ? (
                     <>
@@ -339,7 +339,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                     <button
                       type="button"
                       onClick={() => setShowLegacyLogin(!showLegacyLogin)}
-                      className="text-[#17233d] font-medium hover:underline"
+                      className="text-[#ff5c28] font-medium hover:underline"
                     >
                       {showLegacyLogin ? 'Use Email OTP' : 'Switch to Password Login'}
                     </button>
@@ -437,9 +437,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                       disabled={isVerifying || isSuccess}
                       className={`h-13 sm:h-14 w-full text-center text-2xl font-bold rounded-xl border transition ${
                         digit
-                          ? 'border-[#17233d] bg-slate-50/30 text-slate-700'
+                          ? 'border-[#ff5c28] bg-orange-50/40 text-slate-900 font-black shadow-2xs'
                           : 'border-slate-200 bg-white text-slate-900'
-                      } focus:outline-none focus:border-[#17233d] focus:ring-2 focus:ring-[#17233d]/20 disabled:opacity-50`}
+                      } focus:outline-none focus:border-[#ff5c28] focus:ring-2 focus:ring-[#ff5c28]/20 disabled:opacity-50`}
                     />
                   ))}
                 </div>
@@ -453,7 +453,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                 type="button"
                 onClick={() => handleVerifyOtp()}
                 disabled={isVerifying || isSuccess || otpDigits.join('').length !== 6}
-                className="w-full h-12 rounded-xl bg-[#f07d4a] hover:bg-[#de6a3a] active:bg-[#c83b0f] text-white font-semibold text-base shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full h-12 rounded-xl bg-[#ff5c28] hover:bg-[#e64814] active:bg-[#d03d0d] text-white font-semibold text-base shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
               >
                 {isVerifying ? (
                   <>
@@ -482,7 +482,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                     type="button"
                     onClick={() => handleSendOtp(email)}
                     disabled={isSending || isVerifying}
-                    className="text-[#17233d] hover:text-[#c83b0f] font-semibold text-xs cursor-pointer hover:underline disabled:opacity-50"
+                    className="text-[#ff5c28] hover:text-[#d03d0d] font-semibold text-xs cursor-pointer hover:underline disabled:opacity-50"
                   >
                     Resend OTP
                   </button>
@@ -501,7 +501,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
                 <button
                   type="button"
                   onClick={() => setShowLegacyLogin(false)}
-                  className="text-xs text-[#17233d] font-semibold hover:underline"
+                  className="text-xs text-[#ff5c28] font-semibold hover:underline"
                 >
                   Use Email OTP
                 </button>

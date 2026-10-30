@@ -10,6 +10,7 @@ import {
   ChevronUp,
   AlertCircle,
   Users,
+  Sparkles,
 } from 'lucide-react';
 import type { Requirement, Bid } from '../types';
 import { CardImageGallery } from './CardImageGallery';
@@ -105,8 +106,8 @@ export const RequirementManager: React.FC<RequirementManagerProps> = ({
           <div className="text-xs text-slate-400">All posted host requirements</div>
         </div>
         <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1">
-          <div className="text-xs font-semibold text-slate-700 uppercase tracking-wider">Open for Bidding</div>
-          <div className="text-2xl font-bold text-[#17233d]">{totalOpen}</div>
+          <div className="text-xs font-semibold text-[#ff5c28] uppercase tracking-wider">Open for Bidding</div>
+          <div className="text-2xl font-bold text-[#ff5c28]">{totalOpen}</div>
           <div className="text-xs text-slate-400">Actively receiving vendor quotes</div>
         </div>
         <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1">
@@ -130,7 +131,7 @@ export const RequirementManager: React.FC<RequirementManagerProps> = ({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by title, host, venue, or area..."
-            className="w-full h-10 pl-10 pr-4 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#17233d] focus:ring-2 focus:ring-[#17233d]/15"
+            className="w-full h-10 pl-10 pr-4 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#ff5c28] focus:ring-2 focus:ring-[#ff5c28]/15"
           />
         </div>
 
@@ -143,7 +144,7 @@ export const RequirementManager: React.FC<RequirementManagerProps> = ({
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#17233d]"
+            className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#ff5c28]"
           >
             <option value="ALL">All Statuses</option>
             <option value="OPEN">OPEN (Bidding)</option>
@@ -156,7 +157,7 @@ export const RequirementManager: React.FC<RequirementManagerProps> = ({
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#17233d]"
+            className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#ff5c28]"
           >
             <option value="ALL">All Categories</option>
             {categories.map((cat) => (
@@ -169,7 +170,7 @@ export const RequirementManager: React.FC<RequirementManagerProps> = ({
           <select
             value={cityFilter}
             onChange={(e) => setCityFilter(e.target.value)}
-            className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#17233d]"
+            className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#ff5c28]"
           >
             <option value="ALL">All Cities ({requirements.length})</option>
             {cities.map((city) => {
@@ -201,6 +202,8 @@ export const RequirementManager: React.FC<RequirementManagerProps> = ({
             const bids = req.bids || [];
             const budget = req.budget || 0;
             const maxBid = req.maxAcceptableBid || Math.floor(budget * 0.85);
+            const minSavings = Math.max(0, budget - maxBid);
+            const savingsPercent = budget > 0 ? Math.round((minSavings / budget) * 100) : 15;
 
             return (
               <div
@@ -276,11 +279,26 @@ export const RequirementManager: React.FC<RequirementManagerProps> = ({
 
                   {/* Financial & Bid Count Column */}
                   <div className="flex items-center justify-between lg:justify-end gap-6 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100">
-                    <div className="text-right">
-                      <div className="text-xs text-slate-400">Host Budget</div>
-                      <div className="text-xl font-bold text-slate-900">₹{budget.toLocaleString()}</div>
-                      <div className="text-[11px] text-[#17233d] font-medium">
-                        Max Bid: ₹{maxBid.toLocaleString()} (15% off)
+                    <div className="bg-slate-50/90 rounded-2xl p-3 border border-slate-200/80 min-w-[220px] space-y-2">
+                      <div className="flex items-center justify-between gap-4">
+                        <div>
+                          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">BUDGET CEILING</div>
+                          <div className="text-base font-extrabold text-slate-900">₹{budget.toLocaleString()}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">MAX ALLOWED BID</div>
+                          <div className="text-base font-extrabold text-emerald-700">₹{maxBid.toLocaleString()}</div>
+                        </div>
+                      </div>
+
+                      <div className="bg-[#eafbf3] border border-emerald-200/80 rounded-xl px-2.5 py-1.5 flex items-center justify-between gap-2 text-emerald-900 shadow-2xs">
+                        <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-800">
+                          <Sparkles className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span>Minimum Guaranteed Savings</span>
+                        </div>
+                        <span className="text-xs font-black text-emerald-700 whitespace-nowrap">
+                          &ge; ₹{minSavings.toLocaleString()} ({savingsPercent}% OFF)
+                        </span>
                       </div>
                     </div>
 

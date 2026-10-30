@@ -45,7 +45,7 @@ const actionMeta: Record<string, { label: string; className: string; icon: any }
 const txLabels: Record<string, { label: string; className: string }> = {
   PAYMENT_HELD_ESCROW: { label: 'Host Escrow Paid', className: 'bg-blue-50 text-blue-800 border-blue-200' },
   PAYOUT_RELEASED_PROVIDER: { label: 'Vendor Payout', className: 'bg-emerald-50 text-emerald-800 border-emerald-200' },
-  COMMISSION_EARNED: { label: 'EzzyGo Fee', className: 'bg-slate-50 text-slate-800 border-slate-200' },
+  COMMISSION_EARNED: { label: 'EzzyGo Fee (10%)', className: 'bg-orange-50 text-[#ff5c28] border-orange-200' },
   REFUND: { label: 'Host Refund', className: 'bg-rose-50 text-rose-800 border-rose-200' },
 };
 
@@ -141,7 +141,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
             disabled={isLoading}
             className="self-start sm:self-auto px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-sm font-semibold flex items-center gap-2 shadow-xs transition cursor-pointer disabled:opacity-50"
           >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-[#17233d]' : 'text-slate-500'}`} />
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-[#ff5c28]' : 'text-slate-500'}`} />
             <span>{isLoading ? 'Refreshing...' : 'Refresh Logs'}</span>
           </button>
         )}
@@ -153,13 +153,13 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
           onClick={() => setSubTab('audit')}
           className={`pb-2 px-3 text-sm font-semibold border-b-2 transition cursor-pointer flex items-center gap-2 ${
             subTab === 'audit'
-              ? 'border-[#17233d] text-[#17233d]'
+              ? 'border-[#ff5c28] text-[#ff5c28]'
               : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
           <ShieldCheck className="w-4 h-4" />
           <span>Admin Mutation Logs</span>
-          <span className={`text-xs px-2 py-0.5 rounded-full ${subTab === 'audit' ? 'bg-slate-50 text-[#17233d]' : 'bg-slate-100 text-slate-600'}`}>
+          <span className={`text-xs px-2 py-0.5 rounded-full ${subTab === 'audit' ? 'bg-orange-50 text-[#ff5c28] font-bold border border-orange-200/60' : 'bg-slate-100 text-slate-600'}`}>
             {logs.length}
           </span>
         </button>
@@ -168,13 +168,13 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
           onClick={() => setSubTab('ledger')}
           className={`pb-2 px-3 text-sm font-semibold border-b-2 transition cursor-pointer flex items-center gap-2 ${
             subTab === 'ledger'
-              ? 'border-[#17233d] text-[#17233d]'
+              ? 'border-[#ff5c28] text-[#ff5c28]'
               : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
           <CreditCard className="w-4 h-4" />
           <span>Financial Transaction Ledger</span>
-          <span className={`text-xs px-2 py-0.5 rounded-full ${subTab === 'ledger' ? 'bg-slate-50 text-[#17233d]' : 'bg-slate-100 text-slate-600'}`}>
+          <span className={`text-xs px-2 py-0.5 rounded-full ${subTab === 'ledger' ? 'bg-orange-50 text-[#ff5c28] font-bold border border-orange-200/60' : 'bg-slate-100 text-slate-600'}`}>
             {transactions.length}
           </span>
         </button>
@@ -189,7 +189,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={subTab === 'audit' ? 'Search actions, actors, or details...' : 'Search transaction references...'}
-            className="w-full pl-10 pr-4 py-2 rounded-xl bg-white border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#17233d]/20 focus:border-[#17233d]"
+            className="w-full pl-10 pr-4 py-2 rounded-xl bg-white border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff5c28]/20 focus:border-[#ff5c28]"
           />
         </div>
 
@@ -287,7 +287,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                       <div className="md:text-right shrink-0">
                         <div className="text-xs text-slate-400">Transaction Value</div>
                         <div className="text-base font-bold text-slate-900">
-                          ?{Number(log.amount).toLocaleString('en-IN')}
+                          ₹{Number(log.amount).toLocaleString('en-IN')}
                         </div>
                       </div>
                     )}
@@ -321,7 +321,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                       {t.referenceId && <p className="text-xs font-mono text-slate-400">Ref: {t.referenceId}</p>}
                     </div>
                     <div className="text-base font-bold text-slate-900 shrink-0">
-                      ?{Number(t.amount || 0).toLocaleString()}
+                      ₹{Number(t.amount || 0).toLocaleString()}
                     </div>
                   </li>
                 );

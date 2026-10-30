@@ -3,6 +3,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../config/theme.dart';
 import '../../data/event_services.dart';
 import '../../utils/app_nav.dart';
+import '../../widgets/app_cached_image.dart';
 import '../../widgets/shell_bottom_insets.dart';
 import 'post_requirement_screen.dart';
 
@@ -64,14 +65,12 @@ class ServiceDetailScreen extends StatelessWidget {
               children: [
                 Stack(
                   children: [
-                    Image.asset(
-                      asset,
+                    AppCachedImage(
+                      imageUrl: image,
+                      fallbackAsset: asset,
                       height: 220,
                       width: double.infinity,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => image.isNotEmpty
-                          ? Image.network(image, height: 220, width: double.infinity, fit: BoxFit.cover)
-                          : Container(height: 220, color: AppTheme.slate100),
                     ),
                     Positioned.fill(
                       child: DecoratedBox(

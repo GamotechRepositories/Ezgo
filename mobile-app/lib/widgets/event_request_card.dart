@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../config/theme.dart';
 import '../models/requirement_model.dart';
+import 'app_cached_image.dart';
 
 class EventRequestCard extends StatelessWidget {
   final RequirementModel requirement;
@@ -255,38 +256,14 @@ class EventRequestCard extends StatelessWidget {
 
   Widget _cover({double? width, required double height}) {
     final url = requirement.imageUrl;
-    final hasNet = url != null && url.startsWith('http');
-    return hasNet
-        ? Image.network(
-            url,
-            width: width,
-            height: height,
-            fit: BoxFit.cover,
-            cacheWidth: ((width ?? 400) * 2).round().clamp(200, 800),
-            filterQuality: FilterQuality.medium,
-            errorBuilder: (_, _, _) => Image.asset(
-              requirement.coverAsset,
-              width: width,
-              height: height,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => _fallback(width, height),
-            ),
-          )
-        : Image.asset(
-            requirement.coverAsset,
-            width: width,
-            height: height,
-            fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => _fallback(width, height),
-          );
-  }
-
-  Widget _fallback(double? width, double height) {
-    return Container(
+    return AppCachedImage(
+      imageUrl: url,
+      fallbackAsset: requirement.coverAsset,
       width: width,
       height: height,
-      color: AppTheme.slate100,
-      child: const Icon(LucideIcons.calendar, color: AppTheme.slate400),
+      fit: BoxFit.cover,
+      memCacheWidth: ((width ?? 400) * 2).round().clamp(200, 800),
+      memCacheHeight: (height * 2).round().clamp(200, 800),
     );
   }
 

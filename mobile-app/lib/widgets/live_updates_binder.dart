@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import '../config/theme.dart';
 import '../models/bid_model.dart';
@@ -37,7 +38,9 @@ class _LiveUpdatesBinderState extends State<LiveUpdatesBinder> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _sync();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _sync();
+    });
   }
 
   @override
@@ -52,6 +55,13 @@ class _LiveUpdatesBinderState extends State<LiveUpdatesBinder> {
   }
 
   void _sync() {
+    if (!mounted) return;
+    if (SchedulerBinding.instance.schedulerPhase == SchedulerPhase.persistentCallbacks) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _sync();
+      });
+      return;
+    }
     final auth = context.read<AuthProvider>();
     final userId = auth.user?.id;
     if (!auth.isLoggedIn || userId == null || userId.isEmpty) {
