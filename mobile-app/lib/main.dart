@@ -50,22 +50,35 @@ void _tuneForLowRam() {
 
 void _installErrorGuards() {
   FlutterError.onError = (details) {
+    debugPrint('*** FLUTTER ERROR: ${details.exceptionAsString()}\n${details.stack}');
     FlutterError.presentError(details);
   };
   PlatformDispatcher.instance.onError = (error, stack) {
-    debugPrint('EzzyGo platform error: $error');
+    debugPrint('EzzyGo platform error: $error\n$stack');
     return true;
   };
   ErrorWidget.builder = (details) {
-    return const Material(
+    debugPrint('*** ERROR WIDGET BUILDER: ${details.exceptionAsString()}\n${details.stack}');
+    return Material(
       color: Colors.white,
       child: Center(
         child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Text(
-            'Something went wrong. Go back and try again.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Something went wrong. Go back and try again.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                details.exceptionAsString(),
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 11, color: Colors.red),
+              ),
+            ],
           ),
         ),
       ),

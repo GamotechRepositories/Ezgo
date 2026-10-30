@@ -90,6 +90,16 @@ class _VendorProfileScreenState extends State<VendorProfileScreen> {
     );
   }
 
+  Future<void> _switchToHostMode() async {
+    final auth = context.read<AuthProvider>();
+    final reqs = context.read<RequirementsProvider>();
+    final bookings = context.read<BookingsProvider>();
+
+    reqs.loadData(requesterId: auth.user?.id);
+    bookings.loadData();
+    await auth.setActiveRole(UserRole.host);
+  }
+
   Future<void> _openUrl(String url) async {
     final ok = await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
     if (!ok && mounted) _toast('Could not open this on your phone.');
@@ -286,7 +296,7 @@ class _VendorProfileScreenState extends State<VendorProfileScreen> {
               );
             }),
             _Row(LucideIcons.headset, AppTheme.emerald, 'Help & support', 'WhatsApp, call or email us', _openHelp),
-            _Row(LucideIcons.globe, AppTheme.ink, 'Host website', 'See the customer booking site', () => _openUrl(ApiConfig.hostPortalUrl)),
+            _Row(LucideIcons.home, AppTheme.primary, 'Switch to Host mode', 'Book event services & post event requests', _switchToHostMode),
           ]),
           const SizedBox(height: 12),
           TextButton.icon(

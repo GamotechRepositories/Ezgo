@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../config/api_config.dart';
 import '../config/theme.dart';
+import '../models/user_model.dart';
 import '../providers/auth_provider.dart';
 import '../providers/bookings_provider.dart';
 import '../providers/requirements_provider.dart';
@@ -85,6 +86,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } finally {
       if (mounted) setState(() => _uploading = false);
     }
+  }
+
+  Future<void> _switchToVendorMode() async {
+    final auth = context.read<AuthProvider>();
+    final reqs = context.read<RequirementsProvider>();
+    final bookings = context.read<BookingsProvider>();
+
+    reqs.loadData(marketplace: true);
+    bookings.loadData();
+    await auth.setActiveRole(UserRole.vendor);
   }
 
   Future<void> _openUrl(String url) async {
@@ -191,7 +202,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               );
             }),
             _MenuRow(LucideIcons.headset, 'Help & support', 'WhatsApp, call or email us', _openHelpSheet),
-            _MenuRow(LucideIcons.briefcase, 'Vendor portal', 'If you sell event services', () => _openUrl(ApiConfig.vendorPortalUrl)),
+            _MenuRow(LucideIcons.store, 'Switch to Vendor mode', 'Manage services, view leads & place bids', _switchToVendorMode),
           ]),
           const SizedBox(height: 12),
           TextButton.icon(

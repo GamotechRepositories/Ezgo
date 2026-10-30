@@ -40,12 +40,19 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _postFromIndex = 0;
   final ScrollController _hostScrollController = ScrollController();
   final GlobalKey<HostHomeScreenState> _hostHomeKey = GlobalKey<HostHomeScreenState>();
-  final GlobalKey<NavigatorState> _homeNavKey = GlobalKey<NavigatorState>();
-  final GlobalKey<NavigatorState> _eventsNavKey = GlobalKey<NavigatorState>();
-  final GlobalKey<NavigatorState> _bookingsNavKey = GlobalKey<NavigatorState>();
-  final GlobalKey<NavigatorState> _calendarNavKey = GlobalKey<NavigatorState>();
-  final GlobalKey<NavigatorState> _profileNavKey = GlobalKey<NavigatorState>();
+  final GlobalKey<NavigatorState> _hostHomeNavKey = GlobalKey<NavigatorState>();
+  final GlobalKey<NavigatorState> _hostEventsNavKey = GlobalKey<NavigatorState>();
+  final GlobalKey<NavigatorState> _hostBookingsNavKey = GlobalKey<NavigatorState>();
+  final GlobalKey<NavigatorState> _hostProfileNavKey = GlobalKey<NavigatorState>();
+
+  final GlobalKey<NavigatorState> _vendorHomeNavKey = GlobalKey<NavigatorState>();
+  final GlobalKey<NavigatorState> _vendorLeadsNavKey = GlobalKey<NavigatorState>();
+  final GlobalKey<NavigatorState> _vendorJobsNavKey = GlobalKey<NavigatorState>();
+  final GlobalKey<NavigatorState> _vendorCalendarNavKey = GlobalKey<NavigatorState>();
+  final GlobalKey<NavigatorState> _vendorProfileNavKey = GlobalKey<NavigatorState>();
   final GlobalKey _bookingsIconKey = GlobalKey();
+
+  bool? _lastIsHost;
 
   static const List<String> navbarCities = [
     'Pune',
@@ -178,26 +185,26 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     if (_isVendor) {
       switch (index) {
         case 1:
-          return _eventsNavKey;
+          return _vendorLeadsNavKey;
         case 2:
-          return _bookingsNavKey;
+          return _vendorJobsNavKey;
         case 3:
-          return _calendarNavKey;
+          return _vendorCalendarNavKey;
         case 4:
-          return _profileNavKey;
+          return _vendorProfileNavKey;
         default:
-          return _homeNavKey;
+          return _vendorHomeNavKey;
       }
     }
     switch (index) {
       case 1:
-        return _eventsNavKey;
+        return _hostEventsNavKey;
       case 3:
-        return _bookingsNavKey;
+        return _hostBookingsNavKey;
       case 4:
-        return _profileNavKey;
+        return _hostProfileNavKey;
       default:
-        return _homeNavKey;
+        return _hostHomeNavKey;
     }
   }
 
@@ -277,7 +284,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     }
 
     if (!auth.isLoggedIn &&
-        (auth.isVendor ? (index == 2 || index == 3 || index == 4) : (index == 1 || index == 3))) {
+        (auth.isVendor ? (index == 2 || index == 3) : (index == 1 || index == 3))) {
       _openLogin();
       return;
     }
@@ -424,6 +431,46 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     final reqProvider = context.watch<RequirementsProvider>();
     final isHost = auth.isHost;
 
+    if (_lastIsHost != null && _lastIsHost != isHost) {
+      final switchingToHost = isHost;
+      _lastIsHost = isHost;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final authNow = context.read<AuthProvider>();
+        context.read<RequirementsProvider>().loadData(
+          requesterId: switchingToHost ? authNow.user?.id : null,
+          marketplace: !switchingToHost,
+        );
+        context.read<BookingsProvider>().loadData();
+
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(
+                  switchingToHost ? LucideIcons.home : LucideIcons.store,
+                  color: Colors.white,
+                  size: 18,
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  switchingToHost ? 'Switched to Host mode' : 'Switched to Vendor mode',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ],
+            ),
+            backgroundColor: AppTheme.emerald,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      });
+    } else {
+      _lastIsHost = isHost;
+    }
+
     final homePage = isHost
         ? HostHomeScreen(
             key: _hostHomeKey,
@@ -494,20 +541,57 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                           context: context,
                           removeBottom: true,
                           child: TabSwipeShell(
+                            key: ValueKey(isHost ? 'host_shell' : 'vendor_shell'),
                             currentIndex: _stackIndex,
                             children: isHost
                                 ? [
-                                    _TabNavigator(navigatorKey: _homeNavKey, root: homePage),
-                                    _TabNavigator(navigatorKey: _eventsNavKey, root: eventsPage),
-                                    _TabNavigator(navigatorKey: _bookingsNavKey, root: bookingsPage),
-                                    _TabNavigator(navigatorKey: _profileNavKey, root: profilePage),
+                                    _TabNavigator(
+                                      key: const ValueKey('host_tab_home'),
+                                      navigatorKey: _hostHomeNavKey,
+                                      root: homePage,
+                                    ),
+                                    _TabNavigator(
+                                      key: const ValueKey('host_tab_events'),
+                                      navigatorKey: _hostEventsNavKey,
+                                      root: eventsPage,
+                                    ),
+                                    _TabNavigator(
+                                      key: const ValueKey('host_tab_bookings'),
+                                      navigatorKey: _hostBookingsNavKey,
+                                      root: bookingsPage,
+                                    ),
+                                    _TabNavigator(
+                                      key: const ValueKey('host_tab_profile'),
+                                      navigatorKey: _hostProfileNavKey,
+                                      root: profilePage,
+                                    ),
                                   ]
                                 : [
-                                    _TabNavigator(navigatorKey: _homeNavKey, root: homePage),
-                                    _TabNavigator(navigatorKey: _eventsNavKey, root: eventsPage),
-                                    _TabNavigator(navigatorKey: _bookingsNavKey, root: bookingsPage),
-                                    _TabNavigator(navigatorKey: _calendarNavKey, root: calendarPage),
-                                    _TabNavigator(navigatorKey: _profileNavKey, root: profilePage),
+                                    _TabNavigator(
+                                      key: const ValueKey('vendor_tab_home'),
+                                      navigatorKey: _vendorHomeNavKey,
+                                      root: homePage,
+                                    ),
+                                    _TabNavigator(
+                                      key: const ValueKey('vendor_tab_leads'),
+                                      navigatorKey: _vendorLeadsNavKey,
+                                      root: eventsPage,
+                                    ),
+                                    _TabNavigator(
+                                      key: const ValueKey('vendor_tab_jobs'),
+                                      navigatorKey: _vendorJobsNavKey,
+                                      root: bookingsPage,
+                                    ),
+                                    _TabNavigator(
+                                      key: const ValueKey('vendor_tab_calendar'),
+                                      navigatorKey: _vendorCalendarNavKey,
+                                      root: calendarPage,
+                                    ),
+                                    _TabNavigator(
+                                      key: const ValueKey('vendor_tab_profile'),
+                                      navigatorKey: _vendorProfileNavKey,
+                                      root: profilePage,
+                                    ),
                                   ],
                           ),
                         ),
@@ -658,7 +742,7 @@ class _TabNavigator extends StatefulWidget {
   final GlobalKey<NavigatorState> navigatorKey;
   final Widget root;
 
-  const _TabNavigator({required this.navigatorKey, required this.root});
+  const _TabNavigator({super.key, required this.navigatorKey, required this.root});
 
   @override
   State<_TabNavigator> createState() => _TabNavigatorState();

@@ -77,8 +77,11 @@ class _LiveUpdatesBinderState extends State<LiveUpdatesBinder> {
     if (_boundUserId == userId) return;
     _boundUserId = userId;
     SocketService.instance.connect(userId);
-    context.read<NotificationsProvider>().load();
-    context.read<PaymentsProvider>().load();
+    scheduleMicrotask(() {
+      if (!mounted) return;
+      context.read<NotificationsProvider>().load();
+      context.read<PaymentsProvider>().load();
+    });
     _poll?.cancel();
     _poll = Timer.periodic(const Duration(seconds: 45), (_) {
       if (!mounted) return;

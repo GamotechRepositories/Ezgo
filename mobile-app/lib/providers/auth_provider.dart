@@ -57,7 +57,10 @@ class AuthProvider extends ChangeNotifier {
         final userData = jsonDecode(savedUser) as Map<String, dynamic>;
         userData['token'] = token;
         _user = UserModel.fromJson(userData);
-        if (_user!.role == UserRole.vendor || _user!.role == UserRole.host) {
+        final savedRole = prefs.getString('active_role');
+        if (savedRole != null && savedRole.isNotEmpty) {
+          _activeRole = savedRole == 'vendor' ? UserRole.vendor : UserRole.host;
+        } else if (_user!.role == UserRole.vendor || _user!.role == UserRole.host) {
           _activeRole = _user!.role;
         }
         _sessionReady = true;
@@ -72,7 +75,12 @@ class AuthProvider extends ChangeNotifier {
         final userData = data.cast<String, dynamic>();
         userData['token'] = token;
         _user = UserModel.fromJson(userData);
-        _activeRole = _user!.role;
+        final savedRole = prefs.getString('active_role');
+        if (savedRole != null && savedRole.isNotEmpty) {
+          _activeRole = savedRole == 'vendor' ? UserRole.vendor : UserRole.host;
+        } else {
+          _activeRole = _user!.role;
+        }
         await _persistSession(token);
       }
     } on ApiException catch (e) {
@@ -200,17 +208,26 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  void switchRole() async {
-    _activeRole = _activeRole == UserRole.host ? UserRole.vendor : UserRole.host;
+  Future<void> setActiveRole(UserRole targetRole) async {
+    _activeRole = targetRole;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('active_role', _activeRole == UserRole.vendor ? 'vendor' : 'host');
 
-    _user = _user?.copyWith(
-      role: _activeRole,
-      name: _activeRole == UserRole.host ? 'Ananya Sharma (Host)' : 'Rajesh Sound & FX Pro',
-      businessName: _activeRole == UserRole.vendor ? 'Rajesh Pro Audio & Lightings' : null,
-    );
+    if (_user != null) {
+      _user = _user!.copyWith(
+        role: _activeRole,
+        businessName: _activeRole == UserRole.vendor
+            ? (_user!.businessName ?? _user!.name)
+            : _user!.businessName,
+      );
+      await prefs.setString('auth_user', jsonEncode(_user!.toJson()));
+    }
     notifyListeners();
+  }
+
+  void switchRole() async {
+    final nextRole = _activeRole == UserRole.host ? UserRole.vendor : UserRole.host;
+    await setActiveRole(nextRole);
   }
 
   Future<bool> loginWithGoogle({required UserRole role}) async {

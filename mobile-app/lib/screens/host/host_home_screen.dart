@@ -260,37 +260,44 @@ class HostHomeScreenState extends State<HostHomeScreen> with AutomaticKeepAliveC
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(28)),
         child: Stack(
           children: [
+            // 4K Luxury Indian Wedding Setup Background Image
             Positioned.fill(
-              child: AppCachedImage(
-                imageUrl: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&auto=format&fit=crop&q=80',
-                fallbackAsset: 'assets/images/hero_wedding_bg.jpg',
+              child: Image.asset(
+                'assets/images/hero_wedding_4k.jpg',
                 fit: BoxFit.cover,
+                alignment: const Alignment(0, -0.2),
+                errorBuilder: (_, __, ___) => Image.asset(
+                  'assets/images/hero_wedding_bg.jpg',
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
+            // Bottom Dark Cinematic Gradient for High Legibility
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      Colors.white.withValues(alpha: 0.95),
-                      Colors.white.withValues(alpha: 0.85),
-                      Colors.white.withValues(alpha: 0.30),
+                      Colors.black.withValues(alpha: 0.95),
+                      Colors.black.withValues(alpha: 0.65),
+                      Colors.black.withValues(alpha: 0.20),
                       Colors.transparent,
                     ],
-                    stops: const [0.0, 0.28, 0.46, 0.68],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
+                    stops: const [0.0, 0.45, 0.70, 1.0],
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
                   ),
                 ),
               ),
             ),
+            // Top Subtle Vignette for Status & Header Readability
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      Colors.white.withValues(alpha: 0.85),
-                      Colors.white.withValues(alpha: 0.30),
+                      Colors.black.withValues(alpha: 0.65),
+                      Colors.black.withValues(alpha: 0.25),
                       Colors.transparent,
                     ],
                     stops: const [0.0, 0.15, 0.35],
@@ -300,13 +307,14 @@ class HostHomeScreenState extends State<HostHomeScreen> with AutomaticKeepAliveC
                 ),
               ),
             ),
+            // Header Bar: Logo, City Selector, Notification Bell
             Positioned(
               top: 10,
               left: 16,
               right: 16,
               child: Row(
                 children: [
-                  const EzzyGoLogo(size: 24, isLight: false),
+                  const EzzyGoLogo(size: 24, isLight: true),
                   const SizedBox(width: 8),
                   GestureDetector(
                     behavior: HitTestBehavior.opaque,
@@ -319,7 +327,7 @@ class HostHomeScreenState extends State<HostHomeScreen> with AutomaticKeepAliveC
                         border: Border.all(color: const Color(0xFFE5E7EB)),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.08),
+                            color: Colors.black.withValues(alpha: 0.15),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -349,6 +357,7 @@ class HostHomeScreenState extends State<HostHomeScreen> with AutomaticKeepAliveC
                 ],
               ),
             ),
+            // Hero Content: Reverse Bidding Badge, Headline, CTA & 4K Tag
             Positioned(
               left: 20,
               right: 20,
@@ -358,18 +367,25 @@ class HostHomeScreenState extends State<HostHomeScreen> with AutomaticKeepAliveC
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
                     decoration: BoxDecoration(
-                      color: AppTheme.ink,
+                      color: AppTheme.primary,
                       borderRadius: BorderRadius.circular(6),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.primary.withValues(alpha: 0.4),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: const Text(
                       'REVERSE BIDDING',
                       style: TextStyle(
-                        fontSize: 9,
+                        fontSize: 9.5,
                         fontWeight: FontWeight.w900,
                         color: Colors.white,
-                        letterSpacing: 0.7,
+                        letterSpacing: 0.8,
                       ),
                     ),
                   ),
@@ -377,11 +393,18 @@ class HostHomeScreenState extends State<HostHomeScreen> with AutomaticKeepAliveC
                   Text(
                     'Post your budget.\nVendors bid lower.',
                     style: GoogleFonts.poppins(
-                      fontSize: 22.5,
+                      fontSize: 23,
                       fontWeight: FontWeight.w900,
-                      color: const Color(0xFF111827),
+                      color: Colors.white,
                       height: 1.15,
                       letterSpacing: -0.4,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withValues(alpha: 0.5),
+                          offset: const Offset(0, 2),
+                          blurRadius: 4,
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -390,10 +413,17 @@ class HostHomeScreenState extends State<HostHomeScreen> with AutomaticKeepAliveC
                     style: GoogleFonts.poppins(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
-                      color: AppTheme.primary,
+                      color: const Color(0xFFFCD34D), // Amber 300
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withValues(alpha: 0.4),
+                          offset: const Offset(0, 1),
+                          blurRadius: 3,
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -401,15 +431,15 @@ class HostHomeScreenState extends State<HostHomeScreen> with AutomaticKeepAliveC
                         onTap: () => _openCreateEvent(),
                         borderRadius: BorderRadius.circular(24),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8.5),
+                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9.5),
                           decoration: BoxDecoration(
                             color: AppTheme.primary,
                             borderRadius: BorderRadius.circular(24),
                             boxShadow: [
                               BoxShadow(
-                                color: AppTheme.primary.withValues(alpha: 0.35),
-                                blurRadius: 10,
-                                offset: const Offset(0, 3),
+                                color: AppTheme.primary.withValues(alpha: 0.45),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
                               ),
                             ],
                           ),
@@ -431,25 +461,19 @@ class HostHomeScreenState extends State<HostHomeScreen> with AutomaticKeepAliveC
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.92),
+                          color: Colors.black.withValues(alpha: 0.45),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFE5E7EB)),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.08),
-                              blurRadius: 4,
-                              offset: const Offset(0, 1),
-                            ),
-                          ],
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
                         ),
                         child: const Text(
-                          '1/3',
+                          '4K Ultra HD',
                           style: TextStyle(
-                            color: Color(0xFF1F2937),
+                            color: Colors.white,
                             fontSize: 11,
                             fontWeight: FontWeight.w800,
+                            letterSpacing: 0.3,
                           ),
                         ),
                       ),

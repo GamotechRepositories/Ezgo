@@ -80,9 +80,11 @@ class EzzyGoLogo extends StatelessWidget {
     }
 
     // Horizontal Inline Logo (AppBar & Navigation)
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: subtitle != null ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: subtitle != null ? CrossAxisAlignment.center : CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisSize: MainAxisSize.min,
@@ -159,7 +161,8 @@ class EzzyGoLogo extends StatelessWidget {
           ),
         ],
       ],
-    );
+    ),
+  );
   }
 }
 
