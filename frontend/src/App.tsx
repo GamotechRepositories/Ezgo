@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Home, CalendarDays, Plus, Receipt, User as UserIcon } from 'lucide-react';
 import { Navbar } from './components/Navbar';
 import { HostHomePage } from './components/HostHomePage';
@@ -204,20 +204,34 @@ function HostApp({
 
   // Toasts
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const recentToastsRef = useRef<Map<string, number>>(new Map());
 
-  const addToast = (type: ToastMessage['type'], title: string, message: string) => {
+  const removeToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  const addToast = useCallback((type: ToastMessage['type'], title: string, message: string) => {
+    const cleanMsg = (message || '').trim();
+    const dedupeKey = `${type}:${title}:${cleanMsg}`;
+    const now = Date.now();
+    const lastSeen = recentToastsRef.current.get(dedupeKey) || 0;
+
+    // Deduplicate: If an identical toast was shown in the last 4 seconds, ignore it
+    if (now - lastSeen < 4000) {
+      return;
+    }
+    recentToastsRef.current.set(dedupeKey, now);
+
     const newToast: ToastMessage = {
       id: Math.random().toString(36).substring(2, 9),
       type,
       title,
-      message,
+      message: cleanMsg,
     };
-    setToasts((prev) => [...prev, newToast]);
-  };
 
-  const removeToast = (id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  };
+    // Cap at maximum 3 visible toasts, auto-discarding older ones
+    setToasts((prev) => [...prev.slice(-2), newToast]);
+  }, []);
 
   const loadMyActivity = useCallback(async (userId: string) => {
     const [reqs, bks] = await Promise.all([
@@ -356,7 +370,6 @@ function HostApp({
     socket.on('requirement:updated', handleRequirementUpdated);
     socket.on('booking:created', handleBookingCreated);
     socket.on('booking:updated', handleBookingUpdated);
-    socket.on('booking:update', handleBookingUpdated);
     socket.on('notification:new', handleNewNotification);
 
     return () => {
@@ -365,7 +378,6 @@ function HostApp({
       socket.off('requirement:updated', handleRequirementUpdated);
       socket.off('booking:created', handleBookingCreated);
       socket.off('booking:updated', handleBookingUpdated);
-      socket.off('booking:update', handleBookingUpdated);
       socket.off('notification:new', handleNewNotification);
     };
   }, [currentUser._id, loadMyActivity]);
@@ -436,7 +448,10 @@ function HostApp({
   const handleCreateRequirement = async (data: Partial<Requirement>) => {
     try {
       const newReq = await api.createRequirement(data);
-      setRequirements((prev) => [newReq, ...prev]);
+      setRequirements((prev) => {
+        if (prev.some((r) => String(r._id) === String(newReq._id))) return prev;
+        return [newReq, ...prev];
+      });
       closeAllModals(true);
       addToast(
         'success',

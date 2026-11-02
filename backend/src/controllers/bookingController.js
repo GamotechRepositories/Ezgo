@@ -122,6 +122,38 @@ export const acceptBid = async (req, res, next) => {
     // Check if booking already exists for this requirement
     let booking = await Booking.findOne({ requirementId });
     if (booking && booking.status !== 'CANCELLED') {
+      if (booking.status === 'AWAITING_PAYMENT') {
+        if (booking.bidId?.toString() === bidId.toString()) {
+          // Idempotent return so the host can seamlessly proceed to escrow payment modal
+          const populated = await Booking.findById(booking._id)
+            .populate('providerId', PROVIDER_PUBLIC_FIELDS)
+            .populate('requesterId', REQUESTER_PUBLIC_FIELDS)
+            .populate('requirementId');
+
+          const existingJson = populated.toJSON();
+          existingJson.providerId = sanitizeProviderForHost(existingJson.providerId, false);
+          existingJson.requesterId = sanitizeRequesterForVendor(existingJson.requesterId, false);
+
+          return res.status(200).json({
+            success: true,
+            message: 'Proposal already accepted. Please complete escrow payment.',
+            data: existingJson,
+          });
+        }
+        res.status(400);
+        throw new Error('Another proposal was already accepted and is awaiting payment.');
+      }
+
+      if (['ACTIVE', 'COMPLETED', 'PAYOUT_RELEASED'].includes(booking.status)) {
+        res.status(400);
+        throw new Error('This event requirement has already been confirmed and paid in escrow.');
+      }
+
+      if (booking.status === 'DISPUTED') {
+        res.status(400);
+        throw new Error('This event booking is currently under dispute review.');
+      }
+
       res.status(400);
       throw new Error('A booking already exists for this requirement');
     }

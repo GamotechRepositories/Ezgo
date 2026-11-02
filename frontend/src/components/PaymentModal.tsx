@@ -64,6 +64,16 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     setLoading(false);
   };
 
+  const handleDemoPay = async () => {
+    setLoading(true);
+    setErrorMessage(null);
+    try {
+      await completeDemoPay();
+    } catch (err: any) {
+      fail(err.message || 'Could not complete demo payment.');
+    }
+  };
+
   const handlePay = async () => {
     setLoading(true);
     setErrorMessage(null);
@@ -75,72 +85,69 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         throw new Error('The amount must be at least ₹1.');
       }
 
-      try {
-        const orderData = await api.createRazorpayOrder({
-          amount: amountInPaise,
-          currency: 'INR',
+      const orderData = await api.createRazorpayOrder({
+        amount: amountInPaise,
+        currency: 'INR',
+        bookingId: booking._id,
+        receipt: `rcpt_bkg_${booking._id.toString().slice(-8)}`,
+        notes: {
           bookingId: booking._id,
-          receipt: `rcpt_bkg_${booking._id.toString().slice(-8)}`,
-          notes: {
-            bookingId: booking._id,
-            bidAmount: booking.bidAmount.toString(),
-            platformFee: booking.platformFee.toString(),
+          bidAmount: booking.bidAmount.toString(),
+          platformFee: booking.platformFee.toString(),
+        },
+      });
+
+      const razorpayKey = orderData?.key_id || import.meta.env.VITE_RAZORPAY_KEY_ID;
+      if (razorpayKey && orderData?.order_id) {
+        await openRazorpayCheckout({
+          key: razorpayKey,
+          amount: orderData.amount || amountInPaise,
+          currency: orderData.currency || 'INR',
+          order_id: orderData.order_id,
+          name: 'EzzyGo Event Marketplace',
+          description: `Escrow payment for ${providerName}`,
+          prefill: {
+            name: requester?.name || '',
+            email: requester?.email || '',
+            contact: requester?.phone || '',
+          },
+          onSuccess: async (response) => {
+            try {
+              const verifyRes = await api.verifyRazorpayPayment({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                bookingId: booking._id,
+              });
+
+              if (!verifyRes.success) {
+                fail('We could not confirm this payment.', true);
+                return;
+              }
+              setTransactionId(response.razorpay_payment_id);
+              const confirmed = verifyRes.data?.booking || booking;
+              setPaidBooking(confirmed);
+              await onPaySuccess(booking._id, 'Razorpay Standard Checkout', response.razorpay_payment_id, verifyRes.data?.booking);
+              setStep('success');
+              setLoading(false);
+            } catch (verifyErr: any) {
+              fail(verifyErr.message || 'We could not confirm this payment.', true);
+            }
+          },
+          onDismiss: () => {
+            fail('Payment window was closed. No money was charged.');
+          },
+          onFailure: (err) => {
+            fail(`Payment failed: ${err?.description || err?.message || 'please try again.'}`);
           },
         });
-
-        const liveKey = (orderData?.key_id || '').startsWith('rzp_live_');
-        if (liveKey && orderData?.order_id) {
-          await openRazorpayCheckout({
-            key: orderData.key_id,
-            amount: orderData.amount || amountInPaise,
-            currency: orderData.currency || 'INR',
-            order_id: orderData.order_id,
-            name: 'EzzyGo',
-            description: `Booking payment for ${providerName}`,
-            prefill: {
-              name: requester?.name || '',
-              email: requester?.email || '',
-              contact: requester?.phone || '',
-            },
-            onSuccess: async (response) => {
-              try {
-                const verifyRes = await api.verifyRazorpayPayment({
-                  razorpay_order_id: response.razorpay_order_id,
-                  razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_signature: response.razorpay_signature,
-                  bookingId: booking._id,
-                });
-
-                if (!verifyRes.success) {
-                  fail('We could not confirm this payment.', true);
-                  return;
-                }
-                setTransactionId(response.razorpay_payment_id);
-                const confirmed = verifyRes.data?.booking || booking;
-                setPaidBooking(confirmed);
-                await onPaySuccess(booking._id, 'Razorpay Standard Checkout', response.razorpay_payment_id, verifyRes.data?.booking);
-                setStep('success');
-                setLoading(false);
-              } catch (verifyErr: any) {
-                fail(verifyErr.message || 'We could not confirm this payment.', true);
-              }
-            },
-            onDismiss: () => {
-              fail('You closed the payment window. No money was taken.');
-            },
-            onFailure: (err) => {
-              fail(`Payment failed: ${err?.description || err?.message || 'please try again.'}`);
-            },
-          });
-          return;
-        }
-      } catch {
-        // Test/demo keys: confirm escrow without Razorpay checkout.
+        return;
       }
 
+      // If Razorpay order creation didn't return an order_id, fallback to demo pay
       await completeDemoPay();
     } catch (err: any) {
-      fail(err.message || 'Could not start the payment.');
+      fail(err.message || 'Could not start the payment gateway.');
     }
   };
 
@@ -299,27 +306,40 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               </div>
             </div>
 
-            <p className="text-sm text-slate-600">
-              Demo payment is on. Escrow confirms instantly and vendor contact unlocks. Live UPI/card starts after Razorpay live keys.
+            <p className="text-xs text-slate-500 leading-relaxed flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>100% Escrow Protected: Payments are held safely by EzzyGo and only released after your event is successfully delivered.</span>
             </p>
 
-            <button
-              onClick={handlePay}
-              disabled={loading}
-              className="w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-base transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-            >
-              {loading ? (
-                <span className="flex items-center gap-2">
-                  <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Confirming demo payment...
-                </span>
-              ) : (
-                <>
-                  <span>Confirm demo payment · ₹{booking.totalPaid.toLocaleString()}</span>
-                  <ArrowRight className="w-5 h-5" />
-                </>
-              )}
-            </button>
+            <div className="space-y-2.5 pt-1">
+              <button
+                type="button"
+                onClick={handlePay}
+                disabled={loading}
+                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold text-base shadow-md shadow-emerald-600/20 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 active:scale-98"
+              >
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Opening Payment Gateway...
+                  </span>
+                ) : (
+                  <>
+                    <span>Pay ₹{booking.totalPaid.toLocaleString()} via Razorpay</span>
+                    <ArrowRight className="w-5 h-5" />
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDemoPay}
+                disabled={loading}
+                className="w-full py-2.5 rounded-xl border border-dashed border-slate-300 hover:border-slate-400 text-slate-600 hover:text-slate-800 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                <span>Instant Demo Pay (Skip Gateway)</span>
+              </button>
+            </div>
 
             <button
               onClick={onClose}

@@ -1,5 +1,5 @@
 import { Search, Briefcase, Calendar, User as UserIcon } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { VendorSidebar } from './components/VendorSidebar';
 import { VendorHeader } from './components/VendorHeader';
 import { VendorAccountModal } from './components/VendorAccountModal';
@@ -98,15 +98,30 @@ function VendorApp({ currentVendor, onUpdateVendor, onLogout }: { currentVendor:
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const recentToastsRef = useRef<Map<string, number>>(new Map());
 
-  const addToast = (type: ToastMessage['type'], title: string, message?: string) => {
-    const id = Math.random().toString(36).substring(2, 9);
-    setToasts((prev) => [...prev, { id, type, title, message: message || '' }]);
-  };
-
-  const removeToast = (id: string) => {
+  const removeToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
-  };
+  }, []);
+
+  const addToast = useCallback((type: ToastMessage['type'], title: string, message?: string) => {
+    const cleanMsg = (message || '').trim();
+    const dedupeKey = `${type}:${title}:${cleanMsg}`;
+    const now = Date.now();
+    const lastSeen = recentToastsRef.current.get(dedupeKey) || 0;
+
+    // Deduplicate: If an identical toast was shown in the last 4 seconds, ignore it
+    if (now - lastSeen < 4000) {
+      return;
+    }
+    recentToastsRef.current.set(dedupeKey, now);
+
+    const id = Math.random().toString(36).substring(2, 9);
+    const newToast: ToastMessage = { id, type, title, message: cleanMsg };
+
+    // Cap at maximum 3 visible toasts, discarding older ones
+    setToasts((prev) => [...prev.slice(-2), newToast]);
+  }, []);
 
   const loadData = async () => {
     setLoadError('');
@@ -239,7 +254,6 @@ function VendorApp({ currentVendor, onUpdateVendor, onLogout }: { currentVendor:
     socket.on('requirement:updated', handleRequirementUpdated);
     socket.on('booking:created', handleBookingCreated);
     socket.on('booking:updated', handleBookingUpdated);
-    socket.on('booking:update', handleBookingUpdated);
     socket.on('kyc:status', handleKycStatus);
     socket.on('notification:new', handleNewNotification);
 
@@ -249,7 +263,6 @@ function VendorApp({ currentVendor, onUpdateVendor, onLogout }: { currentVendor:
       socket.off('requirement:updated', handleRequirementUpdated);
       socket.off('booking:created', handleBookingCreated);
       socket.off('booking:updated', handleBookingUpdated);
-      socket.off('booking:update', handleBookingUpdated);
       socket.off('kyc:status', handleKycStatus);
       socket.off('notification:new', handleNewNotification);
     };

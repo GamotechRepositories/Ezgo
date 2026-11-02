@@ -131,12 +131,33 @@ export const HostHomePage: React.FC<HostHomePageProps> = ({
 
   const city = (selectedCity || 'Pune').split(',')[0].trim();
   const ads = banners.filter((b) => b.isActive);
-  const compactReqs = requirements.filter((r) => r.status !== 'DRAFT');
-  const liveReqs = [...requirements.filter((r) => r.status === 'OPEN')]
-    .sort((a, b) => (b.bidsCount || b.bids?.length || 0) - (a.bidsCount || a.bids?.length || 0));
-  const liveCount = requirements.filter(
-    (r) => r.status === 'OPEN' && ((r.bidsCount || 0) > 0 || (r.bids || []).length > 0)
-  ).length;
+  
+  // Deduplicate requirements by _id to avoid duplicate cards from concurrent socket + REST responses
+  const uniqueReqs = useMemo(() => {
+    const seen = new Set<string>();
+    return requirements.filter((r) => {
+      const id = String(r._id);
+      if (seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
+  }, [requirements]);
+
+  const compactReqs = useMemo(() => uniqueReqs.filter((r) => r.status !== 'DRAFT'), [uniqueReqs]);
+  const liveReqs = useMemo(
+    () =>
+      [...uniqueReqs.filter((r) => r.status === 'OPEN')].sort(
+        (a, b) => (b.bidsCount || b.bids?.length || 0) - (a.bidsCount || a.bids?.length || 0)
+      ),
+    [uniqueReqs]
+  );
+  const liveCount = useMemo(
+    () =>
+      uniqueReqs.filter(
+        (r) => r.status === 'OPEN' && ((r.bidsCount || 0) > 0 || (r.bids || []).length > 0)
+      ).length,
+    [uniqueReqs]
+  );
   const homeServices = APP_EVENT_SERVICES.slice(0, 4);
 
   useEffect(() => {

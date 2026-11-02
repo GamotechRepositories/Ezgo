@@ -302,8 +302,18 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
   const estimatedWinningBid = Math.round(packageRetailTotal * 0.74); // 26% avg reverse-bidding savings
   const estimatedSavings = packageRetailTotal - estimatedWinningBid;
 
-  const openReqs = requirements.filter((r) => r.status === 'OPEN' || r.status === 'ACCEPTED' || r.status === 'EXPIRED');
-  const draftReqs = requirements.filter((r) => r.status === 'DRAFT');
+  const uniqueRequirements = useMemo(() => {
+    const seen = new Set<string>();
+    return requirements.filter((r) => {
+      const id = String(r._id);
+      if (seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
+  }, [requirements]);
+
+  const openReqs = uniqueRequirements.filter((r) => r.status === 'OPEN' || r.status === 'ACCEPTED' || r.status === 'EXPIRED');
+  const draftReqs = uniqueRequirements.filter((r) => r.status === 'DRAFT');
   const activeBookings = bookings.filter((b) => b.status === 'ACTIVE' || b.status === 'AWAITING_PAYMENT');
 
   const availableCities = useMemo(() => {
@@ -314,7 +324,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
   }, [openReqs]);
 
   // Filtered requirements
-  const compactReqs = requirements.filter((r) => r.status !== 'DRAFT').slice(0, 3);
+  const compactReqs = uniqueRequirements.filter((r) => r.status !== 'DRAFT').slice(0, 3);
   const liveReqs = [...openReqs.filter((r) => r.status === 'OPEN')]
     .sort((a, b) => {
       const bidCmp = (b.bidsCount || b.bids?.length || 0) - (a.bidsCount || a.bids?.length || 0);
@@ -2078,7 +2088,7 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                                 onClick={() => setExpandedReqId(isExpanded ? null : req._id)}
                                 className="w-full py-3 sm:py-2.5 px-4 rounded-xl bg-gradient-to-r from-orange-500 to-[#ff5c28] hover:from-orange-600 hover:to-[#ff5c28] text-white font-bold text-xs sm:text-sm shadow-md shadow-slate-900/12 flex items-center justify-center gap-1.5 cursor-pointer transition active:scale-95 min-h-[44px]"
                               >
-                                <span>{isExpanded ? 'Hide bids' : 'See bids'}</span>
+                                <span>{isExpanded ? 'Hide' : req.status === 'COMPLETED' ? 'View event' : req.status === 'ACTIVE' ? 'View booking' : req.status === 'ACCEPTED' ? 'Pay deposit' : 'See bids'}</span>
                                 <ArrowRight className="w-3.5 h-3.5" />
                               </button>
 
@@ -2106,7 +2116,13 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
                           </div>
 
                           <span className="text-xs font-medium text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full">
-                            {eligibleBids.length} you can accept
+                            {req.status === 'COMPLETED'
+                              ? 'Event Completed'
+                              : req.status === 'ACTIVE'
+                                ? 'Escrow Confirmed'
+                                : req.status === 'ACCEPTED'
+                                  ? 'Proposal Accepted'
+                                  : `${eligibleBids.length} you can accept`}
                           </span>
                         </div>
 
@@ -2208,7 +2224,22 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
 
                                   {/* Action */}
                                   <div>
-                                    {isEligible ? (
+                                    {req.status === 'COMPLETED' || req.status === 'ACTIVE' || bid.status === 'ACCEPTED' ? (
+                                      <div className="w-full py-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-extrabold text-xs text-center flex items-center justify-center gap-1.5 min-h-[46px]">
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                                        <span>
+                                          {req.status === 'COMPLETED'
+                                            ? 'Event Completed · Escrow Released'
+                                            : req.status === 'ACTIVE'
+                                              ? 'Booking Confirmed in Escrow'
+                                              : 'Proposal Accepted · Awaiting Deposit'}
+                                        </span>
+                                      </div>
+                                    ) : bid.status === 'REJECTED' ? (
+                                      <div className="w-full py-3 rounded-xl bg-slate-100 border border-slate-200 text-slate-500 font-bold text-xs text-center min-h-[46px] flex items-center justify-center">
+                                        Proposal Not Selected
+                                      </div>
+                                    ) : isEligible ? (
                                       <button
                                         onClick={() => onAcceptBid(req._id, bid._id)}
                                         className="w-full py-3.5 sm:py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold text-xs sm:text-sm shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 cursor-pointer transition active:scale-95 min-h-[46px]"

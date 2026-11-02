@@ -210,8 +210,8 @@ class BookingsProvider extends ChangeNotifier {
         final orderId = (order['order_id'] ?? order['id'] ?? '').toString();
         final key = (order['key_id'] ?? order['key'] ?? '').toString();
         final amount = order['amount'] is num ? (order['amount'] as num).toInt() : 0;
-        final isLive = key.startsWith('rzp_live_');
-        if (isLive && orderId.isNotEmpty && key.isNotEmpty) {
+        final hasKey = key.isNotEmpty && (key.startsWith('rzp_test_') || key.startsWith('rzp_live_'));
+        if (hasKey && orderId.isNotEmpty) {
           try {
             final checkout = await RazorpayCheckout.open(
               key: key,

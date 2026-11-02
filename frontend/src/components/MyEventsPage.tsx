@@ -2,9 +2,11 @@ import React, { useMemo, useState } from 'react';
 import {
   ArrowLeft,
   Calendar,
+  CheckCircle2,
   ChevronDown,
   ChevronUp,
   ClipboardList,
+  Clock,
   MapPin,
   Plus,
   Radio,
@@ -60,35 +62,45 @@ export const MyEventsPage: React.FC<MyEventsPageProps> = ({
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>('All');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
+  const uniqueRequirements = useMemo(() => {
+    const seen = new Set<string>();
+    return requirements.filter((r) => {
+      const id = String(r._id);
+      if (seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
+  }, [requirements]);
+
   const counts = useMemo(
     () => ({
-      All: requirements.length,
-      Open: requirements.filter((r) => r.status === 'OPEN').length,
-      'With bids': requirements.filter(
+      All: uniqueRequirements.length,
+      Open: uniqueRequirements.filter((r) => r.status === 'OPEN').length,
+      'With bids': uniqueRequirements.filter(
         (r) => r.status === 'OPEN' && ((r.bidsCount || 0) > 0 || (r.bids || []).length > 0)
       ).length,
-      Booked: requirements.filter((r) => r.status === 'ACCEPTED' || r.status === 'ACTIVE').length,
-      Closed: requirements.filter(
+      Booked: uniqueRequirements.filter((r) => r.status === 'ACCEPTED' || r.status === 'ACTIVE').length,
+      Closed: uniqueRequirements.filter(
         (r) => r.status === 'COMPLETED' || r.status === 'CANCELLED' || r.status === 'EXPIRED'
       ).length,
     }),
-    [requirements]
+    [uniqueRequirements]
   );
 
   const filtered = useMemo(() => {
-    if (filter === 'Open') return requirements.filter((r) => r.status === 'OPEN');
+    if (filter === 'Open') return uniqueRequirements.filter((r) => r.status === 'OPEN');
     if (filter === 'With bids')
-      return requirements.filter(
+      return uniqueRequirements.filter(
         (r) => r.status === 'OPEN' && ((r.bidsCount || 0) > 0 || (r.bids || []).length > 0)
       );
     if (filter === 'Booked')
-      return requirements.filter((r) => r.status === 'ACCEPTED' || r.status === 'ACTIVE');
+      return uniqueRequirements.filter((r) => r.status === 'ACCEPTED' || r.status === 'ACTIVE');
     if (filter === 'Closed')
-      return requirements.filter(
+      return uniqueRequirements.filter(
         (r) => r.status === 'COMPLETED' || r.status === 'CANCELLED' || r.status === 'EXPIRED'
       );
-    return requirements;
-  }, [filter, requirements]);
+    return uniqueRequirements;
+  }, [filter, uniqueRequirements]);
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 pb-24 pt-0 lg:pt-20">
@@ -281,9 +293,11 @@ export const MyEventsPage: React.FC<MyEventsPageProps> = ({
                         className={`absolute top-3 left-3 px-3 py-1 rounded-full text-[11px] font-black tracking-wide shadow-xs ${
                           open
                             ? 'bg-[#fff7ed] text-[#ff5c28] border border-[#ffd7c2]'
-                            : req.status === 'ACCEPTED' || req.status === 'ACTIVE'
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                              : 'bg-white text-slate-700 border border-slate-200'
+                            : req.status === 'COMPLETED'
+                              ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                              : req.status === 'ACCEPTED' || req.status === 'ACTIVE'
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                : 'bg-white text-slate-700 border border-slate-200'
                         }`}
                       >
                         {req.status}
@@ -382,11 +396,15 @@ export const MyEventsPage: React.FC<MyEventsPageProps> = ({
                       {/* Expand Action Footer */}
                       <div className="mt-3.5 flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
                         <span className="font-extrabold text-[#ff5c28] flex items-center gap-1">
-                          {req.status === 'ACCEPTED'
-                            ? 'Pay to confirm'
-                            : bidCount > 0
-                              ? `See bids (${bidCount})`
-                              : 'View request details'}
+                          {req.status === 'COMPLETED'
+                            ? 'View completed event'
+                            : req.status === 'ACCEPTED'
+                              ? 'Pay to confirm'
+                              : req.status === 'ACTIVE'
+                                ? 'View active booking'
+                                : bidCount > 0
+                                  ? `See bids (${bidCount})`
+                                  : 'View request details'}
                         </span>
                         <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-[#ff5c28] group-hover:text-white transition">
                           {expanded ? (
@@ -402,15 +420,72 @@ export const MyEventsPage: React.FC<MyEventsPageProps> = ({
                   {/* Expanded Bids Section */}
                   {expanded && (
                     <div className="px-4 pb-4 sm:px-5 sm:pb-5 space-y-3.5 border-t border-slate-100 pt-4 bg-[#fafbfc]">
-                      {req.status === 'ACCEPTED' || req.status === 'ACTIVE' ? (
-                        <button
-                          type="button"
-                          onClick={onOpenBookings}
-                          className="w-full h-11 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs sm:text-sm font-black cursor-pointer transition flex items-center justify-center gap-2 shadow-sm"
-                        >
-                          <ShieldCheck className="w-4 h-4 stroke-[2.5]" />
-                          <span>View Confirmed Booking in Escrow</span>
-                        </button>
+                      {req.status === 'COMPLETED' ? (
+                        <div className="space-y-3">
+                          <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-center space-y-2">
+                            <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
+                              <ShieldCheck className="w-5 h-5 stroke-[2.5]" />
+                            </div>
+                            <p className="text-xs font-black text-emerald-900">
+                              Event Completed & Verified
+                            </p>
+                            <p className="text-[11px] text-emerald-700 leading-relaxed">
+                              This event was completed and the escrow payment was released to the vendor.
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={onOpenBookings}
+                            className="w-full h-11 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs sm:text-sm font-black cursor-pointer transition flex items-center justify-center gap-2 shadow-sm"
+                          >
+                            <ShieldCheck className="w-4 h-4 stroke-[2.5]" />
+                            <span>View Completed Booking & Review</span>
+                          </button>
+                        </div>
+                      ) : req.status === 'ACTIVE' ? (
+                        <div className="space-y-3">
+                          <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-center space-y-2">
+                            <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
+                              <ShieldCheck className="w-5 h-5 stroke-[2.5]" />
+                            </div>
+                            <p className="text-xs font-black text-emerald-900">
+                              Booking Active · Funds Secured in Escrow
+                            </p>
+                            <p className="text-[11px] text-emerald-700 leading-relaxed">
+                              Your event is locked in and vendor details are unlocked. Escrow is safely held until the event is done.
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={onOpenBookings}
+                            className="w-full h-11 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs sm:text-sm font-black cursor-pointer transition flex items-center justify-center gap-2 shadow-sm"
+                          >
+                            <ShieldCheck className="w-4 h-4 stroke-[2.5]" />
+                            <span>View Confirmed Booking in Escrow</span>
+                          </button>
+                        </div>
+                      ) : req.status === 'ACCEPTED' ? (
+                        <div className="space-y-3">
+                          <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-center space-y-2">
+                            <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto">
+                              <Clock className="w-5 h-5 stroke-[2.5]" />
+                            </div>
+                            <p className="text-xs font-black text-amber-900">
+                              Proposal Accepted · Awaiting Escrow Payment
+                            </p>
+                            <p className="text-[11px] text-amber-700 leading-relaxed">
+                              You selected a vendor. Complete the escrow deposit to lock in the booking.
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={onOpenBookings}
+                            className="w-full h-11 rounded-xl bg-gradient-to-r from-amber-500 to-[#ff5c28] hover:from-amber-600 hover:to-[#ff5c28] text-white text-xs sm:text-sm font-black cursor-pointer transition flex items-center justify-center gap-2 shadow-sm"
+                          >
+                            <ShieldCheck className="w-4 h-4 stroke-[2.5]" />
+                            <span>Complete Escrow Deposit in Bookings</span>
+                          </button>
+                        </div>
                       ) : bids.length === 0 ? (
                         <div className="p-5 rounded-2xl bg-white border border-slate-200/90 text-center space-y-2 shadow-2xs">
                           <div className="w-10 h-10 rounded-full bg-orange-50 text-[#ff5c28] flex items-center justify-center mx-auto">
@@ -520,24 +595,39 @@ export const MyEventsPage: React.FC<MyEventsPageProps> = ({
                                     )}
                                   </div>
 
-                                  {bid.isEligibleForAccept ? (
-                                    <button
-                                      type="button"
-                                      onClick={() => onAcceptBid(req._id, bid._id)}
-                                      className={`w-full h-11 rounded-xl text-white text-xs font-black flex items-center justify-center gap-2 cursor-pointer shadow-sm transition active:scale-95 ${
-                                        isLowest
-                                          ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-emerald-600/20'
-                                          : 'bg-[#ff5c28] hover:bg-[#e64814] shadow-orange-500/20'
-                                      }`}
-                                    >
-                                      <ShieldCheck className="w-4 h-4 stroke-[2.5]" />
-                                      <span>Accept Proposal · Pay ₹{total.toLocaleString()}</span>
-                                    </button>
-                                  ) : (
-                                    <p className="text-[11px] font-bold text-rose-700 text-center bg-rose-50 p-2 rounded-xl border border-rose-200">
-                                      Too high to accept. Bid must be ₹{req.maxAcceptableBid.toLocaleString()} or less.
-                                    </p>
-                                  )}
+                                   {req.status === 'COMPLETED' || req.status === 'ACTIVE' || bid.status === 'ACCEPTED' ? (
+                                     <div className="w-full py-2.5 px-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-black text-center flex items-center justify-center gap-1.5 shadow-2xs">
+                                       <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                                       <span>
+                                         {req.status === 'COMPLETED'
+                                           ? 'Event Completed · Escrow Released'
+                                           : req.status === 'ACTIVE'
+                                             ? 'Booking Confirmed in Escrow'
+                                             : 'Proposal Accepted · Awaiting Deposit'}
+                                       </span>
+                                     </div>
+                                   ) : bid.status === 'REJECTED' ? (
+                                     <div className="w-full py-2.5 px-3 rounded-xl bg-slate-100 border border-slate-200 text-slate-500 text-xs font-bold text-center">
+                                       Proposal Not Selected
+                                     </div>
+                                   ) : bid.isEligibleForAccept ? (
+                                     <button
+                                       type="button"
+                                       onClick={() => onAcceptBid(req._id, bid._id)}
+                                       className={`w-full h-11 rounded-xl text-white text-xs font-black flex items-center justify-center gap-2 cursor-pointer shadow-sm transition active:scale-95 ${
+                                         isLowest
+                                           ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-emerald-600/20'
+                                           : 'bg-[#ff5c28] hover:bg-[#e64814] shadow-orange-500/20'
+                                       }`}
+                                     >
+                                       <ShieldCheck className="w-4 h-4 stroke-[2.5]" />
+                                       <span>Accept Proposal · Pay ₹{total.toLocaleString()}</span>
+                                     </button>
+                                   ) : (
+                                     <p className="text-[11px] font-bold text-rose-700 text-center bg-rose-50 p-2 rounded-xl border border-rose-200">
+                                       Too high to accept. Bid must be ₹{req.maxAcceptableBid.toLocaleString()} or less.
+                                     </p>
+                                   )}
                                 </div>
                               );
                             });

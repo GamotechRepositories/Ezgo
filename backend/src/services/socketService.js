@@ -85,36 +85,12 @@ export const broadcastBookingCreated = (booking) => {
   if (!io) return;
   io.emit('booking:created', booking);
   io.to('admin:room').emit('booking:created', booking);
-
-  const reqId = booking.requesterId?._id ? String(booking.requesterId._id) : (booking.requesterId ? String(booking.requesterId) : null);
-  const provId = booking.providerId?._id ? String(booking.providerId._id) : (booking.providerId ? String(booking.providerId) : null);
-
-  if (reqId) {
-    io.to(`user:${reqId}`).emit('booking:update', booking);
-    io.to(`user:${reqId}`).emit('booking:created', booking);
-  }
-  if (provId) {
-    io.to(`user:${provId}`).emit('booking:update', booking);
-    io.to(`user:${provId}`).emit('booking:created', booking);
-  }
 };
 
 export const broadcastBookingUpdated = (booking) => {
   if (!io) return;
   io.emit('booking:updated', booking);
   io.to('admin:room').emit('booking:updated', booking);
-
-  const reqId = booking.requesterId?._id ? String(booking.requesterId._id) : (booking.requesterId ? String(booking.requesterId) : null);
-  const provId = booking.providerId?._id ? String(booking.providerId._id) : (booking.providerId ? String(booking.providerId) : null);
-
-  if (reqId) {
-    io.to(`user:${reqId}`).emit('booking:update', booking);
-    io.to(`user:${reqId}`).emit('booking:updated', booking);
-  }
-  if (provId) {
-    io.to(`user:${provId}`).emit('booking:update', booking);
-    io.to(`user:${provId}`).emit('booking:updated', booking);
-  }
 };
 
 export const broadcastDisputeRaised = ({ booking, disputeReason, raisedBy }) => {
