@@ -297,7 +297,7 @@ class BookingsProvider extends ChangeNotifier {
   Future<void> cancelBooking(String id, {String? reason}) async {
     await ApiService().post(ApiConfig.cancelBooking, {
       'bookingId': id,
-      if (reason != null) 'reason': reason,
+      if (reason != null && reason.isNotEmpty) 'reason': reason,
     });
     await loadData();
   }

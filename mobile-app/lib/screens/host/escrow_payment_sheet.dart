@@ -129,6 +129,7 @@ class _EscrowPaymentSheetState extends State<EscrowPaymentSheet> {
     final bookings = context.read<BookingsProvider>();
     final auth = context.read<AuthProvider>();
     final requirements = context.read<RequirementsProvider>();
+    final payments = context.read<PaymentsProvider>();
     try {
       final paid = await bookings.payEscrow(
         bookingId: widget.booking.id,
@@ -140,7 +141,7 @@ class _EscrowPaymentSheetState extends State<EscrowPaymentSheet> {
       );
       await requirements.loadData(requesterId: auth.user?.id);
       await bookings.loadData();
-      await context.read<PaymentsProvider>().load();
+      await payments.load();
       final latest = bookings.bookings.where((b) => b.id == paid.id);
       final shown = latest.isNotEmpty ? latest.first : paid;
       if (!mounted) return;

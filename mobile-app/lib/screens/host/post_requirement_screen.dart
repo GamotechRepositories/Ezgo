@@ -685,20 +685,77 @@ class _PostRequirementScreenState extends State<PostRequirementScreen> {
             ],
           ),
         ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _guestTierChip('50 Guests', 50),
+            _guestTierChip('100 Guests', 100),
+            _guestTierChip('250 Guests', 250),
+            _guestTierChip('500 Guests', 500),
+            _guestTierChip('1,000+ Guests', 1000),
+          ],
+        ),
         const SizedBox(height: 14),
-        const Text('Event Date', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
-        const SizedBox(height: 8),
-        InkWell(
-          onTap: _pickDate,
-          child: Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppTheme.borderSubtle)),
-            child: Row(children: [
-              const Icon(LucideIcons.calendar, size: 18, color: AppTheme.primary),
-              const SizedBox(width: 10),
-              Text(DateFormat('dd MMM yyyy').format(_eventDate), style: const TextStyle(fontWeight: FontWeight.w700)),
-            ]),
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Event Date', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: _pickDate,
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppTheme.borderSubtle)),
+                      child: Row(children: [
+                        const Icon(LucideIcons.calendar, size: 18, color: AppTheme.primary),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            DateFormat('dd MMM yyyy').format(_eventDate),
+                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ]),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Event Time', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: _pickTime,
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppTheme.borderSubtle)),
+                      child: Row(children: [
+                        const Icon(LucideIcons.clock, size: 18, color: AppTheme.primary),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _eventTime.format(context),
+                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ]),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 14),
         const Text('Event Location', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
@@ -929,8 +986,8 @@ class _PostRequirementScreenState extends State<PostRequirementScreen> {
               const SizedBox(height: 8),
               _reviewRow(LucideIcons.heart, 'Occasion', _selectedOccasion),
               _reviewRow(LucideIcons.users, 'Guest Count', '$_guestCount Guests'),
-              _reviewRow(LucideIcons.calendar, 'Event Date', DateFormat('dd MMM yyyy').format(_eventDate)),
-              _reviewRow(LucideIcons.mapPin, 'Location', '$_city'),
+              _reviewRow(LucideIcons.calendar, 'Event Date', '${DateFormat('dd MMM yyyy').format(_eventDate)} (${_eventTime.format(context)})'),
+              _reviewRow(LucideIcons.mapPin, 'Location', _city),
               _reviewRow(LucideIcons.banknote, 'Your ceiling', _budget >= 1000 ? formatCurrency.format(_budget) : 'Set a budget'),
             ],
           ),
