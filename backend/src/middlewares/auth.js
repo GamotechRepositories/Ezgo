@@ -20,6 +20,14 @@ export const requireAuth = async (req, res, next) => {
       res.status(401);
       throw new Error('Please log in again.');
     }
+    if (user.isBanned) {
+      res.status(403);
+      throw new Error(
+        user.banReason
+          ? `Your account has been suspended by the administrator: "${user.banReason}". Please contact support.`
+          : 'Your account has been suspended by the administrator. Please contact support.'
+      );
+    }
     req.user = user;
     next();
   } catch (error) {

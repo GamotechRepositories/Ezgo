@@ -12,6 +12,9 @@ export interface User {
   reviewCount?: number;
   completedJobs?: number;
   isVerified?: boolean;
+  isBanned?: boolean;
+  banReason?: string;
+  bannedAt?: string;
   bankDetails?: {
     accountHolder: string;
     accountNumber: string;
@@ -209,9 +212,61 @@ export interface Bid {
     rating?: number;
     avatar?: string;
     isVerified?: boolean;
+  isBanned?: boolean;
+  banReason?: string;
+  bannedAt?: string;
   };
   amount: number;
   message?: string;
   status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'WITHDRAWN';
   createdAt: string;
+}
+
+export interface Review {
+  _id: string;
+  bookingId?: {
+    _id: string;
+    status: string;
+    totalPaid?: number;
+    bidAmount?: number;
+    requirementId?: {
+      title: string;
+      category: string;
+      occasion?: string;
+      location?: { city: string };
+    };
+  };
+  fromUserId?: {
+    _id: string;
+    name: string;
+    email?: string;
+    phone?: string;
+    avatar?: string;
+    role?: string;
+  };
+  toUserId?: {
+    _id: string;
+    name: string;
+    businessName?: string;
+    email?: string;
+    phone?: string;
+    avatar?: string;
+    rating?: number;
+  };
+  rating: number;
+  comment?: string;
+  role: 'requester_to_provider' | 'provider_to_requester';
+  isHidden?: boolean;
+  moderationReason?: string;
+  moderatedAt?: string;
+  createdAt: string;
+}
+
+export interface SystemSetting {
+  _id?: string;
+  key: string;
+  platformFeePercent: number;
+  minBiddingDiscountPercent: number;
+  updatedByName?: string;
+  updatedAt?: string;
 }

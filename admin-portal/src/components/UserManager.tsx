@@ -10,6 +10,8 @@ import {
   Mail,
   AlertCircle,
   MapPin,
+  Ban,
+  Unlock,
 } from 'lucide-react';
 import type { User } from '../types';
 
@@ -17,6 +19,7 @@ interface UserManagerProps {
   users: User[];
   currentAdminId?: string;
   onUpdateRole: (userId: string, newRole: string) => Promise<void>;
+  onToggleBan: (userId: string, isBanned: boolean, banReason?: string) => Promise<void>;
   onRefresh: () => void;
 }
 
@@ -24,10 +27,12 @@ export const UserManager: React.FC<UserManagerProps> = ({
   users,
   currentAdminId,
   onUpdateRole,
+  onToggleBan,
   onRefresh,
 }) => {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'BANNED'>('ALL');
   const [cityFilter, setCityFilter] = useState('ALL');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [confirmRoleChange, setConfirmRoleChange] = useState<{
@@ -36,11 +41,18 @@ export const UserManager: React.FC<UserManagerProps> = ({
     newRole: string;
   } | null>(null);
 
+  const [banModal, setBanModal] = useState<{
+    user: User;
+    action: 'BAN' | 'UNBAN';
+    reason: string;
+  } | null>(null);
+
   // Aggregate stats
   const totalUsers = users.length;
   const totalAdmins = users.filter((u) => u.role === 'admin' || (u as any).roles?.includes('admin')).length;
   const totalVendors = users.filter((u) => u.role === 'provider' || (u as any).roles?.includes('provider')).length;
   const totalHosts = users.filter((u) => u.role === 'requester' || (u as any).roles?.includes('requester')).length;
+  const totalBanned = users.filter((u) => u.isBanned).length;
 
   // Extract cities
   const userCities = Array.from(
@@ -57,6 +69,9 @@ export const UserManager: React.FC<UserManagerProps> = ({
       const matchRole = u.role === roleFilter || (u as any).roles?.includes(roleFilter);
       if (!matchRole) return false;
     }
+    if (statusFilter === 'BANNED' && !u.isBanned) return false;
+    if (statusFilter === 'ACTIVE' && u.isBanned) return false;
+
     if (cityFilter !== 'ALL') {
       const userLoc = (u.serviceArea || (u.kycDocuments as any)?.businessAddress || '').toLowerCase();
       const filterKey = cityFilter.toLowerCase().split(' ')[0];
@@ -84,12 +99,24 @@ export const UserManager: React.FC<UserManagerProps> = ({
     }
   };
 
+  const handleConfirmBanToggle = async () => {
+    if (!banModal) return;
+    setUpdatingId(banModal.user._id);
+    try {
+      const shouldBan = banModal.action === 'BAN';
+      await onToggleBan(banModal.user._id, shouldBan, banModal.reason);
+      setBanModal(null);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* Header & Stats */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">User Management</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">User Management & Access Control</h1>
           <p className="text-sm sm:text-base text-slate-600 mt-1">
             Directory of all registered hosts, vendors, and administrators across the EzzyGo marketplace.
           </p>
@@ -102,7 +129,7 @@ export const UserManager: React.FC<UserManagerProps> = ({
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
         <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1">
           <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Accounts</div>
           <div className="text-2xl font-bold text-slate-900">{totalUsers}</div>
@@ -132,6 +159,14 @@ export const UserManager: React.FC<UserManagerProps> = ({
           <div className="text-2xl font-bold text-blue-700">{totalHosts}</div>
           <div className="text-xs text-slate-400">Event hosts / requesters</div>
         </div>
+        <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1">
+          <div className="text-xs font-semibold text-red-600 uppercase tracking-wider flex items-center gap-1.5">
+            <Ban className="w-3.5 h-3.5" />
+            <span>Suspended</span>
+          </div>
+          <div className="text-2xl font-bold text-red-600">{totalBanned}</div>
+          <div className="text-xs text-slate-400">Banned accounts</div>
+        </div>
       </div>
 
       {/* Filter and Search Bar */}
@@ -148,7 +183,26 @@ export const UserManager: React.FC<UserManagerProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
-          <div className="flex items-center gap-2">
+          {/* Status Filter */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-slate-500 font-medium">Status:</span>
+            {(['ALL', 'ACTIVE', 'BANNED'] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setStatusFilter(s)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
+                  statusFilter === s
+                    ? 'bg-slate-900 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {s === 'ALL' ? 'All' : s === 'ACTIVE' ? 'Active' : 'Suspended'}
+              </button>
+            ))}
+          </div>
+
+          {/* Role Filter */}
+          <div className="flex items-center gap-1.5">
             <span className="text-xs text-slate-500 font-medium">Role:</span>
             {(['ALL', 'admin', 'provider', 'requester'] as const).map((r) => (
               <button
@@ -198,15 +252,18 @@ export const UserManager: React.FC<UserManagerProps> = ({
               {filtered.map((user) => {
                 const isAdmin = user.role === 'admin' || (user as any).roles?.includes('admin');
                 const isProvider = user.role === 'provider' || (user as any).roles?.includes('provider');
+                const isSelf = user._id === currentAdminId;
 
                 return (
-                  <tr key={user._id} className="hover:bg-slate-50/60 transition">
+                  <tr key={user._id} className={`hover:bg-slate-50/60 transition ${user.isBanned ? 'bg-red-50/40' : ''}`}>
                     {/* User info */}
                     <td className="py-4 px-4 sm:px-6">
                       <div className="flex items-center gap-3">
                         <div
                           className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${
-                            isAdmin
+                            user.isBanned
+                              ? 'bg-red-100 text-red-700'
+                              : isAdmin
                               ? 'bg-rose-100 text-rose-700'
                               : isProvider
                               ? 'bg-orange-100 text-[#ff5c28]'
@@ -218,9 +275,14 @@ export const UserManager: React.FC<UserManagerProps> = ({
                         <div className="min-w-0">
                           <div className="font-bold text-slate-900 truncate flex items-center gap-2">
                             <span>{user.name}</span>
-                            {user._id === currentAdminId && (
+                            {isSelf && (
                               <span className="text-[10px] bg-slate-900 text-white px-2 py-0.5 rounded-full font-normal">
                                 You
+                              </span>
+                            )}
+                            {user.isBanned && (
+                              <span className="text-[10px] bg-red-100 text-red-700 border border-red-200 px-2 py-0.5 rounded-full font-bold">
+                                Suspended
                               </span>
                             )}
                           </div>
@@ -285,7 +347,12 @@ export const UserManager: React.FC<UserManagerProps> = ({
                     {/* Status & Trust */}
                     <td className="py-4 px-4">
                       <div className="space-y-1 text-xs">
-                        {user.isVerified ? (
+                        {user.isBanned ? (
+                          <div className="text-red-700 font-semibold flex items-center gap-1">
+                            <Ban className="w-3.5 h-3.5 text-red-600" />
+                            <span>Account Banned</span>
+                          </div>
+                        ) : user.isVerified ? (
                           <div className="inline-flex items-center gap-1 text-emerald-700 font-semibold">
                             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                             <span>Verified KYC</span>
@@ -296,9 +363,14 @@ export const UserManager: React.FC<UserManagerProps> = ({
                             <span>Unverified</span>
                           </div>
                         ) : (
-                          <span className="text-slate-400">Regular</span>
+                          <span className="text-slate-500 font-medium">Active</span>
                         )}
-                        {user.completedJobs !== undefined && user.completedJobs > 0 && (
+                        {user.isBanned && user.banReason && (
+                          <div className="text-[11px] text-red-600 truncate max-w-[160px]" title={user.banReason}>
+                            Reason: {user.banReason}
+                          </div>
+                        )}
+                        {!user.isBanned && user.completedJobs !== undefined && user.completedJobs > 0 && (
                           <div className="text-[11px] text-slate-500">
                             {user.completedJobs} completed booking{user.completedJobs === 1 ? '' : 's'}
                           </div>
@@ -306,27 +378,55 @@ export const UserManager: React.FC<UserManagerProps> = ({
                       </div>
                     </td>
 
-                    {/* Role changer dropdown */}
+                    {/* Actions: Role Changer & Ban Toggle */}
                     <td className="py-4 px-4 text-right">
-                      <select
-                        value={user.role}
-                        disabled={updatingId === user._id}
-                        onChange={(e) => {
-                          const nextRole = e.target.value;
-                          if (nextRole !== user.role) {
-                            setConfirmRoleChange({
-                              userId: user._id,
-                              userName: user.name,
-                              newRole: nextRole,
-                            });
-                          }
-                        }}
-                        className="px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:border-slate-300 focus:outline-none focus:border-[#ff5c28] cursor-pointer"
-                      >
-                        <option value="requester">Host</option>
-                        <option value="provider">Vendor</option>
-                        <option value="admin">Administrator</option>
-                      </select>
+                      <div className="inline-flex items-center gap-2">
+                        <select
+                          value={user.role}
+                          disabled={updatingId === user._id || isSelf}
+                          onChange={(e) => {
+                            const nextRole = e.target.value;
+                            if (nextRole !== user.role) {
+                              setConfirmRoleChange({
+                                userId: user._id,
+                                userName: user.name,
+                                newRole: nextRole,
+                              });
+                            }
+                          }}
+                          className="px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:border-slate-300 focus:outline-none focus:border-[#ff5c28] cursor-pointer disabled:opacity-50"
+                        >
+                          <option value="requester">Host</option>
+                          <option value="provider">Vendor</option>
+                          <option value="admin">Administrator</option>
+                        </select>
+
+                        {!isSelf && (
+                          user.isBanned ? (
+                            <button
+                              type="button"
+                              onClick={() => setBanModal({ user, action: 'UNBAN', reason: '' })}
+                              disabled={updatingId === user._id}
+                              className="px-2.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 text-xs font-semibold flex items-center gap-1 cursor-pointer transition"
+                              title="Unban account"
+                            >
+                              <Unlock className="w-3.5 h-3.5" />
+                              <span>Unban</span>
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setBanModal({ user, action: 'BAN', reason: '' })}
+                              disabled={updatingId === user._id}
+                              className="px-2.5 py-1.5 rounded-xl bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 text-xs font-semibold flex items-center gap-1 cursor-pointer transition"
+                              title="Suspend / Ban account"
+                            >
+                              <Ban className="w-3.5 h-3.5" />
+                              <span>Ban</span>
+                            </button>
+                          )
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -379,6 +479,71 @@ export const UserManager: React.FC<UserManagerProps> = ({
                 className="px-4 py-2 rounded-xl bg-[#ff5c28] hover:bg-[#e64814] text-white text-sm font-semibold shadow-xs cursor-pointer"
               >
                 Apply Role
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Account Ban / Unban Modal */}
+      {banModal && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center border shrink-0 ${
+                banModal.action === 'BAN' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-emerald-50 text-emerald-600 border-emerald-200'
+              }`}>
+                {banModal.action === 'BAN' ? <Ban className="w-5 h-5" /> : <Unlock className="w-5 h-5" />}
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">
+                  {banModal.action === 'BAN' ? 'Suspend User Account' : 'Restore User Account'}
+                </h3>
+                <p className="text-xs text-slate-500">Security & Enforcement Action</p>
+              </div>
+            </div>
+
+            <p className="text-sm text-slate-600 leading-relaxed">
+              {banModal.action === 'BAN' ? (
+                <>
+                  Are you sure you want to suspend <strong className="text-slate-900">{banModal.user.name}</strong> ({banModal.user.email || banModal.user.phone})? They will be immediately blocked from logging in, bidding, or posting requirements.
+                </>
+              ) : (
+                <>
+                  Are you sure you want to lift the suspension for <strong className="text-slate-900">{banModal.user.name}</strong>? They will regain full account access.
+                </>
+              )}
+            </p>
+
+            {banModal.action === 'BAN' && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700">Reason for Suspension (visible to user):</label>
+                <textarea
+                  value={banModal.reason}
+                  onChange={(e) => setBanModal({ ...banModal, reason: e.target.value })}
+                  placeholder="e.g. Fraudulent behavior, repeated cancellations, violation of safety guidelines..."
+                  rows={3}
+                  className="w-full p-3 rounded-xl border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-red-500"
+                />
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setBanModal(null)}
+                className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-100 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmBanToggle}
+                className={`px-4 py-2 rounded-xl text-white text-sm font-semibold shadow-xs cursor-pointer ${
+                  banModal.action === 'BAN' ? 'bg-red-600 hover:bg-red-700' : 'bg-emerald-600 hover:bg-emerald-700'
+                }`}
+              >
+                {banModal.action === 'BAN' ? 'Confirm Ban' : 'Confirm Unban'}
               </button>
             </div>
           </div>

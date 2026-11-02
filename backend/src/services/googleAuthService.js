@@ -243,6 +243,15 @@ export const handleGoogleAuth = async ({ idToken, accessToken, role = 'requester
   let user = await UserModel.findOne({ googleId: profile.sub });
 
   if (user) {
+    if (user.isBanned) {
+      const error = new Error(
+        user.banReason
+          ? `Your account has been suspended: "${user.banReason}". Please contact support.`
+          : 'Your account has been suspended by the administrator. Please contact support.'
+      );
+      error.statusCode = 403;
+      throw error;
+    }
     user = await syncUserRoleForPortal(user, role);
 
     // Sync avatar if empty
@@ -278,6 +287,15 @@ export const handleGoogleAuth = async ({ idToken, accessToken, role = 'requester
   if (profile.email) {
     const existingByEmail = await UserModel.findOne({ email: profile.email });
     if (existingByEmail) {
+      if (existingByEmail.isBanned) {
+        const error = new Error(
+          existingByEmail.banReason
+            ? `Your account has been suspended: "${existingByEmail.banReason}". Please contact support.`
+            : 'Your account has been suspended by the administrator. Please contact support.'
+        );
+        error.statusCode = 403;
+        throw error;
+      }
       if (profile.emailVerified) {
         // Cryptographically verified Google email: safely link Google ID and log in
         existingByEmail.googleId = profile.sub;

@@ -1,4 +1,4 @@
-import type { AdminMetrics, Booking, Category, Occasion, User, AuditLog, Banner } from '../types';
+import type { AdminMetrics, Booking, Category, Occasion, User, AuditLog, Banner, Review, SystemSetting } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const TOKEN_KEY = 'ezzygo_token_admin';
@@ -223,6 +223,30 @@ export const api = {
 
   updateUserRole: (userId: string, role: string) =>
     request<User>(`/admin/users/${userId}/role`, json('PATCH', { role }), 'Could not update user role'),
+
+  toggleUserBan: (userId: string, isBanned: boolean, banReason?: string) =>
+    request<User>(`/admin/users/${userId}/ban`, json('PATCH', { isBanned, banReason }), 'Could not update user ban status'),
+
+  getReviews: (params?: { status?: string; rating?: string; search?: string }) => {
+    const query = new URLSearchParams();
+    if (params?.status && params.status !== 'ALL') query.set('status', params.status);
+    if (params?.rating && params.rating !== 'ALL') query.set('rating', params.rating);
+    if (params?.search) query.set('search', params.search);
+    const qs = query.toString() ? `?${query.toString()}` : '';
+    return request<Review[]>(`/admin/reviews${qs}`, {}, 'Could not load reviews');
+  },
+
+  toggleReviewHide: (reviewId: string, isHidden: boolean, moderationReason?: string) =>
+    request<Review>(`/admin/reviews/${reviewId}/toggle-hide`, json('PATCH', { isHidden, moderationReason }), 'Could not moderate review'),
+
+  deleteReview: (reviewId: string) =>
+    request<{ success: boolean; message: string }>(`/admin/reviews/${reviewId}`, { method: 'DELETE' }, 'Could not delete review'),
+
+  getSettings: () =>
+    request<SystemSetting>('/admin/settings', {}, 'Could not load system settings'),
+
+  updateSettings: (data: { platformFeePercent?: number; minBiddingDiscountPercent?: number }) =>
+    request<SystemSetting>('/admin/settings', json('PATCH', data), 'Could not update system settings'),
 
   updateProfile: (data: {
     userId?: string;

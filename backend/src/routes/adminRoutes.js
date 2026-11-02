@@ -8,6 +8,12 @@ import {
   getProviderKyc,
   getAllUsers,
   updateUserRole,
+  toggleUserBan,
+  getAllReviews,
+  toggleReviewHidden,
+  deleteReview,
+  getAdminSettings,
+  updateAdminSettings,
   getSystemHealth,
   testSmtpDiagnostic,
 } from '../controllers/adminController.js';
@@ -63,6 +69,17 @@ router.get('/providers', getProviders);
 router.get('/providers/:providerId/kyc', getProviderKyc);
 router.get('/users', getAllUsers);
 router.patch('/users/:userId/role', updateUserRole);
+router.patch('/users/:userId/ban', toggleUserBan);
+
+// Review Moderation Routes
+router.get('/reviews', getAllReviews);
+router.patch('/reviews/:reviewId/toggle-hide', toggleReviewHidden);
+router.delete('/reviews/:reviewId', deleteReview);
+
+// System Settings & Dynamic Commission Routes
+router.get('/settings', getAdminSettings);
+router.patch('/settings', updateAdminSettings);
+
 router.get('/system-health', getSystemHealth);
 router.post('/test-email', testSmtpDiagnostic);
 router.get('/audit-logs', getAuditLogs);

@@ -7,6 +7,7 @@ import Transaction from '../models/Transaction.js';
 import Review from '../models/Review.js';
 import razorpayInstance from '../config/razorpay.js';
 import { notifyUser } from '../services/notificationService.js';
+import { getSystemSettings } from '../services/settingsService.js';
 import {
   broadcastBookingCreated,
   broadcastBookingUpdated,
@@ -111,9 +112,11 @@ export const acceptBid = async (req, res, next) => {
       );
     }
 
-    // Calculate Platform Fee (10% paid by requester on top of bid)
+    // Calculate Platform Fee (dynamic percentage paid by requester on top of bid)
+    const settings = await getSystemSettings();
+    const feeRate = (settings?.platformFeePercent ?? 10) / 100;
     const bidAmount = bid.amount;
-    const platformFee = Math.round(bidAmount * 0.10);
+    const platformFee = Math.round(bidAmount * feeRate);
     const totalPaid = bidAmount + platformFee;
 
     // Check if booking already exists for this requirement
@@ -790,10 +793,12 @@ export const addReview = async (req, res, next) => {
       role,
     });
 
-    // If review is for provider, update provider's average rating
+    // If review is for provider, update provider's average rating from visible reviews
     if (role === 'requester_to_provider') {
-      const allReviews = await Review.find({ toUserId, role: 'requester_to_provider' });
-      const avg = allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length;
+      const allReviews = await Review.find({ toUserId, role: 'requester_to_provider', isHidden: { $ne: true } });
+      const avg = allReviews.length > 0
+        ? allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length
+        : 4.8;
       await User.findByIdAndUpdate(toUserId, {
         rating: Number(avg.toFixed(1)),
         reviewCount: allReviews.length,

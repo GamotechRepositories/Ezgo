@@ -9,6 +9,7 @@ import { EscrowDisputeManager } from './components/EscrowDisputeManager';
 import { CategoryManager } from './components/CategoryManager';
 import { OccasionManager } from './components/OccasionManager';
 import { BannerManager } from './components/BannerManager';
+import { ReviewModerationManager } from './components/ReviewModerationManager';
 import { AuditLogViewer } from './components/AuditLogViewer';
 import { AdminAccountModal } from './components/AdminAccountModal';
 import { ToastContainer } from './components/Toast';
@@ -16,7 +17,7 @@ import type { ToastMessage } from './components/Toast';
 import { LoginPage } from './components/LoginPage';
 import { api, getToken, clearToken, emptyMetrics } from './services/api';
 import { getSocket } from './services/socket';
-import type { AdminMetrics, Booking, Category, Occasion, User, AuditLog, Banner } from './types';
+import type { AdminMetrics, Booking, Category, Occasion, User, AuditLog, Banner, Review, SystemSetting } from './types';
 
 const VALID_TABS: AdminTab[] = [
   'metrics',
@@ -24,6 +25,7 @@ const VALID_TABS: AdminTab[] = [
   'escrow',
   'kyc',
   'users',
+  'reviews',
   'categories',
   'occasions',
   'banners',
@@ -89,6 +91,8 @@ function AdminApp({
   const [banners, setBanners] = useState<Banner[]>([]);
   const [requirements, setRequirements] = useState<any[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [settings, setSettings] = useState<SystemSetting | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(false);
   const [loadError, setLoadError] = useState('');
@@ -132,8 +136,10 @@ function AdminApp({
       api.getAuditLogs(),
       api.getRequirements(),
       api.getAllUsers(),
+      api.getReviews(),
+      api.getSettings(),
     ]);
-    const [m, p, b, c, o, bn, l, reqs, users] = results;
+    const [m, p, b, c, o, bn, l, reqs, users, revs, sett] = results;
     if (m.status === 'fulfilled') setMetrics(m.value);
     if (p.status === 'fulfilled') setProviders(p.value);
     if (b.status === 'fulfilled') setBookings(b.value);
@@ -143,6 +149,8 @@ function AdminApp({
     if (l && l.status === 'fulfilled') setAuditLogs(l.value);
     if (reqs && reqs.status === 'fulfilled') setRequirements(reqs.value);
     if (users && users.status === 'fulfilled') setAllUsers(users.value);
+    if (revs && revs.status === 'fulfilled') setReviews(revs.value);
+    if (sett && sett.status === 'fulfilled') setSettings(sett.value);
 
     const failed = results.find((r): r is PromiseRejectedResult => r.status === 'rejected');
     setLoadError(failed ? (failed.reason as Error).message : '');
@@ -549,6 +557,66 @@ function AdminApp({
     }
   };
 
+  const handleToggleUserBan = async (userId: string, isBanned: boolean, banReason?: string) => {
+    try {
+      const updated = await api.toggleUserBan(userId, isBanned, banReason);
+      setAllUsers((prev) =>
+        prev.map((u) =>
+          u._id === userId
+            ? { ...u, isBanned: updated.isBanned, banReason: updated.banReason, bannedAt: updated.bannedAt }
+            : u
+        )
+      );
+      addToast(
+        isBanned ? 'warning' : 'success',
+        isBanned ? 'Account Suspended' : 'Account Restored',
+        isBanned
+          ? `User "${updated.name}" has been banned. Access revoked.`
+          : `User "${updated.name}" has been unbanned. Access restored.`
+      );
+    } catch (err: any) {
+      addToast('error', 'Action failed', err.message);
+    }
+  };
+
+  const handleToggleReviewHide = async (reviewId: string, isHidden: boolean, moderationReason?: string) => {
+    try {
+      const updated = await api.toggleReviewHide(reviewId, isHidden, moderationReason);
+      setReviews((prev) => prev.map((r) => (r._id === reviewId ? updated : r)));
+      addToast(
+        'info',
+        isHidden ? 'Review Hidden' : 'Review Restored',
+        isHidden ? 'Review excluded from public ratings.' : 'Review restored to public listings.'
+      );
+    } catch (err: any) {
+      addToast('error', 'Could not moderate review', err.message);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    try {
+      await api.deleteReview(reviewId);
+      setReviews((prev) => prev.filter((r) => r._id !== reviewId));
+      addToast('success', 'Review Deleted', 'Review permanently removed and ratings recalculated.');
+    } catch (err: any) {
+      addToast('error', 'Could not delete review', err.message);
+    }
+  };
+
+  const handleUpdateSettings = async (data: Partial<SystemSetting>) => {
+    try {
+      const updated = await api.updateSettings(data);
+      setSettings(updated);
+      addToast(
+        'success',
+        'Fee Settings Applied',
+        `Platform commission set to ${updated.platformFeePercent}% and discount floor to ${updated.minBiddingDiscountPercent}%.`
+      );
+    } catch (err: any) {
+      addToast('error', 'Could not update fee settings', err.message);
+    }
+  };
+
   const pendingKycCount = (providers || []).filter((p) => !p.isVerified).length;
   const activeEscrowCount = (bookings || []).filter((b) => b.status === 'ACTIVE').length;
   const openRequirementsCount = (requirements || []).filter((r) => r.status === 'OPEN').length;
@@ -613,6 +681,8 @@ function AdminApp({
               bookings={bookings}
               requirements={requirements}
               currentAdmin={currentAdmin}
+              settings={settings || undefined}
+              onUpdateSettings={handleUpdateSettings}
               onNavigateTab={handleTabChange}
             />
           )}
@@ -638,6 +708,16 @@ function AdminApp({
               users={allUsers}
               currentAdminId={currentAdmin._id}
               onUpdateRole={handleUpdateUserRole}
+              onToggleBan={handleToggleUserBan}
+              onRefresh={loadData}
+            />
+          )}
+
+          {activeTab === 'reviews' && (
+            <ReviewModerationManager
+              reviews={reviews}
+              onToggleHide={handleToggleReviewHide}
+              onDeleteReview={handleDeleteReview}
               onRefresh={loadData}
             />
           )}

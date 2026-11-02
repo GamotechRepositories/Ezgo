@@ -7,6 +7,9 @@ import User from '../models/User.js';
 import Transaction from '../models/Transaction.js';
 import { notifyUser } from '../services/notificationService.js';
 import { broadcastKycUpdated } from '../services/socketService.js';
+import Review from '../models/Review.js';
+import SystemSetting from '../models/SystemSetting.js';
+import { getSystemSettings, invalidateSettingsCache } from '../services/settingsService.js';
 
 export const getAdminMetrics = async (req, res, next) => {
   try {
@@ -337,7 +340,7 @@ export const getAllUsers = async (req, res, next) => {
       });
     }
     const users = await User.find(filter)
-      .select('name email phone role roles isVerified businessName serviceArea kycDocuments createdAt avatar rating completedJobs')
+      .select('name email phone role roles isVerified isBanned banReason bannedAt businessName serviceArea kycDocuments createdAt avatar rating completedJobs')
       .sort({ createdAt: -1 });
 
     res.json({
@@ -473,3 +476,272 @@ export const testSmtpDiagnostic = async (req, res, next) => {
     });
   }
 };
+
+// @desc    Ban or Unban a user account (Admin only)
+// @route   PATCH /api/admin/users/:userId/ban
+export const toggleUserBan = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    const { isBanned, banReason = '' } = req.body;
+
+    if (userId === req.user?._id?.toString()) {
+      res.status(400);
+      throw new Error('You cannot ban your own administrator account.');
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404);
+      throw new Error('User not found');
+    }
+
+    const setBanned = Boolean(isBanned);
+    user.isBanned = setBanned;
+    user.banReason = setBanned ? (banReason?.trim() || 'Violated community guidelines or terms of service.') : '';
+    user.bannedAt = setBanned ? new Date() : null;
+    user.bannedBy = setBanned ? req.user?._id : null;
+    await user.save();
+
+    await logAudit({
+      req,
+      action: setBanned ? 'USER_ACCOUNT_BANNED' : 'USER_ACCOUNT_UNBANNED',
+      targetType: 'User',
+      targetId: user._id,
+      details: setBanned
+        ? `Banned user "${user.name}" (${user.email || user.phone}). Reason: ${user.banReason}`
+        : `Unbanned user "${user.name}" (${user.email || user.phone})`,
+      metadata: { banReason: user.banReason },
+      status: setBanned ? 'WARNING' : 'SUCCESS',
+    });
+
+    res.json({
+      success: true,
+      message: setBanned ? `User "${user.name}" has been banned/suspended.` : `User "${user.name}" has been unbanned.`,
+      data: user,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get all reviews across marketplace for moderation
+// @route   GET /api/admin/reviews
+export const getAllReviews = async (req, res, next) => {
+  try {
+    const { status, rating, search } = req.query;
+    const filter = {};
+    if (status === 'HIDDEN') filter.isHidden = true;
+    if (status === 'VISIBLE') filter.isHidden = { $ne: true };
+    if (rating && Number(rating) >= 1 && Number(rating) <= 5) {
+      filter.rating = Number(rating);
+    }
+
+    const reviews = await Review.find(filter)
+      .populate('fromUserId', 'name email phone avatar role')
+      .populate('toUserId', 'name businessName email phone avatar rating')
+      .populate({
+        path: 'bookingId',
+        select: 'status totalPaid bidAmount requirementId',
+        populate: { path: 'requirementId', select: 'title category occasion location' },
+      })
+      .sort({ createdAt: -1 });
+
+    let result = reviews;
+    if (search && search.trim()) {
+      const q = search.trim().toLowerCase();
+      result = reviews.filter((r) => {
+        const commentMatch = r.comment?.toLowerCase().includes(q);
+        const fromMatch = r.fromUserId?.name?.toLowerCase().includes(q) || r.fromUserId?.email?.toLowerCase().includes(q);
+        const toMatch = r.toUserId?.name?.toLowerCase().includes(q) || r.toUserId?.businessName?.toLowerCase().includes(q);
+        return commentMatch || fromMatch || toMatch;
+      });
+    }
+
+    res.json({
+      success: true,
+      count: result.length,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Toggle hide / unhide a review (Admin moderation)
+// @route   PATCH /api/admin/reviews/:reviewId/toggle-hide
+export const toggleReviewHidden = async (req, res, next) => {
+  try {
+    const { reviewId } = req.params;
+    const { isHidden, moderationReason = '' } = req.body;
+
+    const review = await Review.findById(reviewId);
+    if (!review) {
+      res.status(404);
+      throw new Error('Review not found');
+    }
+
+    const setHidden = isHidden !== undefined ? Boolean(isHidden) : !review.isHidden;
+    review.isHidden = setHidden;
+    review.moderationReason = setHidden ? (moderationReason?.trim() || 'Hidden by administrator for content moderation') : '';
+    review.moderatedBy = setHidden ? req.user?._id : null;
+    review.moderatedAt = setHidden ? new Date() : null;
+    await review.save();
+
+    // Recalculate target vendor rating if it's requester_to_provider
+    if (review.role === 'requester_to_provider' && review.toUserId) {
+      const activeReviews = await Review.find({ toUserId: review.toUserId, role: 'requester_to_provider', isHidden: { $ne: true } });
+      const avg = activeReviews.length > 0 ? activeReviews.reduce((sum, r) => sum + r.rating, 0) / activeReviews.length : 4.8;
+      await User.findByIdAndUpdate(review.toUserId, {
+        rating: Number(avg.toFixed(1)),
+        reviewCount: activeReviews.length,
+      });
+    }
+
+    await logAudit({
+      req,
+      action: setHidden ? 'REVIEW_HIDDEN' : 'REVIEW_RESTORED',
+      targetType: 'Review',
+      targetId: review._id,
+      details: setHidden
+        ? `Moderated & hid review ID #${review._id} (${review.rating}⭐). Reason: ${review.moderationReason}`
+        : `Restored visibility of review ID #${review._id} (${review.rating}⭐)`,
+      metadata: { rating: review.rating, comment: review.comment, moderationReason: review.moderationReason },
+      status: 'SUCCESS',
+    });
+
+    const populated = await Review.findById(review._id)
+      .populate('fromUserId', 'name email phone avatar role')
+      .populate('toUserId', 'name businessName email phone avatar rating')
+      .populate({
+        path: 'bookingId',
+        select: 'status totalPaid bidAmount requirementId',
+        populate: { path: 'requirementId', select: 'title category occasion location' },
+      });
+
+    res.json({
+      success: true,
+      message: setHidden ? 'Review hidden from public listings.' : 'Review restored to public listings.',
+      data: populated,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Delete a review (Admin moderation)
+// @route   DELETE /api/admin/reviews/:reviewId
+export const deleteReview = async (req, res, next) => {
+  try {
+    const { reviewId } = req.params;
+    const review = await Review.findById(reviewId);
+    if (!review) {
+      res.status(404);
+      throw new Error('Review not found');
+    }
+
+    const toUserId = review.toUserId;
+    const role = review.role;
+    await Review.findByIdAndDelete(reviewId);
+
+    // Recalculate target vendor rating if it's requester_to_provider
+    if (role === 'requester_to_provider' && toUserId) {
+      const activeReviews = await Review.find({ toUserId, role: 'requester_to_provider', isHidden: { $ne: true } });
+      const avg = activeReviews.length > 0 ? activeReviews.reduce((sum, r) => sum + r.rating, 0) / activeReviews.length : 4.8;
+      await User.findByIdAndUpdate(toUserId, {
+        rating: Number(avg.toFixed(1)),
+        reviewCount: activeReviews.length,
+      });
+    }
+
+    await logAudit({
+      req,
+      action: 'REVIEW_DELETED',
+      targetType: 'Review',
+      targetId: review._id,
+      details: `Permanently deleted review ID #${review._id} (${review.rating}⭐)`,
+      status: 'WARNING',
+    });
+
+    res.json({
+      success: true,
+      message: 'Review permanently removed and provider rating recalculated.',
+      data: { _id: reviewId },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get system settings (Admin only)
+// @route   GET /api/admin/settings
+export const getAdminSettings = async (req, res, next) => {
+  try {
+    const settings = await getSystemSettings(true);
+    res.json({
+      success: true,
+      data: settings,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Update system settings (Admin only)
+// @route   PATCH /api/admin/settings
+export const updateAdminSettings = async (req, res, next) => {
+  try {
+    const { platformFeePercent, minBiddingDiscountPercent } = req.body;
+    let settings = await SystemSetting.findOne({ key: 'marketplace_config' });
+    if (!settings) {
+      settings = new SystemSetting({ key: 'marketplace_config' });
+    }
+
+    const oldFee = settings.platformFeePercent;
+    const oldDiscount = settings.minBiddingDiscountPercent;
+
+    if (platformFeePercent !== undefined) {
+      const fee = Number(platformFeePercent);
+      if (isNaN(fee) || fee < 0 || fee > 50) {
+        res.status(400);
+        throw new Error('Platform fee percentage must be between 0% and 50%.');
+      }
+      settings.platformFeePercent = fee;
+    }
+
+    if (minBiddingDiscountPercent !== undefined) {
+      const disc = Number(minBiddingDiscountPercent);
+      if (isNaN(disc) || disc < 0 || disc > 90) {
+        res.status(400);
+        throw new Error('Minimum bidding discount floor must be between 0% and 90%.');
+      }
+      settings.minBiddingDiscountPercent = disc;
+    }
+
+    settings.updatedBy = req.user?._id || null;
+    settings.updatedByName = req.user?.name || 'Administrator';
+    await settings.save();
+    invalidateSettingsCache();
+
+    await logAudit({
+      req,
+      action: 'SYSTEM_SETTINGS_UPDATED',
+      targetType: 'SystemSetting',
+      targetId: settings._id,
+      details: `Updated platform commission from ${oldFee}% to ${settings.platformFeePercent}% and discount floor from ${oldDiscount}% to ${settings.minBiddingDiscountPercent}%`,
+      metadata: {
+        platformFeePercent: settings.platformFeePercent,
+        minBiddingDiscountPercent: settings.minBiddingDiscountPercent,
+      },
+      status: 'SUCCESS',
+    });
+
+    res.json({
+      success: true,
+      message: `System settings updated: Commission rate set to ${settings.platformFeePercent}%.`,
+      data: settings,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+

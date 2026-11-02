@@ -31,6 +31,7 @@ const tabTitles: Record<AdminTab, { title: string; subtitle: string }> = {
   escrow: { title: 'Payments & Escrow', subtitle: 'Manage held funds, release payouts, or resolve disputes' },
   kyc: { title: 'Vendor Checks & KYC', subtitle: 'Verify business identity, Aadhaar/PAN, and bank details' },
   users: { title: 'User Management', subtitle: 'Full directory of hosts, vendors, and administrators' },
+  reviews: { title: 'Review & Rating Moderation', subtitle: 'Audit feedback, hide inappropriate content, and maintain quality scores' },
   categories: { title: 'Service Categories', subtitle: 'Service catalog shown in host & vendor portals' },
   occasions: { title: 'Event Occasions', subtitle: 'Event types shown in the host portal and mobile app' },
   banners: { title: 'Promotions & Ad Banners', subtitle: 'Manage advertisement banners, offers, and city targeting on the user portal' },

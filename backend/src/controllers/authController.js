@@ -67,6 +67,15 @@ export const verifyOtpAndLogin = async (req, res, next) => {
       });
     }
 
+    if (user.isBanned) {
+      res.status(403);
+      throw new Error(
+        user.banReason
+          ? `Your account has been suspended: "${user.banReason}". Please contact support.`
+          : 'Your account has been suspended by the administrator. Please contact support.'
+      );
+    }
+
     let authenticatedUser = user;
     if (role) {
       authenticatedUser = await syncUserRoleForPortal(user, role);
@@ -321,6 +330,15 @@ export const login = async (req, res, next) => {
     if (!matches) {
       res.status(401);
       throw new Error(isEmail ? 'Wrong email or password.' : 'Wrong phone number or password.');
+    }
+
+    if (user.isBanned) {
+      res.status(403);
+      throw new Error(
+        user.banReason
+          ? `Your account has been suspended: "${user.banReason}". Please contact support.`
+          : 'Your account has been suspended by the administrator. Please contact support.'
+      );
     }
 
     let authenticatedUser = user;

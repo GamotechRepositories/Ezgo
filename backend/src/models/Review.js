@@ -33,6 +33,23 @@ const reviewSchema = new mongoose.Schema(
       enum: ['requester_to_provider', 'provider_to_requester'],
       required: true,
     },
+    isHidden: {
+      type: Boolean,
+      default: false,
+    },
+    moderatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    moderationReason: {
+      type: String,
+      default: '',
+    },
+    moderatedAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );

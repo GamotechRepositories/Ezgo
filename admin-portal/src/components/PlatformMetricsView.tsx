@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   TrendingUp,
   Wallet,
@@ -15,8 +15,9 @@ import {
   Banknote,
   ArrowRight,
   MapPin,
+  Sliders,
 } from 'lucide-react';
-import type { AdminMetrics, User, Booking, Requirement } from '../types';
+import type { AdminMetrics, User, Booking, Requirement, SystemSetting } from '../types';
 import type { AdminTab } from './AdminSidebar';
 
 interface PlatformMetricsViewProps {
@@ -25,6 +26,8 @@ interface PlatformMetricsViewProps {
   bookings?: Booking[];
   requirements?: Requirement[];
   currentAdmin?: User;
+  settings?: SystemSetting;
+  onUpdateSettings?: (settings: Partial<SystemSetting>) => Promise<void>;
   onNavigateTab?: (tab: AdminTab) => void;
 }
 
@@ -34,8 +37,15 @@ export const PlatformMetricsView: React.FC<PlatformMetricsViewProps> = ({
   bookings = [],
   requirements = [],
   currentAdmin,
+  settings,
+  onUpdateSettings,
   onNavigateTab,
 }) => {
+  const [isFeeModalOpen, setIsFeeModalOpen] = useState(false);
+  const [newFeePercent, setNewFeePercent] = useState(settings?.platformFeePercent ?? 10);
+  const [newDiscountPercent, setNewDiscountPercent] = useState(settings?.minBiddingDiscountPercent ?? 15);
+  const [isSavingFee, setIsSavingFee] = useState(false);
+
   const gmv = metrics?.totalGMV || 0;
   const commission = metrics?.totalCommissionEarned || 0;
   const escrowHeld = metrics?.totalEscrowHeld || 0;
@@ -68,7 +78,9 @@ export const PlatformMetricsView: React.FC<PlatformMetricsViewProps> = ({
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>EzzyGo Core Marketplace Active</span>
               <span className="text-white/40">&bull;</span>
-              <span>10% Platform Commission</span>
+              <span>{settings?.platformFeePercent ?? 10}% Platform Commission</span>
+              <span className="text-white/40">&bull;</span>
+              <span>≥{settings?.minBiddingDiscountPercent ?? 15}% Discount Floor</span>
             </div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white leading-tight">
               Welcome back, {currentAdmin?.name?.split(' ')[0] || 'Administrator'} 👋
@@ -79,6 +91,18 @@ export const PlatformMetricsView: React.FC<PlatformMetricsViewProps> = ({
           </div>
 
           <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 shrink-0">
+            <button
+              onClick={() => {
+                setNewFeePercent(settings?.platformFeePercent ?? 10);
+                setNewDiscountPercent(settings?.minBiddingDiscountPercent ?? 15);
+                setIsFeeModalOpen(true);
+              }}
+              className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-semibold transition cursor-pointer flex items-center gap-2"
+            >
+              <Sliders className="w-4 h-4 text-orange-400" />
+              <span>Fee Rules ({settings?.platformFeePercent ?? 10}%)</span>
+            </button>
+
             {pendingKyc > 0 && (
               <button
                 onClick={() => navigate('kyc')}
@@ -479,6 +503,130 @@ export const PlatformMetricsView: React.FC<PlatformMetricsViewProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Dynamic Commission & Fee Rule Configuration Modal */}
+      {isFeeModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-orange-50 text-[#ff5c28] flex items-center justify-center border border-orange-200 shrink-0">
+                  <BadgePercent className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900">Platform Commission & Fee Rules</h3>
+                  <p className="text-xs text-slate-500">Configure marketplace revenue and discount floors</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsFeeModalOpen(false)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-5">
+              {/* Slider 1: Platform Fee */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-bold text-slate-900">Platform Commission Fee</label>
+                  <span className="px-3 py-1 rounded-full bg-[#ff5c28] text-white text-xs font-black">
+                    {newFeePercent}%
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500">Percentage charged to event host upon escrow payment.</p>
+                <input
+                  type="range"
+                  min={0}
+                  max={30}
+                  step={1}
+                  value={newFeePercent}
+                  onChange={(e) => setNewFeePercent(Number(e.target.value))}
+                  className="w-full accent-[#ff5c28] cursor-pointer"
+                />
+                <div className="flex justify-between text-[10px] text-slate-400 font-semibold">
+                  <span>0% (Free)</span>
+                  <span>10% (Default)</span>
+                  <span>20%</span>
+                  <span>30% (Max)</span>
+                </div>
+              </div>
+
+              {/* Slider 2: Minimum Reverse Bidding Discount */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-bold text-slate-900">Min Reverse Bidding Discount Floor</label>
+                  <span className="px-3 py-1 rounded-full bg-slate-900 text-white text-xs font-black">
+                    {newDiscountPercent}% OFF
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500">Vendors can only bid at or below this ceiling of the host's budget.</p>
+                <input
+                  type="range"
+                  min={5}
+                  max={50}
+                  step={1}
+                  value={newDiscountPercent}
+                  onChange={(e) => setNewDiscountPercent(Number(e.target.value))}
+                  className="w-full accent-slate-900 cursor-pointer"
+                />
+                <div className="flex justify-between text-[10px] text-slate-400 font-semibold">
+                  <span>5% Min</span>
+                  <span>15% (Default)</span>
+                  <span>30%</span>
+                  <span>50% Max</span>
+                </div>
+              </div>
+
+              {/* Live Calculator Simulation */}
+              <div className="p-4 rounded-2xl bg-orange-50/50 border border-orange-200 space-y-2 text-xs">
+                <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                  <Banknote className="w-4 h-4 text-[#ff5c28]" />
+                  <span>Live Transaction Simulation (₹1,00,000 Host Budget)</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 pt-1 text-slate-600">
+                  <div>Max Winning Bid: <strong>₹{(100000 * (1 - newDiscountPercent / 100)).toLocaleString()}</strong></div>
+                  <div>Platform Fee ({newFeePercent}%): <strong>₹{Math.round((100000 * (1 - newDiscountPercent / 100)) * (newFeePercent / 100)).toLocaleString()}</strong></div>
+                  <div>Host Pays Total: <strong>₹{Math.round((100000 * (1 - newDiscountPercent / 100)) * (1 + newFeePercent / 100)).toLocaleString()}</strong></div>
+                  <div>EzzyGo Commission: <strong className="text-emerald-700">₹{Math.round((100000 * (1 - newDiscountPercent / 100)) * (newFeePercent / 100)).toLocaleString()}</strong></div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsFeeModalOpen(false)}
+                className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-100 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isSavingFee}
+                onClick={async () => {
+                  if (onUpdateSettings) {
+                    setIsSavingFee(true);
+                    try {
+                      await onUpdateSettings({
+                        platformFeePercent: newFeePercent,
+                        minBiddingDiscountPercent: newDiscountPercent,
+                      });
+                      setIsFeeModalOpen(false);
+                    } finally {
+                      setIsSavingFee(false);
+                    }
+                  }
+                }}
+                className="px-5 py-2.5 rounded-xl bg-[#ff5c28] hover:bg-[#e64814] text-white text-sm font-semibold shadow-xs cursor-pointer flex items-center gap-2"
+              >
+                {isSavingFee ? 'Saving...' : 'Save & Apply Platform Rules'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
