@@ -10,7 +10,6 @@ import {
   ChevronUp,
   AlertCircle,
   Users,
-  Sparkles,
   Edit2,
   Check,
   X,
@@ -333,7 +332,6 @@ export const RequirementManager: React.FC<RequirementManagerProps> = ({
                       {hasBids ? (
                         <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-300/90 rounded-xl px-2.5 py-1.5 flex items-center justify-between gap-2 text-emerald-950 shadow-2xs">
                           <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-800">
-                            <Sparkles className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                             <span>Live Savings ({bids.length} {bids.length === 1 ? 'Bid' : 'Bids'})</span>
                           </div>
                           <span className="text-xs font-black text-emerald-700 whitespace-nowrap">
@@ -343,7 +341,6 @@ export const RequirementManager: React.FC<RequirementManagerProps> = ({
                       ) : (
                         <div className="bg-[#eafbf3] border border-emerald-200/80 rounded-xl px-2.5 py-1.5 flex items-center justify-between gap-2 text-emerald-900 shadow-2xs">
                           <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-800">
-                            <Sparkles className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                             <span>Minimum Guaranteed Savings</span>
                           </div>
                           <span className="text-xs font-black text-emerald-700 whitespace-nowrap">

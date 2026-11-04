@@ -25,7 +25,6 @@ import {
   Search,
   Shield,
   ShieldCheck,
-  Sparkles,
   TrendingDown,
   Utensils,
   Volume2,
@@ -63,7 +62,7 @@ interface HostHomePageProps {
 
 const occasionIcon = (type: OccasionItem['iconType']) => {
   const cls = 'w-[18px] h-[18px] text-[#ff5c28]';
-  if (type === 'rings') return <Sparkles className={cls} />;
+  if (type === 'rings') return <Heart className={cls} />;
   if (type === 'lotus') return <Flower2 className={cls} />;
   if (type === 'corporate') return <Briefcase className={cls} />;
   if (type === 'party') return <PartyPopper className={cls} />;
@@ -72,7 +71,7 @@ const occasionIcon = (type: OccasionItem['iconType']) => {
 
 const serviceIcon = (key: string, className = 'w-3 h-3') => {
   if (key === 'dj') return <Volume2 className={className} />;
-  if (key === 'decor') return <Sparkles className={className} />;
+  if (key === 'decor') return <Palette className={className} />;
   if (key === 'photography') return <Camera className={className} />;
   if (key === 'catering') return <Utensils className={className} />;
   if (key === 'lighting') return <Lightbulb className={className} />;
@@ -260,7 +259,6 @@ export const HostHomePage: React.FC<HostHomePageProps> = ({
           <div className="grid grid-cols-12 gap-8 items-center">
             <div className="col-span-12 xl:col-span-8 space-y-5">
               <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/95 backdrop-blur-md border border-amber-200/80 shadow-xs text-xs font-black text-[#17233d]">
-                <Sparkles className="w-3.5 h-3.5 text-[#ff5c28]" />
                 <span>India&#39;s #1 Event Marketplace</span>
                 <span className="text-slate-300">•</span>
                 <span className="text-emerald-700 font-extrabold">Min. 15% Savings Guaranteed</span>
@@ -335,8 +333,8 @@ export const HostHomePage: React.FC<HostHomePageProps> = ({
             <div className="hidden xl:flex flex-col items-end justify-center col-span-4">
               <div className="bg-white/90 backdrop-blur-md border border-white/70 p-4 rounded-3xl shadow-xl shadow-slate-950/10 max-w-xs space-y-2.5">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 text-[#ff5c28]" /> 4K Ultra HD Decor
+                  <span className="px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-black uppercase tracking-wider">
+                    4K Ultra HD Decor
                   </span>
                   <span className="text-[11px] font-black text-emerald-600 flex items-center gap-1">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Live Bidding
@@ -554,7 +552,6 @@ export const HostHomePage: React.FC<HostHomePageProps> = ({
             <div>
               <div className="flex flex-wrap items-center gap-2.5 mb-2">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-[#17233d] text-[11px] font-black uppercase tracking-wider">
-                  <Sparkles className="w-3.5 h-3.5" />
                   Services & price guide
                 </span>
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold">
@@ -759,7 +756,6 @@ export const HostHomePage: React.FC<HostHomePageProps> = ({
                     : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
                 }`}
               >
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                 <span>How Reverse Bidding Works</span>
               </button>
             </div>
@@ -1035,8 +1031,7 @@ function LiveBiddingCard({
             {lowestBid ? (
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs font-black">
-                  <span className="text-emerald-700 flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 text-emerald-600" />
+                  <span className="text-emerald-700">
                     You Save ₹{saved.toLocaleString()}
                   </span>
                   <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black">
@@ -1183,7 +1178,6 @@ function EmptyReverseBiddingState({ onOpenPost }: { onOpenPost: () => void }) {
         {/* Top Header */}
         <div className="text-center space-y-2">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-black">
-            <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
             <span>HOW REVERSE BIDDING WORKS</span>
           </div>
           <h3 className="text-2xl sm:text-3xl font-black text-slate-900">

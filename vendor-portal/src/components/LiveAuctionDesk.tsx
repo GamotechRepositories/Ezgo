@@ -6,7 +6,6 @@ import {
   Clock,
   MapPin,
   Users,
-  Sparkles,
   Trophy,
   AlertTriangle,
   Info,
@@ -297,7 +296,6 @@ export const LiveAuctionDesk: React.FC<LiveAuctionDeskProps> = ({
         <div className="rounded-3xl bg-slate-50/90 border border-slate-200/80 p-5 sm:p-6 space-y-4 animate-in slide-in-from-top-4 duration-300">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-slate-700" />
               <h3 className="font-bold text-slate-900 text-base">Simple 4-Step Reverse Bidding Process</h3>
             </div>
             <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-full">

@@ -86,7 +86,7 @@ class ImagePosterCard extends StatelessWidget {
                     ),
                     child: Center(
                       child: iconWidget ??
-                          Icon(icon ?? LucideIcons.sparkles, size: 18, color: AppTheme.primary),
+                          Icon(icon ?? LucideIcons.partyPopper, size: 18, color: AppTheme.primary),
                     ),
                   ),
                   const SizedBox(width: 8),

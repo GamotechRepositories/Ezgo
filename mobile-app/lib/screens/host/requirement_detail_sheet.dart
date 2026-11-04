@@ -234,7 +234,7 @@ class RequirementDetailSheet extends StatelessWidget {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(LucideIcons.sparkles, size: 13, color: AppTheme.emerald),
+                                
                                 const SizedBox(width: 5),
                                 Text(
                                   'Live Savings: ₹${req.budget - (req.lowestBid ?? req.bids.map((b) => b.amount).reduce((a, b) => a < b ? a : b))} (${req.budget > 0 ? (((req.budget - (req.lowestBid ?? req.bids.map((b) => b.amount).reduce((a, b) => a < b ? a : b))) / req.budget) * 100).round() : 0}% OFF)',

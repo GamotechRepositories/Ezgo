@@ -15,7 +15,6 @@ import {
   MessageCircle,
   HelpCircle,
   ArrowRight,
-  Sparkles,
   Lock,
   Loader2,
   Save,
@@ -276,7 +275,6 @@ export const MyProfilePage: React.FC<MyProfilePageProps> = ({
                 onClick={onOpenPostModal}
                 className="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs shadow-sm transition cursor-pointer flex items-center gap-1.5"
               >
-                <Sparkles className="w-3.5 h-3.5 text-slate-700" />
                 <span>+ Post New Event</span>
               </button>
             </div>
@@ -383,7 +381,6 @@ export const MyProfilePage: React.FC<MyProfilePageProps> = ({
             {/* Vendor Switch Card - Neutral Slate */}
             <div className="p-4 rounded-2xl bg-white border border-slate-200/80 text-xs shadow-2xs">
               <div className="font-bold text-slate-900 mb-1 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-slate-600" />
                 Are you an Event Vendor?
               </div>
               <p className="text-slate-500 mb-3 leading-relaxed">

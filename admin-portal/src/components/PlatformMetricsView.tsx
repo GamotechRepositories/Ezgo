@@ -5,7 +5,7 @@ import {
   ShieldCheck,
   Users,
   ArrowUpRight,
-  Sparkles,
+  ClipboardList,
   CheckCircle2,
   AlertTriangle,
   ChevronRight,
@@ -437,7 +437,7 @@ export const PlatformMetricsView: React.FC<PlatformMetricsViewProps> = ({
         >
           <div className="flex items-center justify-between">
             <div className="w-10 h-10 rounded-xl bg-orange-50 text-[#ff5c28] flex items-center justify-center group-hover:scale-105 transition-transform">
-              <Sparkles className="w-5 h-5" />
+              <ClipboardList className="w-5 h-5" />
             </div>
             <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-[#ff5c28] transition-colors" />
           </div>

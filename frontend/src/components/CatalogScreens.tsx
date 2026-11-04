@@ -12,7 +12,6 @@ import {
   PartyPopper,
   Plus,
   Search,
-  Sparkles,
   Utensils,
   Volume2,
   Lightbulb,
@@ -37,7 +36,7 @@ type PostFn = (initial?: string | PostRequirementInitialData) => void;
 
 const occasionIcon = (type: OccasionItem['iconType']) => {
   const cls = 'w-[18px] h-[18px] text-[#ff5c28]';
-  if (type === 'rings') return <Sparkles className={cls} />;
+  if (type === 'rings') return <Heart className={cls} />;
   if (type === 'lotus') return <Flower2 className={cls} />;
   if (type === 'corporate') return <Briefcase className={cls} />;
   if (type === 'party') return <PartyPopper className={cls} />;
@@ -46,7 +45,7 @@ const occasionIcon = (type: OccasionItem['iconType']) => {
 
 const serviceIcon = (key: string, className = 'w-3 h-3') => {
   if (key === 'dj') return <Volume2 className={className} />;
-  if (key === 'decor') return <Sparkles className={className} />;
+  if (key === 'decor') return <Palette className={className} />;
   if (key === 'photography') return <Camera className={className} />;
   if (key === 'catering') return <Utensils className={className} />;
   if (key === 'lighting') return <Lightbulb className={className} />;
@@ -428,7 +427,6 @@ export function ServiceDetailScreen({
               Verified Local Vendors
             </span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 border border-orange-200 text-[#ff5c28] text-xs font-extrabold">
-              <Sparkles className="w-3.5 h-3.5 text-[#ff5c28]" />
               Save 15%+ via Reverse Bidding
             </span>
           </div>
@@ -463,7 +461,7 @@ export function ServiceDetailScreen({
                   {service.shortName}
                 </span>
                 <span className="px-2.5 py-0.5 rounded-full bg-[#e4f7ea] text-[#18794e] text-[10.5px] font-extrabold flex items-center gap-1">
-                  <Sparkles className="w-3 h-3" /> Min 15% Savings Guaranteed
+                  Min 15% Savings Guaranteed
                 </span>
                 <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-amber-300">
                   <Star className="w-3.5 h-3.5 fill-amber-300 text-amber-300" /> 4.9 (420+ Events)
@@ -771,7 +769,6 @@ export function ServiceDetailScreen({
               {/* 15% Rule Callout Box */}
               <div className="p-4 rounded-2xl bg-gradient-to-br from-[#fff5f0] to-[#fde7d8]/60 border border-[#ff5c28]/30">
                 <div className="flex items-center gap-1.5 text-[#ff5c28] font-black text-xs">
-                  <Sparkles className="w-4 h-4 shrink-0" />
                   <span>The EzzyGo Advantage</span>
                 </div>
                 <p className="text-xs text-slate-700 mt-1.5 leading-relaxed font-medium">

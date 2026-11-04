@@ -7,7 +7,6 @@ import {
   ShieldCheck, 
   Palette,
   Tag,
-  Sparkles,
   PartyPopper,
   Phone, 
   Star, 
@@ -722,7 +721,6 @@ export const RequesterView: React.FC<RequesterViewProps> = ({
             <div>
               <div className="flex flex-wrap items-center gap-2.5 mb-2">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-[#17233d] text-[11px] font-black uppercase tracking-wider">
-                  <Sparkles className="w-3.5 h-3.5" />
                   <span>SERVICES & PRICE GUIDE</span>
                 </span>
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold">

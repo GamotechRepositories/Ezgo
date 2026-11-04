@@ -7,7 +7,7 @@ import {
   ExternalLink,
   X,
   PartyPopper,
-  Sparkles,
+  ClipboardList,
   Users,
   Megaphone,
   Star,
@@ -58,7 +58,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     {
       id: 'requirements' as const,
       label: 'Live Requests & Bids',
-      icon: Sparkles,
+      icon: ClipboardList,
       count: openRequirementsCount > 0 ? openRequirementsCount : null,
       reminderCount: null,
     },

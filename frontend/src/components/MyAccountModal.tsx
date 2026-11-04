@@ -14,7 +14,6 @@ import {
   MessageCircle,
   HelpCircle,
   ArrowRight,
-  Sparkles,
   Lock,
   Globe,
   Loader2,
@@ -500,7 +499,6 @@ export const MyAccountModal: React.FC<MyAccountModalProps> = ({
               <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div>
                   <div className="font-bold text-sm text-slate-900 flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4 text-slate-700" />
                     Planning another event?
                   </div>
                   <div className="text-xs text-slate-600 mt-0.5">

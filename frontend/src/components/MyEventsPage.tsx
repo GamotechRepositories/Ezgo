@@ -11,7 +11,6 @@ import {
   Plus,
   Radio,
   ShieldCheck,
-  Sparkles,
   TrendingDown,
   Users,
   WifiOff,
@@ -373,8 +372,7 @@ export const MyEventsPage: React.FC<MyEventsPageProps> = ({
                         {req.lowestBid && req.budget > 0 ? (
                           <div className="pt-2 border-t border-slate-200/70">
                             <div className="flex items-center justify-between text-[11px] font-black text-emerald-700">
-                              <span className="flex items-center gap-1">
-                                <Sparkles className="w-3 h-3" />
+                              <span>
                                 Save ₹{(req.budget - req.lowestBid).toLocaleString()}
                               </span>
                               <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-[10px]">
@@ -533,8 +531,7 @@ export const MyEventsPage: React.FC<MyEventsPageProps> = ({
                                 >
                                   {isLowest && (
                                     <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-[10.5px] font-black uppercase tracking-wider shadow-2xs">
-                                      <span className="flex items-center gap-1.5">
-                                        <Sparkles className="w-3.5 h-3.5" />
+                                      <span>
                                         #1 Lowest Bid · Maximum Savings
                                       </span>
                                       <span className="bg-white/20 px-2 py-0.5 rounded-full text-[10px]">

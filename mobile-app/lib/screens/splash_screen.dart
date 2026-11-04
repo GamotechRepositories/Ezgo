@@ -43,7 +43,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       'title': 'Decoration',
       'tagline': 'Floral Mandap, Grand Arches & Fairy Lights',
       'benchmark': 'From ₹10,000',
-      'icon': LucideIcons.sparkles,
+      'icon': LucideIcons.palette,
       'color': const Color(0xFFE11D48),
       'bg': const Color(0xFFFFE4E6),
       'tag': '15% Off Bids',

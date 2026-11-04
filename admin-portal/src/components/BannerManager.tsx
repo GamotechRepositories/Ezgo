@@ -11,7 +11,6 @@ import {
   MapPin,
   Eye,
   EyeOff,
-  Sparkles,
   Layers,
   Monitor,
   Smartphone,
@@ -346,7 +345,6 @@ export const BannerManager: React.FC<BannerManagerProps> = ({
                   {/* Top Badges */}
                   <div className="absolute top-3.5 inset-x-3.5 flex items-center justify-between">
                     <span className="px-3 py-1 rounded-full bg-white/95 backdrop-blur-md text-[10px] font-black uppercase tracking-wider text-[#ff5c28] shadow-md flex items-center gap-1">
-                      <Sparkles className="w-3 h-3 text-slate-600" />
                       <span>{ad.badge || 'FEATURED'}</span>
                     </span>
 

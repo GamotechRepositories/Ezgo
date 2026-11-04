@@ -40,7 +40,7 @@ class OccasionCard {
       case 'birthday':
         return const Icon(LucideIcons.cake, size: 17, color: AppTheme.primary);
       default:
-        return const Icon(LucideIcons.sparkles, size: 17, color: AppTheme.primary);
+        return const Icon(LucideIcons.partyPopper, size: 17, color: AppTheme.primary);
     }
   }
 }

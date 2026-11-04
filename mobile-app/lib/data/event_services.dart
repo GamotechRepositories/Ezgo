@@ -69,7 +69,7 @@ class EventServices {
       priceFrom: 'From ₹15,000',
       asset: 'assets/images/occasion_weddings.jpg',
       image: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&auto=format&fit=crop&q=80',
-      icon: LucideIcons.sparkles,
+      icon: LucideIcons.palette,
     ),
     EventService(
       id: 'photography',

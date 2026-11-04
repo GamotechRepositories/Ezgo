@@ -41,7 +41,7 @@ IconData vendorCategoryIcon(String category) {
   if (key.contains('dj') || key.contains('sound')) return LucideIcons.audioLines;
   if (key.contains('photo') || key.contains('film') || key.contains('video')) return LucideIcons.camera;
   if (key.contains('cater') || key.contains('food')) return LucideIcons.utensilsCrossed;
-  if (key.contains('decor') || key.contains('mandap') || key.contains('stage')) return LucideIcons.sparkles;
+  if (key.contains('decor') || key.contains('mandap') || key.contains('stage')) return LucideIcons.palette;
   if (key.contains('light') || key.contains('truss')) return LucideIcons.lamp;
   return LucideIcons.partyPopper;
 }

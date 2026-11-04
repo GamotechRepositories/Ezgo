@@ -25,7 +25,6 @@ import {
   Image as ImageIcon,
   Loader2,
   FileText,
-  Sparkles,
   PartyPopper,
   Briefcase,
   Cake,
@@ -99,7 +98,7 @@ const POPULAR_AREAS_BY_CITY: Record<string, string[]> = {
 };
 
 const OCCASIONS = [
-  { id: 'Wedding', label: 'Wedding', icon: Sparkles },
+  { id: 'Wedding', label: 'Wedding', icon: Heart },
   { id: 'Sangeet / Haldi', label: 'Sangeet / Haldi', icon: Music },
   { id: 'Reception', label: 'Reception', icon: PartyPopper },
   { id: 'Birthday Party', label: 'Birthday Party', icon: Cake },
@@ -615,7 +614,6 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
         {/* Intro Banner */}
         <div className="mb-6">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 border border-orange-200 text-[#ff5c28] text-xs font-black uppercase tracking-wider mb-2">
-            <Sparkles className="w-3.5 h-3.5 text-[#ff5c28]" />
             <span>Fast Vendor Reverse-Bidding</span>
           </div>
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">
@@ -1153,7 +1151,6 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                     {selectedCategories.some((c) => c.toLowerCase().includes('cater') || c.toLowerCase().includes('food')) && (
                       <div className="p-3.5 rounded-2xl bg-amber-50/90 border border-amber-200 text-xs text-amber-950 flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
                           <span>
                             Catering scales dynamically: <strong>{guestCount || 0} guests × ~₹450/plate = ₹{((Number(guestCount) || 0) * 450).toLocaleString()}</strong>
                           </span>
@@ -1407,7 +1404,6 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                             : 'bg-orange-50 border border-orange-300 text-orange-950 hover:bg-orange-100'
                         }`}
                       >
-                        <Sparkles className="w-3.5 h-3.5" />
                         <span>Recommended (~₹{calculatedAutoBudget.toLocaleString()})</span>
                       </button>
 
