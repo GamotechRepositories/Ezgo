@@ -1348,11 +1348,11 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <label className="text-xs sm:text-sm font-extrabold text-slate-800 flex items-center gap-1.5">
-                          <span>Enter Your Target Budget (तुमचे बजेट टाका)</span>
+                          <span>Enter Your Target Budget</span>
                           <span className="text-rose-600 font-black">*</span>
                         </label>
                         <span className="text-[11px] font-bold text-amber-800 bg-amber-100/90 border border-amber-300 px-2.5 py-0.5 rounded-full">
-                          Required / आवश्यक
+                          Required
                         </span>
                       </div>
 
@@ -1376,7 +1376,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                                 setIsBudgetManual(true);
                                 setBudget(val === '' ? '' : parseInt(val, 10) || 0);
                               }}
-                              placeholder="Type budget (उदा. 25000)"
+                              placeholder="Type budget (e.g. 25000)"
                               required
                               className="w-full text-right font-black text-slate-900 placeholder:text-slate-400 placeholder:font-normal placeholder:text-sm sm:placeholder:text-base text-2xl sm:text-3xl focus:outline-none bg-transparent"
                             />
@@ -1385,15 +1385,15 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                           {/* Dynamic Feedback Hint */}
                           {budget === '' ? (
                             <p className="text-[11.5px] font-semibold text-amber-700 mt-1.5 flex items-center gap-1">
-                              <span>⚠️ हे भरणे आवश्यक आहे — रक्कम टाईप करा किंवा खालील बटण निवडा</span>
+                              <span>⚠️ Required — Type your budget amount or select a preset below</span>
                             </p>
                           ) : numericBudget < 1000 ? (
                             <p className="text-[11.5px] font-semibold text-rose-600 mt-1.5">
-                              किमान बजेट ₹1,000 असावे.
+                              Minimum budget must be at least ₹1,000.
                             </p>
                           ) : (
                             <p className="text-[11.5px] font-bold text-emerald-700 mt-1.5 flex items-center gap-1">
-                              <span>✓ बजेट निश्चित झाले: ₹{numericBudget.toLocaleString()}</span>
+                              <span>✓ Budget set: ₹{numericBudget.toLocaleString()}</span>
                             </p>
                           )}
                         </div>
