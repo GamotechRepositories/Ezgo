@@ -331,6 +331,12 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
       setBudget('');
       setVenueAddress('');
       setArea('');
+      setTitle('');
+      setIsTitleManual(false);
+      setCustomServiceName('');
+      setDescription('');
+      setSelectedEquipments([]);
+      setCurrentStep(1);
     } else {
       setIsBudgetManual(false);
       setEventDate('');
@@ -340,6 +346,12 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
       setBudget('');
       setVenueAddress('');
       setArea('');
+      setTitle('');
+      setIsTitleManual(false);
+      setCustomServiceName('');
+      setDescription('');
+      setSelectedEquipments([]);
+      setCurrentStep(1);
     }
 
     if (initialCity && (!initialData || typeof initialData === 'string' || !initialData.city)) {
@@ -387,9 +399,14 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
       .slice(0, 2)
       .join(' + ');
     const displayCat = selectedCategories.length > 2 ? `${catShort} + more` : catShort;
-    const guestPart = guestCount ? `(${guestCount} Guests)` : '';
-    const locPart = area || city ? `in ${area || city}` : '';
-    const autoTitle = `${displayCat || 'Event Services'} for ${eventType || 'Event'} ${guestPart} ${locPart}`.trim();
+    const validGuests = typeof guestCount === 'number' && guestCount > 0 ? guestCount : null;
+    const guestPart = validGuests ? `(${validGuests} Guests)` : '';
+    const locPart = area ? `in ${area}` : city ? `in ${city}` : '';
+    const autoTitle = [displayCat || 'Event Services', 'for', eventType || 'Event', guestPart, locPart]
+      .filter(Boolean)
+      .join(' ')
+      .replace(/\s+/g, ' ')
+      .trim();
     setTitle(autoTitle);
   }, [selectedCategories, customServiceName, eventType, guestCount, area, city, isTitleManual]);
 
@@ -1172,7 +1189,18 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1.5">Requirement Title *</label>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="block text-xs font-bold text-slate-700">Requirement Title *</label>
+                        {isTitleManual && (
+                          <button
+                            type="button"
+                            onClick={() => setIsTitleManual(false)}
+                            className="text-[11px] font-bold text-[#ff5c28] hover:underline cursor-pointer"
+                          >
+                            Reset to auto title
+                          </button>
+                        )}
+                      </div>
                       <input
                         type="text"
                         value={title}
@@ -1181,7 +1209,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                           setIsTitleManual(true);
                         }}
                         required
-                        placeholder="e.g. Stage Mandap Decor & DJ Sound for Wedding (200 Guests in Baner)"
+                        placeholder="e.g. Stage Mandap Decor for Wedding in Baner"
                         className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500 focus:bg-white transition"
                       />
                     </div>
@@ -1424,17 +1452,43 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                       </div>
                       <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
                         <span className="text-slate-400 font-bold uppercase text-[9.5px] tracking-wider block mb-0.5">Date & Venue</span>
-                        <span className="font-extrabold text-slate-900 block truncate">{eventDate} • {area}, {city}</span>
+                        <span className="font-extrabold text-slate-900 block truncate">{eventDate || 'Date TBA'} • {area || city}</span>
                       </div>
                       <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                        <span className="text-slate-400 font-bold uppercase text-[9.5px] tracking-wider block mb-0.5">Ceiling & Guests</span>
-                        <span className="font-black text-emerald-700 block truncate">Max ₹{numericBudget.toLocaleString()} ({guestCount} Guests)</span>
+                        <span className="text-slate-400 font-bold uppercase text-[9.5px] tracking-wider block mb-0.5">Estimated Guests</span>
+                        <span className="font-extrabold text-slate-900 block truncate">{guestCount ? `${guestCount} Guests` : 'Not specified'}</span>
                       </div>
                     </div>
 
-                    <div className="p-3 bg-slate-50/70 rounded-2xl border border-slate-100 text-xs">
+                    {/* Dedicated Prominent Budget & Escrow Review Row */}
+                    <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-50/90 via-teal-50/70 to-emerald-50/90 border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                      <div>
+                        <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 block">Maximum Budget Ceiling</span>
+                        <div className="flex items-baseline gap-2 mt-0.5">
+                          <span className="text-2xl font-black text-slate-900 font-mono">
+                            {numericBudget > 0 ? `₹${numericBudget.toLocaleString()}` : 'Enter your budget above'}
+                          </span>
+                          {numericBudget > 0 && (
+                            <span className="text-xs font-extrabold text-emerald-700">
+                              (Max Allowed Bid: ₹{maxAcceptableBid.toLocaleString()})
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {numericBudget > 0 && (
+                        <div className="px-3.5 py-1.5 rounded-xl bg-white/95 border border-emerald-300 text-right shadow-2xs">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Minimum Guaranteed Savings</span>
+                          <span className="text-sm font-black text-emerald-700 font-mono">
+                            ≥ ₹{guaranteedMinSavings.toLocaleString()} (15% OFF)
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-100 text-xs space-y-1">
                       <p className="font-bold text-slate-900">Title: <span className="font-medium text-slate-700">{title}</span></p>
-                      {description && <p className="text-slate-500 mt-1 font-medium">Notes: {description}</p>}
+                      {description && <p className="text-slate-500 font-medium">Notes: {description}</p>}
                     </div>
                   </div>
                 </div>
@@ -1547,7 +1601,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                   </span>
                   <span className="inline-flex items-center gap-1 drop-shadow-sm">
                     <Users className="w-3.5 h-3.5 text-amber-300" />
-                    {guestCount || 200} guests
+                    {guestCount ? `${guestCount} guests` : 'Guests TBA'}
                   </span>
                 </div>
               </div>
@@ -1568,6 +1622,27 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                   )}
                 </div>
               </div>
+
+              {/* Live Budget Ceiling Card (shows as soon as user sets budget) */}
+              {numericBudget > 0 && (
+                <div className="p-3.5 rounded-2xl bg-gradient-to-br from-slate-50 via-white to-emerald-50/50 border border-slate-200/90 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">Budget Ceiling</span>
+                      <span className="text-base font-black text-slate-900 font-mono">₹{numericBudget.toLocaleString()}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] text-emerald-700 font-extrabold uppercase tracking-wider block">Max Allowed Bid</span>
+                      <span className="text-base font-black text-emerald-600 font-mono">₹{maxAcceptableBid.toLocaleString()}</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-200/70 flex items-center justify-between text-[11px] font-bold text-emerald-800">
+                    <span>15% Reverse Discount</span>
+                    <span>Save ≥ ₹{guaranteedMinSavings.toLocaleString()}</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
