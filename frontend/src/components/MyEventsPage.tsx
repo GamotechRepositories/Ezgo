@@ -15,6 +15,10 @@ import {
   Users,
   WifiOff,
   Zap,
+  Trash2,
+  AlertTriangle,
+  X,
+  Loader2,
 } from 'lucide-react';
 import type { Requirement } from '../types';
 
@@ -25,6 +29,7 @@ interface MyEventsPageProps {
   onOpenPostModal: () => void;
   onAcceptBid: (requirementId: string, bidId: string) => Promise<void>;
   onOpenBookings: () => void;
+  onDeleteRequirement?: (requirementId: string) => Promise<void>;
   onRefresh?: () => void;
   onBack?: () => void;
 }
@@ -55,11 +60,29 @@ export const MyEventsPage: React.FC<MyEventsPageProps> = ({
   onOpenPostModal,
   onAcceptBid,
   onOpenBookings,
+  onDeleteRequirement,
   onRefresh,
   onBack,
 }) => {
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>('All');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [deleteConfirmReq, setDeleteConfirmReq] = useState<Requirement | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirmReq || !onDeleteRequirement) return;
+    try {
+      setIsDeleting(true);
+      setDeleteError('');
+      await onDeleteRequirement(deleteConfirmReq._id);
+      setDeleteConfirmReq(null);
+    } catch (err: any) {
+      setDeleteError(err.message || 'Failed to delete event.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const uniqueRequirements = useMemo(() => {
     const seen = new Set<string>();
@@ -302,8 +325,29 @@ export const MyEventsPage: React.FC<MyEventsPageProps> = ({
                         {req.status}
                       </span>
 
+                      {/* Quick Delete Trash Button on Cover */}
+                      {onDeleteRequirement && ['OPEN', 'DRAFT', 'EXPIRED', 'CANCELLED'].includes(req.status) && (
+                        <button
+                          type="button"
+                          title="Remove Event Request"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteConfirmReq(req);
+                          }}
+                          className="absolute top-3 right-3 w-7 h-7 rounded-full bg-black/60 hover:bg-rose-600 text-white/90 hover:text-white backdrop-blur-md flex items-center justify-center transition shadow-xs cursor-pointer z-10 active:scale-95"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+
                       {/* Category Tag on Image */}
-                      <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md text-white text-[10px] font-bold">
+                      <span
+                        className={`absolute top-3 ${
+                          onDeleteRequirement && ['OPEN', 'DRAFT', 'EXPIRED', 'CANCELLED'].includes(req.status)
+                            ? 'right-12'
+                            : 'right-3'
+                        } px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md text-white text-[10px] font-bold`}
+                      >
                         {req.category}
                       </span>
 
@@ -485,7 +529,7 @@ export const MyEventsPage: React.FC<MyEventsPageProps> = ({
                           </button>
                         </div>
                       ) : bids.length === 0 ? (
-                        <div className="p-5 rounded-2xl bg-white border border-slate-200/90 text-center space-y-2 shadow-2xs">
+                        <div className="p-5 rounded-2xl bg-white border border-slate-200/90 text-center space-y-2.5 shadow-2xs">
                           <div className="w-10 h-10 rounded-full bg-orange-50 text-[#ff5c28] flex items-center justify-center mx-auto">
                             <Radio className="w-5 h-5 animate-pulse" />
                           </div>
@@ -495,6 +539,18 @@ export const MyEventsPage: React.FC<MyEventsPageProps> = ({
                           <p className="text-[11px] text-slate-500 max-w-xs mx-auto leading-relaxed">
                             Local vendors are reviewing your requirement. All submitted bids must be at least 15% below your ₹{req.budget.toLocaleString()} ceiling!
                           </p>
+                          {onDeleteRequirement && ['OPEN', 'DRAFT', 'EXPIRED', 'CANCELLED'].includes(req.status) && (
+                            <div className="pt-2">
+                              <button
+                                type="button"
+                                onClick={() => setDeleteConfirmReq(req)}
+                                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition cursor-pointer active:scale-95 shadow-2xs"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                <span>Cancel & Remove Request</span>
+                              </button>
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <div className="space-y-3">
@@ -631,6 +687,21 @@ export const MyEventsPage: React.FC<MyEventsPageProps> = ({
                           })()}
                         </div>
                       )}
+
+                      {/* Delete Event in Expanded View */}
+                      {onDeleteRequirement && ['OPEN', 'DRAFT', 'EXPIRED', 'CANCELLED'].includes(req.status) && bids.length > 0 && (
+                        <div className="pt-3 border-t border-slate-200/70 flex items-center justify-between text-xs">
+                          <span className="text-slate-500 text-[11px] font-medium">No longer need this event?</span>
+                          <button
+                            type="button"
+                            onClick={() => setDeleteConfirmReq(req)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition cursor-pointer active:scale-95 shadow-2xs"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Remove Event</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -639,6 +710,77 @@ export const MyEventsPage: React.FC<MyEventsPageProps> = ({
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmReq && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4 animate-in zoom-in-95 duration-200">
+            <div className="flex items-start justify-between">
+              <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => {
+                  setDeleteConfirmReq(null);
+                  setDeleteError('');
+                }}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-black text-slate-900">Remove Event Request?</h3>
+              <p className="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed">
+                Are you sure you want to remove <strong className="text-slate-900 font-bold">"{deleteConfirmReq.title}"</strong>?
+                Any bids associated with this request will also be deleted. This action cannot be undone.
+              </p>
+            </div>
+
+            {deleteError && (
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-bold text-rose-700 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                <span>{deleteError}</span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => {
+                  setDeleteConfirmReq(null);
+                  setDeleteError('');
+                }}
+                className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={handleConfirmDelete}
+                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md shadow-rose-600/20 transition cursor-pointer flex items-center gap-2 disabled:opacity-50 active:scale-95"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Removing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    <span>Yes, Remove Event</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

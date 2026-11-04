@@ -476,6 +476,18 @@ function HostApp({
     }
   };
 
+  // 2.5 Delete Requirement
+  const handleDeleteRequirement = async (requirementId: string) => {
+    try {
+      await api.deleteRequirement(requirementId);
+      setRequirements((prev) => prev.filter((r) => String(r._id) !== String(requirementId)));
+      addToast('success', 'Event Removed', 'Your event request has been successfully deleted.');
+    } catch (err: any) {
+      addToast('error', 'Could not delete event', err.message || 'Failed to delete event');
+      throw err;
+    }
+  };
+
   // 3. Payment Success
   const handlePaySuccess = async (
     bookingId: string,
@@ -738,6 +750,7 @@ function HostApp({
             onOpenPostModal={() => handleOpenPostModal()}
             onAcceptBid={handleAcceptBid}
             onOpenBookings={handleOpenBookings}
+            onDeleteRequirement={handleDeleteRequirement}
             onRefresh={refreshMine}
             onBack={() => goTo('home')}
           />

@@ -225,9 +225,9 @@ export const deleteRequirement = async (req, res, next) => {
       throw new Error('You can only delete your own request.');
     }
 
-    if (!['DRAFT', 'OPEN'].includes(requirement.status)) {
+    if (!['DRAFT', 'OPEN', 'EXPIRED', 'CANCELLED'].includes(requirement.status) && req.user.role !== 'admin') {
       res.status(400);
-      throw new Error(`Cannot delete active or completed requirement.`);
+      throw new Error(`Cannot delete active or booked requirement.`);
     }
 
     // Delete associated bids if any
