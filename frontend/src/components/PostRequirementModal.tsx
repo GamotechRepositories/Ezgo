@@ -29,7 +29,6 @@ import {
   Briefcase,
   Cake,
   AlertCircle,
-  Navigation,
 } from 'lucide-react';
 import type { Category, Requirement, PostRequirementInitialData } from '../types';
 import { EVENT_CATEGORIES } from '../data/eventData';
@@ -450,22 +449,6 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
     }
   };
 
-  const handleDetectLocation = () => {
-    if (!navigator.geolocation) {
-      setValidationError('Geolocation is not supported by your browser.');
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      () => {
-        // Default to current city
-        setCity((prev) => prev || 'Pune');
-      },
-      () => {
-        setValidationError('Location access denied. Please select your city manually.');
-      }
-    );
-  };
-
   const setDateShortcut = (daysFromNow: number) => {
     const d = new Date(Date.now() + daysFromNow * 24 * 60 * 60 * 1000);
     setEventDate(isoDate(d));
@@ -857,25 +840,14 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                 <div className="space-y-5 animate-in fade-in duration-200">
                   {/* Location Card */}
                   <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-7 shadow-xs space-y-4">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                      <div className="flex items-center gap-2.5">
-                        <span className="w-6 h-6 rounded-full bg-[#17233d] text-white text-xs font-bold flex items-center justify-center">
-                          1
-                        </span>
-                        <div>
-                          <h2 className="text-base font-extrabold text-slate-900">Where is the event venue?</h2>
-                          <p className="text-xs text-slate-500 font-medium">Verified local vendors in your area will compete</p>
-                        </div>
+                    <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
+                      <span className="w-6 h-6 rounded-full bg-[#17233d] text-white text-xs font-bold flex items-center justify-center">
+                        1
+                      </span>
+                      <div>
+                        <h2 className="text-base font-extrabold text-slate-900">Where is the event venue?</h2>
+                        <p className="text-xs text-slate-500 font-medium">Verified local vendors in your area will compete</p>
                       </div>
-
-                      <button
-                        type="button"
-                        onClick={handleDetectLocation}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition cursor-pointer"
-                      >
-                        <Navigation className="w-3.5 h-3.5 text-[#ff5c28]" />
-                        <span>Detect Location</span>
-                      </button>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
