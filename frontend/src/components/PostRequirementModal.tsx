@@ -21,8 +21,6 @@ import {
   Tent,
   SunMedium,
   Plus,
-  Upload,
-  Image as ImageIcon,
   Loader2,
   FileText,
   PartyPopper,
@@ -32,7 +30,6 @@ import {
 } from 'lucide-react';
 import type { Category, Requirement, PostRequirementInitialData } from '../types';
 import { EVENT_CATEGORIES } from '../data/eventData';
-import { api } from '../services/api';
 
 interface PostRequirementModalProps {
   isOpen: boolean;
@@ -253,10 +250,6 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
   const [selectedEquipments, setSelectedEquipments] = useState<string[]>([]);
   const [budget, setBudget] = useState<number | ''>('');
   const [isBudgetManual, setIsBudgetManual] = useState(false);
-  const [customImageUrl, setCustomImageUrl] = useState<string>('');
-  const [customImages, setCustomImages] = useState<string[]>([]);
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
-  const [uploadError, setUploadError] = useState('');
   const [validationError, setValidationError] = useState('');
   const [loading, setLoading] = useState(false);
   const [packageSummary, setPackageSummary] = useState<PostRequirementInitialData['packageSummary'] | null>(null);
@@ -430,25 +423,6 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
     setSelectedEquipments((prev) => (prev.includes(eq) ? prev.filter((item) => item !== eq) : [...prev, eq]));
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
-    try {
-      setIsUploadingImage(true);
-      setUploadError('');
-      const uploadPromises = files.map((file) => api.uploadImage(file, 'ezzygo/requirements'));
-      const urls = await Promise.all(uploadPromises);
-      setCustomImages((prev) => [...prev, ...urls].slice(0, 8));
-      if (urls.length > 0 && !customImageUrl) {
-        setCustomImageUrl(urls[0]);
-      }
-    } catch (err: any) {
-      setUploadError(err.message || 'Failed to upload photo. Please retry.');
-    } finally {
-      setIsUploadingImage(false);
-    }
-  };
-
   const setDateShortcut = (daysFromNow: number) => {
     const d = new Date(Date.now() + daysFromNow * 24 * 60 * 60 * 1000);
     setEventDate(isoDate(d));
@@ -506,8 +480,8 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
         eventType: eventType || undefined,
         title,
         description,
-        imageUrl: customImages[0] || customImageUrl || activeCategory.image,
-        images: customImages,
+        imageUrl: activeCategory.image,
+        images: activeCategory.image ? [activeCategory.image] : [],
         equipmentNeeded: selectedEquipments,
         location: { city, area: area || 'Downtown', venueAddress },
         eventDate: eventDate || todayIso(),
@@ -539,8 +513,8 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
         eventType: eventType || undefined,
         title,
         description,
-        imageUrl: customImages[0] || customImageUrl || activeCategory.image,
-        images: customImages.length > 0 ? customImages : customImageUrl ? [customImageUrl] : [],
+        imageUrl: activeCategory.image,
+        images: activeCategory.image ? [activeCategory.image] : [],
         equipmentNeeded: selectedEquipments,
         location: { city, area, venueAddress },
         eventDate,
@@ -1216,81 +1190,6 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                         className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-medium focus:outline-none focus:border-orange-500 focus:bg-white transition"
                       />
                     </div>
-
-                    {/* Photo Upload Card */}
-                    <div className="space-y-2">
-                      <label className="block text-xs font-bold text-slate-700 flex items-center justify-between">
-                        <span className="flex items-center gap-1.5">
-                          <ImageIcon className="w-4 h-4 text-[#ff5c28]" />
-                          <span>Venue / Theme Inspiration Photos (Optional)</span>
-                        </span>
-                        <span className="text-[10px] text-slate-400 font-semibold">Max 8 photos</span>
-                      </label>
-
-                      <div className="border-2 border-dashed border-slate-200 hover:border-orange-400 rounded-2xl p-5 bg-slate-50/70 transition text-center flex flex-col items-center justify-center">
-                        <input
-                          type="file"
-                          id="req-custom-image-upload"
-                          accept="image/*"
-                          multiple
-                          disabled={isUploadingImage}
-                          onChange={handleImageUpload}
-                          className="hidden"
-                        />
-                        <label
-                          htmlFor="req-custom-image-upload"
-                          className={`cursor-pointer flex flex-col items-center justify-center gap-2 text-slate-600 ${isUploadingImage ? 'opacity-60 pointer-events-none' : ''}`}
-                        >
-                          {isUploadingImage ? (
-                            <div className="flex flex-col items-center gap-2 py-3">
-                              <Loader2 className="w-7 h-7 text-[#ff5c28] animate-spin" />
-                              <span className="font-bold text-xs text-slate-700">Uploading photos to CDN...</span>
-                            </div>
-                          ) : (
-                            <>
-                              <div className="w-10 h-10 rounded-full bg-white text-[#ff5c28] flex items-center justify-center shadow-xs">
-                                <Upload className="w-5 h-5" />
-                              </div>
-                              <span className="font-extrabold text-xs sm:text-sm text-slate-800">
-                                {customImages.length > 0 ? '+ Add More Photos' : 'Click to Upload Inspiration Images'}
-                              </span>
-                              <span className="text-[11px] text-slate-400">Supports JPG, PNG, WebP</span>
-                            </>
-                          )}
-                        </label>
-
-                        {uploadError && <p className="text-xs text-rose-600 font-medium mt-2">{uploadError}</p>}
-
-                        {customImages.length > 0 && (
-                          <div className="mt-4 w-full grid grid-cols-4 sm:grid-cols-6 gap-2">
-                            {customImages.map((imgUrl, idx) => (
-                              <div
-                                key={idx}
-                                className="relative aspect-square rounded-xl overflow-hidden border border-slate-200 bg-slate-100 group shadow-2xs"
-                              >
-                                <img src={imgUrl} alt="" className="w-full h-full object-cover" />
-                                {idx === 0 && (
-                                  <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[8.5px] font-black bg-[#ff5c28] text-white">
-                                    Cover
-                                  </span>
-                                )}
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setCustomImages((prev) => prev.filter((_, i) => i !== idx));
-                                    if (idx === 0) setCustomImageUrl(customImages[1] || '');
-                                  }}
-                                  className="absolute top-1 right-1 w-5 h-5 rounded-full bg-rose-600 text-white flex items-center justify-center text-[10px] font-bold shadow-xs cursor-pointer opacity-80 hover:opacity-100"
-                                >
-                                  ✕
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
                   </div>
                 </div>
               )}
@@ -1562,7 +1461,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
               {/* Card Thumbnail */}
               <div className="relative h-44 rounded-2xl overflow-hidden bg-slate-100">
                 <img
-                  src={customImages[0] || customImageUrl || activeCategory.image || '/hero_wedding_4k.jpg'}
+                  src={activeCategory.image || '/hero_wedding_4k.jpg'}
                   alt=""
                   className="w-full h-full object-cover"
                 />
