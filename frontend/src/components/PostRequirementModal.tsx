@@ -127,7 +127,6 @@ const STEP_TITLES = [
 const isoDate = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const todayIso = () => isoDate(new Date());
-const twoWeeksFromNowIso = () => isoDate(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000));
 
 /**
  * Returns a recommended baseline price for a single service category based on event context.
@@ -244,17 +243,17 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
   const [selectedCategories, setSelectedCategories] = useState<string[]>(['Decoration & Stage Design']);
   const [customServiceName, setCustomServiceName] = useState('');
   const [city, setCity] = useState(initialCleanCity);
-  const [area, setArea] = useState(POPULAR_AREAS_BY_CITY[initialCleanCity]?.[0] || 'Main Area');
+  const [area, setArea] = useState('');
   const [venueAddress, setVenueAddress] = useState('');
-  const [eventDate, setEventDate] = useState(twoWeeksFromNowIso);
-  const [startTime, setStartTime] = useState('18:00');
-  const [endTime, setEndTime] = useState('23:00');
-  const [guestCount, setGuestCount] = useState<number | ''>(200);
+  const [eventDate, setEventDate] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
+  const [guestCount, setGuestCount] = useState<number | ''>('');
   const [title, setTitle] = useState('');
   const [isTitleManual, setIsTitleManual] = useState(false);
   const [description, setDescription] = useState('');
   const [selectedEquipments, setSelectedEquipments] = useState<string[]>([]);
-  const [budget, setBudget] = useState<number | ''>(30000);
+  const [budget, setBudget] = useState<number | ''>('');
   const [isBudgetManual, setIsBudgetManual] = useState(false);
   const [customImageUrl, setCustomImageUrl] = useState<string>('');
   const [customImages, setCustomImages] = useState<string[]>([]);
@@ -268,17 +267,10 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
   const calculatedAutoBudget = useMemo(() => {
     return calculateEstimatedBudget(
       selectedCategories,
-      typeof guestCount === 'number' ? guestCount : 200,
+      typeof guestCount === 'number' && guestCount > 0 ? guestCount : 200,
       eventType
     );
   }, [selectedCategories, guestCount, eventType]);
-
-  // Keep budget in sync when auto-calculation is active
-  useEffect(() => {
-    if (!isBudgetManual) {
-      setBudget(calculatedAutoBudget);
-    }
-  }, [calculatedAutoBudget, isBudgetManual]);
 
   // Sync incoming props / prefilled data
   useEffect(() => {
@@ -332,14 +324,27 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
         : [initialCategory];
       setSelectedCategories(cats);
       setIsBudgetManual(false);
+      setEventDate('');
+      setStartTime('');
+      setEndTime('');
+      setGuestCount('');
+      setBudget('');
+      setVenueAddress('');
+      setArea('');
     } else {
       setIsBudgetManual(false);
+      setEventDate('');
+      setStartTime('');
+      setEndTime('');
+      setGuestCount('');
+      setBudget('');
+      setVenueAddress('');
+      setArea('');
     }
 
     if (initialCity && (!initialData || typeof initialData === 'string' || !initialData.city)) {
       const c = normalizeCity(initialCity);
       setCity(c);
-      if (POPULAR_AREAS_BY_CITY[c]?.[0]) setArea(POPULAR_AREAS_BY_CITY[c][0]);
     }
   }, [isOpen, initialData, initialCategory, initialCity]);
 
@@ -479,6 +484,10 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
       }
       if (!city.trim() || !area.trim()) {
         setValidationError('Please provide your city and locality / area.');
+        return;
+      }
+      if (!guestCount || Number(guestCount) <= 0) {
+        setValidationError('Please enter estimated guest count.');
         return;
       }
       setCurrentStep(3);
@@ -1078,7 +1087,7 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                           value={guestCount}
                           onChange={(e) => {
                             const val = e.target.value;
-                            setGuestCount(val === '' ? '' : parseInt(val, 10) || 50);
+                            setGuestCount(val === '' ? '' : parseInt(val, 10) || 0);
                           }}
                           placeholder="e.g. 200"
                           className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500"
@@ -1342,14 +1351,14 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                         <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs">
                           <span className="text-[10.5px] text-slate-500 font-bold uppercase tracking-wider block">Max Allowed Vendor Bid</span>
                           <span className="text-slate-900 font-black text-lg sm:text-xl block mt-0.5 font-mono">
-                            ₹{maxAcceptableBid.toLocaleString()}
+                            {numericBudget > 0 ? `₹${maxAcceptableBid.toLocaleString()}` : '—'}
                           </span>
                         </div>
 
                         <div className="bg-gradient-to-br from-emerald-600 to-teal-700 text-white p-3.5 rounded-2xl shadow-sm">
                           <span className="text-[10.5px] text-emerald-100 font-bold uppercase tracking-wider block">Your Guaranteed Savings</span>
                           <span className="text-white font-black text-lg sm:text-xl block mt-0.5 font-mono">
-                            ≥ ₹{guaranteedMinSavings.toLocaleString()}
+                            {numericBudget > 0 ? `≥ ₹${guaranteedMinSavings.toLocaleString()}` : '—'}
                           </span>
                         </div>
                       </div>
