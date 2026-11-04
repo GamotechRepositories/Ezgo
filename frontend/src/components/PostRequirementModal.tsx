@@ -31,8 +31,6 @@ import {
   Cake,
   AlertCircle,
   Navigation,
-  RotateCcw,
-  Pencil,
 } from 'lucide-react';
 import type { Category, Requirement, PostRequirementInitialData } from '../types';
 import { EVENT_CATEGORIES } from '../data/eventData';
@@ -258,7 +256,6 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
   const [selectedEquipments, setSelectedEquipments] = useState<string[]>([]);
   const [budget, setBudget] = useState<number | ''>(30000);
   const [isBudgetManual, setIsBudgetManual] = useState(false);
-  const [isEditingPreviewBudget, setIsEditingPreviewBudget] = useState(false);
   const [customImageUrl, setCustomImageUrl] = useState<string>('');
   const [customImages, setCustomImages] = useState<string[]>([]);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
@@ -283,26 +280,9 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
     }
   }, [calculatedAutoBudget, isBudgetManual]);
 
-  const handleAdjustBudget = (delta: number) => {
-    setIsBudgetManual(true);
-    setBudget((prev) => {
-      const current = typeof prev === 'number' && prev > 0 ? prev : calculatedAutoBudget;
-      return Math.max(1000, current + delta);
-    });
-  };
-
-  const handleResetToAutoBudget = () => {
-    setIsBudgetManual(false);
-    setBudget(calculatedAutoBudget);
-    setIsEditingPreviewBudget(false);
-  };
-
   // Sync incoming props / prefilled data
   useEffect(() => {
-    if (!isOpen) {
-      setIsEditingPreviewBudget(false);
-      return;
-    }
+    if (!isOpen) return;
 
     if (initialData) {
       if (typeof initialData === 'string') {
@@ -1578,132 +1558,6 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                     <span className="text-[10px] text-slate-400 font-bold">+{selectedCategories.length - 3} more</span>
                   )}
                 </div>
-              </div>
-
-              {/* Budget vs Max Allowed Bid (Interactive Live Dynamic Card) */}
-              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">
-                      Budget Ceiling
-                    </span>
-                    {isBudgetManual ? (
-                      <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 text-[9.5px] font-black">
-                        Custom
-                      </span>
-                    ) : (
-                      <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-900 text-[9.5px] font-black flex items-center gap-0.5">
-                        <Sparkles className="w-2.5 h-2.5 text-emerald-600" />
-                        Auto
-                      </span>
-                    )}
-                  </div>
-
-                  {isBudgetManual ? (
-                    <button
-                      type="button"
-                      onClick={handleResetToAutoBudget}
-                      className="text-[10px] font-bold text-orange-600 hover:text-orange-700 hover:underline flex items-center gap-0.5 cursor-pointer"
-                      title="Reset back to recommended baseline"
-                    >
-                      <RotateCcw className="w-2.5 h-2.5" />
-                      <span>Reset (~₹{calculatedAutoBudget.toLocaleString()})</span>
-                    </button>
-                  ) : (
-                    <span className="text-[10px] font-semibold text-slate-500">
-                      {selectedCategories.length} {selectedCategories.length > 1 ? 'Services' : 'Service'}
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between gap-2">
-                  {isEditingPreviewBudget ? (
-                    <div className="flex items-center gap-1 flex-1 bg-white border-2 border-[#ff5c28] rounded-xl px-2 py-1 shadow-inner">
-                      <span className="text-xs font-black text-[#ff5c28]">₹</span>
-                      <input
-                        type="number"
-                        step="500"
-                        min="1000"
-                        value={budget}
-                        autoFocus
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setIsBudgetManual(true);
-                          setBudget(val === '' ? '' : parseInt(val, 10) || 0);
-                        }}
-                        onBlur={() => setIsEditingPreviewBudget(false)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') setIsEditingPreviewBudget(false);
-                        }}
-                        className="w-full text-right font-black text-slate-900 text-sm focus:outline-none bg-transparent"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setIsEditingPreviewBudget(false)}
-                        className="text-[11px] font-bold text-[#ff5c28] px-1 hover:underline cursor-pointer"
-                      >
-                        Done
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-lg font-black text-slate-900 font-mono">
-                        ₹{numericBudget.toLocaleString()}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setIsEditingPreviewBudget(true)}
-                        className="p-1 rounded text-slate-400 hover:text-slate-800 hover:bg-slate-200 transition cursor-pointer"
-                        title="Click to edit budget directly"
-                      >
-                        <Pencil className="w-3 h-3" />
-                      </button>
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => handleAdjustBudget(-5000)}
-                      className="px-2 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-[10.5px] font-black transition cursor-pointer active:scale-95 shadow-2xs"
-                      title="Decrease ceiling by ₹5,000"
-                    >
-                      -5k
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleAdjustBudget(5000)}
-                      className="px-2 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-[10.5px] font-black transition cursor-pointer active:scale-95 shadow-2xs"
-                      title="Increase ceiling by ₹5,000"
-                    >
-                      +5k
-                    </button>
-                  </div>
-                </div>
-
-                <div className="pt-2 border-t border-slate-200/70 flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] text-emerald-800 font-extrabold uppercase tracking-wider block">
-                      Max Allowed Bid
-                    </span>
-                    <span className="text-sm font-black text-emerald-600 font-mono">
-                      ₹{maxAcceptableBid.toLocaleString()}
-                    </span>
-                  </div>
-                  <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold">
-                    15% Reverse Discount
-                  </span>
-                </div>
-              </div>
-
-              {/* Guaranteed Savings Highlight */}
-              <div className="p-3 rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 text-center space-y-0.5 shadow-2xs">
-                <span className="text-[11px] font-black text-emerald-800 flex items-center justify-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-600" /> Minimum Guaranteed Savings
-                </span>
-                <span className="text-lg font-black text-emerald-700 font-mono block">
-                  ≥ ₹{guaranteedMinSavings.toLocaleString()} (15% OFF)
-                </span>
               </div>
             </div>
           </div>
