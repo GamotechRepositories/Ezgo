@@ -262,14 +262,6 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [packageSummary, setPackageSummary] = useState<PostRequirementInitialData['packageSummary'] | null>(null);
 
-  // Dynamic baseline budget calculation
-  const calculatedAutoBudget = useMemo(() => {
-    return calculateEstimatedBudget(
-      selectedCategories,
-      typeof guestCount === 'number' && guestCount > 0 ? guestCount : 200,
-      eventType
-    );
-  }, [selectedCategories, guestCount, eventType]);
 
   // Sync incoming props / prefilled data
   useEffect(() => {
@@ -1353,60 +1345,80 @@ export const PostRequirementModal: React.FC<PostRequirementModalProps> = ({
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-5 items-center">
-                      <div className="sm:col-span-5 flex items-center bg-white border-2 border-[#ff5c28] rounded-2xl px-5 py-3.5 shadow-sm">
-                        <span className="text-2xl sm:text-3xl font-black text-[#ff5c28] mr-2.5">₹</span>
-                        <input
-                          type="number"
-                          step="500"
-                          min="1000"
-                          value={budget}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setIsBudgetManual(true);
-                            setBudget(val === '' ? '' : parseInt(val, 10) || 0);
-                          }}
-                          placeholder="25000"
-                          required
-                          className="w-full text-right font-black text-slate-900 text-2xl sm:text-3xl focus:outline-none bg-transparent"
-                        />
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-xs sm:text-sm font-extrabold text-slate-800 flex items-center gap-1.5">
+                          <span>Enter Your Target Budget (तुमचे बजेट टाका)</span>
+                          <span className="text-rose-600 font-black">*</span>
+                        </label>
+                        <span className="text-[11px] font-bold text-amber-800 bg-amber-100/90 border border-amber-300 px-2.5 py-0.5 rounded-full">
+                          Required / आवश्यक
+                        </span>
                       </div>
 
-                      <div className="sm:col-span-7 grid grid-cols-2 gap-3">
-                        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs">
-                          <span className="text-[10.5px] text-slate-500 font-bold uppercase tracking-wider block">Max Allowed Vendor Bid</span>
-                          <span className="text-slate-900 font-black text-lg sm:text-xl block mt-0.5 font-mono">
-                            {numericBudget > 0 ? `₹${maxAcceptableBid.toLocaleString()}` : '—'}
-                          </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-12 gap-5 items-start">
+                        <div className="sm:col-span-5">
+                          <div
+                            className={`flex items-center bg-white border-2 rounded-2xl px-5 py-3.5 shadow-sm transition-all ${
+                              budget !== '' && numericBudget >= 1000
+                                ? 'border-emerald-500 ring-2 ring-emerald-100'
+                                : 'border-[#ff5c28] focus-within:ring-2 focus-within:ring-orange-200'
+                            }`}
+                          >
+                            <span className="text-2xl sm:text-3xl font-black text-[#ff5c28] mr-2.5">₹</span>
+                            <input
+                              type="number"
+                              step="500"
+                              min="1000"
+                              value={budget}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setIsBudgetManual(true);
+                                setBudget(val === '' ? '' : parseInt(val, 10) || 0);
+                              }}
+                              placeholder="Type budget (उदा. 25000)"
+                              required
+                              className="w-full text-right font-black text-slate-900 placeholder:text-slate-400 placeholder:font-normal placeholder:text-sm sm:placeholder:text-base text-2xl sm:text-3xl focus:outline-none bg-transparent"
+                            />
+                          </div>
+
+                          {/* Dynamic Feedback Hint */}
+                          {budget === '' ? (
+                            <p className="text-[11.5px] font-semibold text-amber-700 mt-1.5 flex items-center gap-1">
+                              <span>⚠️ हे भरणे आवश्यक आहे — रक्कम टाईप करा किंवा खालील बटण निवडा</span>
+                            </p>
+                          ) : numericBudget < 1000 ? (
+                            <p className="text-[11.5px] font-semibold text-rose-600 mt-1.5">
+                              किमान बजेट ₹1,000 असावे.
+                            </p>
+                          ) : (
+                            <p className="text-[11.5px] font-bold text-emerald-700 mt-1.5 flex items-center gap-1">
+                              <span>✓ बजेट निश्चित झाले: ₹{numericBudget.toLocaleString()}</span>
+                            </p>
+                          )}
                         </div>
 
-                        <div className="bg-gradient-to-br from-emerald-600 to-teal-700 text-white p-3.5 rounded-2xl shadow-sm">
-                          <span className="text-[10.5px] text-emerald-100 font-bold uppercase tracking-wider block">Your Guaranteed Savings</span>
-                          <span className="text-white font-black text-lg sm:text-xl block mt-0.5 font-mono">
-                            {numericBudget > 0 ? `≥ ₹${guaranteedMinSavings.toLocaleString()}` : '—'}
-                          </span>
+                        <div className="sm:col-span-7 grid grid-cols-2 gap-3">
+                          <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs">
+                            <span className="text-[10.5px] text-slate-500 font-bold uppercase tracking-wider block">Max Allowed Vendor Bid</span>
+                            <span className="text-slate-900 font-black text-lg sm:text-xl block mt-0.5 font-mono">
+                              {numericBudget > 0 ? `₹${maxAcceptableBid.toLocaleString()}` : '—'}
+                            </span>
+                          </div>
+
+                          <div className="bg-gradient-to-br from-emerald-600 to-teal-700 text-white p-3.5 rounded-2xl shadow-sm">
+                            <span className="text-[10.5px] text-emerald-100 font-bold uppercase tracking-wider block">Your Guaranteed Savings</span>
+                            <span className="text-white font-black text-lg sm:text-xl block mt-0.5 font-mono">
+                              {numericBudget > 0 ? `≥ ₹${guaranteedMinSavings.toLocaleString()}` : '—'}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
 
                     {/* Quick Budget Presets */}
                     <div className="flex items-center gap-2 flex-wrap pt-1">
-                      <span className="text-xs font-bold text-slate-500">Recommended & Presets:</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsBudgetManual(false);
-                          setBudget(calculatedAutoBudget);
-                        }}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition cursor-pointer flex items-center gap-1.5 ${
-                          !isBudgetManual && budget === calculatedAutoBudget
-                            ? 'bg-[#ff5c28] text-white shadow-2xs'
-                            : 'bg-orange-50 border border-orange-300 text-orange-950 hover:bg-orange-100'
-                        }`}
-                      >
-                        <span>Recommended (~₹{calculatedAutoBudget.toLocaleString()})</span>
-                      </button>
-
+                      <span className="text-xs font-bold text-slate-500">Quick Select:</span>
                       {BUDGET_PRESETS.map((amt) => (
                         <button
                           key={amt}
